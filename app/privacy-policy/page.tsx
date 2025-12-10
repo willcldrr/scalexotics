@@ -122,7 +122,7 @@ export default function PrivacyPolicy() {
               className="inline-block px-6 py-2.5 text-sm font-medium text-white rounded-xl transition hover:opacity-90"
               style={{ backgroundColor: "#375DEE" }}
             >
-              Return to Home
+                Return to Home
             </a>
           </div>
         </div>
