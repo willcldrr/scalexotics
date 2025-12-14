@@ -13,23 +13,9 @@ export const metadata: Metadata = {
   title: "Scale Exotics - Automate Your Rental Fleet to $50k/month+",
   description:
     "Learn how to scale your exotic car rental business to $50k/month+ with our automated booking assistant.",
-  generator: "v0.app",
   icons: {
-    icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
-    ],
-    apple: "/apple-icon.png",
+    icon: "/scalexoticslogo.png",
+    apple: "/scalexoticslogo.png",
   },
 }
 
