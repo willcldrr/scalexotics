@@ -31,8 +31,11 @@ export default function Home() {
   const progress = (currentStep / totalSteps) * 100
 
   const validatePhone = (phone: string) => {
-    const phoneRegex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/
-    return phoneRegex.test(phone.replace(/\s/g, ""))
+    // Strip all non-numeric characters except +
+    const cleaned = phone.replace(/[^\d+]/g, "")
+    // Must have at least 10 digits (US) or 11+ with country code
+    const digitsOnly = cleaned.replace(/\D/g, "")
+    return digitsOnly.length >= 10 && digitsOnly.length <= 15
   }
 
   const handleOptionSelect = (field: keyof SurveyAnswers, value: string) => {
@@ -60,7 +63,7 @@ export default function Home() {
     if (!answers.phoneNumber.trim()) {
       newErrors.phoneNumber = "Phone number is required"
     } else if (!validatePhone(answers.phoneNumber)) {
-      newErrors.phoneNumber = "Please enter a valid phone number"
+      newErrors.phoneNumber = "Please enter a valid 10-digit phone number"
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -348,13 +351,6 @@ export default function Home() {
           </div>
         ) : (
           <div className="w-full max-w-2xl">
-            {/* Step indicator */}
-            <div className="flex justify-center mb-8">
-              <span className="text-white/40 text-sm">
-                Question {currentStep + 1} of {totalSteps}
-              </span>
-            </div>
-            
             {renderQuestion()}
 
             {/* Back button (not on first question) */}
