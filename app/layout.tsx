@@ -1,13 +1,9 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono, Anton } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { GoogleAnalytics } from "@next/third-parties/google"
+import { syne, inter } from "./fonts"
 import "./globals.css"
-
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
-const _anton = Anton({ subsets: ["latin"], weight: "400" })
 
 export const metadata: Metadata = {
   title: "Scale Exotics - Automate Your Rental Fleet to $50k/month+",
@@ -25,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`font-sans antialiased`}>
+    <html lang="en" className={`${syne.variable} ${inter.variable}`}>
+      <body className="font-sans antialiased">
         {children}
         <Analytics />
         {process.env.NEXT_PUBLIC_GA_ID && (
