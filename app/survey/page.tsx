@@ -104,16 +104,16 @@ export default function Survey() {
     switch (currentStep) {
       case 0:
         return (
-          <div className="flex flex-col items-center gap-8 animate-fade-in">
-            <h2 className="text-3xl md:text-4xl font-bold text-white text-center" style={{ fontFamily: 'var(--font-display)' }}>
+          <div className="flex flex-col items-center gap-6 md:gap-8 animate-fade-in">
+            <h2 className="text-2xl md:text-4xl font-bold text-white text-center px-2" style={{ fontFamily: 'var(--font-display)' }}>
               How many vehicles are currently in your fleet?
             </h2>
-            <div className="w-full max-w-md flex flex-col gap-3">
+            <div className="w-full max-w-md flex flex-col gap-2 md:gap-3">
               {["1–3", "4–7", "8–15", "16+"].map((option) => (
                 <button
                   key={option}
                   onClick={() => handleOptionSelect("fleetSize", option)}
-                  className={`w-full px-6 py-4 rounded-xl border transition-all duration-200 text-left text-lg
+                  className={`w-full px-5 md:px-6 py-3.5 md:py-4 rounded-xl border transition-all duration-200 text-left text-base md:text-lg
                     ${answers.fleetSize === option
                       ? "bg-[#375DEE] border-[#375DEE] text-white"
                       : "bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-[#375DEE]/50"
@@ -128,16 +128,16 @@ export default function Survey() {
 
       case 1:
         return (
-          <div className="flex flex-col items-center gap-8 animate-fade-in">
-            <h2 className="text-3xl md:text-4xl font-bold text-white text-center" style={{ fontFamily: 'var(--font-display)' }}>
+          <div className="flex flex-col items-center gap-6 md:gap-8 animate-fade-in">
+            <h2 className="text-2xl md:text-4xl font-bold text-white text-center px-2" style={{ fontFamily: 'var(--font-display)' }}>
               What percentage of weekdays are typically booked?
             </h2>
-            <div className="w-full max-w-md flex flex-col gap-3">
+            <div className="w-full max-w-md flex flex-col gap-2 md:gap-3">
               {["<25%", "25–50%", "50–75%", "75%+"].map((option) => (
                 <button
                   key={option}
                   onClick={() => handleOptionSelect("weekdayBookings", option)}
-                  className={`w-full px-6 py-4 rounded-xl border transition-all duration-200 text-left text-lg
+                  className={`w-full px-5 md:px-6 py-3.5 md:py-4 rounded-xl border transition-all duration-200 text-left text-base md:text-lg
                     ${answers.weekdayBookings === option
                       ? "bg-[#375DEE] border-[#375DEE] text-white"
                       : "bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-[#375DEE]/50"
@@ -152,16 +152,16 @@ export default function Survey() {
 
       case 2:
         return (
-          <div className="flex flex-col items-center gap-8 animate-fade-in">
-            <h2 className="text-3xl md:text-4xl font-bold text-white text-center" style={{ fontFamily: 'var(--font-display)' }}>
+          <div className="flex flex-col items-center gap-6 md:gap-8 animate-fade-in">
+            <h2 className="text-2xl md:text-4xl font-bold text-white text-center px-2" style={{ fontFamily: 'var(--font-display)' }}>
               Where do most of your bookings come from today?
             </h2>
-            <div className="w-full max-w-md flex flex-col gap-3">
+            <div className="w-full max-w-md flex flex-col gap-2 md:gap-3">
               {["Instagram DMs", "Website / Google", "Turo", "Referrals / brokers", "Mixed / unsure"].map((option) => (
                 <button
                   key={option}
                   onClick={() => handleOptionSelect("bookingSource", option)}
-                  className={`w-full px-6 py-4 rounded-xl border transition-all duration-200 text-left text-lg
+                  className={`w-full px-5 md:px-6 py-3.5 md:py-4 rounded-xl border transition-all duration-200 text-left text-base md:text-lg
                     ${answers.bookingSource === option
                       ? "bg-[#375DEE] border-[#375DEE] text-white"
                       : "bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-[#375DEE]/50"
@@ -176,11 +176,11 @@ export default function Survey() {
 
       case 3:
         return (
-          <div className="flex flex-col items-center gap-8 animate-fade-in">
-            <h2 className="text-3xl md:text-4xl font-bold text-white text-center px-4" style={{ fontFamily: 'var(--font-display)' }}>
+          <div className="flex flex-col items-center gap-6 md:gap-8 animate-fade-in">
+            <h2 className="text-2xl md:text-4xl font-bold text-white text-center px-2" style={{ fontFamily: 'var(--font-display)' }}>
               What&apos;s the biggest thing holding back more bookings right now?
             </h2>
-            <div className="w-full max-w-md flex flex-col gap-3">
+            <div className="w-full max-w-md flex flex-col gap-2 md:gap-3">
               {[
                 "Not enough inbound leads",
                 "Slow response / missed follow-ups",
@@ -191,7 +191,7 @@ export default function Survey() {
                 <button
                   key={option}
                   onClick={() => handleOptionSelect("biggestBlocker", option)}
-                  className={`w-full px-6 py-4 rounded-xl border transition-all duration-200 text-left text-lg
+                  className={`w-full px-5 md:px-6 py-3.5 md:py-4 rounded-xl border transition-all duration-200 text-left text-base md:text-lg
                     ${answers.biggestBlocker === option
                       ? "bg-[#375DEE] border-[#375DEE] text-white"
                       : "bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-[#375DEE]/50"
@@ -206,20 +206,20 @@ export default function Survey() {
 
       case 4:
         return (
-          <div className="flex flex-col items-center gap-8 animate-fade-in">
-            <h2 className="text-3xl md:text-4xl font-bold text-white text-center" style={{ fontFamily: 'var(--font-display)' }}>
+          <div className="flex flex-col items-center gap-6 md:gap-8 animate-fade-in">
+            <h2 className="text-2xl md:text-4xl font-bold text-white text-center px-2" style={{ fontFamily: 'var(--font-display)' }}>
               Name + best phone number to reach you
             </h2>
-            <div className="w-full max-w-md flex flex-col gap-4">
+            <div className="w-full max-w-md flex flex-col gap-3 md:gap-4">
               <div>
                 <input
                   type="text"
                   placeholder="Full Name"
                   value={answers.fullName}
                   onChange={(e) => handleInputChange("fullName", e.target.value)}
-                  className={`w-full px-5 py-4 rounded-xl bg-white/5 border ${errors.fullName ? "border-red-500" : "border-white/20"} text-white placeholder:text-white/50 focus:outline-none focus:border-[#375DEE] transition text-lg`}
+                  className={`w-full px-4 md:px-5 py-3.5 md:py-4 rounded-xl bg-white/5 border ${errors.fullName ? "border-red-500" : "border-white/20"} text-white placeholder:text-white/50 focus:outline-none focus:border-[#375DEE] transition text-base md:text-lg`}
                 />
-                {errors.fullName && <p className="text-red-400 text-sm mt-2 ml-1">{errors.fullName}</p>}
+                {errors.fullName && <p className="text-red-400 text-xs md:text-sm mt-1.5 md:mt-2 ml-1">{errors.fullName}</p>}
               </div>
               <div>
                 <input
@@ -227,14 +227,14 @@ export default function Survey() {
                   placeholder="Phone Number"
                   value={answers.phoneNumber}
                   onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
-                  className={`w-full px-5 py-4 rounded-xl bg-white/5 border ${errors.phoneNumber ? "border-red-500" : "border-white/20"} text-white placeholder:text-white/50 focus:outline-none focus:border-[#375DEE] transition text-lg`}
+                  className={`w-full px-4 md:px-5 py-3.5 md:py-4 rounded-xl bg-white/5 border ${errors.phoneNumber ? "border-red-500" : "border-white/20"} text-white placeholder:text-white/50 focus:outline-none focus:border-[#375DEE] transition text-base md:text-lg`}
                 />
-                {errors.phoneNumber && <p className="text-red-400 text-sm mt-2 ml-1">{errors.phoneNumber}</p>}
+                {errors.phoneNumber && <p className="text-red-400 text-xs md:text-sm mt-1.5 md:mt-2 ml-1">{errors.phoneNumber}</p>}
               </div>
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="w-full py-5 text-white text-xl rounded-xl transition-all duration-300 hover:shadow-[0_0_40px_rgba(55,93,238,0.4)] mt-4 disabled:opacity-50 disabled:cursor-not-allowed bg-[#375DEE] hover:bg-[#4169E1]"
+                className="w-full py-4 md:py-5 text-white text-lg md:text-xl rounded-xl transition-all duration-300 hover:shadow-[0_0_40px_rgba(55,93,238,0.4)] mt-2 md:mt-4 disabled:opacity-50 disabled:cursor-not-allowed bg-[#375DEE] hover:bg-[#4169E1]"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 {isSubmitting ? "Submitting..." : "Submit"}
@@ -314,21 +314,21 @@ export default function Survey() {
       </div>
 
       {/* Main Content - Survey */}
-      <main className="flex-1 flex items-center justify-center px-6 md:px-8 py-12 pt-32">
+      <main className="flex-1 flex items-center justify-center px-4 md:px-8 py-8 md:py-12 pt-28 md:pt-32">
         {isSubmitted ? (
-          <div className="flex flex-col items-center gap-6 animate-fade-in text-center">
-            <div className="w-24 h-24 rounded-full bg-[#375DEE]/20 flex items-center justify-center">
-              <svg className="w-12 h-12 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex flex-col items-center gap-4 md:gap-6 animate-fade-in text-center px-4">
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-[#375DEE]/20 flex items-center justify-center">
+              <svg className="w-10 h-10 md:w-12 md:h-12 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 className="text-4xl md:text-5xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>Thank You!</h3>
-            <p className="text-white/60 text-lg max-w-md">
+            <h3 className="text-3xl md:text-5xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>Thank You!</h3>
+            <p className="text-white/60 text-base md:text-lg max-w-md">
               We&apos;ve received your information and will be in touch shortly to discuss how we can help grow your fleet.
             </p>
             <a
               href="/"
-              className="mt-4 inline-flex items-center gap-2 text-[#375DEE] hover:text-white transition-colors"
+              className="mt-2 md:mt-4 inline-flex items-center gap-2 text-[#375DEE] hover:text-white transition-colors text-sm md:text-base"
             >
               ← Back to Home
             </a>
@@ -353,11 +353,11 @@ export default function Survey() {
       </main>
 
       {/* Footer */}
-      <footer className="relative py-8 border-t border-white/[0.06]">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <img src="/scalexoticslong.png" alt="Scale Exotics" className="h-5 w-auto opacity-40" />
-            <div className="flex items-center gap-4 text-xs text-white/30">
+      <footer className="relative py-6 md:py-8 border-t border-white/[0.06]">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
+            <img src="/scalexoticslong.png" alt="Scale Exotics" className="h-4 md:h-5 w-auto opacity-40" />
+            <div className="flex items-center gap-3 md:gap-4 text-[10px] md:text-xs text-white/30">
               <a href="/about" className="hover:text-[#375DEE] transition-colors">About</a>
               <span className="text-white/10">•</span>
               <a href="/services" className="hover:text-[#375DEE] transition-colors">Services</a>
@@ -366,7 +366,7 @@ export default function Survey() {
               <span className="text-white/10">•</span>
               <a href="/privacy-policy" className="hover:text-[#375DEE] transition-colors">Privacy</a>
             </div>
-            <span className="text-white/20 text-xs">© {new Date().getFullYear()} Scale Exotics</span>
+            <span className="text-white/20 text-[10px] md:text-xs">© {new Date().getFullYear()} Scale Exotics</span>
           </div>
         </div>
       </footer>

@@ -203,18 +203,18 @@ export default function Home() {
       </section>
 
       {/* Stats Bar */}
-      <section className="relative py-8 bg-[#375DEE]/5 border-y border-[#375DEE]/20">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+      <section className="relative py-6 md:py-8 bg-[#375DEE]/5 border-y border-[#375DEE]/20">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:flex md:flex-row items-center justify-between gap-4 md:gap-8">
             {[
               { value: "$2.4M+", label: "Revenue Generated" },
               { value: "50+", label: "Fleet Partners" },
               { value: "3X", label: "Avg Revenue Growth" },
               { value: "90", label: "Days to Results" }
             ].map((stat, i) => (
-              <div key={stat.label} className="flex items-center gap-4">
-                <span className="text-3xl md:text-4xl font-bold text-[#375DEE]" style={{ fontFamily: 'var(--font-display)' }}>{stat.value}</span>
-                <span className="text-sm text-white/40">{stat.label}</span>
+              <div key={stat.label} className="flex flex-col md:flex-row items-center md:items-center gap-1 md:gap-4 text-center md:text-left">
+                <span className="text-2xl md:text-4xl font-bold text-[#375DEE]" style={{ fontFamily: 'var(--font-display)' }}>{stat.value}</span>
+                <span className="text-xs md:text-sm text-white/40">{stat.label}</span>
                 {i < 3 && <div className="hidden md:block w-[1px] h-8 bg-white/10 ml-8" />}
               </div>
             ))}
@@ -226,16 +226,16 @@ export default function Home() {
       <section
         id="transformation"
         ref={setRef("transformation")}
-        className="relative py-24 md:py-32"
+        className="relative py-16 md:py-32"
       >
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           {/* Section Header */}
-          <div className={`text-center mb-16 md:mb-20 transition-all duration-1000 overflow-visible ${isVisible("transformation") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
-            <span className="text-[#375DEE] text-sm tracking-widest uppercase mb-4 block">The Transformation</span>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-normal" style={{ fontFamily: 'var(--font-display)' }}>
+          <div className={`text-center mb-10 md:mb-20 transition-all duration-1000 overflow-visible ${isVisible("transformation") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
+            <span className="text-[#375DEE] text-xs md:text-sm tracking-widest uppercase mb-3 md:mb-4 block">The Transformation</span>
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-normal" style={{ fontFamily: 'var(--font-display)' }}>
               Stop Leaving Money <span className="text-[#375DEE]">On The Table</span>
             </h2>
-            <p className="text-white/50 max-w-2xl mx-auto text-lg">
+            <p className="text-white/50 max-w-2xl mx-auto text-base md:text-lg">
               Most fleet owners are stuck doing everything manually. We change that.
             </p>
           </div>
@@ -243,11 +243,11 @@ export default function Home() {
           {/* Before/After Comparison */}
           <div className={`grid md:grid-cols-2 gap-6 md:gap-8 transition-all duration-1000 ${isVisible("transformation") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`} style={{ transitionDelay: "200ms" }}>
             {/* Before */}
-            <div className="relative p-8 md:p-10 rounded-2xl border border-white/10 bg-white/[0.02]">
-              <div className="absolute top-0 left-8 -translate-y-1/2 px-4 py-1 bg-black border border-white/20 rounded-full">
-                <span className="text-xs text-white/50 tracking-widest uppercase">Without Us</span>
+            <div className="relative p-6 md:p-10 rounded-2xl border border-white/10 bg-white/[0.02]">
+              <div className="absolute top-0 left-6 md:left-8 -translate-y-1/2 px-3 md:px-4 py-1 bg-black border border-white/20 rounded-full">
+                <span className="text-[10px] md:text-xs text-white/50 tracking-widest uppercase">Without Us</span>
               </div>
-              <div className="space-y-5 mt-4">
+              <div className="space-y-4 md:space-y-5 mt-4">
                 {[
                   "Chasing leads manually through DMs",
                   "Missing inquiries while you sleep",
@@ -256,24 +256,24 @@ export default function Home() {
                   "No idea what's working or not",
                   "Weekdays sitting empty"
                 ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-4">
-                    <div className="w-6 h-6 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg className="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div key={i} className="flex items-start gap-3 md:gap-4">
+                    <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg className="w-3 h-3 md:w-3.5 md:h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </div>
-                    <span className="text-white/60">{item}</span>
+                    <span className="text-white/60 text-sm md:text-base">{item}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* After */}
-            <div className="relative p-8 md:p-10 rounded-2xl border border-[#375DEE]/30 bg-[#375DEE]/5">
-              <div className="absolute top-0 left-8 -translate-y-1/2 px-4 py-1 bg-[#375DEE] rounded-full">
-                <span className="text-xs text-white tracking-widest uppercase">With Scale Exotics</span>
+            <div className="relative p-6 md:p-10 rounded-2xl border border-[#375DEE]/30 bg-[#375DEE]/5">
+              <div className="absolute top-0 left-6 md:left-8 -translate-y-1/2 px-3 md:px-4 py-1 bg-[#375DEE] rounded-full">
+                <span className="text-[10px] md:text-xs text-white tracking-widest uppercase">With Scale Exotics</span>
               </div>
-              <div className="space-y-5 mt-4">
+              <div className="space-y-4 md:space-y-5 mt-4">
                 {[
                   "Leads captured and qualified automatically",
                   "24/7 instant response to every inquiry",
@@ -282,13 +282,13 @@ export default function Home() {
                   "Real-time dashboard shows what converts",
                   "Full fleet utilization, weekdays included"
                 ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-4">
-                    <div className="w-6 h-6 rounded-full bg-[#375DEE]/20 border border-[#375DEE]/50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg className="w-3.5 h-3.5 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div key={i} className="flex items-start gap-3 md:gap-4">
+                    <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-[#375DEE]/20 border border-[#375DEE]/50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg className="w-3 h-3 md:w-3.5 md:h-3.5 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <span className="text-white">{item}</span>
+                    <span className="text-white text-sm md:text-base">{item}</span>
                   </div>
                 ))}
               </div>
@@ -315,19 +315,19 @@ export default function Home() {
       <section
         id="process"
         ref={setRef("process")}
-        className="relative py-24 md:py-32 bg-gradient-to-b from-[#375DEE]/5 to-transparent"
+        className="relative py-16 md:py-32 bg-gradient-to-b from-[#375DEE]/5 to-transparent"
       >
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           {/* Section Header */}
-          <div className={`text-center mb-20 transition-all duration-1000 ${isVisible("process") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
-            <span className="text-[#375DEE] text-sm tracking-widest uppercase mb-4 block">Our Process</span>
-            <h2 className="text-4xl md:text-6xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <div className={`text-center mb-12 md:mb-20 transition-all duration-1000 ${isVisible("process") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
+            <span className="text-[#375DEE] text-xs md:text-sm tracking-widest uppercase mb-3 md:mb-4 block">Our Process</span>
+            <h2 className="text-3xl md:text-6xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
               How We <span className="text-[#375DEE]">Scale</span> Your Fleet
             </h2>
           </div>
 
           {/* Process Steps */}
-          <div className="grid md:grid-cols-3 gap-8 md:gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-12">
             {[
               {
                 num: "01",
@@ -362,24 +362,24 @@ export default function Home() {
             ].map((step, i) => (
               <div
                 key={step.num}
-                className={`group relative p-8 rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:border-[#375DEE]/30 transition-all duration-700 ${isVisible("process") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}
+                className={`group relative p-6 md:p-8 rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:border-[#375DEE]/30 transition-all duration-700 ${isVisible("process") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}
                 style={{ transitionDelay: `${(i + 1) * 150}ms` }}
               >
                 {/* Number - Large and visible */}
-                <div className="absolute top-6 right-6 text-6xl md:text-7xl font-bold text-[#375DEE]/20" style={{ fontFamily: 'var(--font-display)' }}>
+                <div className="absolute top-4 right-4 md:top-6 md:right-6 text-5xl md:text-7xl font-bold text-[#375DEE]/20" style={{ fontFamily: 'var(--font-display)' }}>
                   {step.num}
                 </div>
 
                 {/* Icon */}
-                <div className="w-14 h-14 rounded-xl bg-[#375DEE]/10 border border-[#375DEE]/30 flex items-center justify-center text-[#375DEE] mb-6 group-hover:bg-[#375DEE]/20 transition-colors duration-300">
+                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-[#375DEE]/10 border border-[#375DEE]/30 flex items-center justify-center text-[#375DEE] mb-4 md:mb-6 group-hover:bg-[#375DEE]/20 transition-colors duration-300">
                   {step.icon}
                 </div>
 
                 {/* Content */}
-                <h3 className="text-2xl font-semibold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+                <h3 className="text-xl md:text-2xl font-semibold text-white mb-3 md:mb-4" style={{ fontFamily: 'var(--font-display)' }}>
                   {step.title}
                 </h3>
-                <p className="text-white/50 leading-relaxed">{step.desc}</p>
+                <p className="text-white/50 leading-relaxed text-sm md:text-base">{step.desc}</p>
               </div>
             ))}
           </div>
@@ -390,55 +390,56 @@ export default function Home() {
       <section
         id="services"
         ref={setRef("services")}
-        className="relative py-24 md:py-32"
+        className="relative py-16 md:py-32"
       >
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-10 md:gap-16 items-center">
             {/* Left - Image */}
             <div className={`relative transition-all duration-1000 ${isVisible("services") ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-12"}`}>
-              <div className="relative rounded-3xl overflow-hidden">
+              <div className="relative rounded-2xl md:rounded-3xl overflow-hidden">
                 <img
-                  src="https://images.unsplash.com/photo-1709085599581-03e868266a56?q=80&w=2670&auto=format&fit=crop"
+                  src="https://images.unsplash.com/photo-1593219535889-7873a100874a?q=80&w=2670&auto=format&fit=crop"
                   alt="Luxury car interior"
                   className="w-full aspect-[4/5] object-cover"
                 />
+                <div className="absolute inset-0 bg-black/40" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                 <div className="absolute inset-0 bg-[#375DEE]/10" />
               </div>
               {/* Floating card */}
-              <div className="absolute -bottom-8 -right-8 bg-[#375DEE] rounded-2xl p-6 shadow-2xl shadow-[#375DEE]/20">
-                <div className="text-3xl font-bold text-white mb-1" style={{ fontFamily: 'var(--font-display)' }}>50+</div>
-                <div className="text-sm text-white/70">Fleet Partners</div>
+              <div className="absolute -bottom-4 right-4 md:-bottom-8 md:-right-8 bg-[#375DEE] rounded-xl md:rounded-2xl p-4 md:p-6 shadow-2xl shadow-[#375DEE]/20">
+                <div className="text-2xl md:text-3xl font-bold text-white mb-1" style={{ fontFamily: 'var(--font-display)' }}>50+</div>
+                <div className="text-xs md:text-sm text-white/70">Fleet Partners</div>
               </div>
             </div>
 
             {/* Right - Content */}
             <div className={`transition-all duration-1000 ${isVisible("services") ? "opacity-100 translate-x-0" : "opacity-0 translate-x-12"}`} style={{ transitionDelay: "200ms" }}>
-              <div className="w-12 h-1 bg-[#375DEE] mb-6" />
-              <h2 className="text-4xl md:text-5xl font-bold mb-6" style={{ fontFamily: 'var(--font-display)' }}>
+              <div className="w-10 md:w-12 h-1 bg-[#375DEE] mb-4 md:mb-6" />
+              <h2 className="text-3xl md:text-5xl font-bold mb-4 md:mb-6" style={{ fontFamily: 'var(--font-display)' }}>
                 Complete Growth <span className="text-[#375DEE]">Systems</span>
               </h2>
-              <p className="text-white/50 text-lg mb-10 leading-relaxed">
+              <p className="text-white/50 text-base md:text-lg mb-8 md:mb-10 leading-relaxed">
                 Everything you need to dominate your market and scale with confidence.
               </p>
 
               {/* Services List */}
-              <div className="space-y-6">
+              <div className="space-y-5 md:space-y-6">
                 {[
                   { title: "Lead Generation Engine", desc: "Automated 24/7 capture across Instagram, Google & referrals" },
                   { title: "Conversion Automation", desc: "AI-powered instant responses and booking optimization" },
                   { title: "Revenue Intelligence", desc: "Real-time dashboards and demand forecasting" },
                   { title: "Fleet Operations", desc: "Streamlined booking management and customer CRM" }
                 ].map((service, i) => (
-                  <div key={service.title} className="group flex gap-4 items-start">
-                    <div className="w-10 h-10 rounded-lg bg-[#375DEE]/10 border border-[#375DEE]/30 flex items-center justify-center flex-shrink-0 group-hover:bg-[#375DEE]/20 transition-colors">
-                      <svg className="w-5 h-5 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div key={service.title} className="group flex gap-3 md:gap-4 items-start">
+                    <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-[#375DEE]/10 border border-[#375DEE]/30 flex items-center justify-center flex-shrink-0 group-hover:bg-[#375DEE]/20 transition-colors">
+                      <svg className="w-4 h-4 md:w-5 md:h-5 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
                     <div>
-                      <h4 className="text-lg font-medium text-white mb-1">{service.title}</h4>
-                      <p className="text-white/40 text-sm">{service.desc}</p>
+                      <h4 className="text-base md:text-lg font-medium text-white mb-1">{service.title}</h4>
+                      <p className="text-white/40 text-xs md:text-sm">{service.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -452,19 +453,19 @@ export default function Home() {
       <section
         id="testimonials"
         ref={setRef("testimonials")}
-        className="relative py-24 md:py-32 bg-gradient-to-b from-transparent via-[#375DEE]/5 to-transparent"
+        className="relative py-16 md:py-32 bg-gradient-to-b from-transparent via-[#375DEE]/5 to-transparent"
       >
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           {/* Section Header */}
-          <div className={`text-center mb-16 transition-all duration-1000 ${isVisible("testimonials") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
-            <span className="text-[#375DEE] text-sm tracking-widest uppercase mb-4 block">Testimonials</span>
-            <h2 className="text-4xl md:text-5xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <div className={`text-center mb-10 md:mb-16 transition-all duration-1000 ${isVisible("testimonials") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
+            <span className="text-[#375DEE] text-xs md:text-sm tracking-widest uppercase mb-3 md:mb-4 block">Testimonials</span>
+            <h2 className="text-3xl md:text-5xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
               What Fleet <span className="text-[#375DEE]">Owners</span> Say
             </h2>
           </div>
 
           {/* Testimonials Grid */}
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {[
               {
                 quote: "We went from struggling to fill weekdays to being fully booked 3 weeks out. The lead quality is insane.",
@@ -487,25 +488,25 @@ export default function Home() {
             ].map((testimonial, i) => (
               <div
                 key={testimonial.name}
-                className={`group p-8 bg-white/[0.02] border border-white/[0.06] rounded-2xl hover:border-[#375DEE]/30 transition-all duration-700 ${
+                className={`group p-6 md:p-8 bg-white/[0.02] border border-white/[0.06] rounded-2xl hover:border-[#375DEE]/30 transition-all duration-700 ${
                   isVisible("testimonials") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
                 }`}
                 style={{ transitionDelay: `${(i + 1) * 150}ms` }}
               >
                 {/* Quote */}
-                <div className="text-[#375DEE] text-4xl mb-4">&ldquo;</div>
-                <p className="text-white/70 leading-relaxed mb-8">{testimonial.quote}</p>
+                <div className="text-[#375DEE] text-3xl md:text-4xl mb-3 md:mb-4">&ldquo;</div>
+                <p className="text-white/70 leading-relaxed mb-6 md:mb-8 text-sm md:text-base">{testimonial.quote}</p>
 
                 {/* Author */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 md:gap-4">
                   <img
                     src={testimonial.img}
                     alt={testimonial.name}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-[#375DEE]/30"
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-[#375DEE]/30"
                   />
                   <div>
-                    <div className="text-white font-medium">{testimonial.name}</div>
-                    <div className="text-white/40 text-sm">{testimonial.role}</div>
+                    <div className="text-white font-medium text-sm md:text-base">{testimonial.name}</div>
+                    <div className="text-white/40 text-xs md:text-sm">{testimonial.role}</div>
                   </div>
                 </div>
               </div>
@@ -518,7 +519,7 @@ export default function Home() {
       <section
         id="cta"
         ref={setRef("cta")}
-        className="relative py-32 md:py-40 overflow-hidden"
+        className="relative py-20 md:py-40 overflow-hidden"
       >
         {/* Background */}
         <div className="absolute inset-0">
@@ -532,22 +533,22 @@ export default function Home() {
         </div>
 
         {/* Content */}
-        <div className={`relative z-10 max-w-4xl mx-auto px-6 lg:px-8 text-center transition-all duration-1000 ${isVisible("cta") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
-          <div className="w-20 h-1 bg-[#375DEE] mx-auto mb-8" />
-          <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6" style={{ fontFamily: 'var(--font-display)' }}>
+        <div className={`relative z-10 max-w-4xl mx-auto px-4 md:px-6 lg:px-8 text-center transition-all duration-1000 ${isVisible("cta") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
+          <div className="w-16 md:w-20 h-1 bg-[#375DEE] mx-auto mb-6 md:mb-8" />
+          <h2 className="text-3xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6" style={{ fontFamily: 'var(--font-display)' }}>
             Ready to <span className="text-[#375DEE]">Dominate</span>
             <br />Your Market?
           </h2>
-          <p className="text-white/50 text-lg md:text-xl max-w-xl mx-auto mb-10">
+          <p className="text-white/50 text-base md:text-xl max-w-xl mx-auto mb-8 md:mb-10">
             Take the first step toward scaling your exotic rental business.
           </p>
           <a
             href="/survey"
-            className="inline-flex items-center gap-3 px-10 py-5 bg-[#375DEE] hover:bg-[#4169E1] text-white text-lg rounded-full transition-all duration-300 hover:shadow-[0_0_40px_rgba(55,93,238,0.4)]"
+            className="inline-flex items-center gap-2 md:gap-3 px-8 md:px-10 py-4 md:py-5 bg-[#375DEE] hover:bg-[#4169E1] text-white text-base md:text-lg rounded-full transition-all duration-300 hover:shadow-[0_0_40px_rgba(55,93,238,0.4)]"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             Get Your Growth Plan
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
           </a>
@@ -555,45 +556,45 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="relative py-16 md:py-20 border-t border-white/[0.06]">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-10 md:gap-8 mb-12">
+      <footer className="relative py-12 md:py-20 border-t border-white/[0.06]">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-8 mb-10 md:mb-12">
             {/* Brand */}
-            <div className="md:col-span-2">
-              <img src="/scalexoticslong.png" alt="Scale Exotics" className="h-7 w-auto mb-4" />
-              <p className="text-white/40 text-sm max-w-sm leading-relaxed">
+            <div className="col-span-2">
+              <img src="/scalexoticslong.png" alt="Scale Exotics" className="h-6 md:h-7 w-auto mb-3 md:mb-4" />
+              <p className="text-white/40 text-xs md:text-sm max-w-sm leading-relaxed">
                 Helping exotic car rental fleet owners build automated systems that generate consistent $50k+ months.
               </p>
               {/* Blue accent */}
-              <div className="w-16 h-1 bg-[#375DEE] mt-6" />
+              <div className="w-12 md:w-16 h-1 bg-[#375DEE] mt-4 md:mt-6" />
             </div>
 
             {/* Quick Links */}
             <div>
-              <h4 className="text-white text-sm font-medium mb-4">Quick Links</h4>
-              <div className="flex flex-col gap-3">
-                <a href="/about" className="text-white/40 text-sm hover:text-[#375DEE] transition-colors">About</a>
-                <a href="/services" className="text-white/40 text-sm hover:text-[#375DEE] transition-colors">Services</a>
-                <a href="/survey" className="text-white/40 text-sm hover:text-[#375DEE] transition-colors">Get Started</a>
+              <h4 className="text-white text-xs md:text-sm font-medium mb-3 md:mb-4">Quick Links</h4>
+              <div className="flex flex-col gap-2 md:gap-3">
+                <a href="/about" className="text-white/40 text-xs md:text-sm hover:text-[#375DEE] transition-colors">About</a>
+                <a href="/services" className="text-white/40 text-xs md:text-sm hover:text-[#375DEE] transition-colors">Services</a>
+                <a href="/survey" className="text-white/40 text-xs md:text-sm hover:text-[#375DEE] transition-colors">Get Started</a>
               </div>
             </div>
 
             {/* Legal */}
             <div>
-              <h4 className="text-white text-sm font-medium mb-4">Legal</h4>
-              <div className="flex flex-col gap-3">
-                <a href="/privacy-policy" className="text-white/40 text-sm hover:text-[#375DEE] transition-colors">Privacy Policy</a>
-                <a href="/tos" className="text-white/40 text-sm hover:text-[#375DEE] transition-colors">Terms of Service</a>
+              <h4 className="text-white text-xs md:text-sm font-medium mb-3 md:mb-4">Legal</h4>
+              <div className="flex flex-col gap-2 md:gap-3">
+                <a href="/privacy-policy" className="text-white/40 text-xs md:text-sm hover:text-[#375DEE] transition-colors">Privacy Policy</a>
+                <a href="/tos" className="text-white/40 text-xs md:text-sm hover:text-[#375DEE] transition-colors">Terms of Service</a>
               </div>
             </div>
           </div>
 
           {/* Bottom bar */}
-          <div className="pt-8 border-t border-white/[0.06] flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-white/30 text-xs">
+          <div className="pt-6 md:pt-8 border-t border-white/[0.06] flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
+            <p className="text-white/30 text-[10px] md:text-xs">
               © {new Date().getFullYear()} Scale Exotics. All rights reserved.
             </p>
-            <p className="text-white/20 text-[10px] max-w-lg text-center md:text-right">
+            <p className="text-white/20 text-[9px] md:text-[10px] max-w-lg text-center md:text-right">
               This site is not a part of the Facebook website or Facebook Inc. Additionally, this site is NOT endorsed by Facebook in any way. FACEBOOK is a trademark of FACEBOOK, Inc.
             </p>
           </div>
