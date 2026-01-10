@@ -2,18 +2,25 @@ import { NextRequest, NextResponse } from "next/server"
 import twilio from "twilio"
 import { createClient } from "@supabase/supabase-js"
 
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-)
+function getTwilioClient() {
+  return twilio(
+    process.env.TWILIO_ACCOUNT_SID,
+    process.env.TWILIO_AUTH_TOKEN
+  )
+}
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const twilioClient = getTwilioClient()
+    const supabase = getSupabase()
+
     const { to, message, leadId, userId } = await request.json()
 
     if (!to || !message) {

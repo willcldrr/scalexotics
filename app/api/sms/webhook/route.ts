@@ -7,13 +7,16 @@ import {
   getDefaultUserId,
 } from "@/lib/sms-ai"
 
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-)
+function getTwilioClient() {
+  return twilio(
+    process.env.TWILIO_ACCOUNT_SID,
+    process.env.TWILIO_AUTH_TOKEN
+  )
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const twilioClient = getTwilioClient()
     const formData = await request.formData()
 
     const from = formData.get("From") as string

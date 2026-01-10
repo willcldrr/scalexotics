@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
-// Use service role for API key validation (bypasses RLS)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
 
 // CORS headers for cross-origin requests from lead capture sites
 const corsHeaders = {
@@ -20,6 +21,8 @@ export async function OPTIONS() {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getSupabase()
+
     // Get API key from header
     const apiKey = request.headers.get("X-API-Key")
 
