@@ -259,26 +259,26 @@ function generateGreeting(
 
   // Generate based on tone
   if (vehicleInterest && dateInfo) {
-    return `Hey ${firstName}! Thanks for reaching out to ${businessName}! I see you're interested in the ${vehicleInterest} for ${dateInfo}. Let me check availability and get back to you with pricing! 🔥`
+    return `Hey ${firstName}! ${businessName} here. ${vehicleInterest} for ${dateInfo}? Let me check availability!`
   }
 
   if (vehicleInterest) {
-    return `Hey ${firstName}! Thanks for your interest in ${businessName}! Great choice looking at the ${vehicleInterest}! What dates were you thinking? 🚗`
+    return `Hey ${firstName}! ${businessName} here. Great choice on the ${vehicleInterest}! What dates?`
   }
 
   const greetings: Record<string, string[]> = {
     friendly: [
-      `Hey ${firstName}! 👋 Thanks for checking out ${businessName}! I saw you're interested in renting an exotic car. What dates were you looking at?`,
-      `Hi ${firstName}! This is ${businessName}. Super excited you reached out! Which car caught your eye? We've got ${vehicleList} and more 🔥`,
+      `Hey ${firstName}! Thanks for reaching out to ${businessName}. What dates are you looking at?`,
+      `Hi ${firstName}! ${businessName} here. Which car interests you?`,
     ],
     professional: [
-      `Hello ${firstName}, thank you for your interest in ${businessName}. I'd be happy to help you secure a vehicle. What dates are you considering?`,
+      `Hello ${firstName}, thank you for contacting ${businessName}. What dates work for you?`,
     ],
     luxury: [
-      `Good day ${firstName}. Thank you for considering ${businessName} for your exotic car experience. How may I assist you in selecting the perfect vehicle?`,
+      `Hello ${firstName}. Welcome to ${businessName}. How may I assist you today?`,
     ],
     energetic: [
-      `Hey ${firstName}!! 🚗💨 SO pumped you hit us up at ${businessName}! Ready to drive something INSANE?? What are you thinking - Lambo? Ferrari? 🔥`,
+      `Hey ${firstName}! ${businessName} here! Ready to drive something amazing? What dates?`,
     ],
   }
 
