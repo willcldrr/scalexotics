@@ -116,7 +116,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create new lead
+    // Schedule initial SMS for 1-2 minutes from now (random delay for natural feel)
+    const delayMinutes = 1 + Math.random() // 1 to 2 minutes
+    const smsScheduledAt = new Date(Date.now() + delayMinutes * 60 * 1000).toISOString()
+
+    // Create new lead with scheduled SMS
     const { data: newLead, error: insertError } = await supabase
       .from("leads")
       .insert({
@@ -129,6 +133,8 @@ export async function POST(request: NextRequest) {
         notes: notes || null,
         source: source || keyData.domain || "lead_capture",
         status: "new",
+        initial_sms_scheduled_at: smsScheduledAt,
+        initial_sms_sent: false,
       })
       .select("id")
       .single()
