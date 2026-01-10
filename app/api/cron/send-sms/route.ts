@@ -1,3 +1,4 @@
+// SMS Cron Job - sends scheduled initial messages to new leads
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import twilio from "twilio"
