@@ -56,6 +56,7 @@ export default function VehiclesPage() {
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     name: "",
@@ -74,6 +75,13 @@ export default function VehiclesPage() {
 
   const fetchVehicles = async () => {
     setLoading(true)
+
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      setUserId(user.id)
+    }
+
     const { data, error } = await supabase
       .from("vehicles")
       .select("*")
@@ -126,9 +134,11 @@ export default function VehiclesPage() {
   }
 
   const handleSave = async () => {
+    if (!userId) return
     setSaving(true)
 
     const vehicleData = {
+      user_id: userId,
       name: formData.name || `${formData.year} ${formData.make} ${formData.model}`,
       make: formData.make,
       model: formData.model,

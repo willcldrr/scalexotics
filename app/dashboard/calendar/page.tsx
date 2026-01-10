@@ -56,6 +56,7 @@ export default function CalendarPage() {
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
   const [saving, setSaving] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     vehicle_id: "",
@@ -73,6 +74,12 @@ export default function CalendarPage() {
 
   const fetchData = async () => {
     setLoading(true)
+
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      setUserId(user.id)
+    }
 
     const [vehiclesRes, bookingsRes] = await Promise.all([
       supabase.from("vehicles").select("id, name, make, model").neq("status", "inactive"),
@@ -174,9 +181,11 @@ export default function CalendarPage() {
   }
 
   const handleSave = async () => {
+    if (!userId) return
     setSaving(true)
 
     const bookingData = {
+      user_id: userId,
       vehicle_id: formData.vehicle_id,
       customer_name: formData.customer_name,
       customer_phone: formData.customer_phone || null,

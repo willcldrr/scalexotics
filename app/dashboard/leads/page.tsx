@@ -55,6 +55,7 @@ export default function LeadsPage() {
   })
   const [saving, setSaving] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -62,6 +63,13 @@ export default function LeadsPage() {
 
   const fetchData = async () => {
     setLoading(true)
+
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      setUserId(user.id)
+    }
+
     const [leadsRes, vehiclesRes] = await Promise.all([
       supabase.from("leads").select("*").order("created_at", { ascending: false }),
       supabase.from("vehicles").select("id, name, make, model"),
@@ -73,9 +81,11 @@ export default function LeadsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!userId) return
     setSaving(true)
 
     const leadData = {
+      user_id: userId,
       name: formData.name,
       email: formData.email || null,
       phone: formData.phone,
