@@ -15,6 +15,7 @@ import {
   X,
   ChevronRight,
   Bot,
+  ClipboardList,
 } from "lucide-react"
 
 const navItems = [
@@ -22,6 +23,7 @@ const navItems = [
   { name: "Leads", href: "/dashboard/leads", icon: Users },
   { name: "Bookings", href: "/dashboard/bookings", icon: CalendarCheck },
   { name: "Vehicles", href: "/dashboard/vehicles", icon: Car },
+  { name: "Lead Capture", href: "/dashboard/lead-capture", icon: ClipboardList },
   { name: "AI Assistant", href: "/dashboard/ai-assistant", icon: Bot },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
