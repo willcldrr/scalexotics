@@ -22,6 +22,8 @@ import {
   Loader2,
   Copy,
   ExternalLink,
+  Code,
+  RotateCcw,
 } from "lucide-react"
 
 interface AISettings {
@@ -39,7 +41,43 @@ interface AISettings {
   deposit_percentage: number
   follow_up_enabled: boolean
   follow_up_hours: number
+  custom_system_prompt: string
 }
+
+const DEFAULT_SYSTEM_PROMPT = `You are an AI assistant for {{business_name}}, an exotic car rental business. Your role is to help potential customers book luxury vehicles via SMS.
+
+## Your Personality
+- Tone: {{tone}}
+- Be helpful, knowledgeable, and enthusiastic about the cars
+- Keep responses concise since this is SMS (aim for 1-3 sentences)
+- Use emojis sparingly if the tone is friendly or energetic
+
+## Business Information
+- Business Name: {{business_name}}
+- Phone: {{business_phone}}
+- Hours: {{business_hours}}
+
+## Available Vehicles
+{{vehicles}}
+
+## Booking Process
+{{booking_process}}
+
+## Pricing Information
+{{pricing_info}}
+
+## Your Goals
+1. Answer questions about vehicles, availability, and pricing
+2. Collect rental dates and vehicle preferences
+3. Guide customers toward booking
+4. Provide excellent customer service
+
+## Guidelines
+- If asked about availability, check the vehicle list and dates
+- Always try to move the conversation toward a booking
+- If you don't know something, offer to have a team member follow up
+- Never make up pricing or availability information
+- Be professional but match the configured tone`
 
 const defaultSettings: AISettings = {
   business_name: "",
@@ -55,6 +93,7 @@ const defaultSettings: AISettings = {
   deposit_percentage: 25,
   follow_up_enabled: true,
   follow_up_hours: 24,
+  custom_system_prompt: "",
 }
 
 const toneOptions = [
@@ -71,7 +110,7 @@ export default function AIAssistantPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [vehicles, setVehicles] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState<"config" | "preview" | "connection">("config")
+  const [activeTab, setActiveTab] = useState<"config" | "preview" | "connection" | "advanced">("config")
   const [userId, setUserId] = useState<string | null>(null)
   const [twilioStatus, setTwilioStatus] = useState<"loading" | "connected" | "error">("loading")
   const [twilioInfo, setTwilioInfo] = useState<any>(null)
@@ -295,6 +334,15 @@ export default function AIAssistantPage() {
         >
           <Link className="w-4 h-4 inline mr-2" />
           Connection
+        </button>
+        <button
+          onClick={() => setActiveTab("advanced")}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === "advanced" ? "bg-[#375DEE] text-white" : "text-white/60 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <Code className="w-4 h-4 inline mr-2" />
+          Advanced
         </button>
       </div>
 
@@ -777,6 +825,126 @@ export default function AIAssistantPage() {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "advanced" && (
+        <div className="space-y-6">
+          {/* System Prompt Editor */}
+          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+                <Code className="w-5 h-5 text-[#375DEE]" />
+                Custom System Prompt
+              </h2>
+              <button
+                onClick={() => setSettings({ ...settings, custom_system_prompt: "" })}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Reset to Default
+              </button>
+            </div>
+
+            <p className="text-sm text-white/60 mb-4">
+              Customize the full system prompt used by the AI assistant. Leave empty to use the default prompt with your settings automatically applied.
+            </p>
+
+            <textarea
+              rows={20}
+              placeholder={DEFAULT_SYSTEM_PROMPT}
+              value={settings.custom_system_prompt}
+              onChange={(e) => setSettings({ ...settings, custom_system_prompt: e.target.value })}
+              className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-white placeholder:text-white/20 focus:outline-none focus:border-[#375DEE] transition-colors font-mono text-sm resize-none"
+              style={{ minHeight: "400px" }}
+            />
+
+            <div className="mt-2 flex items-center justify-between text-xs text-white/40">
+              <span>{settings.custom_system_prompt?.length || 0} characters</span>
+              <span>{settings.custom_system_prompt ? "Using custom prompt" : "Using default prompt"}</span>
+            </div>
+          </div>
+
+          {/* Available Variables */}
+          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+              <FileText className="w-5 h-5 text-[#375DEE]" />
+              Available Variables
+            </h2>
+
+            <p className="text-sm text-white/60 mb-4">
+              Use these placeholders in your system prompt. They will be automatically replaced with your configured values.
+            </p>
+
+            <div className="grid sm:grid-cols-2 gap-3">
+              {[
+                { variable: "{{business_name}}", description: "Your business name", value: settings.business_name || "(not set)" },
+                { variable: "{{business_phone}}", description: "Your business phone", value: settings.business_phone || "(not set)" },
+                { variable: "{{business_hours}}", description: "Your business hours", value: settings.business_hours || "(not set)" },
+                { variable: "{{tone}}", description: "Conversation tone setting", value: settings.tone },
+                { variable: "{{greeting_message}}", description: "Initial greeting message", value: settings.greeting_message?.substring(0, 50) + "..." || "(not set)" },
+                { variable: "{{booking_process}}", description: "Booking process info", value: settings.booking_process?.substring(0, 50) + "..." || "(not set)" },
+                { variable: "{{pricing_info}}", description: "Pricing information", value: settings.pricing_info?.substring(0, 50) + "..." || "(not set)" },
+                { variable: "{{vehicles}}", description: "List of available vehicles", value: vehicles.length > 0 ? `${vehicles.length} vehicles` : "(none)" },
+                { variable: "{{deposit_percentage}}", description: "Deposit percentage", value: `${settings.deposit_percentage}%` },
+              ].map((item) => (
+                <div key={item.variable} className="p-3 rounded-xl bg-black/30 border border-white/10">
+                  <div className="flex items-center justify-between mb-1">
+                    <code className="text-sm font-mono text-[#375DEE]">{item.variable}</code>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(item.variable)}
+                      className="p-1 rounded hover:bg-white/10 transition-colors"
+                      title="Copy variable"
+                    >
+                      <Copy className="w-3 h-3 text-white/40" />
+                    </button>
+                  </div>
+                  <p className="text-xs text-white/50">{item.description}</p>
+                  <p className="text-xs text-white/30 mt-1 truncate">Current: {item.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Default Prompt Reference */}
+          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+              <Info className="w-5 h-5 text-[#375DEE]" />
+              Default System Prompt Reference
+            </h2>
+
+            <p className="text-sm text-white/60 mb-4">
+              This is the default system prompt used when no custom prompt is set. Copy it as a starting point for customization.
+            </p>
+
+            <div className="relative">
+              <pre className="p-4 rounded-xl bg-black/30 border border-white/10 text-sm font-mono text-white/70 whitespace-pre-wrap overflow-x-auto">
+                {DEFAULT_SYSTEM_PROMPT}
+              </pre>
+              <button
+                onClick={() => {
+                  setSettings({ ...settings, custom_system_prompt: DEFAULT_SYSTEM_PROMPT })
+                }}
+                className="absolute top-3 right-3 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#375DEE]/20 hover:bg-[#375DEE]/30 text-[#375DEE] text-sm font-medium transition-colors"
+              >
+                <Copy className="w-4 h-4" />
+                Copy to Editor
+              </button>
+            </div>
+          </div>
+
+          {/* Tips */}
+          <div className="bg-[#375DEE]/10 rounded-2xl border border-[#375DEE]/30 p-6">
+            <h3 className="font-semibold mb-3 text-[#375DEE]">Tips for Customizing</h3>
+            <ul className="text-sm text-white/70 space-y-2">
+              <li>• Keep instructions clear and specific for best results</li>
+              <li>• Remember that SMS has a 160 character limit per segment, so instruct the AI to keep responses brief</li>
+              <li>• Include examples of ideal responses if you want specific formatting</li>
+              <li>• Test your custom prompt by sending test messages from the Connection tab</li>
+              <li>• You can add specific rules like "never mention competitor names" or "always ask for the customer's preferred vehicle"</li>
+              <li>• Variables are replaced at runtime, so you can reference them anywhere in your prompt</li>
+            </ul>
           </div>
         </div>
       )}

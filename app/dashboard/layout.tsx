@@ -16,10 +16,12 @@ import {
   ChevronRight,
   Bot,
   ClipboardList,
+  BarChart3,
 } from "lucide-react"
 
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { name: "Leads", href: "/dashboard/leads", icon: Users },
   { name: "Bookings", href: "/dashboard/bookings", icon: CalendarCheck },
   { name: "Vehicles", href: "/dashboard/vehicles", icon: Car },
