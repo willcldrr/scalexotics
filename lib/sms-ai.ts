@@ -1,9 +1,11 @@
 import { createClient } from "@supabase/supabase-js"
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
 
 interface AISettings {
   business_name: string
@@ -55,6 +57,8 @@ export async function generateAIResponse(
   incomingMessage: string,
   leadName: string
 ): Promise<string> {
+  const supabase = getSupabase()
+
   // Get AI settings for this user
   const { data: settings } = await supabase
     .from("ai_settings")
@@ -372,6 +376,8 @@ async function generatePaymentLink(
   depositPercentage: number
 ): Promise<string | null> {
   try {
+    const supabase = getSupabase()
+
     // Get vehicle info
     const { data: vehicle } = await supabase
       .from("vehicles")
@@ -430,6 +436,7 @@ export async function findOrCreateLead(
   userId: string,
   phoneNumber: string
 ): Promise<{ id: string; name: string } | null> {
+  const supabase = getSupabase()
   const cleanPhone = phoneNumber.replace(/\D/g, "")
 
   const { data: existingLead } = await supabase
@@ -469,6 +476,7 @@ export async function saveMessage(
   content: string,
   direction: "inbound" | "outbound"
 ): Promise<void> {
+  const supabase = getSupabase()
   const { error } = await supabase.from("messages").insert({
     user_id: userId,
     lead_id: leadId,
@@ -482,6 +490,7 @@ export async function saveMessage(
 }
 
 export async function getDefaultUserId(): Promise<string | null> {
+  const supabase = getSupabase()
   const { data } = await supabase
     .from("profiles")
     .select("id")
