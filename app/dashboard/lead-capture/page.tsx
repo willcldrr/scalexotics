@@ -236,8 +236,7 @@ export default function LeadCapturePage() {
   }
 
   const getSurveyUrl = (slug: string) => {
-    // This should be the rental survey domain
-    return `https://rentalsurvey.xyz/${slug}`
+    return `https://rentalcapture.xyz/${slug}`
   }
 
   if (loading) {
@@ -468,7 +467,7 @@ export default function LeadCapturePage() {
                   <div>
                     <label className="block text-sm text-white/60 mb-2">Survey URL Slug *</label>
                     <div className="flex items-center gap-2">
-                      <span className="text-white/40">rentalsurvey.xyz/</span>
+                      <span className="text-white/40">rentalcapture.xyz/</span>
                       <input
                         type="text"
                         placeholder="miami-exotics"
