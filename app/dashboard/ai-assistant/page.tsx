@@ -17,6 +17,11 @@ import {
   DollarSign,
   Calendar,
   Info,
+  Link,
+  Send,
+  Loader2,
+  Copy,
+  ExternalLink,
 } from "lucide-react"
 
 interface AISettings {
@@ -66,8 +71,14 @@ export default function AIAssistantPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [vehicles, setVehicles] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState<"config" | "preview" | "stats">("config")
+  const [activeTab, setActiveTab] = useState<"config" | "preview" | "connection">("config")
   const [userId, setUserId] = useState<string | null>(null)
+  const [twilioStatus, setTwilioStatus] = useState<"loading" | "connected" | "error">("loading")
+  const [twilioInfo, setTwilioInfo] = useState<any>(null)
+  const [testPhone, setTestPhone] = useState("")
+  const [testMessage, setTestMessage] = useState("Hey! This is a test message from your AI assistant.")
+  const [sendingTest, setSendingTest] = useState(false)
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -100,7 +111,55 @@ export default function AIAssistantPage() {
       setVehicles(vehiclesData || [])
     }
 
+    // Check Twilio connection
+    checkTwilioConnection()
+
     setLoading(false)
+  }
+
+  const checkTwilioConnection = async () => {
+    setTwilioStatus("loading")
+    try {
+      const res = await fetch("/api/sms/test")
+      const data = await res.json()
+      if (data.success) {
+        setTwilioStatus("connected")
+        setTwilioInfo(data)
+      } else {
+        setTwilioStatus("error")
+        setTwilioInfo(data)
+      }
+    } catch (error) {
+      setTwilioStatus("error")
+      setTwilioInfo({ error: "Failed to connect to Twilio" })
+    }
+  }
+
+  const sendTestMessage = async () => {
+    if (!testPhone) return
+    setSendingTest(true)
+    setTestResult(null)
+
+    try {
+      const res = await fetch("/api/sms/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: testPhone,
+          message: testMessage,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setTestResult({ success: true, message: "Test message sent successfully!" })
+      } else {
+        setTestResult({ success: false, message: data.error || "Failed to send message" })
+      }
+    } catch (error) {
+      setTestResult({ success: false, message: "Failed to send test message" })
+    }
+
+    setSendingTest(false)
   }
 
   const handleSave = async () => {
@@ -227,6 +286,15 @@ export default function AIAssistantPage() {
         >
           <MessageSquare className="w-4 h-4 inline mr-2" />
           Preview
+        </button>
+        <button
+          onClick={() => setActiveTab("connection")}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === "connection" ? "bg-[#375DEE] text-white" : "text-white/60 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <Link className="w-4 h-4 inline mr-2" />
+          Connection
         </button>
       </div>
 
@@ -518,6 +586,196 @@ export default function AIAssistantPage() {
               <p className="text-sm text-white/40 text-center">
                 This is a preview based on your current settings
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "connection" && (
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Twilio Connection Status */}
+          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+              <Phone className="w-5 h-5 text-[#375DEE]" />
+              Twilio Connection
+            </h2>
+
+            <div className="space-y-4">
+              {/* Connection Status */}
+              <div className={`p-4 rounded-xl flex items-center gap-3 ${
+                twilioStatus === "connected"
+                  ? "bg-green-500/10 border border-green-500/30"
+                  : twilioStatus === "error"
+                  ? "bg-red-500/10 border border-red-500/30"
+                  : "bg-white/5 border border-white/10"
+              }`}>
+                {twilioStatus === "loading" ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin text-white/50" />
+                    <span className="text-white/50">Checking connection...</span>
+                  </>
+                ) : twilioStatus === "connected" ? (
+                  <>
+                    <CheckCircle className="w-5 h-5 text-green-400" />
+                    <div>
+                      <p className="font-medium text-green-400">Connected</p>
+                      <p className="text-sm text-white/50">
+                        Account: {twilioInfo?.friendlyName || "Active"}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="w-5 h-5 text-red-400" />
+                    <div>
+                      <p className="font-medium text-red-400">Connection Error</p>
+                      <p className="text-sm text-white/50">
+                        {twilioInfo?.error || "Could not connect to Twilio"}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {twilioStatus === "connected" && twilioInfo?.phoneNumber && (
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                  <p className="text-sm text-white/60 mb-1">Twilio Phone Number</p>
+                  <p className="font-mono text-lg">{twilioInfo.phoneNumber}</p>
+                </div>
+              )}
+
+              <button
+                onClick={checkTwilioConnection}
+                disabled={twilioStatus === "loading"}
+                className="w-full px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium transition-colors disabled:opacity-50"
+              >
+                {twilioStatus === "loading" ? "Checking..." : "Refresh Connection"}
+              </button>
+            </div>
+          </div>
+
+          {/* Webhook Setup */}
+          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+              <Link className="w-5 h-5 text-[#375DEE]" />
+              Webhook Setup
+            </h2>
+
+            <div className="space-y-4">
+              <p className="text-sm text-white/60">
+                Configure your Twilio phone number to send incoming SMS to this webhook URL:
+              </p>
+
+              <div className="p-4 rounded-xl bg-black/30 border border-white/10">
+                <p className="text-xs text-white/50 mb-2">Webhook URL (SMS)</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-sm font-mono text-[#375DEE] break-all">
+                    https://your-domain.com/api/sms/webhook
+                  </code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/api/sms/webhook`)
+                    }}
+                    className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                    title="Copy URL"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-[#375DEE]/10 border border-[#375DEE]/30">
+                <p className="text-sm font-medium text-[#375DEE] mb-2">Setup Instructions:</p>
+                <ol className="text-sm text-white/70 space-y-2 list-decimal list-inside">
+                  <li>Go to your Twilio Console</li>
+                  <li>Navigate to Phone Numbers → Manage → Active Numbers</li>
+                  <li>Click on your phone number</li>
+                  <li>Under "Messaging", set "A message comes in" webhook to the URL above</li>
+                  <li>Set the HTTP method to POST</li>
+                  <li>Save your changes</li>
+                </ol>
+              </div>
+
+              <a
+                href="https://console.twilio.com/us1/develop/phone-numbers/manage/incoming"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium transition-colors"
+              >
+                Open Twilio Console
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
+
+          {/* Send Test Message */}
+          <div className="bg-white/5 rounded-2xl border border-white/10 p-6 lg:col-span-2">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+              <Send className="w-5 h-5 text-[#375DEE]" />
+              Send Test Message
+            </h2>
+
+            <div className="space-y-4">
+              <p className="text-sm text-white/60">
+                Send a test SMS to verify your Twilio configuration is working correctly.
+              </p>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-white/60 mb-2">Phone Number</label>
+                  <input
+                    type="tel"
+                    placeholder="+1234567890"
+                    value={testPhone}
+                    onChange={(e) => setTestPhone(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                  />
+                  <p className="text-xs text-white/40 mt-1">Include country code (e.g., +1 for US)</p>
+                </div>
+                <div>
+                  <label className="block text-sm text-white/60 mb-2">Test Message</label>
+                  <input
+                    type="text"
+                    placeholder="Test message..."
+                    value={testMessage}
+                    onChange={(e) => setTestMessage(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                  />
+                </div>
+              </div>
+
+              {testResult && (
+                <div className={`p-4 rounded-xl ${
+                  testResult.success
+                    ? "bg-green-500/10 border border-green-500/30 text-green-400"
+                    : "bg-red-500/10 border border-red-500/30 text-red-400"
+                }`}>
+                  {testResult.success ? (
+                    <CheckCircle className="w-5 h-5 inline mr-2" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 inline mr-2" />
+                  )}
+                  {testResult.message}
+                </div>
+              )}
+
+              <button
+                onClick={sendTestMessage}
+                disabled={sendingTest || !testPhone || twilioStatus !== "connected"}
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors"
+              >
+                {sendingTest ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    Send Test SMS
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

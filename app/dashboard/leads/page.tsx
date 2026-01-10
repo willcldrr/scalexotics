@@ -12,6 +12,7 @@ import {
   Send,
   Clock,
   User,
+  Users,
   Bot,
   ChevronRight,
   MoreHorizontal,
@@ -61,6 +62,8 @@ const sourceOptions = [
   { value: "tiktok", label: "TikTok" },
   { value: "referral", label: "Referral" },
   { value: "website", label: "Website" },
+  { value: "lead_capture", label: "Lead Capture" },
+  { value: "sms", label: "SMS" },
   { value: "phone", label: "Phone" },
   { value: "other", label: "Other" },
 ]
@@ -92,6 +95,60 @@ export default function LeadsPage() {
 
   useEffect(() => {
     fetchData()
+
+    // Set up real-time subscription for leads
+    const channel = supabase
+      .channel("leads-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "leads",
+        },
+        (payload) => {
+          console.log("New lead received:", payload.new)
+          setLeads((current) => [payload.new as Lead, ...current])
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "leads",
+        },
+        (payload) => {
+          setLeads((current) =>
+            current.map((lead) =>
+              lead.id === payload.new.id ? (payload.new as Lead) : lead
+            )
+          )
+          // Update selected lead if it's the one that changed
+          setSelectedLead((current) =>
+            current?.id === payload.new.id ? (payload.new as Lead) : current
+          )
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "leads",
+        },
+        (payload) => {
+          setLeads((current) => current.filter((lead) => lead.id !== payload.old.id))
+          setSelectedLead((current) =>
+            current?.id === payload.old.id ? null : current
+          )
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   useEffect(() => {
