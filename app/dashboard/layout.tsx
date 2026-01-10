@@ -8,19 +8,21 @@ import {
   LayoutDashboard,
   Users,
   Car,
-  Calendar,
+  CalendarCheck,
   Settings,
   LogOut,
   Menu,
   X,
   ChevronRight,
+  Bot,
 } from "lucide-react"
 
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { name: "Leads", href: "/dashboard/leads", icon: Users },
+  { name: "Bookings", href: "/dashboard/bookings", icon: CalendarCheck },
   { name: "Vehicles", href: "/dashboard/vehicles", icon: Car },
-  { name: "Calendar", href: "/dashboard/calendar", icon: Calendar },
+  { name: "AI Assistant", href: "/dashboard/ai-assistant", icon: Bot },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
 
