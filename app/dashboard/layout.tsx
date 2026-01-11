@@ -17,15 +17,25 @@ import {
   Bot,
   ClipboardList,
   BarChart3,
+  MessageSquare,
+  UserCircle,
+  FileText,
+  Code,
+  Receipt,
 } from "lucide-react"
 
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+  { name: "Inbox", href: "/dashboard/inbox", icon: MessageSquare },
   { name: "Leads", href: "/dashboard/leads", icon: Users },
+  { name: "Customers", href: "/dashboard/customers", icon: UserCircle },
   { name: "Bookings", href: "/dashboard/bookings", icon: CalendarCheck },
   { name: "Vehicles", href: "/dashboard/vehicles", icon: Car },
+  { name: "Agreements", href: "/dashboard/agreements", icon: FileText },
+  { name: "Invoices", href: "/dashboard/invoices", icon: Receipt },
   { name: "Lead Capture", href: "/dashboard/lead-capture", icon: ClipboardList },
+  { name: "Booking Widget", href: "/dashboard/widget", icon: Code },
   { name: "AI Assistant", href: "/dashboard/ai-assistant", icon: Bot },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
