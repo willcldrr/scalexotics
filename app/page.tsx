@@ -53,7 +53,7 @@ export default function Home() {
               </a>
 
               {/* Desktop Nav - Minimal */}
-              <nav className="hidden md:flex items-center">
+              <nav className="hidden md:flex items-center gap-3">
                 <div className="flex items-center gap-1 p-1 bg-white/[0.03] rounded-full border border-white/[0.06]">
                   {[
                     { label: "About", href: "/about" },
@@ -74,6 +74,12 @@ export default function Home() {
                     Get Started
                   </a>
                 </div>
+                <a
+                  href="/login"
+                  className="px-5 py-2 text-sm text-white/60 hover:text-white border border-white/10 hover:border-white/30 rounded-full transition-all duration-300"
+                >
+                  Login
+                </a>
               </nav>
 
               {/* Mobile Menu Button */}
@@ -119,6 +125,16 @@ export default function Home() {
             style={{ transitionDelay: mobileMenuOpen ? "300ms" : "0ms", fontFamily: 'var(--font-display)' }}
           >
             Get Started
+          </a>
+          <a
+            href="/login"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`px-8 py-3 text-base text-white/60 border border-white/20 rounded-full transition-all duration-500 ${
+              mobileMenuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+            }`}
+            style={{ transitionDelay: mobileMenuOpen ? "400ms" : "0ms", fontFamily: 'var(--font-display)' }}
+          >
+            Client Login
           </a>
         </div>
         <button
@@ -303,6 +319,178 @@ export default function Home() {
               style={{ fontFamily: 'var(--font-display)' }}
             >
               See How It Works For You
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Dashboard Section */}
+      <section
+        id="dashboard"
+        ref={setRef("dashboard")}
+        className="relative py-16 md:py-32 bg-gradient-to-b from-transparent via-[#375DEE]/5 to-transparent"
+      >
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className={`text-center mb-10 md:mb-16 transition-all duration-1000 ${isVisible("dashboard") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
+            <span className="text-[#375DEE] text-xs md:text-sm tracking-widest uppercase mb-3 md:mb-4 block">Your Command Center</span>
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6" style={{ fontFamily: 'var(--font-display)' }}>
+              One Dashboard to <span className="text-[#375DEE]">Rule It All</span>
+            </h2>
+            <p className="text-white/50 max-w-2xl mx-auto text-base md:text-lg">
+              Everything you need to manage leads, bookings, customers, and revenue in one powerful platform.
+            </p>
+          </div>
+
+          {/* Dashboard Preview */}
+          <div className={`relative transition-all duration-1000 ${isVisible("dashboard") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`} style={{ transitionDelay: "200ms" }}>
+            {/* Browser Frame */}
+            <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 overflow-hidden shadow-2xl shadow-[#375DEE]/10">
+              {/* Browser Bar */}
+              <div className="flex items-center gap-2 px-4 py-3 bg-white/5 border-b border-white/10">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                  <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                </div>
+                <div className="flex-1 mx-4">
+                  <div className="bg-black/50 rounded-lg px-4 py-1.5 text-xs text-white/40 max-w-md mx-auto">
+                    app.scalexotics.com/dashboard
+                  </div>
+                </div>
+              </div>
+
+              {/* Dashboard Content Mock */}
+              <div className="p-4 md:p-6 bg-black">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
+                  {[
+                    { label: "Monthly Revenue", value: "$48,250", change: "+12.5%", up: true },
+                    { label: "Active Leads", value: "127", change: "+23", up: true },
+                    { label: "Bookings", value: "34", change: "+8", up: true },
+                    { label: "Fleet Utilization", value: "87%", change: "+5%", up: true },
+                  ].map((stat) => (
+                    <div key={stat.label} className="bg-white/5 rounded-xl p-3 md:p-4 border border-white/10">
+                      <p className="text-white/40 text-[10px] md:text-xs mb-1">{stat.label}</p>
+                      <p className="text-lg md:text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>{stat.value}</p>
+                      <p className={`text-[10px] md:text-xs mt-1 ${stat.up ? "text-green-400" : "text-red-400"}`}>
+                        {stat.change} this month
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Chart placeholder */}
+                <div className="grid md:grid-cols-3 gap-3 md:gap-4">
+                  <div className="md:col-span-2 bg-white/5 rounded-xl p-4 md:p-6 border border-white/10">
+                    <p className="text-white/60 text-xs md:text-sm mb-4">Revenue Over Time</p>
+                    <div className="h-32 md:h-48 flex items-end gap-1 md:gap-2">
+                      {[40, 65, 55, 80, 70, 90, 85, 95, 75, 100, 90, 110].map((h, i) => (
+                        <div
+                          key={i}
+                          className="flex-1 bg-[#375DEE]/60 rounded-t transition-all hover:bg-[#375DEE]"
+                          style={{ height: `${h}%` }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-4 md:p-6 border border-white/10">
+                    <p className="text-white/60 text-xs md:text-sm mb-4">Lead Sources</p>
+                    <div className="space-y-3">
+                      {[
+                        { source: "Instagram", pct: 45, color: "#E1306C" },
+                        { source: "Google Ads", pct: 30, color: "#4285F4" },
+                        { source: "Referrals", pct: 15, color: "#34A853" },
+                        { source: "Website", pct: 10, color: "#375DEE" },
+                      ].map((item) => (
+                        <div key={item.source}>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-white/60">{item.source}</span>
+                            <span className="text-white">{item.pct}%</span>
+                          </div>
+                          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full"
+                              style={{ width: `${item.pct}%`, backgroundColor: item.color }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Glow effect */}
+            <div className="absolute -inset-4 bg-[#375DEE]/10 blur-3xl -z-10 rounded-3xl" />
+          </div>
+
+          {/* Features Grid */}
+          <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-10 md:mt-16 transition-all duration-1000 ${isVisible("dashboard") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`} style={{ transitionDelay: "400ms" }}>
+            {[
+              {
+                icon: <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
+                title: "Analytics",
+                desc: "Real-time business insights"
+              },
+              {
+                icon: <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
+                title: "Inbox",
+                desc: "All conversations in one place"
+              },
+              {
+                icon: <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+                title: "Bookings",
+                desc: "Calendar & scheduling"
+              },
+              {
+                icon: <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 17h8M8 17l-2-5h12l-2 5M8 17H6a1 1 0 01-1-1v-1a1 1 0 011-1h1M16 17h2a1 1 0 001-1v-1a1 1 0 00-1-1h-1M6 12l1.5-4.5A2 2 0 019.4 6h5.2a2 2 0 011.9 1.5L18 12M7 17a1 1 0 100-2 1 1 0 000 2zm10 0a1 1 0 100-2 1 1 0 000 2z" /></svg>,
+                title: "Fleet",
+                desc: "Vehicle management"
+              },
+              {
+                icon: <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
+                title: "Customers",
+                desc: "CRM & lifetime value"
+              },
+              {
+                icon: <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
+                title: "Agreements",
+                desc: "Digital contracts & e-sign"
+              },
+              {
+                icon: <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
+                title: "Invoices",
+                desc: "Billing & payments"
+              },
+              {
+                icon: <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
+                title: "AI Assistant",
+                desc: "Smart automation"
+              },
+            ].map((feature) => (
+              <div key={feature.title} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 md:p-5 hover:border-[#375DEE]/30 transition-colors">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-[#375DEE]/10 border border-[#375DEE]/30 flex items-center justify-center text-[#375DEE] mb-3 md:mb-4">
+                  {feature.icon}
+                </div>
+                <h4 className="text-white font-medium text-sm md:text-base mb-1">{feature.title}</h4>
+                <p className="text-white/40 text-xs md:text-sm">{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <div className={`text-center mt-10 md:mt-12 transition-all duration-1000 ${isVisible("dashboard") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`} style={{ transitionDelay: "600ms" }}>
+            <p className="text-white/50 mb-4">Already a client?</p>
+            <a
+              href="/login"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 hover:bg-white/20 text-white border border-white/20 hover:border-[#375DEE]/50 rounded-full transition-all duration-300"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              Access Your Dashboard
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>

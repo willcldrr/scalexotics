@@ -31,17 +31,64 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protected routes
-  if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
+  const pathname = request.nextUrl.pathname
+
+  // Protected routes - require login
+  if (!user && pathname.startsWith('/dashboard')) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  // Redirect logged in users away from auth pages
-  if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
+  // Verify access page - require login but not access verification
+  if (!user && pathname === '/verify-access') {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  // Check access verification for dashboard routes
+  if (user && pathname.startsWith('/dashboard')) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('access_verified')
+      .eq('id', user.id)
+      .single()
+
+    // If not verified, redirect to verify-access page
+    if (!profile?.access_verified) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/verify-access'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // Redirect verified users away from verify-access page
+  if (user && pathname === '/verify-access') {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('access_verified')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.access_verified) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // Redirect logged in users away from auth pages
+  if (user && (pathname === '/login' || pathname === '/signup')) {
+    // Check if they need to verify access first
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('access_verified')
+      .eq('id', user.id)
+      .single()
+
+    const url = request.nextUrl.clone()
+    url.pathname = profile?.access_verified ? '/dashboard' : '/verify-access'
     return NextResponse.redirect(url)
   }
 

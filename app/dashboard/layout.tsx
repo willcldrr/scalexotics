@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import OnboardingModal from "@/components/dashboard/onboarding-modal"
 import {
   LayoutDashboard,
   Users,
@@ -175,6 +176,9 @@ export default function DashboardLayout({
         {/* Page content */}
         <main className="p-6">{children}</main>
       </div>
+
+      {/* Onboarding Modal */}
+      <OnboardingModal />
     </div>
   )
 }
