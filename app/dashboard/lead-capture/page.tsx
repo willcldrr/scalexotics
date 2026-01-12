@@ -150,6 +150,21 @@ export default function LeadCapturePage() {
       return
     }
 
+    // Check if slug is already taken (only for new surveys)
+    if (!editingSurvey) {
+      const { data: existingSlug } = await supabase
+        .from("survey_config")
+        .select("id")
+        .eq("slug", formData.slug)
+        .single()
+
+      if (existingSlug) {
+        setMessage({ type: "error", text: "This URL slug is already taken. Please choose a different one." })
+        setSaving(false)
+        return
+      }
+    }
+
     const surveyData = {
       user_id: user.id,
       slug: formData.slug,
