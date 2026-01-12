@@ -248,8 +248,8 @@ export default function InboxPage() {
                   className="w-full pl-10 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
                 />
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {["all", "new", "contacted", "qualified", "converted"].map((status) => (
+              <div className="flex gap-2">
+                {["all", "new", "contacted", "converted"].map((status) => (
                   <button
                     key={status}
                     onClick={() => setStatusFilter(status)}
