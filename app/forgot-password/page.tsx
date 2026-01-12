@@ -18,13 +18,15 @@ export default function ForgotPasswordPage() {
     setError("")
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+      redirectTo: `${window.location.origin}/auth/callback`,
     })
 
     if (error) {
       setError(error.message)
       setLoading(false)
     } else {
+      // Set a cookie to indicate this is a password recovery flow
+      document.cookie = "password_recovery=true; path=/; max-age=3600; SameSite=Lax"
       router.push(`/check-email?type=reset&email=${encodeURIComponent(email)}`)
     }
   }
