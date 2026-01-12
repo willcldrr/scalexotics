@@ -6,8 +6,14 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set())
+  const [initialVh, setInitialVh] = useState<number | null>(null)
   const sectionRefs = useRef<{ [key: string]: HTMLElement | null }>({})
   const ticking = useRef(false)
+
+  // Capture initial viewport height to prevent layout shift from in-app browser UI
+  useEffect(() => {
+    setInitialVh(window.innerHeight)
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -154,7 +160,10 @@ export default function Home() {
       )}
 
       {/* Hero Section with Image */}
-      <section className="relative min-h-screen flex items-center">
+      <section
+        className="relative flex items-center"
+        style={{ minHeight: initialVh ? `${initialVh}px` : '100vh' }}
+      >
         {/* Background Image - Exotic Car */}
         <div className="absolute inset-0">
           <img
