@@ -18,6 +18,10 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
+  Upload,
+  FileSpreadsheet,
+  AlertCircle,
+  Check,
 } from "lucide-react"
 
 interface Lead {
@@ -92,6 +96,15 @@ export default function LeadsPage() {
     notes: "",
     vehicle_interest: "",
   })
+
+  // CSV Import state
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [csvData, setCsvData] = useState<Array<Record<string, string>>>([])
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([])
+  const [columnMapping, setColumnMapping] = useState<Record<string, string>>({})
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<{ success: number; failed: number } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetchData()
@@ -265,6 +278,144 @@ export default function LeadsPage() {
     return statusOptions.find((s) => s.value === status)?.color || "bg-gray-500/20 text-gray-400"
   }
 
+  // CSV Import functions
+  const parseCSV = (text: string): { headers: string[]; data: Array<Record<string, string>> } => {
+    const lines = text.split(/\r?\n/).filter(line => line.trim())
+    if (lines.length === 0) return { headers: [], data: [] }
+
+    // Parse header row
+    const headers = parseCSVLine(lines[0])
+
+    // Parse data rows
+    const data = lines.slice(1).map(line => {
+      const values = parseCSVLine(line)
+      const row: Record<string, string> = {}
+      headers.forEach((header, index) => {
+        row[header] = values[index] || ""
+      })
+      return row
+    }).filter(row => Object.values(row).some(v => v.trim()))
+
+    return { headers, data }
+  }
+
+  const parseCSVLine = (line: string): string[] => {
+    const result: string[] = []
+    let current = ""
+    let inQuotes = false
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i]
+      if (char === '"') {
+        inQuotes = !inQuotes
+      } else if (char === "," && !inQuotes) {
+        result.push(current.trim())
+        current = ""
+      } else {
+        current += char
+      }
+    }
+    result.push(current.trim())
+    return result
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const text = event.target?.result as string
+      const { headers, data } = parseCSV(text)
+      setCsvHeaders(headers)
+      setCsvData(data)
+      setImportResult(null)
+
+      // Auto-map common column names
+      const autoMapping: Record<string, string> = {}
+      const nameVariants = ["name", "full name", "fullname", "customer name", "contact name", "first name"]
+      const emailVariants = ["email", "e-mail", "email address", "mail"]
+      const phoneVariants = ["phone", "phone number", "telephone", "tel", "mobile", "cell"]
+      const notesVariants = ["notes", "note", "comments", "comment", "description"]
+
+      headers.forEach(header => {
+        const lowerHeader = header.toLowerCase()
+        if (nameVariants.some(v => lowerHeader.includes(v))) autoMapping[header] = "name"
+        else if (emailVariants.some(v => lowerHeader.includes(v))) autoMapping[header] = "email"
+        else if (phoneVariants.some(v => lowerHeader.includes(v))) autoMapping[header] = "phone"
+        else if (notesVariants.some(v => lowerHeader.includes(v))) autoMapping[header] = "notes"
+      })
+
+      setColumnMapping(autoMapping)
+    }
+    reader.readAsText(file)
+  }
+
+  const handleImport = async () => {
+    if (!userId || csvData.length === 0) return
+    setImporting(true)
+
+    let success = 0
+    let failed = 0
+
+    // Find mapped columns
+    const nameCol = Object.entries(columnMapping).find(([_, v]) => v === "name")?.[0]
+    const emailCol = Object.entries(columnMapping).find(([_, v]) => v === "email")?.[0]
+    const phoneCol = Object.entries(columnMapping).find(([_, v]) => v === "phone")?.[0]
+    const notesCol = Object.entries(columnMapping).find(([_, v]) => v === "notes")?.[0]
+
+    if (!nameCol || !phoneCol) {
+      alert("Please map at least Name and Phone columns")
+      setImporting(false)
+      return
+    }
+
+    for (const row of csvData) {
+      const name = row[nameCol]?.trim()
+      const phone = row[phoneCol]?.trim()
+      const email = emailCol ? row[emailCol]?.trim() : null
+      const notes = notesCol ? row[notesCol]?.trim() : null
+
+      if (!name || !phone) {
+        failed++
+        continue
+      }
+
+      const { error } = await supabase.from("leads").insert({
+        user_id: userId,
+        name,
+        phone,
+        email: email || null,
+        notes: notes || null,
+        status: "new",
+        source: "csv_import",
+      })
+
+      if (error) {
+        failed++
+      } else {
+        success++
+      }
+    }
+
+    setImportResult({ success, failed })
+    setImporting(false)
+
+    if (success > 0) {
+      fetchData()
+    }
+  }
+
+  const resetImportModal = () => {
+    setCsvData([])
+    setCsvHeaders([])
+    setColumnMapping({})
+    setImportResult(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
   const filteredLeads = leads.filter((lead) => {
     const matchesSearch =
       lead.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -323,17 +474,29 @@ export default function LeadsPage() {
             {leads.length} lead{leads.length !== 1 ? "s" : ""} from ad campaigns
           </p>
         </div>
-        <button
-          onClick={() => {
-            resetForm()
-            setEditingLead(null)
-            setShowAddModal(true)
-          }}
-          className="flex items-center gap-2 px-5 py-3 bg-[#375DEE] hover:bg-[#4169E1] text-white font-semibold rounded-xl transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          Add Lead
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              resetImportModal()
+              setShowImportModal(true)
+            }}
+            className="flex items-center gap-2 px-5 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold rounded-xl transition-colors"
+          >
+            <Upload className="w-5 h-5" />
+            Import CSV
+          </button>
+          <button
+            onClick={() => {
+              resetForm()
+              setEditingLead(null)
+              setShowAddModal(true)
+            }}
+            className="flex items-center gap-2 px-5 py-3 bg-[#375DEE] hover:bg-[#4169E1] text-white font-semibold rounded-xl transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Add Lead
+          </button>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -687,6 +850,182 @@ export default function LeadsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Import CSV Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <FileSpreadsheet className="w-6 h-6 text-[#375DEE]" />
+                <h2 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+                  Import Leads from CSV
+                </h2>
+              </div>
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-1">
+              {/* File Upload */}
+              {csvData.length === 0 ? (
+                <div className="space-y-4">
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-white/20 rounded-xl p-12 text-center cursor-pointer hover:border-[#375DEE]/50 transition-colors"
+                  >
+                    <Upload className="w-12 h-12 text-white/30 mx-auto mb-4" />
+                    <p className="text-lg font-medium mb-2">Drop your CSV file here</p>
+                    <p className="text-sm text-white/50 mb-4">or click to browse</p>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".csv"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-4">
+                    <p className="text-sm text-white/60 mb-2">Expected CSV format:</p>
+                    <code className="text-xs text-white/40 block">
+                      Name, Phone, Email, Notes<br />
+                      John Smith, (555) 123-4567, john@email.com, Interested in Lamborghini
+                    </code>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Import Result */}
+                  {importResult && (
+                    <div className={`flex items-center gap-3 p-4 rounded-xl ${
+                      importResult.failed === 0
+                        ? "bg-green-500/10 border border-green-500/30 text-green-400"
+                        : "bg-yellow-500/10 border border-yellow-500/30 text-yellow-400"
+                    }`}>
+                      {importResult.failed === 0 ? (
+                        <Check className="w-5 h-5" />
+                      ) : (
+                        <AlertCircle className="w-5 h-5" />
+                      )}
+                      <span>
+                        Imported {importResult.success} leads
+                        {importResult.failed > 0 && `, ${importResult.failed} failed`}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Column Mapping */}
+                  <div>
+                    <h3 className="text-sm font-medium text-white/60 mb-3">Map your columns</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {csvHeaders.map(header => (
+                        <div key={header} className="flex items-center gap-3">
+                          <span className="text-sm text-white/50 w-32 truncate" title={header}>
+                            {header}
+                          </span>
+                          <select
+                            value={columnMapping[header] || ""}
+                            onChange={(e) => setColumnMapping({
+                              ...columnMapping,
+                              [header]: e.target.value
+                            })}
+                            className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-[#375DEE]"
+                          >
+                            <option value="">Skip</option>
+                            <option value="name">Name *</option>
+                            <option value="phone">Phone *</option>
+                            <option value="email">Email</option>
+                            <option value="notes">Notes</option>
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-white/40 mt-2">* Required fields</p>
+                  </div>
+
+                  {/* Preview */}
+                  <div>
+                    <h3 className="text-sm font-medium text-white/60 mb-3">
+                      Preview ({csvData.length} rows)
+                    </h3>
+                    <div className="bg-white/5 rounded-xl overflow-hidden">
+                      <div className="overflow-x-auto max-h-48">
+                        <table className="w-full text-sm">
+                          <thead className="bg-white/5">
+                            <tr>
+                              {csvHeaders.slice(0, 4).map(header => (
+                                <th key={header} className="px-4 py-2 text-left text-white/60 font-medium">
+                                  {header}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {csvData.slice(0, 5).map((row, i) => (
+                              <tr key={i} className="border-t border-white/5">
+                                {csvHeaders.slice(0, 4).map(header => (
+                                  <td key={header} className="px-4 py-2 text-white/80 truncate max-w-[150px]">
+                                    {row[header]}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {csvData.length > 5 && (
+                        <div className="px-4 py-2 text-xs text-white/40 border-t border-white/5">
+                          + {csvData.length - 5} more rows
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-white/10 flex gap-3">
+              {csvData.length > 0 && !importResult && (
+                <button
+                  onClick={resetImportModal}
+                  className="px-5 py-3 rounded-xl border border-white/20 hover:bg-white/5 font-medium transition-colors"
+                >
+                  Choose Different File
+                </button>
+              )}
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="flex-1 px-5 py-3 rounded-xl border border-white/20 hover:bg-white/5 font-medium transition-colors"
+              >
+                {importResult ? "Close" : "Cancel"}
+              </button>
+              {csvData.length > 0 && !importResult && (
+                <button
+                  onClick={handleImport}
+                  disabled={importing || !Object.values(columnMapping).includes("name") || !Object.values(columnMapping).includes("phone")}
+                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 font-semibold transition-colors"
+                >
+                  {importing ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4" />
+                      Import {csvData.length} Leads
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
