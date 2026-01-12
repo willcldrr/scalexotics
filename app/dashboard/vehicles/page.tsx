@@ -1,17 +1,18 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import {
   Plus,
   Search,
   Car,
   DollarSign,
-  Calendar,
   X,
   Pencil,
   Trash2,
-  ImageIcon,
+  Upload,
+  Link as LinkIcon,
+  Loader2,
 } from "lucide-react"
 
 interface Vehicle {
@@ -24,19 +25,37 @@ interface Vehicle {
   daily_rate: number
   image_url: string | null
   status: string
+  notes: string | null
   created_at: string
 }
 
-const vehicleTypes = [
-  "Supercar",
-  "Luxury Sedan",
-  "Luxury SUV",
-  "Sports Car",
-  "Convertible",
-  "Exotic",
-  "Classic",
-  "Other",
-]
+// Auto-determine vehicle type based on make
+const getVehicleType = (make: string): string => {
+  const makeLower = make.toLowerCase()
+
+  // Supercars
+  if (['lamborghini', 'ferrari', 'mclaren', 'bugatti', 'koenigsegg', 'pagani'].includes(makeLower)) {
+    return 'Supercar'
+  }
+  // Luxury SUVs
+  if (['range rover', 'land rover', 'cadillac escalade', 'bentley bentayga', 'rolls royce cullinan'].some(m => makeLower.includes(m.split(' ')[0]))) {
+    return 'Luxury SUV'
+  }
+  // Luxury Sedans
+  if (['rolls royce', 'bentley', 'maybach'].some(m => makeLower.includes(m.split(' ')[0])) && !makeLower.includes('cullinan') && !makeLower.includes('bentayga')) {
+    return 'Luxury Sedan'
+  }
+  // Sports Cars
+  if (['porsche', 'aston martin', 'corvette', 'nissan gt-r', 'audi r8'].some(m => makeLower.includes(m.split(' ')[0]))) {
+    return 'Sports Car'
+  }
+  // Convertibles - check model later or default
+  if (['mercedes', 'bmw', 'audi'].includes(makeLower)) {
+    return 'Luxury'
+  }
+
+  return 'Exotic'
+}
 
 const statusOptions = [
   { value: "available", label: "Available", color: "bg-green-500/20 text-green-400" },
@@ -47,26 +66,28 @@ const statusOptions = [
 
 export default function VehiclesPage() {
   const supabase = createClient()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
-  const [typeFilter, setTypeFilter] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
   const [showModal, setShowModal] = useState(false)
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [imageInputMode, setImageInputMode] = useState<'url' | 'upload'>('upload')
 
   const [formData, setFormData] = useState({
     name: "",
     make: "",
     model: "",
     year: new Date().getFullYear(),
-    type: "Supercar",
     daily_rate: 0,
     image_url: "",
     status: "available",
+    notes: "",
   })
 
   useEffect(() => {
@@ -76,7 +97,6 @@ export default function VehiclesPage() {
   const fetchVehicles = async () => {
     setLoading(true)
 
-    // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       setUserId(user.id)
@@ -98,9 +118,8 @@ export default function VehiclesPage() {
       vehicle.name.toLowerCase().includes(search.toLowerCase()) ||
       vehicle.make.toLowerCase().includes(search.toLowerCase()) ||
       vehicle.model.toLowerCase().includes(search.toLowerCase())
-    const matchesType = !typeFilter || vehicle.type === typeFilter
     const matchesStatus = !statusFilter || vehicle.status === statusFilter
-    return matchesSearch && matchesType && matchesStatus
+    return matchesSearch && matchesStatus
   })
 
   const openAddModal = () => {
@@ -110,11 +129,12 @@ export default function VehiclesPage() {
       make: "",
       model: "",
       year: new Date().getFullYear(),
-      type: "Supercar",
       daily_rate: 0,
       image_url: "",
       status: "available",
+      notes: "",
     })
+    setImageInputMode('upload')
     setShowModal(true)
   }
 
@@ -125,17 +145,54 @@ export default function VehiclesPage() {
       make: vehicle.make,
       model: vehicle.model,
       year: vehicle.year,
-      type: vehicle.type,
       daily_rate: vehicle.daily_rate,
       image_url: vehicle.image_url || "",
       status: vehicle.status,
+      notes: vehicle.notes || "",
     })
+    setImageInputMode(vehicle.image_url ? 'url' : 'upload')
     setShowModal(true)
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !userId) return
+
+    setUploading(true)
+
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${userId}/${Date.now()}.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('vehicle-images')
+        .upload(fileName, file)
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError)
+        alert('Failed to upload image. Please try again or use an image URL.')
+        setUploading(false)
+        return
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('vehicle-images')
+        .getPublicUrl(fileName)
+
+      setFormData({ ...formData, image_url: publicUrl })
+    } catch (err) {
+      console.error('Upload error:', err)
+      alert('Failed to upload image. Please try again or use an image URL.')
+    }
+
+    setUploading(false)
   }
 
   const handleSave = async () => {
     if (!userId) return
     setSaving(true)
+
+    const vehicleType = getVehicleType(formData.make)
 
     const vehicleData = {
       user_id: userId,
@@ -143,10 +200,11 @@ export default function VehiclesPage() {
       make: formData.make,
       model: formData.model,
       year: formData.year,
-      type: formData.type,
+      type: vehicleType,
       daily_rate: formData.daily_rate,
       image_url: formData.image_url || null,
       status: formData.status,
+      notes: formData.notes || null,
     }
 
     if (editingVehicle) {
@@ -210,8 +268,6 @@ export default function VehiclesPage() {
     )
   }
 
-  const uniqueTypes = [...new Set(vehicles.map((v) => v.type))]
-
   if (loading) {
     return (
       <div className="space-y-6">
@@ -271,18 +327,6 @@ export default function VehiclesPage() {
             className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:border-[#375DEE] transition-colors"
           />
         </div>
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#375DEE] transition-colors"
-        >
-          <option value="">All Types</option>
-          {uniqueTypes.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -383,6 +427,10 @@ export default function VehiclesPage() {
                   </div>
                 </div>
 
+                {vehicle.notes && (
+                  <p className="text-white/40 text-sm mt-3 line-clamp-2">{vehicle.notes}</p>
+                )}
+
                 {/* Quick Status Change */}
                 <div className="mt-4 pt-4 border-t border-white/10">
                   <select
@@ -420,6 +468,20 @@ export default function VehiclesPage() {
             </div>
 
             <div className="p-6 space-y-5">
+              {/* Year */}
+              <div>
+                <label className="block text-sm text-white/60 mb-2">Year</label>
+                <input
+                  type="number"
+                  min="1900"
+                  max={new Date().getFullYear() + 1}
+                  value={formData.year}
+                  onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                />
+              </div>
+
+              {/* Make & Model */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-white/60 mb-2">Make</label>
@@ -443,45 +505,7 @@ export default function VehiclesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-white/60 mb-2">Year</label>
-                  <input
-                    type="number"
-                    min="1900"
-                    max={new Date().getFullYear() + 1}
-                    value={formData.year}
-                    onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-white/60 mb-2">Type</label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#375DEE] transition-colors"
-                  >
-                    {vehicleTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm text-white/60 mb-2">Display Name (optional)</label>
-                <input
-                  type="text"
-                  placeholder="Auto-generated from year, make, model"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
-                />
-              </div>
-
+              {/* Daily Rate */}
               <div>
                 <label className="block text-sm text-white/60 mb-2">Daily Rate ($)</label>
                 <input
@@ -495,17 +519,79 @@ export default function VehiclesPage() {
                 />
               </div>
 
+              {/* Image Input */}
               <div>
-                <label className="block text-sm text-white/60 mb-2">Image URL</label>
-                <input
-                  type="url"
-                  placeholder="https://example.com/image.jpg"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
-                />
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm text-white/60">Vehicle Image</label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setImageInputMode('upload')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        imageInputMode === 'upload'
+                          ? 'bg-[#375DEE] text-white'
+                          : 'bg-white/5 text-white/60 hover:bg-white/10'
+                      }`}
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      Upload
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setImageInputMode('url')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        imageInputMode === 'url'
+                          ? 'bg-[#375DEE] text-white'
+                          : 'bg-white/5 text-white/60 hover:bg-white/10'
+                      }`}
+                    >
+                      <LinkIcon className="w-3.5 h-3.5" />
+                      URL
+                    </button>
+                  </div>
+                </div>
+
+                {imageInputMode === 'upload' ? (
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="w-full px-4 py-8 rounded-xl bg-white/5 border border-white/10 border-dashed hover:border-[#375DEE] hover:bg-white/[0.02] transition-colors flex flex-col items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 className="w-8 h-8 text-[#375DEE] animate-spin" />
+                          <span className="text-white/50 text-sm">Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-8 h-8 text-white/30" />
+                          <span className="text-white/50 text-sm">Click to upload image</span>
+                          <span className="text-white/30 text-xs">JPG, PNG, WebP up to 10MB</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <input
+                    type="url"
+                    placeholder="https://example.com/image.jpg"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                  />
+                )}
+
                 {formData.image_url && (
-                  <div className="mt-3 rounded-xl overflow-hidden bg-white/5 h-32">
+                  <div className="mt-3 rounded-xl overflow-hidden bg-white/5 h-32 relative">
                     <img
                       src={formData.image_url}
                       alt="Preview"
@@ -514,10 +600,30 @@ export default function VehiclesPage() {
                         (e.target as HTMLImageElement).style.display = 'none'
                       }}
                     />
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, image_url: '' })}
+                      className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 hover:bg-red-500/50 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
                 )}
               </div>
 
+              {/* Notes */}
+              <div>
+                <label className="block text-sm text-white/60 mb-2">Notes (optional)</label>
+                <textarea
+                  placeholder="Additional details about this vehicle..."
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors resize-none"
+                />
+              </div>
+
+              {/* Status */}
               <div>
                 <label className="block text-sm text-white/60 mb-2">Status</label>
                 <select
