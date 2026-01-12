@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import OnboardingModal from "@/components/dashboard/onboarding-modal"
+import { getSidebarSettings, getDefaultSidebarSettings, SidebarSettings } from "./settings/sidebar-settings"
 import {
   LayoutDashboard,
   Users,
@@ -22,17 +23,17 @@ import {
   Receipt,
 } from "lucide-react"
 
-const navItems = [
-  { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-  { name: "Inbox", href: "/dashboard/inbox", icon: MessageSquare },
-  { name: "Leads", href: "/dashboard/leads", icon: Users },
-  { name: "Customers", href: "/dashboard/customers", icon: UserCircle },
-  { name: "Bookings", href: "/dashboard/bookings", icon: CalendarCheck },
-  { name: "Vehicles", href: "/dashboard/vehicles", icon: Car },
-  { name: "Billing", href: "/dashboard/billing", icon: Receipt },
-  { name: "AI Assistant", href: "/dashboard/ai-assistant", icon: Bot },
-  { name: "Settings", href: "/dashboard/settings", icon: Settings },
+const allNavItems = [
+  { name: "Overview", href: "/dashboard", icon: LayoutDashboard, key: "overview", alwaysVisible: true },
+  { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3, key: "analytics" },
+  { name: "Inbox", href: "/dashboard/inbox", icon: MessageSquare, key: "inbox" },
+  { name: "Leads", href: "/dashboard/leads", icon: Users, key: "leads" },
+  { name: "Customers", href: "/dashboard/customers", icon: UserCircle, key: "customers" },
+  { name: "Bookings", href: "/dashboard/bookings", icon: CalendarCheck, key: "bookings" },
+  { name: "Vehicles", href: "/dashboard/vehicles", icon: Car, key: "vehicles" },
+  { name: "Billing", href: "/dashboard/billing", icon: Receipt, key: "billing" },
+  { name: "AI Assistant", href: "/dashboard/ai-assistant", icon: Bot, key: "ai-assistant" },
+  { name: "Settings", href: "/dashboard/settings", icon: Settings, key: "settings", alwaysVisible: true },
 ]
 
 export default function DashboardLayout({
@@ -46,6 +47,7 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
+  const [sidebarSettings, setSidebarSettings] = useState<SidebarSettings>(getDefaultSidebarSettings())
 
   useEffect(() => {
     const getUser = async () => {
@@ -62,7 +64,25 @@ export default function DashboardLayout({
       }
     }
     getUser()
+
+    // Load sidebar settings
+    setSidebarSettings(getSidebarSettings())
+
+    // Listen for settings changes
+    const handleSettingsChange = (e: CustomEvent<SidebarSettings>) => {
+      setSidebarSettings(e.detail)
+    }
+    window.addEventListener("sidebarSettingsChanged", handleSettingsChange as EventListener)
+
+    return () => {
+      window.removeEventListener("sidebarSettingsChanged", handleSettingsChange as EventListener)
+    }
   }, [])
+
+  // Filter nav items based on settings
+  const navItems = allNavItems.filter(item =>
+    item.alwaysVisible || sidebarSettings[item.key] === true
+  )
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
