@@ -33,7 +33,13 @@ export default function SignUpPage() {
     })
 
     if (signUpError) {
-      setError(signUpError.message)
+      console.error("Signup error details:", {
+        message: signUpError.message,
+        status: signUpError.status,
+        name: signUpError.name,
+        cause: signUpError.cause,
+      })
+      setError(`${signUpError.message}${signUpError.status ? ` (Status: ${signUpError.status})` : ""}`)
       setLoading(false)
       return
     }

@@ -87,29 +87,47 @@ export default function LeadCaptureSettings() {
   const [formData, setFormData] = useState<Partial<SurveyConfig>>(defaultConfig)
 
   useEffect(() => {
-    fetchSurveys()
-    fetchVehicles()
+    fetchData()
   }, [])
 
-  const fetchSurveys = async () => {
+  const fetchData = async () => {
     setLoading(true)
-    const { data } = await supabase
-      .from("survey_config")
-      .select("*")
-      .order("created_at", { ascending: false })
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setLoading(false)
+      return
+    }
 
-    setSurveys(data || [])
+    const [surveysRes, vehiclesRes] = await Promise.all([
+      supabase
+        .from("survey_config")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("vehicles")
+        .select("id, name, make, model, year")
+        .eq("user_id", user.id)
+        .eq("status", "available")
+        .order("make", { ascending: true }),
+    ])
+
+    setSurveys(surveysRes.data || [])
+    setVehicles(vehiclesRes.data || [])
     setLoading(false)
   }
 
-  const fetchVehicles = async () => {
-    const { data } = await supabase
-      .from("vehicles")
-      .select("id, name, make, model, year")
-      .eq("status", "available")
-      .order("make", { ascending: true })
+  const fetchSurveys = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
-    setVehicles(data || [])
+    const { data } = await supabase
+      .from("survey_config")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+
+    setSurveys(data || [])
   }
 
   const openCreateModal = () => {

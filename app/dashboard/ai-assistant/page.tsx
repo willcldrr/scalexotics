@@ -145,6 +145,7 @@ export default function AIAssistantPage() {
       const { data: vehiclesData } = await supabase
         .from("vehicles")
         .select("name, make, model, daily_rate")
+        .eq("user_id", user.id)
         .neq("status", "inactive")
 
       setVehicles(vehiclesData || [])

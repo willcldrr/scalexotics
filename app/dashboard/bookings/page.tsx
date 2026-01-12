@@ -85,16 +85,20 @@ export default function BookingsPage() {
     setLoading(true)
 
     const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      setUserId(user.id)
+    if (!user) {
+      setLoading(false)
+      return
     }
+
+    setUserId(user.id)
 
     const [bookingsRes, vehiclesRes] = await Promise.all([
       supabase
         .from("bookings")
         .select("*, vehicles(id, name, make, model, daily_rate, image_url)")
+        .eq("user_id", user.id)
         .order("start_date", { ascending: true }),
-      supabase.from("vehicles").select("*").neq("status", "inactive"),
+      supabase.from("vehicles").select("*").eq("user_id", user.id).neq("status", "inactive"),
     ])
 
     setBookings(bookingsRes.data || [])

@@ -73,26 +73,35 @@ export default function CalendarSettings() {
   const fetchData = async () => {
     setLoading(true)
 
-    // Get vehicles
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
+    // Get vehicles for this user
     const { data: vehiclesData } = await supabase
       .from("vehicles")
       .select("id, name, make, model, year")
+      .eq("user_id", user.id)
       .order("make", { ascending: true })
 
     setVehicles(vehiclesData || [])
 
-    // Get calendar syncs
+    // Get calendar syncs for this user
     const { data: syncsData } = await supabase
       .from("calendar_syncs")
       .select("*, vehicles(id, name, make, model, year)")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false })
 
     setSyncs(syncsData || [])
 
-    // Get API key for export URLs
+    // Get API key for this user
     const { data: keyData } = await supabase
       .from("api_keys")
       .select("key")
+      .eq("user_id", user.id)
       .eq("is_active", true)
       .limit(1)
       .single()

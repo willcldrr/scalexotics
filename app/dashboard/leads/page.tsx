@@ -178,13 +178,16 @@ export default function LeadsPage() {
     setLoading(true)
 
     const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      setUserId(user.id)
+    if (!user) {
+      setLoading(false)
+      return
     }
 
+    setUserId(user.id)
+
     const [leadsRes, vehiclesRes] = await Promise.all([
-      supabase.from("leads").select("*").order("created_at", { ascending: false }),
-      supabase.from("vehicles").select("id, name, make, model"),
+      supabase.from("leads").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      supabase.from("vehicles").select("id, name, make, model").eq("user_id", user.id),
     ])
 
     setLeads(leadsRes.data || [])

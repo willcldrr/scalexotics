@@ -98,13 +98,17 @@ export default function VehiclesPage() {
     setLoading(true)
 
     const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      setUserId(user.id)
+    if (!user) {
+      setLoading(false)
+      return
     }
+
+    setUserId(user.id)
 
     const { data, error } = await supabase
       .from("vehicles")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false })
 
     if (!error && data) {

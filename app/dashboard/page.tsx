@@ -60,25 +60,35 @@ export default function DashboardPage() {
 
   const fetchData = async () => {
     setLoading(true)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
     const startOfMonth = new Date()
     startOfMonth.setDate(1)
     startOfMonth.setHours(0, 0, 0, 0)
 
-    // Fetch leads
+    // Fetch leads for this user only
     const { data: leads } = await supabase
       .from("leads")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false })
 
-    // Fetch vehicles
+    // Fetch vehicles for this user only
     const { data: vehicles } = await supabase
       .from("vehicles")
       .select("*")
+      .eq("user_id", user.id)
 
-    // Fetch bookings
+    // Fetch bookings for this user only
     const { data: bookings } = await supabase
       .from("bookings")
       .select("*, vehicles(name, make, model)")
+      .eq("user_id", user.id)
       .order("start_date", { ascending: true })
 
     const leadsThisMonth = leads?.filter(
