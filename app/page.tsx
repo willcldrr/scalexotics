@@ -57,7 +57,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden overscroll-none" style={{ fontFamily: 'var(--font-sans)' }}>
       {/* Ultra-Modern Header */}
-      <header className="fixed top-0 left-0 right-0 z-50" style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}>
+      <header className="fixed top-0 left-0 right-0 z-[70]" style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}>
         <div className={`transition-[background-color,border-color] duration-300 ${isScrolled ? "bg-black/90 border-b border-white/[0.08]" : ""}`}>
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="flex items-center justify-between h-20">
@@ -147,15 +147,6 @@ export default function Home() {
             Client Login
           </a>
         </div>
-        <button
-          onClick={() => setMobileMenuOpen(false)}
-          className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center"
-          aria-label="Close menu"
-        >
-          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
       </div>
       )}
 
