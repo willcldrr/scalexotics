@@ -49,10 +49,10 @@ export default function Home() {
   const isVisible = (id: string) => visibleSections.has(id)
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-x-hidden overscroll-none" style={{ fontFamily: 'var(--font-sans)', WebkitOverflowScrolling: 'touch' }}>
+    <div className="min-h-screen bg-black text-white overflow-x-hidden overscroll-none" style={{ fontFamily: 'var(--font-sans)' }}>
       {/* Ultra-Modern Header */}
-      <header className="fixed top-0 left-0 right-0 z-50">
-        <div className={`transition-all duration-300 ${isScrolled ? "bg-black/90 border-b border-white/[0.08]" : ""}`}>
+      <header className="fixed top-0 left-0 right-0 z-50" style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}>
+        <div className={`transition-[background-color,border-color] duration-300 ${isScrolled ? "bg-black/90 border-b border-white/[0.08]" : ""}`}>
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="flex items-center justify-between h-20">
               {/* Logo */}
@@ -109,18 +109,17 @@ export default function Home() {
       </header>
 
       {/* Mobile Menu */}
-      <div className={`fixed inset-0 z-[60] md:hidden transition-all duration-500 ${mobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"}`}>
-        <div className="absolute inset-0 bg-black/98 backdrop-blur-3xl" />
+      {mobileMenuOpen && (
+      <div className="fixed inset-0 z-[60] md:hidden animate-fade-in">
+        <div className="absolute inset-0 bg-black/98 backdrop-blur-xl" />
         <div className="relative h-full flex flex-col items-center justify-center gap-6">
           {["Home", "About", "Services"].map((item, i) => (
             <a
               key={item}
               href={item === "Home" ? "/" : `/${item.toLowerCase()}`}
               onClick={() => setMobileMenuOpen(false)}
-              className={`text-4xl font-light text-white/80 hover:text-[#375DEE] transition-all duration-500 ${
-                mobileMenuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-              }`}
-              style={{ transitionDelay: mobileMenuOpen ? `${i * 100}ms` : "0ms", fontFamily: 'var(--font-display)' }}
+              className="text-4xl font-light text-white/80 hover:text-[#375DEE] transition-colors duration-300"
+              style={{ fontFamily: 'var(--font-display)' }}
             >
               {item}
             </a>
@@ -128,20 +127,16 @@ export default function Home() {
           <a
             href="/survey"
             onClick={() => setMobileMenuOpen(false)}
-            className={`mt-6 px-10 py-4 text-lg bg-[#375DEE] rounded-full transition-all duration-500 ${
-              mobileMenuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            }`}
-            style={{ transitionDelay: mobileMenuOpen ? "300ms" : "0ms", fontFamily: 'var(--font-display)' }}
+            className="mt-6 px-10 py-4 text-lg bg-[#375DEE] rounded-full transition-colors duration-300"
+            style={{ fontFamily: 'var(--font-display)' }}
           >
             Get Started
           </a>
           <a
             href="/login"
             onClick={() => setMobileMenuOpen(false)}
-            className={`px-8 py-3 text-base text-white/60 border border-white/20 rounded-full transition-all duration-500 ${
-              mobileMenuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            }`}
-            style={{ transitionDelay: mobileMenuOpen ? "400ms" : "0ms", fontFamily: 'var(--font-display)' }}
+            className="px-8 py-3 text-base text-white/60 border border-white/20 rounded-full transition-colors duration-300"
+            style={{ fontFamily: 'var(--font-display)' }}
           >
             Client Login
           </a>
@@ -156,6 +151,7 @@ export default function Home() {
           </svg>
         </button>
       </div>
+      )}
 
       {/* Hero Section with Image */}
       <section className="relative min-h-screen flex items-center">
