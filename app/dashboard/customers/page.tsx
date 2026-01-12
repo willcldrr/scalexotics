@@ -95,6 +95,7 @@ export default function CustomersPage() {
                 created_at,
                 vehicles (make, model, year)
               `)
+              .eq("user_id", user.id)
               .eq("customer_phone", lead.phone)
               .order("created_at", { ascending: false })
 

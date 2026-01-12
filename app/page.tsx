@@ -4,12 +4,21 @@ import { useState, useEffect, useRef } from "react"
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [scrollY, setScrollY] = useState(0)
+  const [isScrolled, setIsScrolled] = useState(false)
   const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set())
   const sectionRefs = useRef<{ [key: string]: HTMLElement | null }>({})
+  const ticking = useRef(false)
 
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY)
+    const handleScroll = () => {
+      if (!ticking.current) {
+        requestAnimationFrame(() => {
+          setIsScrolled(window.scrollY > 50)
+          ticking.current = false
+        })
+        ticking.current = true
+      }
+    }
     window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
@@ -40,10 +49,10 @@ export default function Home() {
   const isVisible = (id: string) => visibleSections.has(id)
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-x-hidden" style={{ fontFamily: 'var(--font-sans)' }}>
+    <div className="min-h-screen bg-black text-white overflow-x-hidden overscroll-none" style={{ fontFamily: 'var(--font-sans)', WebkitOverflowScrolling: 'touch' }}>
       {/* Ultra-Modern Header */}
       <header className="fixed top-0 left-0 right-0 z-50">
-        <div className={`transition-all duration-700 ${scrollY > 50 ? "bg-black/60 backdrop-blur-2xl border-b border-white/[0.08]" : ""}`}>
+        <div className={`transition-all duration-300 ${isScrolled ? "bg-black/90 border-b border-white/[0.08]" : ""}`}>
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="flex items-center justify-between h-20">
               {/* Logo */}
@@ -185,8 +194,7 @@ export default function Home() {
               className="text-lg md:text-xl text-white/60 max-w-xl leading-relaxed mb-12 animate-fade-in font-light"
               style={{ animationDelay: "0.2s" }}
             >
-              We build automated systems that help exotic car fleet owners
-              generate consistent $50k+ months on autopilot.
+              The all in one growth engine for rental fleets. Lead capture, automated follow up, and booking management trusted by 50+ fleet owners nationwide.
             </p>
 
             {/* CTAs */}
@@ -293,7 +301,7 @@ export default function Home() {
                 {[
                   "Leads captured and qualified automatically",
                   "24/7 instant response to every inquiry",
-                  "Predictable $50k+ months on autopilot",
+                  "Predictable revenue with automated booking",
                   "Only talk to ready-to-book renters",
                   "Real-time dashboard shows what converts",
                   "Full fleet utilization, weekdays included"
@@ -751,7 +759,7 @@ export default function Home() {
             <div className="col-span-2">
               <img src="/scalexoticslong.png" alt="Scale Exotics" className="h-6 md:h-7 w-auto mb-3 md:mb-4" />
               <p className="text-white/40 text-xs md:text-sm max-w-sm leading-relaxed">
-                Helping exotic car rental fleet owners build automated systems that generate consistent $50k+ months.
+                AI-powered lead capture and booking platform built for exotic car rental fleets.
               </p>
               {/* Blue accent */}
               <div className="w-12 md:w-16 h-1 bg-[#375DEE] mt-4 md:mt-6" />
