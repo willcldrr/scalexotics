@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { Settings, User, ClipboardList, Code, Key, FileText, PanelLeft } from "lucide-react"
+import { Settings, User, ClipboardList, Code, Key, FileText, PanelLeft, Calendar } from "lucide-react"
 
 // Import tab content
 import AccountSettings from "./account-settings"
@@ -11,10 +11,11 @@ import WidgetSettings from "./widget-settings"
 import AccessCodesSettings from "./access-codes-settings"
 import InvoicesSettings from "./invoices-settings"
 import SidebarSettings from "./sidebar-settings"
+import CalendarSettings from "./calendar-settings"
 
 export default function SettingsPage() {
   const supabase = createClient()
-  const [activeTab, setActiveTab] = useState<"account" | "lead-capture" | "widget" | "sidebar" | "access-codes" | "invoices">("account")
+  const [activeTab, setActiveTab] = useState<"account" | "lead-capture" | "widget" | "calendar" | "sidebar" | "access-codes" | "invoices">("account")
   const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
@@ -80,6 +81,17 @@ export default function SettingsPage() {
           Booking Widget
         </button>
         <button
+          onClick={() => setActiveTab("calendar")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+            activeTab === "calendar"
+              ? "bg-[#375DEE] text-white"
+              : "text-white/60 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <Calendar className="w-4 h-4" />
+          Calendar Sync
+        </button>
+        <button
           onClick={() => setActiveTab("sidebar")}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
             activeTab === "sidebar"
@@ -122,6 +134,7 @@ export default function SettingsPage() {
       {activeTab === "account" && <AccountSettings />}
       {activeTab === "lead-capture" && <LeadCaptureSettings />}
       {activeTab === "widget" && <WidgetSettings />}
+      {activeTab === "calendar" && <CalendarSettings />}
       {activeTab === "sidebar" && <SidebarSettings />}
       {activeTab === "invoices" && isAdmin && <InvoicesSettings />}
       {activeTab === "access-codes" && isAdmin && <AccessCodesSettings />}
