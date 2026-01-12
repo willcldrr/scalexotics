@@ -26,35 +26,10 @@ export async function GET(
     const supabase = getSupabase()
     const { slug } = await params
 
-    // Get API key from header
-    const apiKey = request.headers.get("X-API-Key")
-
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "Missing API key" },
-        { status: 401, headers: corsHeaders }
-      )
-    }
-
-    // Validate API key and get associated user
-    const { data: keyData, error: keyError } = await supabase
-      .from("api_keys")
-      .select("user_id, is_active")
-      .eq("key", apiKey)
-      .single()
-
-    if (keyError || !keyData || !keyData.is_active) {
-      return NextResponse.json(
-        { error: "Invalid API key" },
-        { status: 401, headers: corsHeaders }
-      )
-    }
-
-    // Get survey config for this slug and user
+    // Look up survey config by slug (no auth required - slug is unique)
     const { data: config, error: configError } = await supabase
       .from("survey_config")
       .select("*")
-      .eq("user_id", keyData.user_id)
       .eq("slug", slug)
       .eq("is_active", true)
       .single()
@@ -66,11 +41,27 @@ export async function GET(
       )
     }
 
+    // Get the user's active API key to include in response
+    const { data: apiKeyData } = await supabase
+      .from("api_keys")
+      .select("key")
+      .eq("user_id", config.user_id)
+      .eq("is_active", true)
+      .limit(1)
+      .single()
+
+    if (!apiKeyData) {
+      return NextResponse.json(
+        { error: "No active API key found for this survey" },
+        { status: 500, headers: corsHeaders }
+      )
+    }
+
     // Get vehicles - either specific ones or all available
     let vehiclesQuery = supabase
       .from("vehicles")
       .select("id, name, make, model, year, type, daily_rate, image_url")
-      .eq("user_id", keyData.user_id)
+      .eq("user_id", config.user_id)
       .eq("status", "available")
 
     if (config.vehicle_ids && config.vehicle_ids.length > 0) {
@@ -85,7 +76,7 @@ export async function GET(
       const { data: bookings } = await supabase
         .from("bookings")
         .select("vehicle_id, start_date, end_date")
-        .eq("user_id", keyData.user_id)
+        .eq("user_id", config.user_id)
         .in("status", ["confirmed", "pending"])
         .gte("end_date", new Date().toISOString().split("T")[0])
 
@@ -94,6 +85,7 @@ export async function GET(
 
     return NextResponse.json(
       {
+        api_key: apiKeyData.key,
         config: {
           business_name: config.business_name,
           logo_url: config.logo_url,
