@@ -333,113 +333,114 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-2xl sm:text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
             Analytics
           </h1>
-          <p className="text-white/50 mt-1">Deep insights into your rental business</p>
+          <p className="text-white/50 text-sm sm:text-base mt-1">Deep insights into your rental business</p>
         </div>
 
         {/* Time Range Selector */}
-        <div className="flex gap-2 bg-white/5 rounded-xl p-1">
+        <div className="flex gap-1 sm:gap-2 bg-white/5 rounded-xl p-1 overflow-x-auto">
           {[
-            { value: "7d", label: "7 Days" },
-            { value: "30d", label: "30 Days" },
-            { value: "90d", label: "90 Days" },
-            { value: "all", label: "All Time" },
+            { value: "7d", label: "7D", fullLabel: "7 Days" },
+            { value: "30d", label: "30D", fullLabel: "30 Days" },
+            { value: "90d", label: "90D", fullLabel: "90 Days" },
+            { value: "all", label: "All", fullLabel: "All Time" },
           ].map((option) => (
             <button
               key={option.value}
               onClick={() => setTimeRange(option.value as any)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                 timeRange === option.value
                   ? "bg-[#375DEE] text-white"
                   : "text-white/60 hover:text-white"
               }`}
             >
-              {option.label}
+              <span className="sm:hidden">{option.label}</span>
+              <span className="hidden sm:inline">{option.fullLabel}</span>
             </button>
           ))}
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-green-400" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white/5 rounded-xl sm:rounded-2xl border border-white/10 p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-green-500/20 flex items-center justify-center">
+              <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-green-400" />
             </div>
             {kpis.revenueChange !== 0 && (
-              <div className={`flex items-center gap-1 text-sm ${kpis.revenueChange >= 0 ? "text-green-400" : "text-red-400"}`}>
-                {kpis.revenueChange >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+              <div className={`flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm ${kpis.revenueChange >= 0 ? "text-green-400" : "text-red-400"}`}>
+                {kpis.revenueChange >= 0 ? <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" /> : <ArrowDownRight className="w-3 h-3 sm:w-4 sm:h-4" />}
                 {Math.abs(kpis.revenueChange).toFixed(1)}%
               </div>
             )}
           </div>
-          <p className="text-white/50 text-sm">Total Revenue</p>
-          <p className="text-3xl font-bold mt-1" style={{ fontFamily: 'var(--font-display)' }}>
-            ${kpis.totalRevenue.toLocaleString()}
+          <p className="text-white/50 text-xs sm:text-sm">Total Revenue</p>
+          <p className="text-xl sm:text-3xl font-bold mt-1" style={{ fontFamily: 'var(--font-display)' }}>
+            ${kpis.totalRevenue >= 10000 ? `${(kpis.totalRevenue/1000).toFixed(1)}k` : kpis.totalRevenue.toLocaleString()}
           </p>
         </div>
 
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 rounded-xl bg-[#375DEE]/20 flex items-center justify-center">
-              <CalendarCheck className="w-6 h-6 text-[#375DEE]" />
+        <div className="bg-white/5 rounded-xl sm:rounded-2xl border border-white/10 p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-[#375DEE]/20 flex items-center justify-center">
+              <CalendarCheck className="w-5 h-5 sm:w-6 sm:h-6 text-[#375DEE]" />
             </div>
             {kpis.bookingsChange !== 0 && (
-              <div className={`flex items-center gap-1 text-sm ${kpis.bookingsChange >= 0 ? "text-green-400" : "text-red-400"}`}>
-                {kpis.bookingsChange >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+              <div className={`flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm ${kpis.bookingsChange >= 0 ? "text-green-400" : "text-red-400"}`}>
+                {kpis.bookingsChange >= 0 ? <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" /> : <ArrowDownRight className="w-3 h-3 sm:w-4 sm:h-4" />}
                 {Math.abs(kpis.bookingsChange).toFixed(1)}%
               </div>
             )}
           </div>
-          <p className="text-white/50 text-sm">Total Bookings</p>
-          <p className="text-3xl font-bold mt-1" style={{ fontFamily: 'var(--font-display)' }}>
+          <p className="text-white/50 text-xs sm:text-sm">Total Bookings</p>
+          <p className="text-xl sm:text-3xl font-bold mt-1" style={{ fontFamily: 'var(--font-display)' }}>
             {kpis.totalBookings}
           </p>
         </div>
 
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-              <Users className="w-6 h-6 text-purple-400" />
+        <div className="bg-white/5 rounded-xl sm:rounded-2xl border border-white/10 p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-purple-500/20 flex items-center justify-center">
+              <Users className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
             </div>
           </div>
-          <p className="text-white/50 text-sm">Leads</p>
-          <p className="text-3xl font-bold mt-1" style={{ fontFamily: 'var(--font-display)' }}>
+          <p className="text-white/50 text-xs sm:text-sm">Leads</p>
+          <p className="text-xl sm:text-3xl font-bold mt-1" style={{ fontFamily: 'var(--font-display)' }}>
             {kpis.totalLeads}
           </p>
-          <p className="text-sm text-white/40 mt-1">{kpis.convertedLeads} converted</p>
+          <p className="text-xs sm:text-sm text-white/40 mt-1">{kpis.convertedLeads} converted</p>
         </div>
 
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center">
-              <Target className="w-6 h-6 text-orange-400" />
+        <div className="bg-white/5 rounded-xl sm:rounded-2xl border border-white/10 p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-orange-500/20 flex items-center justify-center">
+              <Target className="w-5 h-5 sm:w-6 sm:h-6 text-orange-400" />
             </div>
           </div>
-          <p className="text-white/50 text-sm">Conversion Rate</p>
-          <p className="text-3xl font-bold mt-1" style={{ fontFamily: 'var(--font-display)' }}>
+          <p className="text-white/50 text-xs sm:text-sm">Conversion Rate</p>
+          <p className="text-xl sm:text-3xl font-bold mt-1" style={{ fontFamily: 'var(--font-display)' }}>
             {kpis.conversionRate.toFixed(1)}%
           </p>
-          <p className="text-sm text-white/40 mt-1">Avg: ${kpis.avgBookingValue.toLocaleString()}/booking</p>
+          <p className="text-xs sm:text-sm text-white/40 mt-1 truncate">Avg: ${kpis.avgBookingValue.toLocaleString()}</p>
         </div>
       </div>
 
       {/* Revenue Over Time */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-        <div className="flex items-center gap-3 mb-6">
+      <div className="bg-white/5 rounded-2xl border border-white/10 p-4 sm:p-6">
+        <div className="flex items-center gap-3 mb-4 sm:mb-6">
           <Activity className="w-5 h-5 text-[#375DEE]" />
-          <h2 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
-            Revenue & Bookings Over Time
+          <h2 className="text-base sm:text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+            Revenue & Bookings
           </h2>
         </div>
-        <div className="h-80">
+        <div className="h-64 sm:h-80">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={revenueOverTime}>
               <defs>
@@ -452,22 +453,25 @@ export default function AnalyticsPage() {
               <XAxis
                 dataKey="date"
                 stroke="#ffffff40"
-                tick={{ fill: '#ffffff60', fontSize: 12 }}
+                tick={{ fill: '#ffffff60', fontSize: 10 }}
                 tickLine={false}
+                interval="preserveStartEnd"
               />
               <YAxis
                 yAxisId="left"
                 stroke="#ffffff40"
-                tick={{ fill: '#ffffff60', fontSize: 12 }}
+                tick={{ fill: '#ffffff60', fontSize: 10 }}
                 tickLine={false}
                 tickFormatter={(value) => `$${value}`}
+                width={50}
               />
               <YAxis
                 yAxisId="right"
                 orientation="right"
                 stroke="#ffffff40"
-                tick={{ fill: '#ffffff60', fontSize: 12 }}
+                tick={{ fill: '#ffffff60', fontSize: 10 }}
                 tickLine={false}
+                width={30}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend
@@ -498,13 +502,13 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Middle Row - Conversion Funnel & Lead Sources */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Conversion Funnel */}
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-          <div className="flex items-center gap-3 mb-6">
+        <div className="bg-white/5 rounded-2xl border border-white/10 p-4 sm:p-6">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
             <BarChart3 className="w-5 h-5 text-[#375DEE]" />
-            <h2 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
-              Lead Conversion Funnel
+            <h2 className="text-base sm:text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+              Conversion Funnel
             </h2>
           </div>
           <div className="space-y-4">
@@ -529,24 +533,24 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Lead Sources */}
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-          <div className="flex items-center gap-3 mb-6">
+        <div className="bg-white/5 rounded-2xl border border-white/10 p-4 sm:p-6">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
             <PieChartIcon className="w-5 h-5 text-[#375DEE]" />
-            <h2 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-base sm:text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
               Lead Sources
             </h2>
           </div>
           {leadSourcesData.length > 0 ? (
-            <div className="flex items-center gap-6">
-              <div className="w-48 h-48">
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+              <div className="w-40 h-40 sm:w-48 sm:h-48 flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={leadSourcesData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={40}
-                      outerRadius={70}
+                      innerRadius={35}
+                      outerRadius={60}
                       paddingAngle={2}
                       dataKey="value"
                     >
@@ -558,14 +562,14 @@ export default function AnalyticsPage() {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex-1 space-y-2">
+              <div className="w-full sm:flex-1 space-y-2">
                 {leadSourcesData.slice(0, 5).map((source, index) => (
                   <div key={source.name} className="flex items-center gap-3">
                     <div
-                      className="w-3 h-3 rounded-full"
+                      className="w-3 h-3 rounded-full flex-shrink-0"
                       style={{ backgroundColor: COLORS[index % COLORS.length] }}
                     />
-                    <span className="text-sm text-white/70 flex-1">{source.name}</span>
+                    <span className="text-sm text-white/70 flex-1 truncate">{source.name}</span>
                     <span className="text-sm font-semibold">{source.value}</span>
                   </div>
                 ))}
@@ -578,32 +582,32 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Vehicle Performance */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-        <div className="flex items-center gap-3 mb-6">
+      <div className="bg-white/5 rounded-2xl border border-white/10 p-4 sm:p-6">
+        <div className="flex items-center gap-3 mb-4 sm:mb-6">
           <Car className="w-5 h-5 text-[#375DEE]" />
-          <h2 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h2 className="text-base sm:text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
             Vehicle Performance
           </h2>
         </div>
         {vehiclePerformance.length > 0 ? (
-          <div className="h-72">
+          <div className="h-64 sm:h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={vehiclePerformance} layout="vertical">
+              <BarChart data={vehiclePerformance} layout="vertical" margin={{ left: -20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" horizontal={false} />
                 <XAxis
                   type="number"
                   stroke="#ffffff40"
-                  tick={{ fill: '#ffffff60', fontSize: 12 }}
+                  tick={{ fill: '#ffffff60', fontSize: 10 }}
                   tickLine={false}
-                  tickFormatter={(value) => `$${value}`}
+                  tickFormatter={(value) => `$${value >= 1000 ? `${(value/1000).toFixed(0)}k` : value}`}
                 />
                 <YAxis
                   type="category"
                   dataKey="name"
                   stroke="#ffffff40"
-                  tick={{ fill: '#ffffff60', fontSize: 12 }}
+                  tick={{ fill: '#ffffff60', fontSize: 10 }}
                   tickLine={false}
-                  width={120}
+                  width={100}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Bar dataKey="revenue" name="Revenue" fill="#375DEE" radius={[0, 4, 4, 0]} />
@@ -616,12 +620,12 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Bottom Row - Vehicle Utilization & Booking Status */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Vehicle Utilization */}
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-          <div className="flex items-center gap-3 mb-6">
+        <div className="bg-white/5 rounded-2xl border border-white/10 p-4 sm:p-6">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
             <Clock className="w-5 h-5 text-[#375DEE]" />
-            <h2 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-base sm:text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
               Vehicle Utilization
             </h2>
           </div>
@@ -652,24 +656,24 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Booking Status Distribution */}
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-          <div className="flex items-center gap-3 mb-6">
+        <div className="bg-white/5 rounded-2xl border border-white/10 p-4 sm:p-6">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
             <CalendarCheck className="w-5 h-5 text-[#375DEE]" />
-            <h2 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-base sm:text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
               Booking Status
             </h2>
           </div>
           {bookingStatusData.length > 0 ? (
-            <div className="flex items-center gap-6">
-              <div className="w-48 h-48">
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+              <div className="w-40 h-40 sm:w-48 sm:h-48 flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={bookingStatusData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={40}
-                      outerRadius={70}
+                      innerRadius={35}
+                      outerRadius={60}
                       paddingAngle={2}
                       dataKey="value"
                     >
@@ -690,11 +694,11 @@ export default function AnalyticsPage() {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex-1 space-y-2">
+              <div className="w-full sm:flex-1 space-y-2">
                 {bookingStatusData.map((status) => (
                   <div key={status.name} className="flex items-center gap-3">
                     <div
-                      className="w-3 h-3 rounded-full"
+                      className="w-3 h-3 rounded-full flex-shrink-0"
                       style={{
                         backgroundColor:
                           status.name.toLowerCase() === "completed" ? "#22c55e" :
@@ -704,7 +708,7 @@ export default function AnalyticsPage() {
                           "#8b5cf6"
                       }}
                     />
-                    <span className="text-sm text-white/70 flex-1">{status.name}</span>
+                    <span className="text-sm text-white/70 flex-1 truncate">{status.name}</span>
                     <span className="text-sm font-semibold">{status.value}</span>
                   </div>
                 ))}
@@ -717,28 +721,33 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Lead Status Overview */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-        <div className="flex items-center gap-3 mb-6">
+      <div className="bg-white/5 rounded-2xl border border-white/10 p-4 sm:p-6">
+        <div className="flex items-center gap-3 mb-4 sm:mb-6">
           <Users className="w-5 h-5 text-[#375DEE]" />
-          <h2 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h2 className="text-base sm:text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
             Lead Pipeline
           </h2>
         </div>
         {leadStatusData.length > 0 ? (
-          <div className="h-64">
+          <div className="h-56 sm:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={leadStatusData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
                 <XAxis
                   dataKey="name"
                   stroke="#ffffff40"
-                  tick={{ fill: '#ffffff60', fontSize: 12 }}
+                  tick={{ fill: '#ffffff60', fontSize: 10 }}
                   tickLine={false}
+                  interval={0}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
                 />
                 <YAxis
                   stroke="#ffffff40"
-                  tick={{ fill: '#ffffff60', fontSize: 12 }}
+                  tick={{ fill: '#ffffff60', fontSize: 10 }}
                   tickLine={false}
+                  width={30}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Bar dataKey="value" name="Leads" radius={[4, 4, 0, 0]}>
