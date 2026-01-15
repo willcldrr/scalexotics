@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import Image from "next/image"
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -63,7 +64,7 @@ export default function Home() {
             <div className="flex items-center justify-between h-20">
               {/* Logo */}
               <a href="/" className="relative group">
-                <img src="/scalexoticslong.png" alt="Scale Exotics" className="h-7 w-auto" />
+                <Image src="/scalexoticslong.png" alt="Scale Exotics" width={140} height={28} className="h-7 w-auto" priority />
                 <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-[#375DEE] group-hover:w-full transition-all duration-300" />
               </a>
 
@@ -157,10 +158,13 @@ export default function Home() {
       >
         {/* Background Image - Exotic Car */}
         <div className="absolute inset-0">
-          <img
+          <Image
             src="https://images.unsplash.com/photo-1544636331-e26879cd4d9b?q=80&w=2574&auto=format&fit=crop"
             alt="Luxury exotic car"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            priority
+            sizes="100vw"
           />
           {/* Gradient overlays */}
           <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
@@ -588,11 +592,13 @@ export default function Home() {
           <div className="grid lg:grid-cols-2 gap-10 md:gap-16 items-center">
             {/* Left - Image */}
             <div className={`relative transition-all duration-1000 ${isVisible("services") ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-12"}`}>
-              <div className="relative rounded-2xl md:rounded-3xl overflow-hidden">
-                <img
+              <div className="relative rounded-2xl md:rounded-3xl overflow-hidden aspect-[4/5]">
+                <Image
                   src="https://images.unsplash.com/photo-1593219535889-7873a100874a?q=80&w=2670&auto=format&fit=crop"
                   alt="Luxury car interior"
-                  className="w-full aspect-[4/5] object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                 />
                 <div className="absolute inset-0 bg-black/40" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -715,10 +721,12 @@ export default function Home() {
       >
         {/* Background */}
         <div className="absolute inset-0">
-          <img
+          <Image
             src="https://images.unsplash.com/photo-1571001437100-9d282569809b?q=80&w=2670&auto=format&fit=crop"
             alt="Exotic car fleet"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="100vw"
           />
           <div className="absolute inset-0 bg-black/80" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#375DEE]/20 to-transparent" />
@@ -753,7 +761,7 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-8 mb-10 md:mb-12">
             {/* Brand */}
             <div className="col-span-2">
-              <img src="/scalexoticslong.png" alt="Scale Exotics" className="h-6 md:h-7 w-auto mb-3 md:mb-4" />
+              <Image src="/scalexoticslong.png" alt="Scale Exotics" width={140} height={28} className="h-6 md:h-7 w-auto mb-3 md:mb-4" />
               <p className="text-white/40 text-xs md:text-sm max-w-sm leading-relaxed">
                 AI-powered lead capture and booking platform built for exotic car rental fleets.
               </p>

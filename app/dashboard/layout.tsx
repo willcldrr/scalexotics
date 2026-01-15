@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import OnboardingModal from "@/components/dashboard/onboarding-modal"
@@ -110,9 +111,11 @@ export default function DashboardLayout({
           {/* Logo */}
           <div className="p-6 border-b border-white/10">
             <Link href="/dashboard" className="flex items-center gap-3">
-              <img
+              <Image
                 src="https://imagedelivery.net/CVEJyzst_6io-ETn1V_PSw/3bdba65e-fb1a-4a3e-ff6f-1aa89b081f00/public"
                 alt="Scale Exotics"
+                width={32}
+                height={32}
                 className="h-8 w-auto"
               />
               <span className="font-semibold text-lg" style={{ fontFamily: 'var(--font-display)' }}>
