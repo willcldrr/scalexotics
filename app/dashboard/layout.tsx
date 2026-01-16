@@ -131,11 +131,11 @@ export default function DashboardLayout({
               <Image
                 src="https://imagedelivery.net/CVEJyzst_6io-ETn1V_PSw/3bdba65e-fb1a-4a3e-ff6f-1aa89b081f00/public"
                 alt="Scale Exotics"
-                width={32}
-                height={32}
-                className="h-8 w-auto"
+                width={28}
+                height={28}
+                className="h-7 w-auto"
               />
-              <span className="font-semibold text-lg" style={{ fontFamily: 'var(--font-display)' }}>
+              <span className="font-semibold text-xl" style={{ fontFamily: 'var(--font-display)' }}>
                 Dashboard
               </span>
             </Link>
