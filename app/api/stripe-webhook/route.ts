@@ -36,23 +36,64 @@ export async function POST(request: NextRequest) {
     const session = event.data.object as Stripe.Checkout.Session
 
     const invoiceId = session.metadata?.invoice_id
+    const bookingId = session.metadata?.booking_id
+    const source = session.metadata?.source
 
-    if (invoiceId) {
-      // Update invoice status to paid
+    // Handle booking deposits
+    if (source === "booking_deposit" && bookingId) {
       const { error } = await supabase
-        .from("client_invoices")
+        .from("bookings")
         .update({
-          status: "paid",
-          paid_at: new Date().toISOString(),
-          stripe_checkout_session_id: session.id,
+          deposit_paid: true,
+          status: "confirmed",
           stripe_payment_intent_id: session.payment_intent as string,
         })
-        .eq("id", invoiceId)
+        .eq("id", bookingId)
 
       if (error) {
-        console.error("Error updating invoice:", error)
+        console.error("Error updating booking:", error)
       } else {
-        console.log(`Invoice ${invoiceId} marked as paid`)
+        console.log(`Booking ${bookingId} deposit confirmed`)
+      }
+    }
+
+    // Handle invoices
+    if (invoiceId) {
+      // Check which table to update based on source
+      if (source === "dashboard_invoices") {
+        // Update dashboard invoices table
+        const { error } = await supabase
+          .from("invoices")
+          .update({
+            status: "paid",
+            paid_at: new Date().toISOString(),
+            stripe_checkout_session_id: session.id,
+            stripe_payment_intent_id: session.payment_intent as string,
+          })
+          .eq("id", invoiceId)
+
+        if (error) {
+          console.error("Error updating dashboard invoice:", error)
+        } else {
+          console.log(`Dashboard invoice ${invoiceId} marked as paid`)
+        }
+      } else {
+        // Update client_invoices table (legacy)
+        const { error } = await supabase
+          .from("client_invoices")
+          .update({
+            status: "paid",
+            paid_at: new Date().toISOString(),
+            stripe_checkout_session_id: session.id,
+            stripe_payment_intent_id: session.payment_intent as string,
+          })
+          .eq("id", invoiceId)
+
+        if (error) {
+          console.error("Error updating client invoice:", error)
+        } else {
+          console.log(`Client invoice ${invoiceId} marked as paid`)
+        }
       }
     }
   }

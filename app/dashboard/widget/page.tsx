@@ -14,10 +14,17 @@ import {
   Loader2,
 } from "lucide-react"
 
+interface CustomDomain {
+  domain: string
+  verified: boolean
+  ssl_status: string
+}
+
 export default function WidgetPage() {
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [apiKey, setApiKey] = useState<string | null>(null)
+  const [customDomain, setCustomDomain] = useState<CustomDomain | null>(null)
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<"embed" | "customize" | "preview">("embed")
 
@@ -32,24 +39,32 @@ export default function WidgetPage() {
   })
 
   useEffect(() => {
-    fetchApiKey()
+    fetchData()
   }, [])
 
-  const fetchApiKey = async () => {
+  const fetchData = async () => {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
 
     if (user) {
-      // Get or create API key for widget
-      const { data: existingKey } = await supabase
-        .from("api_keys")
-        .select("key")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .single()
+      // Get or create API key for widget and fetch custom domain
+      const [keyRes, domainRes] = await Promise.all([
+        supabase
+          .from("api_keys")
+          .select("key")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .single(),
+        supabase
+          .from("custom_domains")
+          .select("domain, verified, ssl_status")
+          .eq("user_id", user.id)
+          .limit(1)
+          .single(),
+      ])
 
-      if (existingKey) {
-        setApiKey(existingKey.key)
+      if (keyRes.data) {
+        setApiKey(keyRes.data.key)
       } else {
         // Create a new API key
         const newKey = `se_${crypto.randomUUID().replace(/-/g, "")}`
@@ -68,10 +83,22 @@ export default function WidgetPage() {
           setApiKey(createdKey.key)
         }
       }
+
+      setCustomDomain(domainRes.data || null)
     }
 
     setLoading(false)
   }
+
+  // Get the base URL for embeds (custom domain if available)
+  const getBaseUrl = () => {
+    if (customDomain?.verified && customDomain.ssl_status === "active") {
+      return `https://${customDomain.domain}`
+    }
+    return typeof window !== 'undefined' ? window.location.origin : 'https://scalexotics.com'
+  }
+
+  const baseUrl = getBaseUrl()
 
   const embedCode = `<!-- Scale Exotics Booking Widget -->
 <div id="scale-exotics-widget"></div>
@@ -87,7 +114,7 @@ export default function WidgetPage() {
       maxVehicles: ${widgetConfig.maxVehicles}
     };
     var script = document.createElement("script");
-    script.src = "${typeof window !== 'undefined' ? window.location.origin : 'https://scalexotics.com'}/widget.js";
+    script.src = "${baseUrl}/widget.js";
     script.async = true;
     script.onload = function() {
       ScaleExoticsWidget.init(config);
@@ -97,7 +124,7 @@ export default function WidgetPage() {
 </script>`
 
   const iframeCode = `<iframe
-  src="${typeof window !== 'undefined' ? window.location.origin : 'https://scalexotics.com'}/embed?key=${apiKey || "YOUR_API_KEY"}&theme=${widgetConfig.theme}&color=${encodeURIComponent(widgetConfig.primaryColor)}"
+  src="${baseUrl}/embed?key=${apiKey || "YOUR_API_KEY"}&theme=${widgetConfig.theme}&color=${encodeURIComponent(widgetConfig.primaryColor)}"
   width="100%"
   height="600"
   frameborder="0"
@@ -135,6 +162,25 @@ export default function WidgetPage() {
         </h1>
         <p className="text-white/50 mt-1">Embed a booking widget on your website</p>
       </div>
+
+      {/* Domain Info */}
+      {customDomain?.verified && customDomain.ssl_status === "active" ? (
+        <div className="bg-green-500/10 rounded-xl border border-green-500/30 p-4 flex items-center gap-3">
+          <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+          <div>
+            <p className="text-green-400 font-medium">Using your custom domain</p>
+            <p className="text-white/60 text-sm">
+              Widget URLs will use <span className="text-white font-mono">{customDomain.domain}</span>
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-yellow-500/10 rounded-xl border border-yellow-500/30 p-4">
+          <p className="text-yellow-400 text-sm">
+            Set up a custom domain in Settings → Branding to use your own domain for widget URLs
+          </p>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-white/10 pb-4">

@@ -20,6 +20,10 @@ import {
   Car,
   User,
   Building,
+  Link2,
+  ExternalLink,
+  Copy,
+  Check,
 } from "lucide-react"
 import { format } from "date-fns"
 
@@ -83,6 +87,8 @@ export default function InvoicesContent() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
   const [selectedBooking, setSelectedBooking] = useState<string>("")
   const [creating, setCreating] = useState(false)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [sendingId, setSendingId] = useState<string | null>(null)
   const invoiceRef = useRef<HTMLDivElement>(null)
 
   // Form state for new invoice
@@ -304,6 +310,58 @@ export default function InvoicesContent() {
     window.print()
   }
 
+  const getPaymentLink = (invoiceId: string) => {
+    const origin = typeof window !== "undefined" ? window.location.origin : ""
+    return `${origin}/invoice/${invoiceId}`
+  }
+
+  const copyPaymentLink = async (invoice: Invoice) => {
+    const link = getPaymentLink(invoice.id)
+    await navigator.clipboard.writeText(link)
+    setCopiedId(invoice.id)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  const sendInvoiceEmail = async (invoice: Invoice) => {
+    if (!invoice.customer_email) {
+      alert("No email address for this customer")
+      return
+    }
+
+    setSendingId(invoice.id)
+
+    // Update status to "sent" if currently draft
+    if (invoice.status === "draft") {
+      const { error } = await supabase
+        .from("invoices")
+        .update({ status: "sent" })
+        .eq("id", invoice.id)
+
+      if (!error) {
+        setInvoices(invoices.map(i =>
+          i.id === invoice.id ? { ...i, status: "sent" } : i
+        ))
+      }
+    }
+
+    // Open email client with pre-filled content
+    const subject = encodeURIComponent(`Invoice ${invoice.invoice_number} - ${profile?.company_name || "Scale Exotics"}`)
+    const paymentLink = getPaymentLink(invoice.id)
+    const body = encodeURIComponent(
+      `Hi ${invoice.customer_name},\n\n` +
+      `Please find your invoice attached below.\n\n` +
+      `Invoice: ${invoice.invoice_number}\n` +
+      `Amount: $${invoice.total.toLocaleString()}\n` +
+      `Due Date: ${format(new Date(invoice.due_date), "MMMM d, yyyy")}\n\n` +
+      `Pay online: ${paymentLink}\n\n` +
+      `Thank you for your business!\n\n` +
+      `${profile?.company_name || "Scale Exotics"}`
+    )
+
+    window.open(`mailto:${invoice.customer_email}?subject=${subject}&body=${body}`)
+    setSendingId(null)
+  }
+
   const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = invoice.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase())
@@ -428,7 +486,7 @@ export default function InvoicesContent() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <p className="font-bold text-lg">${invoice.total.toLocaleString()}</p>
+                      <p className="font-bold text-lg font-numbers">${invoice.total.toLocaleString()}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -437,16 +495,42 @@ export default function InvoicesContent() {
                           setShowViewModal(true)
                         }}
                         className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+                        title="View Invoice"
                       >
                         <Eye className="w-5 h-5" />
                       </button>
                       {invoice.status !== "paid" && (
-                        <button
-                          onClick={() => markAsPaid(invoice)}
-                          className="px-3 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 text-sm font-medium rounded-lg transition-colors"
-                        >
-                          Mark Paid
-                        </button>
+                        <>
+                          <button
+                            onClick={() => copyPaymentLink(invoice)}
+                            className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+                            title="Copy Payment Link"
+                          >
+                            {copiedId === invoice.id ? (
+                              <Check className="w-5 h-5 text-green-400" />
+                            ) : (
+                              <Link2 className="w-5 h-5" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => sendInvoiceEmail(invoice)}
+                            disabled={sendingId === invoice.id}
+                            className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors disabled:opacity-50"
+                            title="Send Invoice Email"
+                          >
+                            {sendingId === invoice.id ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                              <Send className="w-5 h-5" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => markAsPaid(invoice)}
+                            className="px-3 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 text-sm font-medium rounded-lg transition-colors"
+                          >
+                            Mark Paid
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -618,6 +702,35 @@ export default function InvoicesContent() {
             <div className="p-6 border-b flex items-center justify-between print:hidden">
               <h2 className="text-xl font-semibold text-gray-800">Invoice Preview</h2>
               <div className="flex items-center gap-2">
+                {selectedInvoice.status !== "paid" && (
+                  <>
+                    <button
+                      onClick={() => copyPaymentLink(selectedInvoice)}
+                      className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+                    >
+                      {copiedId === selectedInvoice.id ? (
+                        <>
+                          <Check className="w-4 h-4 text-green-600" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Link2 className="w-4 h-4" />
+                          Copy Link
+                        </>
+                      )}
+                    </button>
+                    <a
+                      href={getPaymentLink(selectedInvoice.id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2 bg-[#375DEE] hover:bg-[#4169E1] text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Open Payment Page
+                    </a>
+                  </>
+                )}
                 <button onClick={printInvoice} className="p-2 hover:bg-gray-100 rounded-lg">
                   <Printer className="w-5 h-5 text-gray-600" />
                 </button>

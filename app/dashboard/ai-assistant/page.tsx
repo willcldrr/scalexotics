@@ -286,25 +286,47 @@ export default function AIAssistantPage() {
         </button>
       </div>
 
-      {/* Status Banner */}
-      <div className={`rounded-xl p-4 flex items-center gap-3 ${settings.auto_respond ? "bg-green-500/10 border border-green-500/30" : "bg-yellow-500/10 border border-yellow-500/30"}`}>
-        {settings.auto_respond ? (
-          <>
-            <Zap className="w-5 h-5 text-green-400" />
-            <div>
-              <p className="font-medium text-green-400">AI Assistant is Active</p>
-              <p className="text-sm text-white/50">Automatically responding to incoming messages</p>
-            </div>
-          </>
-        ) : (
-          <>
-            <AlertCircle className="w-5 h-5 text-yellow-400" />
-            <div>
-              <p className="font-medium text-yellow-400">AI Assistant is Paused</p>
-              <p className="text-sm text-white/50">Enable auto-respond to activate</p>
-            </div>
-          </>
-        )}
+      {/* Main On/Off Toggle */}
+      <div className={`rounded-2xl p-5 flex items-center justify-between ${
+        settings.auto_respond
+          ? "bg-gradient-to-r from-[#375DEE]/20 via-[#375DEE]/10 to-transparent border border-[#375DEE]/30"
+          : "bg-white/[0.03] border border-white/10"
+      }`}>
+        <div className="flex items-center gap-4">
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+            settings.auto_respond ? "bg-[#375DEE]/20" : "bg-white/10"
+          }`}>
+            {settings.auto_respond ? (
+              <Zap className="w-6 h-6 text-[#375DEE]" />
+            ) : (
+              <Bot className="w-6 h-6 text-white/40" />
+            )}
+          </div>
+          <div>
+            <p className="font-semibold text-lg">
+              {settings.auto_respond ? "AI Agent is ON" : "AI Agent is OFF"}
+            </p>
+            <p className="text-sm text-white/50">
+              {settings.auto_respond
+                ? "Automatically responding to incoming SMS messages"
+                : "Turn on to enable automatic SMS responses"}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            setSettings({ ...settings, auto_respond: !settings.auto_respond })
+          }}
+          className={`relative w-16 h-9 rounded-full transition-colors ${
+            settings.auto_respond ? "bg-[#375DEE]" : "bg-white/20"
+          }`}
+        >
+          <div
+            className={`absolute top-1 w-7 h-7 rounded-full bg-white shadow-lg transition-all ${
+              settings.auto_respond ? "left-8" : "left-1"
+            }`}
+          />
+        </button>
       </div>
 
       {/* Tabs */}

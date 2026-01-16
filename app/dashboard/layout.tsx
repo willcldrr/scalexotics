@@ -22,19 +22,36 @@ import {
   MessageSquare,
   UserCircle,
   Receipt,
+  Plug,
+  ClipboardCheck,
+  Truck,
+  Globe,
+  Shield,
+  FileText,
+  Key,
 } from "lucide-react"
 
+// Ordered by frequency of use for rental fleet owners
 const allNavItems = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard, key: "overview", alwaysVisible: true },
-  { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3, key: "analytics" },
   { name: "Inbox", href: "/dashboard/inbox", icon: MessageSquare, key: "inbox" },
   { name: "Leads", href: "/dashboard/leads", icon: Users, key: "leads" },
-  { name: "Customers", href: "/dashboard/customers", icon: UserCircle, key: "customers" },
   { name: "Bookings", href: "/dashboard/bookings", icon: CalendarCheck, key: "bookings" },
+  { name: "Customers", href: "/dashboard/customers", icon: UserCircle, key: "customers" },
   { name: "Vehicles", href: "/dashboard/vehicles", icon: Car, key: "vehicles" },
+  { name: "Inspections", href: "/dashboard/inspections", icon: ClipboardCheck, key: "inspections" },
+  { name: "Deliveries", href: "/dashboard/deliveries", icon: Truck, key: "deliveries" },
   { name: "Billing", href: "/dashboard/billing", icon: Receipt, key: "billing" },
+  { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3, key: "analytics" },
   { name: "AI Assistant", href: "/dashboard/ai-assistant", icon: Bot, key: "ai-assistant" },
+  { name: "Connections", href: "/dashboard/connections", icon: Plug, key: "connections" },
   { name: "Settings", href: "/dashboard/settings", icon: Settings, key: "settings", alwaysVisible: true },
+]
+
+const adminNavItems = [
+  { name: "Domains", href: "/dashboard/admin/domains", icon: Globe, key: "admin-domains" },
+  { name: "Invoices", href: "/dashboard/admin/invoices", icon: FileText, key: "admin-invoices" },
+  { name: "Access Codes", href: "/dashboard/admin/access-codes", icon: Key, key: "admin-access-codes" },
 ]
 
 export default function DashboardLayout({
@@ -125,7 +142,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1">
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const isActive = pathname === item.href ||
                 (item.href !== "/dashboard" && pathname.startsWith(item.href))
@@ -146,6 +163,38 @@ export default function DashboardLayout({
                 </Link>
               )
             })}
+
+            {/* Admin Section */}
+            {profile?.is_admin && (
+              <>
+                <div className="pt-4 pb-2 px-4">
+                  <p className="text-xs font-semibold text-white/30 uppercase tracking-wider flex items-center gap-2">
+                    <Shield className="w-3 h-3" />
+                    Admin
+                  </p>
+                </div>
+                {adminNavItems.map((item) => {
+                  const isActive = pathname === item.href ||
+                    (item.href !== "/dashboard" && pathname.startsWith(item.href))
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                        isActive
+                          ? "bg-[#375DEE] text-white"
+                          : "text-white/60 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      <span className="font-medium">{item.name}</span>
+                      {isActive && <ChevronRight className="w-4 h-4 ml-auto" />}
+                    </Link>
+                  )
+                })}
+              </>
+            )}
           </nav>
 
           {/* User section */}

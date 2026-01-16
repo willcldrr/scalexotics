@@ -1,39 +1,18 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { createClient } from "@/lib/supabase/client"
-import { Settings, User, ClipboardList, Code, Key, FileText, PanelLeft, Calendar } from "lucide-react"
+import { useState } from "react"
+import { User, ClipboardList, Code, PanelLeft, Calendar, Palette } from "lucide-react"
 
 // Import tab content
 import AccountSettings from "./account-settings"
 import LeadCaptureSettings from "./lead-capture-settings"
 import WidgetSettings from "./widget-settings"
-import AccessCodesSettings from "./access-codes-settings"
-import InvoicesSettings from "./invoices-settings"
 import SidebarSettings from "./sidebar-settings"
 import CalendarSettings from "./calendar-settings"
+import BrandingSettings from "./branding-settings"
 
 export default function SettingsPage() {
-  const supabase = createClient()
-  const [activeTab, setActiveTab] = useState<"account" | "lead-capture" | "widget" | "calendar" | "sidebar" | "access-codes" | "invoices">("account")
-  const [isAdmin, setIsAdmin] = useState(false)
-
-  useEffect(() => {
-    checkAdmin()
-  }, [])
-
-  const checkAdmin = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", user.id)
-        .single()
-
-      setIsAdmin(profile?.is_admin || false)
-    }
-  }
+  const [activeTab, setActiveTab] = useState<"account" | "lead-capture" | "widget" | "calendar" | "sidebar" | "branding">("account")
 
   return (
     <div className="space-y-6">
@@ -102,32 +81,17 @@ export default function SettingsPage() {
           <PanelLeft className="w-4 h-4" />
           Sidebar
         </button>
-        {isAdmin && (
-          <>
-            <button
-              onClick={() => setActiveTab("invoices")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
-                activeTab === "invoices"
-                  ? "bg-[#375DEE] text-white"
-                  : "text-white/60 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              Invoices
-            </button>
-            <button
-              onClick={() => setActiveTab("access-codes")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
-                activeTab === "access-codes"
-                  ? "bg-[#375DEE] text-white"
-                  : "text-white/60 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Key className="w-4 h-4" />
-              Access Codes
-            </button>
-          </>
-        )}
+        <button
+          onClick={() => setActiveTab("branding")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+            activeTab === "branding"
+              ? "bg-[#375DEE] text-white"
+              : "text-white/60 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <Palette className="w-4 h-4" />
+          Branding
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -136,8 +100,7 @@ export default function SettingsPage() {
       {activeTab === "widget" && <WidgetSettings />}
       {activeTab === "calendar" && <CalendarSettings />}
       {activeTab === "sidebar" && <SidebarSettings />}
-      {activeTab === "invoices" && isAdmin && <InvoicesSettings />}
-      {activeTab === "access-codes" && isAdmin && <AccessCodesSettings />}
+      {activeTab === "branding" && <BrandingSettings />}
     </div>
   )
 }

@@ -52,6 +52,12 @@ interface Vehicle {
   year: number
 }
 
+interface CustomDomain {
+  domain: string
+  verified: boolean
+  ssl_status: string
+}
+
 const defaultConfig: Partial<SurveyConfig> = {
   business_name: "",
   logo_url: null,
@@ -77,6 +83,7 @@ export default function LeadCapturePage() {
   const supabase = createClient()
   const [surveys, setSurveys] = useState<SurveyConfig[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [customDomain, setCustomDomain] = useState<CustomDomain | null>(null)
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingSurvey, setEditingSurvey] = useState<SurveyConfig | null>(null)
@@ -99,7 +106,7 @@ export default function LeadCapturePage() {
       return
     }
 
-    const [surveysRes, vehiclesRes] = await Promise.all([
+    const [surveysRes, vehiclesRes, domainRes] = await Promise.all([
       supabase
         .from("survey_config")
         .select("*")
@@ -111,10 +118,17 @@ export default function LeadCapturePage() {
         .eq("user_id", user.id)
         .eq("status", "available")
         .order("make", { ascending: true }),
+      supabase
+        .from("custom_domains")
+        .select("domain, verified, ssl_status")
+        .eq("user_id", user.id)
+        .limit(1)
+        .single(),
     ])
 
     setSurveys(surveysRes.data || [])
     setVehicles(vehiclesRes.data || [])
+    setCustomDomain(domainRes.data || null)
     setLoading(false)
   }
 
@@ -269,7 +283,19 @@ export default function LeadCapturePage() {
   }
 
   const getSurveyUrl = (slug: string) => {
-    return `https://rentalcapture.xyz/${slug}`
+    // Use custom domain if configured and verified
+    if (customDomain?.verified && customDomain.ssl_status === "active") {
+      return `https://${customDomain.domain}/lead/${slug}`
+    }
+    // Fallback to scalexotics.com/lead/{slug}
+    return `https://scalexotics.com/lead/${slug}`
+  }
+
+  const getDomainPrefix = () => {
+    if (customDomain?.verified && customDomain.ssl_status === "active") {
+      return `${customDomain.domain}/lead/`
+    }
+    return "scalexotics.com/lead/"
   }
 
   if (loading) {
@@ -500,7 +526,7 @@ export default function LeadCapturePage() {
                   <div>
                     <label className="block text-sm text-white/60 mb-2">Survey URL Slug *</label>
                     <div className="flex items-center gap-2">
-                      <span className="text-white/40">rentalcapture.xyz/</span>
+                      <span className="text-white/40 text-sm">{getDomainPrefix()}</span>
                       <input
                         type="text"
                         placeholder="miami-exotics"
@@ -511,6 +537,11 @@ export default function LeadCapturePage() {
                       />
                     </div>
                     <p className="text-xs text-white/40 mt-2">Lowercase letters, numbers, and hyphens only</p>
+                    {!customDomain?.verified && (
+                      <p className="text-xs text-yellow-400/80 mt-1">
+                        Set up a custom domain in Settings → Branding to use your own domain
+                      </p>
+                    )}
                   </div>
 
                   <div>
