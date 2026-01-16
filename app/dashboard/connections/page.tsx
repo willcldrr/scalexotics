@@ -32,7 +32,7 @@ const integrations = [
     name: "Stripe",
     category: "Payment Processing",
     description: "Accept payments, manage subscriptions, and handle payouts securely.",
-    icon: "https://cdn.brandfetch.io/idxAg10C0L/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/stripe/white",
     popular: true,
   },
   {
@@ -40,14 +40,14 @@ const integrations = [
     name: "Square",
     category: "Payment Processing",
     description: "Process in-person and online payments with Square's payment platform.",
-    icon: "https://cdn.brandfetch.io/id2S-kXbuq/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/square/white",
   },
   {
     id: "paypal",
     name: "PayPal Business",
     category: "Payment Processing",
     description: "Accept PayPal payments and manage business transactions.",
-    icon: "https://cdn.brandfetch.io/idnHHZuOR0/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/paypal/white",
   },
 
   // Accounting
@@ -56,7 +56,7 @@ const integrations = [
     name: "QuickBooks Online",
     category: "Accounting",
     description: "Sync invoices, expenses, and financial data automatically.",
-    icon: "https://cdn.brandfetch.io/idtVGfbF2J/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/quickbooks/2CA01C",
     popular: true,
   },
   {
@@ -64,21 +64,21 @@ const integrations = [
     name: "Xero",
     category: "Accounting",
     description: "Cloud accounting software for small business bookkeeping.",
-    icon: "https://cdn.brandfetch.io/idxpVeMkjd/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/xero/13B5EA",
   },
   {
     id: "freshbooks",
     name: "FreshBooks",
     category: "Accounting",
     description: "Invoicing, expenses, and time tracking for small businesses.",
-    icon: "https://cdn.brandfetch.io/idLbdx3pE4/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/freshbooks/0075DD",
   },
   {
     id: "wave",
     name: "Wave",
     category: "Accounting",
     description: "Free accounting software for small businesses.",
-    icon: "https://cdn.brandfetch.io/idF0NJKC2K/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/wave/1C6DD0",
   },
 
   // CRM
@@ -87,7 +87,7 @@ const integrations = [
     name: "Salesforce",
     category: "CRM",
     description: "Sync leads, contacts, and deals with the world's #1 CRM.",
-    icon: "https://cdn.brandfetch.io/id6a3zspvr/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/salesforce/00A1E0",
     popular: true,
   },
   {
@@ -95,7 +95,7 @@ const integrations = [
     name: "HubSpot",
     category: "CRM",
     description: "Marketing, sales, and service software that grows with you.",
-    icon: "https://cdn.brandfetch.io/id3b6rHB-S/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/hubspot/FF7A59",
     popular: true,
   },
   {
@@ -103,14 +103,14 @@ const integrations = [
     name: "Zoho CRM",
     category: "CRM",
     description: "Comprehensive CRM for managing customer relationships.",
-    icon: "https://cdn.brandfetch.io/idzZTEr_1z/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/zoho/C8202B",
   },
   {
     id: "pipedrive",
     name: "Pipedrive",
     category: "CRM",
     description: "Sales CRM and pipeline management software.",
-    icon: "https://cdn.brandfetch.io/idQFVN4drY/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/pipedrive/1A1919",
   },
 
   // Calendar & Scheduling
@@ -119,7 +119,7 @@ const integrations = [
     name: "Google Calendar",
     category: "Calendar & Scheduling",
     description: "Sync bookings with Google Calendar for seamless scheduling.",
-    icon: "https://cdn.brandfetch.io/idnrCPuv87/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/googlecalendar/4285F4",
     popular: true,
   },
   {
@@ -127,21 +127,21 @@ const integrations = [
     name: "Microsoft Outlook",
     category: "Calendar & Scheduling",
     description: "Sync with Outlook calendar and email for booking management.",
-    icon: "https://cdn.brandfetch.io/idchmboHEZ/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/microsoftoutlook/0078D4",
   },
   {
     id: "calendly",
     name: "Calendly",
     category: "Calendar & Scheduling",
     description: "Automate scheduling with clients and prospects.",
-    icon: "https://cdn.brandfetch.io/idiyDu_Eq6/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/calendly/006BFF",
   },
   {
     id: "cal",
     name: "Cal.com",
     category: "Calendar & Scheduling",
     description: "Open-source scheduling infrastructure for everyone.",
-    icon: "https://cdn.brandfetch.io/idEPy2A5vH/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/caldotcom/white",
   },
 
   // Communication
@@ -150,7 +150,7 @@ const integrations = [
     name: "Twilio",
     category: "Communication",
     description: "SMS, voice, and messaging APIs for customer communication.",
-    icon: "https://cdn.brandfetch.io/idz6myLq9M/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/twilio/F22F46",
     popular: true,
   },
   {
@@ -158,21 +158,21 @@ const integrations = [
     name: "SendGrid",
     category: "Communication",
     description: "Email delivery and marketing campaigns at scale.",
-    icon: "https://cdn.brandfetch.io/idySVoh4ni/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/sendgrid/1A82E2",
   },
   {
     id: "mailchimp",
     name: "Mailchimp",
     category: "Communication",
     description: "Email marketing, automation, and CRM platform.",
-    icon: "https://cdn.brandfetch.io/idXvLRDzyN/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/mailchimp/FFE01B",
   },
   {
     id: "slack",
     name: "Slack",
     category: "Communication",
     description: "Get notifications and updates directly in Slack channels.",
-    icon: "https://cdn.brandfetch.io/id8Rj76cg5/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/slack/4A154B",
   },
 
   // Fleet & GPS Tracking
@@ -196,7 +196,7 @@ const integrations = [
     name: "Samsara",
     category: "Fleet & GPS",
     description: "Connected operations platform for fleet management.",
-    icon: "https://cdn.brandfetch.io/id-pR5wvM9/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/samsara/white",
   },
   {
     id: "vyncs",
@@ -212,7 +212,7 @@ const integrations = [
     name: "Turo",
     category: "Marketplaces",
     description: "Sync your fleet with the world's largest car sharing marketplace.",
-    icon: "https://cdn.brandfetch.io/idmSKXamxf/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/turo/00AFF5",
     popular: true,
   },
   {
@@ -220,7 +220,7 @@ const integrations = [
     name: "Getaround",
     category: "Marketplaces",
     description: "Connect with Getaround's car sharing platform.",
-    icon: "https://cdn.brandfetch.io/idoD_8rCVo/theme/dark/symbol.svg",
+    icon: null,
   },
   {
     id: "hyrecar",
@@ -236,7 +236,7 @@ const integrations = [
     name: "WordPress",
     category: "Website",
     description: "Embed booking widgets on your WordPress site.",
-    icon: "https://cdn.brandfetch.io/idc7V-ENhY/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/wordpress/21759B",
     popular: true,
   },
   {
@@ -244,21 +244,21 @@ const integrations = [
     name: "Webflow",
     category: "Website",
     description: "Integrate booking functionality into Webflow sites.",
-    icon: "https://cdn.brandfetch.io/idxoT1llUJ/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/webflow/4353FF",
   },
   {
     id: "wix",
     name: "Wix",
     category: "Website",
     description: "Add booking capabilities to your Wix website.",
-    icon: "https://cdn.brandfetch.io/idh8WS8VdP/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/wix/0C6EFC",
   },
   {
     id: "squarespace",
     name: "Squarespace",
     category: "Website",
     description: "Seamlessly integrate with Squarespace websites.",
-    icon: "https://cdn.brandfetch.io/iddrQ-YB7q/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/squarespace/white",
   },
 
   // Documents & Contracts
@@ -267,7 +267,7 @@ const integrations = [
     name: "DocuSign",
     category: "Documents",
     description: "Electronic signatures for rental agreements and contracts.",
-    icon: "https://cdn.brandfetch.io/idlprggzgB/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/docusign/FFCC22",
     popular: true,
   },
   {
@@ -275,14 +275,14 @@ const integrations = [
     name: "HelloSign",
     category: "Documents",
     description: "Simple and secure electronic signatures.",
-    icon: "https://cdn.brandfetch.io/idCIqKJCeL/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/hellosign/00B3E6",
   },
   {
     id: "pandadoc",
     name: "PandaDoc",
     category: "Documents",
     description: "Document automation and electronic signatures.",
-    icon: "https://cdn.brandfetch.io/idblkJWv7Z/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/pandadoc/4FBE67",
   },
 
   // Automation
@@ -291,7 +291,7 @@ const integrations = [
     name: "Zapier",
     category: "Automation",
     description: "Connect Scale Exotics to 5,000+ apps with automated workflows.",
-    icon: "https://cdn.brandfetch.io/idiMeFZ01U/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/zapier/FF4A00",
     popular: true,
   },
   {
@@ -299,14 +299,14 @@ const integrations = [
     name: "Make (Integromat)",
     category: "Automation",
     description: "Visual automation platform for complex workflows.",
-    icon: "https://cdn.brandfetch.io/id0eiGGvCw/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/make/6D00CC",
   },
   {
     id: "n8n",
     name: "n8n",
     category: "Automation",
     description: "Open-source workflow automation tool.",
-    icon: "https://cdn.brandfetch.io/idNRsem2WV/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/n8n/EA4B71",
   },
 
   // Analytics
@@ -315,7 +315,7 @@ const integrations = [
     name: "Google Analytics",
     category: "Analytics",
     description: "Track website traffic and user behavior analytics.",
-    icon: "https://cdn.brandfetch.io/idnrCPuv87/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/googleanalytics/E37400",
     popular: true,
   },
   {
@@ -323,7 +323,7 @@ const integrations = [
     name: "Mixpanel",
     category: "Analytics",
     description: "Product analytics for understanding user behavior.",
-    icon: "https://cdn.brandfetch.io/idW-KM9gVJ/theme/dark/symbol.svg",
+    icon: "https://cdn.simpleicons.org/mixpanel/7856FF",
   },
 ]
 

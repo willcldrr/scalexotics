@@ -63,6 +63,7 @@ export default function BrandingSettings() {
   const [error, setError] = useState<string | null>(null)
   const [domainSaving, setDomainSaving] = useState(false)
   const [domainError, setDomainError] = useState<string | null>(null)
+  const [domainVerifying, setDomainVerifying] = useState(false)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -173,49 +174,59 @@ export default function BrandingSettings() {
     setDomainSaving(true)
     setDomainError(null)
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      setDomainError("Not authenticated")
-      setDomainSaving(false)
-      return
-    }
-
-    // Clean domain (remove protocol, trailing slash)
-    const cleanDomain = newDomain
-      .replace(/^https?:\/\//, "")
-      .replace(/\/.*$/, "")
-      .toLowerCase()
-      .trim()
-
-    // Validate domain format
-    const domainRegex = /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/
-    if (!domainRegex.test(cleanDomain)) {
-      setDomainError("Please enter a valid domain (e.g., book.yourdomain.com)")
-      setDomainSaving(false)
-      return
-    }
-
-    const { data, error } = await supabase
-      .from("custom_domains")
-      .insert({
-        user_id: user.id,
-        domain: cleanDomain,
+    try {
+      const response = await fetch("/api/domains/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: newDomain.trim() }),
       })
-      .select()
-      .single()
 
-    if (error) {
-      if (error.code === "23505") {
-        setDomainError("This domain is already in use")
+      const data = await response.json()
+
+      if (!response.ok) {
+        setDomainError(data.error || "Failed to add domain")
       } else {
-        setDomainError(error.message)
+        setCustomDomain(data.domain)
+        setNewDomain("")
+        if (data.vercelError) {
+          setDomainError(data.vercelError)
+        }
       }
-    } else {
-      setCustomDomain(data)
-      setNewDomain("")
+    } catch (err) {
+      setDomainError("Failed to add domain. Please try again.")
     }
 
     setDomainSaving(false)
+  }
+
+  const handleVerifyDomain = async () => {
+    if (!customDomain) return
+
+    setDomainVerifying(true)
+    setDomainError(null)
+
+    try {
+      const response = await fetch("/api/domains/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      })
+
+      const data = await response.json()
+
+      if (data.domain) {
+        setCustomDomain(data.domain)
+      }
+
+      if (data.error) {
+        setDomainError(data.error)
+      } else if (!data.domain?.verified) {
+        setDomainError(data.message || "DNS not configured yet. Please wait a few minutes and try again.")
+      }
+    } catch (err) {
+      setDomainError("Failed to verify domain. Please try again.")
+    }
+
+    setDomainVerifying(false)
   }
 
   const handleRemoveDomain = async () => {
@@ -301,6 +312,14 @@ export default function BrandingSettings() {
               </button>
             </div>
 
+            {/* Domain Error Display */}
+            {domainError && (
+              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                {domainError}
+              </div>
+            )}
+
             {/* DNS Setup Instructions */}
             {!customDomain.verified && (
               <div className="space-y-4">
@@ -319,6 +338,18 @@ export default function BrandingSettings() {
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold text-white/40">3</div>
                     <span className="text-white/40">Verified</span>
+                  </div>
+                </div>
+
+                {/* Safety Notice */}
+                <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-medium text-green-400 mb-1">Your main website will NOT be affected</p>
+                    <p className="text-white/60">
+                      You're adding a <span className="text-white font-medium">new subdomain</span> ({customDomain.domain.split(".")[0]}) that points to Scale Exotics.
+                      Your existing website at <span className="text-white font-mono">{customDomain.domain.split(".").slice(1).join(".")}</span> will continue working normally.
+                    </p>
                   </div>
                 </div>
 
@@ -347,7 +378,8 @@ export default function BrandingSettings() {
                       <h5 className="font-medium text-white">Add a new CNAME record</h5>
                     </div>
                     <p className="text-white/60 text-sm ml-8">
-                      Create a new DNS record with these exact values:
+                      Click "Add Record" or "Add DNS Record" and create a <span className="text-white font-medium">new</span> record with these exact values.
+                      <span className="text-yellow-400"> Do NOT edit any existing records.</span>
                     </p>
                     <div className="ml-8 bg-black/30 rounded-xl p-4 space-y-3">
                       <div className="grid grid-cols-3 gap-4 text-sm">
@@ -394,11 +426,30 @@ export default function BrandingSettings() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-[#375DEE] flex items-center justify-center text-xs font-bold text-white">3</div>
-                      <h5 className="font-medium text-white">Save and wait for verification</h5>
+                      <h5 className="font-medium text-white">Save and verify your DNS</h5>
                     </div>
                     <p className="text-white/60 text-sm ml-8">
-                      Save your DNS changes. It usually takes 5-15 minutes, but can take up to 48 hours. We'll automatically detect when it's ready.
+                      Save your DNS changes, then click the button below to verify. DNS propagation usually takes 5-15 minutes, but can take up to 48 hours.
                     </p>
+                    <div className="ml-8 mt-3">
+                      <button
+                        onClick={handleVerifyDomain}
+                        disabled={domainVerifying}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors"
+                      >
+                        {domainVerifying ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Checking DNS...
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-4 h-4" />
+                            Verify DNS Configuration
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Provider-specific help */}
@@ -518,18 +569,26 @@ export default function BrandingSettings() {
             </div>
 
             {/* Examples */}
-            <div className="p-4 bg-white/5 rounded-xl">
-              <p className="text-white/60 text-sm mb-2">Popular subdomain choices:</p>
-              <div className="flex flex-wrap gap-2">
-                {["book", "rentals", "reserve", "cars", "fleet"].map((sub) => (
-                  <button
-                    key={sub}
-                    onClick={() => setNewDomain(`${sub}.yourdomain.com`)}
-                    className="text-xs px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors font-mono"
-                  >
-                    {sub}.yourdomain.com
-                  </button>
-                ))}
+            <div className="p-4 bg-white/5 rounded-xl space-y-3">
+              <div>
+                <p className="text-white/70 text-sm font-medium mb-1">Why a subdomain?</p>
+                <p className="text-white/50 text-xs">
+                  Using a subdomain (like book.yoursite.com) keeps your main website working normally while giving your customers a branded booking experience.
+                </p>
+              </div>
+              <div>
+                <p className="text-white/60 text-sm mb-2">Popular subdomain choices:</p>
+                <div className="flex flex-wrap gap-2">
+                  {["book", "rentals", "reserve", "cars", "fleet"].map((sub) => (
+                    <button
+                      key={sub}
+                      onClick={() => setNewDomain(`${sub}.yourdomain.com`)}
+                      className="text-xs px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors font-mono"
+                    >
+                      {sub}.yourdomain.com
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
