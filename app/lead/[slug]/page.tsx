@@ -1,8 +1,7 @@
 "use client"
 
 import { useState, useEffect, use } from "react"
-import { Loader2, CheckCircle, AlertCircle, ChevronRight, Calendar, Car, User, Phone, Mail, Clock } from "lucide-react"
-import Image from "next/image"
+import { Loader2, CheckCircle, AlertCircle, ChevronRight, ChevronLeft, Calendar, Car, User, Phone, Mail } from "lucide-react"
 
 interface SurveyConfig {
   business_name: string
@@ -36,13 +35,21 @@ interface Vehicle {
   image_url: string | null
 }
 
+interface Availability {
+  vehicle_id: string
+  start_date: string
+  end_date: string
+}
+
 interface FormData {
   name: string
   email: string
   phone: string
   age: string
   vehicle_interest: string
-  dates: string
+  vehicle_id: string
+  start_date: string
+  end_date: string
 }
 
 export default function LeadCapturePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -57,6 +64,7 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
   const [config, setConfig] = useState<SurveyConfig | null>(null)
   const [apiKey, setApiKey] = useState<string | null>(null)
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [availability, setAvailability] = useState<Availability[]>([])
 
   const [step, setStep] = useState(0)
   const [formData, setFormData] = useState<FormData>({
@@ -65,8 +73,14 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
     phone: "",
     age: "",
     vehicle_interest: "",
-    dates: "",
+    vehicle_id: "",
+    start_date: "",
+    end_date: "",
   })
+
+  // Calendar state
+  const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [selectingEndDate, setSelectingEndDate] = useState(false)
 
   useEffect(() => {
     fetchConfig()
@@ -86,6 +100,7 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
       setConfig(data.config)
       setApiKey(data.api_key)
       setVehicles(data.vehicles || [])
+      setAvailability(data.availability || [])
       setLoading(false)
     } catch (err) {
       console.error("Error fetching survey config:", err)
@@ -118,6 +133,110 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
     setStep(step + 1)
   }
 
+  const handleVehicleSelect = (vehicle: Vehicle) => {
+    setFormData({
+      ...formData,
+      vehicle_interest: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+      vehicle_id: vehicle.id,
+      start_date: "",
+      end_date: "",
+    })
+    setSelectingEndDate(false)
+    nextStep()
+  }
+
+  // Calendar helpers
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+  }
+
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay()
+  }
+
+  const formatDateISO = (date: Date) => {
+    return date.toISOString().split("T")[0]
+  }
+
+  const formatDateDisplay = (dateStr: string) => {
+    if (!dateStr) return ""
+    const date = new Date(dateStr + "T00:00:00")
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+  }
+
+  const isDateBlocked = (date: Date) => {
+    if (!formData.vehicle_id) return false
+    const dateStr = formatDateISO(date)
+    return availability.some(
+      (booking) =>
+        booking.vehicle_id === formData.vehicle_id &&
+        dateStr >= booking.start_date &&
+        dateStr <= booking.end_date
+    )
+  }
+
+  const isDateInPast = (date: Date) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return date < today
+  }
+
+  const isDateInRange = (date: Date) => {
+    if (!formData.start_date || !formData.end_date) return false
+    const dateStr = formatDateISO(date)
+    return dateStr >= formData.start_date && dateStr <= formData.end_date
+  }
+
+  const isStartDate = (date: Date) => {
+    return formData.start_date === formatDateISO(date)
+  }
+
+  const isEndDate = (date: Date) => {
+    return formData.end_date === formatDateISO(date)
+  }
+
+  const handleDateClick = (date: Date) => {
+    if (isDateBlocked(date) || isDateInPast(date)) return
+
+    const dateStr = formatDateISO(date)
+
+    if (!formData.start_date || !selectingEndDate) {
+      setFormData({ ...formData, start_date: dateStr, end_date: "" })
+      setSelectingEndDate(true)
+    } else {
+      if (dateStr < formData.start_date) {
+        setFormData({ ...formData, start_date: dateStr, end_date: "" })
+      } else {
+        // Check if any date in range is blocked
+        const start = new Date(formData.start_date + "T00:00:00")
+        const end = new Date(dateStr + "T00:00:00")
+        let hasBlockedDate = false
+        const checkDate = new Date(start)
+        while (checkDate <= end) {
+          if (isDateBlocked(checkDate)) {
+            hasBlockedDate = true
+            break
+          }
+          checkDate.setDate(checkDate.getDate() + 1)
+        }
+        if (hasBlockedDate) {
+          setFormData({ ...formData, start_date: dateStr, end_date: "" })
+        } else {
+          setFormData({ ...formData, end_date: dateStr })
+          setSelectingEndDate(false)
+        }
+      }
+    }
+  }
+
+  const prevMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))
+  }
+
+  const nextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))
+  }
+
   const handleSubmit = async () => {
     if (!apiKey) {
       setError("Configuration error. Please try again later.")
@@ -142,8 +261,10 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
         payload.vehicle_interest = formData.vehicle_interest
       }
 
-      if (formData.dates) {
-        payload.notes = `Dates: ${formData.dates}`
+      if (formData.start_date && formData.end_date) {
+        payload.notes = `Dates: ${formatDateDisplay(formData.start_date)} - ${formatDateDisplay(formData.end_date)}`
+      } else if (formData.start_date) {
+        payload.notes = `Date: ${formatDateDisplay(formData.start_date)}`
       }
 
       const response = await fetch("/api/leads/capture", {
@@ -169,16 +290,16 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
     }
   }
 
-  // Calculate total steps based on enabled fields
+  // Calculate total steps based on enabled fields - new order: name, phone, vehicle, dates, email, age
   const getSteps = () => {
     if (!config) return []
     const steps: string[] = []
     if (config.fields.name) steps.push("name")
     if (config.fields.phone) steps.push("phone")
-    if (config.fields.email) steps.push("email")
-    if (config.fields.age) steps.push("age")
     if (config.fields.vehicle && vehicles.length > 0) steps.push("vehicle")
     if (config.fields.dates) steps.push("dates")
+    if (config.fields.email) steps.push("email")
+    if (config.fields.age) steps.push("age")
     return steps
   }
 
@@ -305,7 +426,243 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
     )
   }
 
-  // Form steps
+  // Fullscreen Vehicle Selection
+  if (currentStepName === "vehicle") {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ backgroundColor }}>
+        {/* Header */}
+        <div className="p-4 flex items-center justify-between border-b border-white/10">
+          {config.logo_url ? (
+            <img src={config.logo_url} alt={config.business_name} className="h-8" />
+          ) : (
+            <span className="text-white font-semibold">{config.business_name}</span>
+          )}
+          <span className="text-white/40 text-sm">{step + 1} of {steps.length}</span>
+        </div>
+
+        {/* Title */}
+        <div className="p-6 text-center">
+          <Car className="w-10 h-10 mx-auto mb-3" style={{ color: primaryColor }} />
+          <h2 className="text-2xl font-bold text-white mb-1">Which car interests you?</h2>
+          <p className="text-white/60 text-sm">Tap to select a vehicle</p>
+        </div>
+
+        {/* Vehicle Grid - Full Height Scrollable */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
+          <div className="grid gap-4">
+            {vehicles.map((vehicle) => (
+              <button
+                key={vehicle.id}
+                onClick={() => handleVehicleSelect(vehicle)}
+                className="w-full rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all overflow-hidden text-left"
+              >
+                {vehicle.image_url && (
+                  <div className="aspect-video w-full bg-black/30">
+                    <img
+                      src={vehicle.image_url}
+                      alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold text-white">
+                    {vehicle.year} {vehicle.make} {vehicle.model}
+                  </h3>
+                  <p className="text-white/60">${vehicle.daily_rate}/day</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Skip Button */}
+        <div className="p-4 border-t border-white/10">
+          <button
+            onClick={nextStep}
+            className="w-full py-3 text-white/60 hover:text-white transition-colors"
+          >
+            Skip - Not sure yet
+          </button>
+          <div className="mt-4 h-1 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full transition-all duration-300"
+              style={{ width: `${progress}%`, backgroundColor: primaryColor }}
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Calendar Date Selection
+  if (currentStepName === "dates") {
+    const daysInMonth = getDaysInMonth(currentMonth)
+    const firstDay = getFirstDayOfMonth(currentMonth)
+    const monthYear = currentMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+    const today = new Date()
+    const canGoPrev = currentMonth.getFullYear() > today.getFullYear() ||
+      (currentMonth.getFullYear() === today.getFullYear() && currentMonth.getMonth() > today.getMonth())
+
+    return (
+      <div className="min-h-screen flex flex-col" style={{ backgroundColor }}>
+        {/* Header */}
+        <div className="p-4 flex items-center justify-between border-b border-white/10">
+          {config.logo_url ? (
+            <img src={config.logo_url} alt={config.business_name} className="h-8" />
+          ) : (
+            <span className="text-white font-semibold">{config.business_name}</span>
+          )}
+          <span className="text-white/40 text-sm">{step + 1} of {steps.length}</span>
+        </div>
+
+        {/* Title */}
+        <div className="p-6 text-center">
+          <Calendar className="w-10 h-10 mx-auto mb-3" style={{ color: primaryColor }} />
+          <h2 className="text-2xl font-bold text-white mb-1">
+            {selectingEndDate ? "Select end date" : "Select start date"}
+          </h2>
+          <p className="text-white/60 text-sm">
+            {formData.vehicle_interest
+              ? `For ${formData.vehicle_interest}`
+              : "When do you need the car?"}
+          </p>
+        </div>
+
+        {/* Selected Dates Display */}
+        {(formData.start_date || formData.end_date) && (
+          <div className="px-6 pb-4">
+            <div className="flex items-center justify-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
+              <div className="text-center">
+                <p className="text-xs text-white/40 mb-1">Start</p>
+                <p className="text-white font-medium">
+                  {formData.start_date ? formatDateDisplay(formData.start_date) : "—"}
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-white/40" />
+              <div className="text-center">
+                <p className="text-xs text-white/40 mb-1">End</p>
+                <p className="text-white font-medium">
+                  {formData.end_date ? formatDateDisplay(formData.end_date) : "—"}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Calendar */}
+        <div className="flex-1 px-4">
+          {/* Month Navigation */}
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={prevMonth}
+              disabled={!canGoPrev}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-5 h-5 text-white" />
+            </button>
+            <span className="text-white font-semibold">{monthYear}</span>
+            <button
+              onClick={nextMonth}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              <ChevronRight className="w-5 h-5 text-white" />
+            </button>
+          </div>
+
+          {/* Day Headers */}
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+              <div key={day} className="text-center text-xs text-white/40 py-2">
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Calendar Grid */}
+          <div className="grid grid-cols-7 gap-1">
+            {/* Empty cells for days before first of month */}
+            {Array.from({ length: firstDay }).map((_, i) => (
+              <div key={`empty-${i}`} className="aspect-square" />
+            ))}
+
+            {/* Days of the month */}
+            {Array.from({ length: daysInMonth }).map((_, i) => {
+              const day = i + 1
+              const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
+              const blocked = isDateBlocked(date)
+              const past = isDateInPast(date)
+              const inRange = isDateInRange(date)
+              const isStart = isStartDate(date)
+              const isEnd = isEndDate(date)
+              const disabled = blocked || past
+
+              return (
+                <button
+                  key={day}
+                  onClick={() => handleDateClick(date)}
+                  disabled={disabled}
+                  className={`aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-all
+                    ${disabled ? "text-white/20 cursor-not-allowed" : "hover:bg-white/10"}
+                    ${blocked ? "line-through" : ""}
+                    ${inRange && !isStart && !isEnd ? "bg-white/10 text-white" : ""}
+                    ${isStart || isEnd ? "text-white" : "text-white/70"}
+                  `}
+                  style={{
+                    backgroundColor: isStart || isEnd ? primaryColor : undefined,
+                  }}
+                >
+                  {day}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Legend */}
+          <div className="flex items-center justify-center gap-6 mt-6 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: primaryColor }} />
+              <span className="text-white/60">Selected</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-white/20 flex items-center justify-center">
+                <span className="text-white/40 line-through text-[10px]">X</span>
+              </div>
+              <span className="text-white/60">Unavailable</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Continue Button */}
+        <div className="p-4 border-t border-white/10">
+          <button
+            onClick={isLastStep ? handleSubmit : nextStep}
+            disabled={submitting}
+            className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-white font-semibold text-lg transition-all disabled:opacity-50"
+            style={{ backgroundColor: primaryColor }}
+          >
+            {submitting ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : isLastStep ? (
+              "Submit"
+            ) : formData.start_date && formData.end_date ? (
+              <>Continue<ChevronRight className="w-5 h-5" /></>
+            ) : (
+              "Skip"
+            )}
+          </button>
+          <div className="mt-4 h-1 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full transition-all duration-300"
+              style={{ width: `${progress}%`, backgroundColor: primaryColor }}
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Form steps (phone, email, age)
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor }}>
       {/* Header */}
@@ -362,13 +719,18 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
                 autoFocus
               />
               <button
-                onClick={nextStep}
+                onClick={isLastStep ? handleSubmit : nextStep}
                 disabled={config.require_email && !formData.email.includes("@")}
                 className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-white font-semibold text-lg transition-all disabled:opacity-50"
                 style={{ backgroundColor: primaryColor }}
               >
-                {config.require_email || formData.email ? "Continue" : "Skip"}
-                <ChevronRight className="w-5 h-5" />
+                {submitting ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : isLastStep ? (
+                  "Submit"
+                ) : (
+                  <>{config.require_email || formData.email ? "Continue" : "Skip"}<ChevronRight className="w-5 h-5" /></>
+                )}
               </button>
             </div>
           )}
@@ -390,85 +752,8 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
                 autoFocus
               />
               <button
-                onClick={handleAgeCheck}
-                disabled={!formData.age || parseInt(formData.age) < 18}
-                className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-white font-semibold text-lg transition-all disabled:opacity-50"
-                style={{ backgroundColor: primaryColor }}
-              >
-                Continue
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          )}
-
-          {/* Vehicle Step */}
-          {currentStepName === "vehicle" && (
-            <div>
-              <div className="text-center mb-6">
-                <Car className="w-12 h-12 mx-auto mb-4" style={{ color: primaryColor }} />
-                <h2 className="text-2xl font-bold text-white mb-2">Which car interests you?</h2>
-                <p className="text-white/60">Select one or skip if you&apos;re not sure</p>
-              </div>
-              <div className="space-y-3 max-h-80 overflow-y-auto mb-6">
-                {vehicles.map((vehicle) => (
-                  <button
-                    key={vehicle.id}
-                    onClick={() => setFormData({ ...formData, vehicle_interest: `${vehicle.year} ${vehicle.make} ${vehicle.model}` })}
-                    className={`w-full p-4 rounded-xl border text-left transition-all ${
-                      formData.vehicle_interest === `${vehicle.year} ${vehicle.make} ${vehicle.model}`
-                        ? "border-white/30 bg-white/10"
-                        : "border-white/10 bg-white/5 hover:bg-white/10"
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      {vehicle.image_url && (
-                        <img src={vehicle.image_url} alt={vehicle.name} className="w-16 h-12 object-cover rounded-lg" />
-                      )}
-                      <div className="flex-1">
-                        <p className="text-white font-medium">{vehicle.year} {vehicle.make} {vehicle.model}</p>
-                        <p className="text-white/50 text-sm">${vehicle.daily_rate}/day</p>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-              <button
-                onClick={isLastStep ? handleSubmit : nextStep}
-                disabled={submitting}
-                className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-white font-semibold text-lg transition-all disabled:opacity-50"
-                style={{ backgroundColor: primaryColor }}
-              >
-                {submitting ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : isLastStep ? (
-                  "Submit"
-                ) : (
-                  <>
-                    {formData.vehicle_interest ? "Continue" : "Skip"}
-                    <ChevronRight className="w-5 h-5" />
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-
-          {/* Dates Step */}
-          {currentStepName === "dates" && (
-            <div className="text-center">
-              <Calendar className="w-12 h-12 mx-auto mb-4" style={{ color: primaryColor }} />
-              <h2 className="text-2xl font-bold text-white mb-2">When do you need the car?</h2>
-              <p className="text-white/60 mb-6">Tell us your preferred dates</p>
-              <input
-                type="text"
-                placeholder="e.g., This Saturday to Sunday"
-                value={formData.dates}
-                onChange={(e) => setFormData({ ...formData, dates: e.target.value })}
-                className="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/10 text-white text-lg text-center placeholder:text-white/30 focus:outline-none focus:border-white/30"
-                autoFocus
-              />
-              <button
-                onClick={isLastStep ? handleSubmit : nextStep}
-                disabled={submitting}
+                onClick={isLastStep ? handleSubmit : handleAgeCheck}
+                disabled={!formData.age || parseInt(formData.age) < 18 || submitting}
                 className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-white font-semibold text-lg transition-all disabled:opacity-50"
                 style={{ backgroundColor: primaryColor }}
               >
@@ -477,10 +762,7 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
                 ) : isLastStep ? (
                   "Submit"
                 ) : (
-                  <>
-                    {formData.dates ? "Continue" : "Skip"}
-                    <ChevronRight className="w-5 h-5" />
-                  </>
+                  <>Continue<ChevronRight className="w-5 h-5" /></>
                 )}
               </button>
             </div>
