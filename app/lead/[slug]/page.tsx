@@ -374,29 +374,29 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
     return (
       <div className="min-h-screen flex flex-col" style={{ backgroundColor }}>
         {/* Header */}
-        <div className="p-6 text-center">
+        <div className="p-6 lg:p-8 text-center">
           {config.logo_url && (
-            <img src={config.logo_url} alt={config.business_name} className="h-10 mx-auto" />
+            <img src={config.logo_url} alt={config.business_name} className="h-10 lg:h-12 mx-auto" />
           )}
         </div>
 
         {/* Content */}
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <div className="max-w-md w-full text-center">
-            <h1 className="text-3xl font-bold text-white mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+        <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-8">
+          <div className="max-w-md lg:max-w-lg w-full text-center">
+            <h1 className="text-3xl lg:text-4xl font-bold text-white mb-3" style={{ fontFamily: 'var(--font-display)' }}>
               {config.welcome_title}
             </h1>
-            <p className="text-white/60 mb-8">{config.welcome_subtitle}</p>
+            <p className="text-white/60 mb-8 lg:text-lg">{config.welcome_subtitle}</p>
 
             {/* Name Input */}
             <div className="text-left mb-6">
-              <label className="block text-sm text-white/60 mb-2">What&apos;s your name?</label>
+              <label className="block text-sm lg:text-base text-white/60 mb-2">What&apos;s your name?</label>
               <input
                 type="text"
                 placeholder="Your full name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/10 text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-white/30"
+                className="w-full px-4 py-4 lg:py-5 rounded-xl bg-white/5 border border-white/10 text-white text-lg lg:text-xl placeholder:text-white/30 focus:outline-none focus:border-white/30"
                 autoFocus
               />
             </div>
@@ -404,22 +404,24 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
             <button
               onClick={nextStep}
               disabled={!formData.name.trim()}
-              className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-white font-semibold text-lg transition-all disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 px-6 py-4 lg:py-5 rounded-xl text-white font-semibold text-lg lg:text-xl transition-all disabled:opacity-50"
               style={{ backgroundColor: primaryColor }}
             >
               Continue
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-5 h-5 lg:w-6 lg:h-6" />
             </button>
           </div>
         </div>
 
         {/* Progress */}
-        <div className="p-6">
-          <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-            <div
-              className="h-full transition-all duration-300"
-              style={{ width: `${progress}%`, backgroundColor: primaryColor }}
-            />
+        <div className="p-6 lg:p-8">
+          <div className="max-w-md lg:max-w-lg mx-auto">
+            <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full transition-all duration-300"
+                style={{ width: `${progress}%`, backgroundColor: primaryColor }}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -431,64 +433,68 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
     return (
       <div className="min-h-screen flex flex-col" style={{ backgroundColor }}>
         {/* Header */}
-        <div className="p-4 flex items-center justify-between border-b border-white/10">
+        <div className="p-4 lg:p-6 flex items-center justify-between border-b border-white/10 max-w-7xl mx-auto w-full">
           {config.logo_url ? (
-            <img src={config.logo_url} alt={config.business_name} className="h-8" />
+            <img src={config.logo_url} alt={config.business_name} className="h-8 lg:h-10" />
           ) : (
-            <span className="text-white font-semibold">{config.business_name}</span>
+            <span className="text-white font-semibold text-lg">{config.business_name}</span>
           )}
           <span className="text-white/40 text-sm">{step + 1} of {steps.length}</span>
         </div>
 
         {/* Title */}
-        <div className="p-6 text-center">
-          <Car className="w-10 h-10 mx-auto mb-3" style={{ color: primaryColor }} />
-          <h2 className="text-2xl font-bold text-white mb-1">Which car interests you?</h2>
-          <p className="text-white/60 text-sm">Tap to select a vehicle</p>
+        <div className="p-6 lg:p-8 text-center">
+          <Car className="w-10 h-10 lg:w-12 lg:h-12 mx-auto mb-3" style={{ color: primaryColor }} />
+          <h2 className="text-2xl lg:text-3xl font-bold text-white mb-1">Which car interests you?</h2>
+          <p className="text-white/60 text-sm lg:text-base">Select a vehicle to continue</p>
         </div>
 
-        {/* Vehicle Grid - Full Height Scrollable */}
-        <div className="flex-1 overflow-y-auto px-4 pb-4">
-          <div className="grid gap-4">
-            {vehicles.map((vehicle) => (
-              <button
-                key={vehicle.id}
-                onClick={() => handleVehicleSelect(vehicle)}
-                className="w-full rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all overflow-hidden text-left"
-              >
-                {vehicle.image_url && (
-                  <div className="aspect-video w-full bg-black/30">
-                    <img
-                      src={vehicle.image_url}
-                      alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-                      className="w-full h-full object-cover"
-                    />
+        {/* Vehicle Grid - Responsive */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+              {vehicles.map((vehicle) => (
+                <button
+                  key={vehicle.id}
+                  onClick={() => handleVehicleSelect(vehicle)}
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all overflow-hidden text-left group"
+                >
+                  {vehicle.image_url && (
+                    <div className="aspect-video w-full bg-black/30 overflow-hidden">
+                      <img
+                        src={vehicle.image_url}
+                        alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  )}
+                  <div className="p-4 lg:p-5">
+                    <h3 className="text-lg lg:text-xl font-semibold text-white">
+                      {vehicle.year} {vehicle.make} {vehicle.model}
+                    </h3>
+                    <p className="text-white/60 lg:text-lg">${vehicle.daily_rate}/day</p>
                   </div>
-                )}
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-white">
-                    {vehicle.year} {vehicle.make} {vehicle.model}
-                  </h3>
-                  <p className="text-white/60">${vehicle.daily_rate}/day</p>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Skip Button */}
-        <div className="p-4 border-t border-white/10">
-          <button
-            onClick={nextStep}
-            className="w-full py-3 text-white/60 hover:text-white transition-colors"
-          >
-            Skip - Not sure yet
-          </button>
-          <div className="mt-4 h-1 bg-white/10 rounded-full overflow-hidden">
-            <div
-              className="h-full transition-all duration-300"
-              style={{ width: `${progress}%`, backgroundColor: primaryColor }}
-            />
+        <div className="p-4 lg:p-6 border-t border-white/10">
+          <div className="max-w-7xl mx-auto">
+            <button
+              onClick={nextStep}
+              className="w-full py-3 text-white/60 hover:text-white transition-colors"
+            >
+              Skip - Not sure yet
+            </button>
+            <div className="mt-4 h-1 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full transition-all duration-300"
+                style={{ width: `${progress}%`, backgroundColor: primaryColor }}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -507,155 +513,166 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
     return (
       <div className="min-h-screen flex flex-col" style={{ backgroundColor }}>
         {/* Header */}
-        <div className="p-4 flex items-center justify-between border-b border-white/10">
+        <div className="p-4 lg:p-6 flex items-center justify-between border-b border-white/10 max-w-4xl mx-auto w-full">
           {config.logo_url ? (
-            <img src={config.logo_url} alt={config.business_name} className="h-8" />
+            <img src={config.logo_url} alt={config.business_name} className="h-8 lg:h-10" />
           ) : (
-            <span className="text-white font-semibold">{config.business_name}</span>
+            <span className="text-white font-semibold text-lg">{config.business_name}</span>
           )}
           <span className="text-white/40 text-sm">{step + 1} of {steps.length}</span>
         </div>
 
-        {/* Title */}
-        <div className="p-6 text-center">
-          <Calendar className="w-10 h-10 mx-auto mb-3" style={{ color: primaryColor }} />
-          <h2 className="text-2xl font-bold text-white mb-1">
-            {selectingEndDate ? "Select end date" : "Select start date"}
-          </h2>
-          <p className="text-white/60 text-sm">
-            {formData.vehicle_interest
-              ? `For ${formData.vehicle_interest}`
-              : "When do you need the car?"}
-          </p>
-        </div>
-
-        {/* Selected Dates Display */}
-        {(formData.start_date || formData.end_date) && (
-          <div className="px-6 pb-4">
-            <div className="flex items-center justify-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
-              <div className="text-center">
-                <p className="text-xs text-white/40 mb-1">Start</p>
-                <p className="text-white font-medium">
-                  {formData.start_date ? formatDateDisplay(formData.start_date) : "—"}
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-white/40" />
-              <div className="text-center">
-                <p className="text-xs text-white/40 mb-1">End</p>
-                <p className="text-white font-medium">
-                  {formData.end_date ? formatDateDisplay(formData.end_date) : "—"}
-                </p>
-              </div>
+        {/* Content Container - Centered on Desktop */}
+        <div className="flex-1 flex flex-col lg:justify-center overflow-y-auto">
+          <div className="max-w-lg mx-auto w-full px-4 lg:px-6 py-6">
+            {/* Title */}
+            <div className="text-center mb-6">
+              <Calendar className="w-10 h-10 lg:w-12 lg:h-12 mx-auto mb-3" style={{ color: primaryColor }} />
+              <h2 className="text-2xl lg:text-3xl font-bold text-white mb-1">
+                {selectingEndDate ? "Select end date" : "Select start date"}
+              </h2>
+              <p className="text-white/60 text-sm lg:text-base">
+                {formData.vehicle_interest
+                  ? `For ${formData.vehicle_interest}`
+                  : "When do you need the car?"}
+              </p>
             </div>
-          </div>
-        )}
 
-        {/* Calendar */}
-        <div className="flex-1 px-4">
-          {/* Month Navigation */}
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={prevMonth}
-              disabled={!canGoPrev}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-5 h-5 text-white" />
-            </button>
-            <span className="text-white font-semibold">{monthYear}</span>
-            <button
-              onClick={nextMonth}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              <ChevronRight className="w-5 h-5 text-white" />
-            </button>
-          </div>
-
-          {/* Day Headers */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div key={day} className="text-center text-xs text-white/40 py-2">
-                {day}
+            {/* Selected Dates Display */}
+            {(formData.start_date || formData.end_date) && (
+              <div className="mb-6">
+                <div className="flex items-center justify-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                  <div className="text-center">
+                    <p className="text-xs lg:text-sm text-white/40 mb-1">Start</p>
+                    <p className="text-white font-medium lg:text-lg">
+                      {formData.start_date ? formatDateDisplay(formData.start_date) : "—"}
+                    </p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-white/40" />
+                  <div className="text-center">
+                    <p className="text-xs lg:text-sm text-white/40 mb-1">End</p>
+                    <p className="text-white font-medium lg:text-lg">
+                      {formData.end_date ? formatDateDisplay(formData.end_date) : "—"}
+                    </p>
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
-
-          {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-1">
-            {/* Empty cells for days before first of month */}
-            {Array.from({ length: firstDay }).map((_, i) => (
-              <div key={`empty-${i}`} className="aspect-square" />
-            ))}
-
-            {/* Days of the month */}
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const day = i + 1
-              const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
-              const blocked = isDateBlocked(date)
-              const past = isDateInPast(date)
-              const inRange = isDateInRange(date)
-              const isStart = isStartDate(date)
-              const isEnd = isEndDate(date)
-              const disabled = blocked || past
-
-              return (
-                <button
-                  key={day}
-                  onClick={() => handleDateClick(date)}
-                  disabled={disabled}
-                  className={`aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-all
-                    ${disabled ? "text-white/20 cursor-not-allowed" : "hover:bg-white/10"}
-                    ${blocked ? "line-through" : ""}
-                    ${inRange && !isStart && !isEnd ? "bg-white/10 text-white" : ""}
-                    ${isStart || isEnd ? "text-white" : "text-white/70"}
-                  `}
-                  style={{
-                    backgroundColor: isStart || isEnd ? primaryColor : undefined,
-                  }}
-                >
-                  {day}
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Legend */}
-          <div className="flex items-center justify-center gap-6 mt-6 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: primaryColor }} />
-              <span className="text-white/60">Selected</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-white/20 flex items-center justify-center">
-                <span className="text-white/40 line-through text-[10px]">X</span>
-              </div>
-              <span className="text-white/60">Unavailable</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Continue Button */}
-        <div className="p-4 border-t border-white/10">
-          <button
-            onClick={isLastStep ? handleSubmit : nextStep}
-            disabled={submitting}
-            className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-white font-semibold text-lg transition-all disabled:opacity-50"
-            style={{ backgroundColor: primaryColor }}
-          >
-            {submitting ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : isLastStep ? (
-              "Submit"
-            ) : formData.start_date && formData.end_date ? (
-              <>Continue<ChevronRight className="w-5 h-5" /></>
-            ) : (
-              "Skip"
             )}
-          </button>
-          <div className="mt-4 h-1 bg-white/10 rounded-full overflow-hidden">
-            <div
-              className="h-full transition-all duration-300"
-              style={{ width: `${progress}%`, backgroundColor: primaryColor }}
-            />
+
+            {/* Calendar */}
+            <div className="bg-white/5 rounded-2xl border border-white/10 p-4 lg:p-6">
+              {/* Month Navigation */}
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={prevMonth}
+                  disabled={!canGoPrev}
+                  className="p-2 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-5 h-5 text-white" />
+                </button>
+                <span className="text-white font-semibold lg:text-lg">{monthYear}</span>
+                <button
+                  onClick={nextMonth}
+                  className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5 text-white" />
+                </button>
+              </div>
+
+              {/* Day Headers */}
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                  <div key={day} className="text-center text-xs lg:text-sm text-white/40 py-2">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* Calendar Grid */}
+              <div className="grid grid-cols-7 gap-1 lg:gap-2">
+                {/* Empty cells for days before first of month */}
+                {Array.from({ length: firstDay }).map((_, i) => (
+                  <div key={`empty-${i}`} className="aspect-square" />
+                ))}
+
+                {/* Days of the month */}
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const day = i + 1
+                  const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
+                  const blocked = isDateBlocked(date)
+                  const past = isDateInPast(date)
+                  const inRange = isDateInRange(date)
+                  const isStart = isStartDate(date)
+                  const isEnd = isEndDate(date)
+                  const disabled = blocked || past
+
+                  return (
+                    <button
+                      key={day}
+                      onClick={() => handleDateClick(date)}
+                      disabled={disabled}
+                      className={`aspect-square flex items-center justify-center rounded-lg text-sm lg:text-base font-medium transition-all
+                        ${disabled ? "text-white/20 cursor-not-allowed" : "hover:bg-white/10"}
+                        ${blocked ? "line-through" : ""}
+                        ${inRange && !isStart && !isEnd ? "bg-white/10 text-white" : ""}
+                        ${isStart || isEnd ? "text-white" : "text-white/70"}
+                      `}
+                      style={{
+                        backgroundColor: isStart || isEnd ? primaryColor : undefined,
+                      }}
+                    >
+                      {day}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Legend */}
+              <div className="flex items-center justify-center gap-6 mt-6 text-xs lg:text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: primaryColor }} />
+                  <span className="text-white/60">Selected</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-white/20 flex items-center justify-center">
+                    <span className="text-white/40 line-through text-[10px]">X</span>
+                  </div>
+                  <span className="text-white/60">Unavailable</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Continue Button */}
+            <div className="mt-6">
+              <button
+                onClick={isLastStep ? handleSubmit : nextStep}
+                disabled={submitting}
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-white font-semibold text-lg transition-all disabled:opacity-50"
+                style={{ backgroundColor: primaryColor }}
+              >
+                {submitting ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : isLastStep ? (
+                  "Submit"
+                ) : formData.start_date && formData.end_date ? (
+                  <>Continue<ChevronRight className="w-5 h-5" /></>
+                ) : (
+                  "Skip"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress - Fixed at bottom */}
+        <div className="p-4 lg:p-6 border-t border-white/10">
+          <div className="max-w-4xl mx-auto">
+            <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full transition-all duration-300"
+                style={{ width: `${progress}%`, backgroundColor: primaryColor }}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -666,40 +683,40 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor }}>
       {/* Header */}
-      <div className="p-6 flex items-center justify-between">
+      <div className="p-6 lg:p-8 flex items-center justify-between max-w-lg lg:max-w-xl mx-auto w-full">
         {config.logo_url ? (
-          <img src={config.logo_url} alt={config.business_name} className="h-8" />
+          <img src={config.logo_url} alt={config.business_name} className="h-8 lg:h-10" />
         ) : (
-          <span className="text-white font-semibold">{config.business_name}</span>
+          <span className="text-white font-semibold text-lg">{config.business_name}</span>
         )}
         <span className="text-white/40 text-sm">{step + 1} of {steps.length}</span>
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6">
-        <div className="max-w-md w-full">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-8">
+        <div className="max-w-md lg:max-w-lg w-full">
           {/* Phone Step */}
           {currentStepName === "phone" && (
             <div className="text-center">
-              <Phone className="w-12 h-12 mx-auto mb-4" style={{ color: primaryColor }} />
-              <h2 className="text-2xl font-bold text-white mb-2">What&apos;s your phone number?</h2>
-              <p className="text-white/60 mb-6">We&apos;ll text you about availability</p>
+              <Phone className="w-12 h-12 lg:w-14 lg:h-14 mx-auto mb-4" style={{ color: primaryColor }} />
+              <h2 className="text-2xl lg:text-3xl font-bold text-white mb-2">What&apos;s your phone number?</h2>
+              <p className="text-white/60 mb-6 lg:text-lg">We&apos;ll text you about availability</p>
               <input
                 type="tel"
                 placeholder="(555) 123-4567"
                 value={formData.phone}
                 onChange={handlePhoneChange}
-                className="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/10 text-white text-lg text-center placeholder:text-white/30 focus:outline-none focus:border-white/30"
+                className="w-full px-4 py-4 lg:py-5 rounded-xl bg-white/5 border border-white/10 text-white text-lg lg:text-xl text-center placeholder:text-white/30 focus:outline-none focus:border-white/30"
                 autoFocus
               />
               <button
                 onClick={nextStep}
                 disabled={formData.phone.replace(/\D/g, "").length < 10}
-                className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-white font-semibold text-lg transition-all disabled:opacity-50"
+                className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-4 lg:py-5 rounded-xl text-white font-semibold text-lg lg:text-xl transition-all disabled:opacity-50"
                 style={{ backgroundColor: primaryColor }}
               >
                 Continue
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="w-5 h-5 lg:w-6 lg:h-6" />
               </button>
             </div>
           )}
@@ -707,29 +724,29 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
           {/* Email Step */}
           {currentStepName === "email" && (
             <div className="text-center">
-              <Mail className="w-12 h-12 mx-auto mb-4" style={{ color: primaryColor }} />
-              <h2 className="text-2xl font-bold text-white mb-2">What&apos;s your email?</h2>
-              <p className="text-white/60 mb-6">{config.require_email ? "Required for booking confirmation" : "Optional, but helps us send you details"}</p>
+              <Mail className="w-12 h-12 lg:w-14 lg:h-14 mx-auto mb-4" style={{ color: primaryColor }} />
+              <h2 className="text-2xl lg:text-3xl font-bold text-white mb-2">What&apos;s your email?</h2>
+              <p className="text-white/60 mb-6 lg:text-lg">{config.require_email ? "Required for booking confirmation" : "Optional, but helps us send you details"}</p>
               <input
                 type="email"
                 placeholder="you@example.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/10 text-white text-lg text-center placeholder:text-white/30 focus:outline-none focus:border-white/30"
+                className="w-full px-4 py-4 lg:py-5 rounded-xl bg-white/5 border border-white/10 text-white text-lg lg:text-xl text-center placeholder:text-white/30 focus:outline-none focus:border-white/30"
                 autoFocus
               />
               <button
                 onClick={isLastStep ? handleSubmit : nextStep}
                 disabled={config.require_email && !formData.email.includes("@")}
-                className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-white font-semibold text-lg transition-all disabled:opacity-50"
+                className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-4 lg:py-5 rounded-xl text-white font-semibold text-lg lg:text-xl transition-all disabled:opacity-50"
                 style={{ backgroundColor: primaryColor }}
               >
                 {submitting ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-5 h-5 lg:w-6 lg:h-6 animate-spin" />
                 ) : isLastStep ? (
                   "Submit"
                 ) : (
-                  <>{config.require_email || formData.email ? "Continue" : "Skip"}<ChevronRight className="w-5 h-5" /></>
+                  <>{config.require_email || formData.email ? "Continue" : "Skip"}<ChevronRight className="w-5 h-5 lg:w-6 lg:h-6" /></>
                 )}
               </button>
             </div>
@@ -738,9 +755,9 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
           {/* Age Step */}
           {currentStepName === "age" && (
             <div className="text-center">
-              <User className="w-12 h-12 mx-auto mb-4" style={{ color: primaryColor }} />
-              <h2 className="text-2xl font-bold text-white mb-2">How old are you?</h2>
-              <p className="text-white/60 mb-6">Renters must be at least {config.minimum_age} years old</p>
+              <User className="w-12 h-12 lg:w-14 lg:h-14 mx-auto mb-4" style={{ color: primaryColor }} />
+              <h2 className="text-2xl lg:text-3xl font-bold text-white mb-2">How old are you?</h2>
+              <p className="text-white/60 mb-6 lg:text-lg">Renters must be at least {config.minimum_age} years old</p>
               <input
                 type="number"
                 placeholder="25"
@@ -748,21 +765,21 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
                 max="99"
                 value={formData.age}
                 onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                className="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/10 text-white text-lg text-center placeholder:text-white/30 focus:outline-none focus:border-white/30"
+                className="w-full px-4 py-4 lg:py-5 rounded-xl bg-white/5 border border-white/10 text-white text-lg lg:text-xl text-center placeholder:text-white/30 focus:outline-none focus:border-white/30"
                 autoFocus
               />
               <button
                 onClick={isLastStep ? handleSubmit : handleAgeCheck}
                 disabled={!formData.age || parseInt(formData.age) < 18 || submitting}
-                className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-white font-semibold text-lg transition-all disabled:opacity-50"
+                className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-4 lg:py-5 rounded-xl text-white font-semibold text-lg lg:text-xl transition-all disabled:opacity-50"
                 style={{ backgroundColor: primaryColor }}
               >
                 {submitting ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-5 h-5 lg:w-6 lg:h-6 animate-spin" />
                 ) : isLastStep ? (
                   "Submit"
                 ) : (
-                  <>Continue<ChevronRight className="w-5 h-5" /></>
+                  <>Continue<ChevronRight className="w-5 h-5 lg:w-6 lg:h-6" /></>
                 )}
               </button>
             </div>
@@ -770,7 +787,7 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
 
           {/* Error message */}
           {error && (
-            <div className="mt-4 p-4 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-center">
+            <div className="mt-4 p-4 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-center lg:text-lg">
               {error}
             </div>
           )}
@@ -778,12 +795,14 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
       </div>
 
       {/* Progress */}
-      <div className="p-6">
-        <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-          <div
-            className="h-full transition-all duration-300"
-            style={{ width: `${progress}%`, backgroundColor: primaryColor }}
-          />
+      <div className="p-6 lg:p-8">
+        <div className="max-w-md lg:max-w-lg mx-auto">
+          <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full transition-all duration-300"
+              style={{ width: `${progress}%`, backgroundColor: primaryColor }}
+            />
+          </div>
         </div>
       </div>
     </div>
