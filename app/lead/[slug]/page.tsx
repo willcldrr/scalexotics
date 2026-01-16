@@ -611,17 +611,23 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
                       key={day}
                       onClick={() => handleDateClick(date)}
                       disabled={disabled}
-                      className={`aspect-square flex items-center justify-center rounded-lg text-sm lg:text-base font-medium transition-all
-                        ${disabled ? "text-white/20 cursor-not-allowed" : "hover:bg-white/10"}
-                        ${blocked ? "line-through" : ""}
+                      className={`aspect-square flex items-center justify-center rounded-lg text-sm lg:text-base font-medium transition-all relative
+                        ${past && !blocked ? "text-white/20 cursor-not-allowed" : ""}
+                        ${blocked ? "bg-red-500/20 text-red-400/60 cursor-not-allowed" : ""}
+                        ${!disabled ? "hover:bg-white/10 text-white/70" : ""}
                         ${inRange && !isStart && !isEnd ? "bg-white/10 text-white" : ""}
-                        ${isStart || isEnd ? "text-white" : "text-white/70"}
+                        ${isStart || isEnd ? "text-white" : ""}
                       `}
                       style={{
                         backgroundColor: isStart || isEnd ? primaryColor : undefined,
                       }}
                     >
-                      {day}
+                      {blocked && (
+                        <span className="absolute inset-0 flex items-center justify-center">
+                          <span className="w-6 h-[2px] bg-red-400/60 rotate-[-45deg] absolute" />
+                        </span>
+                      )}
+                      <span className={blocked ? "relative" : ""}>{day}</span>
                     </button>
                   )
                 })}
@@ -630,12 +636,15 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
               {/* Legend */}
               <div className="flex items-center justify-center gap-6 mt-6 text-xs lg:text-sm">
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: primaryColor }} />
+                  <div className="w-5 h-5 rounded flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
+                    <span className="text-white text-[10px] font-medium">1</span>
+                  </div>
                   <span className="text-white/60">Selected</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-white/20 flex items-center justify-center">
-                    <span className="text-white/40 line-through text-[10px]">X</span>
+                  <div className="w-5 h-5 rounded bg-red-500/20 flex items-center justify-center relative">
+                    <span className="w-3 h-[2px] bg-red-400/60 rotate-[-45deg] absolute" />
+                    <span className="text-red-400/60 text-[10px] font-medium relative">1</span>
                   </div>
                   <span className="text-white/60">Unavailable</span>
                 </div>
