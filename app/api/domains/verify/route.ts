@@ -45,16 +45,50 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    if (!vercelResponse.ok) {
-      // Domain might not be added to Vercel yet
-      if (vercelResponse.status === 404) {
+    // If domain not found in Vercel, try to add it
+    if (vercelResponse.status === 404) {
+      console.log("Domain not found in Vercel, attempting to add:", customDomain.domain)
+
+      const addUrl = VERCEL_TEAM_ID
+        ? `https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/domains?teamId=${VERCEL_TEAM_ID}`
+        : `https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/domains`
+
+      const addResponse = await fetch(addUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${VERCEL_API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: customDomain.domain }),
+      })
+
+      const addData = await addResponse.json()
+
+      if (addResponse.ok || addData.error?.code === "domain_already_in_use") {
         return NextResponse.json({
           domain: customDomain,
-          status: "not_found",
-          message: "Domain not found in Vercel. Try re-adding it.",
+          status: "added_to_vercel",
+          message: "Domain has been added to Vercel. Please wait a few minutes for DNS to propagate, then verify again.",
+          debug: { action: "added", vercelResponse: addData }
+        })
+      } else {
+        return NextResponse.json({
+          domain: customDomain,
+          status: "vercel_error",
+          message: addData.error?.message || "Failed to add domain to Vercel",
+          debug: { action: "add_failed", vercelResponse: addData }
         })
       }
-      throw new Error("Failed to fetch domain status")
+    }
+
+    if (!vercelResponse.ok) {
+      const errorData = await vercelResponse.json()
+      return NextResponse.json({
+        domain: customDomain,
+        status: "vercel_error",
+        message: "Failed to check domain status with Vercel",
+        debug: { vercelStatus: vercelResponse.status, vercelResponse: errorData }
+      })
     }
 
     const vercelData = await vercelResponse.json()
@@ -67,7 +101,7 @@ export async function POST(request: NextRequest) {
       verified = true
       sslStatus = "active"
     } else if (vercelData.verification) {
-      // DNS not configured yet
+      // DNS not configured yet - show what Vercel expects
       sslStatus = "awaiting_dns"
     }
 
@@ -79,6 +113,16 @@ export async function POST(request: NextRequest) {
         .eq("id", customDomain.id)
     }
 
+    // Build helpful message based on verification requirements
+    let message = verified
+      ? "Domain verified and SSL active!"
+      : "Waiting for DNS configuration."
+
+    if (!verified && vercelData.verification) {
+      const verificationInfo = vercelData.verification
+      message = `DNS not yet verified. Vercel is looking for: ${JSON.stringify(verificationInfo)}`
+    }
+
     return NextResponse.json({
       domain: {
         ...customDomain,
@@ -88,16 +132,20 @@ export async function POST(request: NextRequest) {
       vercelData: {
         verified: vercelData.verified,
         verification: vercelData.verification,
+        // Include more debug info
+        name: vercelData.name,
+        apexName: vercelData.apexName,
+        projectId: vercelData.projectId,
+        gitBranch: vercelData.gitBranch,
       },
-      message: verified
-        ? "Domain verified and SSL active!"
-        : "Waiting for DNS configuration. Make sure your CNAME record is set correctly.",
+      message,
     })
   } catch (err) {
     console.error("Domain verification error:", err)
     return NextResponse.json({
       domain: customDomain,
       error: "Failed to verify domain status",
+      debug: { errorMessage: err instanceof Error ? err.message : "Unknown error" }
     }, { status: 500 })
   }
 }

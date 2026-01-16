@@ -212,6 +212,7 @@ export default function BrandingSettings() {
       })
 
       const data = await response.json()
+      console.log("Domain verification response:", data)
 
       if (data.domain) {
         setCustomDomain(data.domain)
@@ -219,10 +220,22 @@ export default function BrandingSettings() {
 
       if (data.error) {
         setDomainError(data.error)
+      } else if (data.status === "added_to_vercel") {
+        // Domain was just added to Vercel
+        setDomainError("Domain registered with Vercel! Please wait 2-5 minutes for DNS to propagate, then verify again.")
+      } else if (data.status === "vercel_error") {
+        setDomainError(data.message || "Error communicating with Vercel. Please try again.")
       } else if (!data.domain?.verified) {
-        setDomainError(data.message || "DNS not configured yet. Please wait a few minutes and try again.")
+        // Show verification requirements if available
+        if (data.vercelData?.verification) {
+          const v = data.vercelData.verification
+          setDomainError(`DNS propagating... Vercel is checking for your CNAME record. This can take up to 48 hours, but usually completes within 10-30 minutes.`)
+        } else {
+          setDomainError(data.message || "DNS not configured yet. Please wait a few minutes and try again.")
+        }
       }
     } catch (err) {
+      console.error("Verification error:", err)
       setDomainError("Failed to verify domain. Please try again.")
     }
 
