@@ -12,10 +12,17 @@ import {
   Loader2,
 } from "lucide-react"
 
+interface CustomDomain {
+  domain: string
+  verified: boolean
+  ssl_status: string
+}
+
 export default function WidgetSettings() {
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [apiKey, setApiKey] = useState<string | null>(null)
+  const [customDomain, setCustomDomain] = useState<CustomDomain | null>(null)
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<"embed" | "customize" | "preview">("embed")
 
@@ -30,24 +37,31 @@ export default function WidgetSettings() {
   })
 
   useEffect(() => {
-    fetchApiKey()
+    fetchData()
   }, [])
 
-  const fetchApiKey = async () => {
+  const fetchData = async () => {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
 
     if (user) {
-      // Get or create API key for widget
-      const { data: existingKey } = await supabase
-        .from("api_keys")
-        .select("key")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .single()
+      // Fetch API key and custom domain in parallel
+      const [apiKeyRes, domainRes] = await Promise.all([
+        supabase
+          .from("api_keys")
+          .select("key")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .single(),
+        supabase
+          .from("custom_domains")
+          .select("domain, verified, ssl_status")
+          .eq("user_id", user.id)
+          .single(),
+      ])
 
-      if (existingKey) {
-        setApiKey(existingKey.key)
+      if (apiKeyRes.data) {
+        setApiKey(apiKeyRes.data.key)
       } else {
         // Create a new API key
         const newKey = `se_${crypto.randomUUID().replace(/-/g, "")}`
@@ -66,10 +80,21 @@ export default function WidgetSettings() {
           setApiKey(createdKey.key)
         }
       }
+
+      setCustomDomain(domainRes.data || null)
     }
 
     setLoading(false)
   }
+
+  const getWidgetBaseUrl = () => {
+    if (customDomain?.verified && customDomain.ssl_status === "active") {
+      return `https://${customDomain.domain}`
+    }
+    return typeof window !== 'undefined' ? window.location.origin : 'https://scalexotics.com'
+  }
+
+  const baseUrl = getWidgetBaseUrl()
 
   const embedCode = `<!-- Scale Exotics Booking Widget -->
 <div id="scale-exotics-widget"></div>
@@ -85,7 +110,7 @@ export default function WidgetSettings() {
       maxVehicles: ${widgetConfig.maxVehicles}
     };
     var script = document.createElement("script");
-    script.src = "${typeof window !== 'undefined' ? window.location.origin : 'https://scalexotics.com'}/widget.js";
+    script.src = "${baseUrl}/widget.js";
     script.async = true;
     script.onload = function() {
       ScaleExoticsWidget.init(config);
@@ -95,7 +120,7 @@ export default function WidgetSettings() {
 </script>`
 
   const iframeCode = `<iframe
-  src="${typeof window !== 'undefined' ? window.location.origin : 'https://scalexotics.com'}/embed?key=${apiKey || "YOUR_API_KEY"}&theme=${widgetConfig.theme}&color=${encodeURIComponent(widgetConfig.primaryColor)}"
+  src="${baseUrl}/embed?key=${apiKey || "YOUR_API_KEY"}&theme=${widgetConfig.theme}&color=${encodeURIComponent(widgetConfig.primaryColor)}"
   width="100%"
   height="600"
   frameborder="0"

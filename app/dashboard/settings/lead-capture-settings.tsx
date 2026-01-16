@@ -51,6 +51,12 @@ interface Vehicle {
   year: number
 }
 
+interface CustomDomain {
+  domain: string
+  verified: boolean
+  ssl_status: string
+}
+
 const defaultConfig: Partial<SurveyConfig> = {
   business_name: "",
   logo_url: null,
@@ -76,6 +82,7 @@ export default function LeadCaptureSettings() {
   const supabase = createClient()
   const [surveys, setSurveys] = useState<SurveyConfig[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [customDomain, setCustomDomain] = useState<CustomDomain | null>(null)
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingSurvey, setEditingSurvey] = useState<SurveyConfig | null>(null)
@@ -98,7 +105,7 @@ export default function LeadCaptureSettings() {
       return
     }
 
-    const [surveysRes, vehiclesRes] = await Promise.all([
+    const [surveysRes, vehiclesRes, domainRes] = await Promise.all([
       supabase
         .from("survey_config")
         .select("*")
@@ -110,10 +117,16 @@ export default function LeadCaptureSettings() {
         .eq("user_id", user.id)
         .eq("status", "available")
         .order("make", { ascending: true }),
+      supabase
+        .from("custom_domains")
+        .select("domain, verified, ssl_status")
+        .eq("user_id", user.id)
+        .single(),
     ])
 
     setSurveys(surveysRes.data || [])
     setVehicles(vehiclesRes.data || [])
+    setCustomDomain(domainRes.data || null)
     setLoading(false)
   }
 
@@ -268,7 +281,17 @@ export default function LeadCaptureSettings() {
   }
 
   const getSurveyUrl = (slug: string) => {
-    return `https://rentalcapture.xyz/${slug}`
+    if (customDomain?.verified && customDomain.ssl_status === "active") {
+      return `https://${customDomain.domain}/lead/${slug}`
+    }
+    return `https://scalexotics.com/lead/${slug}`
+  }
+
+  const getDomainPrefix = () => {
+    if (customDomain?.verified && customDomain.ssl_status === "active") {
+      return `${customDomain.domain}/lead/`
+    }
+    return "scalexotics.com/lead/"
   }
 
   if (loading) {
@@ -486,7 +509,7 @@ export default function LeadCaptureSettings() {
                   <div>
                     <label className="block text-sm text-white/60 mb-2">Survey URL Slug *</label>
                     <div className="flex items-center gap-2">
-                      <span className="text-white/40">rentalcapture.xyz/</span>
+                      <span className="text-white/40">{getDomainPrefix()}</span>
                       <input
                         type="text"
                         placeholder="miami-exotics"
