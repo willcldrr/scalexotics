@@ -35,6 +35,7 @@ import {
   Zap,
 } from "lucide-react"
 import { format, subDays, eachDayOfInterval } from "date-fns"
+import { convertedStatus } from "@/lib/lead-status"
 
 interface Booking {
   id: string
@@ -151,7 +152,7 @@ export default function AnalyticsPage() {
 
     const totalBookings = filteredData.bookings.length
     const totalLeads = filteredData.leads.length
-    const convertedLeads = filteredData.leads.filter(l => l.status === "converted").length
+    const convertedLeads = filteredData.leads.filter(l => l.status === convertedStatus).length
     const conversionRate = totalLeads > 0 ? (convertedLeads / totalLeads) * 100 : 0
     const avgBookingValue = totalBookings > 0 ? totalRevenue / totalBookings : 0
 
@@ -252,20 +253,15 @@ export default function AnalyticsPage() {
   }, [filteredData.bookings])
 
   const conversionFunnel = useMemo(() => {
+    // Funnel stages: each stage includes leads that have progressed to that point or beyond
     const total = filteredData.leads.length
-    const contacted = filteredData.leads.filter(l =>
-      ["contacted", "qualified", "negotiating", "converted"].includes(l.status)
-    ).length
-    const qualified = filteredData.leads.filter(l =>
-      ["qualified", "negotiating", "converted"].includes(l.status)
-    ).length
-    const converted = filteredData.leads.filter(l => l.status === "converted").length
+    const contacted = filteredData.leads.filter(l => ["contacted", "converted"].includes(l.status)).length
+    const converted = filteredData.leads.filter(l => l.status === convertedStatus).length
 
     return [
       { stage: "New Leads", count: total, percentage: 100, color: "#375DEE" },
-      { stage: "Contacted", count: contacted, percentage: total > 0 ? (contacted / total) * 100 : 0, color: "#5b7cf2" },
-      { stage: "Qualified", count: qualified, percentage: total > 0 ? (qualified / total) * 100 : 0, color: "#8aa0f6" },
-      { stage: "Converted", count: converted, percentage: total > 0 ? (converted / total) * 100 : 0, color: "#ffffff" },
+      { stage: "Contacted", count: contacted, percentage: total > 0 ? (contacted / total) * 100 : 0, color: "#a855f7" },
+      { stage: "Converted", count: converted, percentage: total > 0 ? (converted / total) * 100 : 0, color: "#10b981" },
     ]
   }, [filteredData.leads])
 
@@ -369,12 +365,12 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Bookings Card */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-white/[0.06] via-white/[0.03] to-transparent rounded-2xl p-5 border border-white/[0.08] group">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-white/[0.06] rounded-full blur-2xl opacity-50 group-hover:opacity-75 transition-opacity" />
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#375DEE]/20 via-[#375DEE]/10 to-transparent rounded-2xl p-5 border border-[#375DEE]/20 group">
+          <div className="absolute -top-8 -right-8 w-24 h-24 bg-[#375DEE]/20 rounded-full blur-2xl opacity-50 group-hover:opacity-75 transition-opacity" />
           <div className="relative">
             <div className="flex items-start justify-between mb-3">
-              <div className="w-10 h-10 rounded-xl bg-white/[0.08] flex items-center justify-center">
-                <CalendarCheck className="w-5 h-5 text-white/70" />
+              <div className="w-10 h-10 rounded-xl bg-[#375DEE]/20 flex items-center justify-center">
+                <CalendarCheck className="w-5 h-5 text-[#375DEE]" />
               </div>
               {kpis.bookingsChange !== 0 && (
                 <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium font-numbers ${
@@ -393,35 +389,35 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Leads Card */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-[#375DEE]/15 via-[#375DEE]/5 to-transparent rounded-2xl p-5 border border-[#375DEE]/15 group">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-[#375DEE]/15 rounded-full blur-2xl opacity-50 group-hover:opacity-75 transition-opacity" />
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#375DEE]/20 via-[#375DEE]/10 to-transparent rounded-2xl p-5 border border-[#375DEE]/20 group">
+          <div className="absolute -top-8 -right-8 w-24 h-24 bg-[#375DEE]/20 rounded-full blur-2xl opacity-50 group-hover:opacity-75 transition-opacity" />
           <div className="relative">
             <div className="flex items-start justify-between mb-3">
-              <div className="w-10 h-10 rounded-xl bg-[#375DEE]/15 flex items-center justify-center">
-                <Users className="w-5 h-5 text-[#375DEE]/80" />
+              <div className="w-10 h-10 rounded-xl bg-[#375DEE]/20 flex items-center justify-center">
+                <Users className="w-5 h-5 text-[#375DEE]" />
               </div>
             </div>
             <p className="text-white/50 text-xs font-medium mb-1">Total Leads</p>
             <p className="text-2xl sm:text-3xl font-bold font-numbers tracking-tight">{kpis.totalLeads}</p>
             <p className="text-xs text-white/40 mt-1">
-              <span className="text-white font-numbers">{kpis.convertedLeads}</span> converted
+              <span className="text-[#375DEE] font-numbers">{kpis.convertedLeads}</span> converted
             </p>
           </div>
         </div>
 
         {/* Conversion Rate Card */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-white/[0.06] via-white/[0.03] to-transparent rounded-2xl p-5 border border-white/[0.08] group">
-          <div className="absolute -top-8 -right-8 w-24 h-24 bg-white/[0.06] rounded-full blur-2xl opacity-50 group-hover:opacity-75 transition-opacity" />
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#375DEE]/20 via-[#375DEE]/10 to-transparent rounded-2xl p-5 border border-[#375DEE]/20 group">
+          <div className="absolute -top-8 -right-8 w-24 h-24 bg-[#375DEE]/20 rounded-full blur-2xl opacity-50 group-hover:opacity-75 transition-opacity" />
           <div className="relative">
             <div className="flex items-start justify-between mb-3">
-              <div className="w-10 h-10 rounded-xl bg-white/[0.08] flex items-center justify-center">
-                <Target className="w-5 h-5 text-white/70" />
+              <div className="w-10 h-10 rounded-xl bg-[#375DEE]/20 flex items-center justify-center">
+                <Target className="w-5 h-5 text-[#375DEE]" />
               </div>
             </div>
             <p className="text-white/50 text-xs font-medium mb-1">Conversion Rate</p>
             <p className="text-2xl sm:text-3xl font-bold font-numbers tracking-tight">{kpis.conversionRate.toFixed(1)}%</p>
             <p className="text-xs text-white/40 mt-1">
-              Avg: <span className="font-numbers">${Math.round(kpis.avgBookingValue).toLocaleString()}</span>
+              Avg: <span className="text-[#375DEE] font-numbers">${Math.round(kpis.avgBookingValue).toLocaleString()}</span>
             </p>
           </div>
         </div>
@@ -543,12 +539,13 @@ export default function AnalyticsPage() {
                         paddingAngle={3}
                         dataKey="value"
                         strokeWidth={0}
+                        style={{ cursor: 'default', outline: 'none' }}
                       >
                         {leadSourcesData.map((entry, index) => (
-                          <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
+                          <Cell key={entry.name} fill={COLORS[index % COLORS.length]} style={{ outline: 'none' }} />
                         ))}
                       </Pie>
-                      <Tooltip content={<CustomTooltip />} />
+                      <Tooltip content={<CustomTooltip />} cursor={false} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -611,7 +608,7 @@ export default function AnalyticsPage() {
                     axisLine={false}
                     width={110}
                   />
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip content={<CustomTooltip />} cursor={false} />
                   <Bar dataKey="revenue" name="Revenue" fill="#375DEE" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -705,10 +702,12 @@ export default function AnalyticsPage() {
                         paddingAngle={3}
                         dataKey="value"
                         strokeWidth={0}
+                        style={{ cursor: 'default', outline: 'none' }}
                       >
                         {bookingStatusData.map((entry) => (
                           <Cell
                             key={entry.name}
+                            style={{ outline: 'none' }}
                             fill={
                               entry.name.toLowerCase() === "completed" ? "#ffffff" :
                               entry.name.toLowerCase() === "confirmed" ? "#375DEE" :
@@ -719,7 +718,7 @@ export default function AnalyticsPage() {
                           />
                         ))}
                       </Pie>
-                      <Tooltip content={<CustomTooltip />} />
+                      <Tooltip content={<CustomTooltip />} cursor={false} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>

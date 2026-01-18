@@ -6,6 +6,7 @@ import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import OnboardingModal from "@/components/dashboard/onboarding-modal"
+import { DashboardCacheProvider } from "@/lib/dashboard-cache"
 import { getSidebarSettings, getDefaultSidebarSettings, SidebarSettings } from "./settings/sidebar-settings"
 import {
   LayoutDashboard,
@@ -34,7 +35,6 @@ import {
 // Ordered by frequency of use for rental fleet owners
 const allNavItems = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard, key: "overview", alwaysVisible: true },
-  { name: "Inbox", href: "/dashboard/inbox", icon: MessageSquare, key: "inbox" },
   { name: "Leads", href: "/dashboard/leads", icon: Users, key: "leads" },
   { name: "Bookings", href: "/dashboard/bookings", icon: CalendarCheck, key: "bookings" },
   { name: "Customers", href: "/dashboard/customers", icon: UserCircle, key: "customers" },
@@ -246,7 +246,11 @@ export default function DashboardLayout({
         </header>
 
         {/* Page content */}
-        <main className="p-6">{children}</main>
+        <main className="p-6">
+          <DashboardCacheProvider>
+            {children}
+          </DashboardCacheProvider>
+        </main>
       </div>
 
       {/* Onboarding Modal */}

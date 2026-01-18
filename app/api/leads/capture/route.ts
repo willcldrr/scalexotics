@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import twilio from "twilio"
+import { defaultLeadStatus, contactedStatus } from "@/lib/lead-status"
 
 function getSupabase() {
   return createClient(
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest) {
         vehicle_interest: vehicle_interest || null,
         notes: notes || null,
         source: source || keyData.domain || "lead_capture",
-        status: "new",
+        status: defaultLeadStatus,
       })
       .select("id")
       .single()
@@ -206,7 +207,7 @@ export async function POST(request: NextRequest) {
       // Update lead status
       await supabase
         .from("leads")
-        .update({ status: "contacted" })
+        .update({ status: contactedStatus })
         .eq("id", newLead.id)
 
       console.log(`Sent initial SMS to ${formattedPhone}`)

@@ -24,6 +24,7 @@ import {
   Plus,
 } from "lucide-react"
 import { format, formatDistanceToNow } from "date-fns"
+import { customerStatuses } from "@/lib/lead-status"
 
 interface Customer {
   id: string
@@ -71,12 +72,12 @@ export default function CustomersPage() {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (user) {
-      // Get all leads that have been converted or have bookings
+      // Get all leads that have been converted or are in customer statuses
       const { data: leadsData } = await supabase
         .from("leads")
         .select("*")
         .eq("user_id", user.id)
-        .in("status", ["converted", "qualified", "negotiating"])
+        .in("status", customerStatuses)
         .order("created_at", { ascending: false })
 
       if (leadsData) {

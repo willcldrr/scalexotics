@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import twilio from "twilio"
+import { contactedStatus } from "@/lib/lead-status"
 
 function getSupabase() {
   return createClient(
@@ -116,7 +117,7 @@ export async function GET(request: NextRequest) {
           .update({
             initial_sms_sent: true,
             initial_sms_sent_at: new Date().toISOString(),
-            status: "contacted",
+            status: contactedStatus,
           })
           .eq("id", lead.id)
 

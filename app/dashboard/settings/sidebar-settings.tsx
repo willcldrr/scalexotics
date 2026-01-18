@@ -9,7 +9,6 @@ import {
   Settings,
   Bot,
   BarChart3,
-  MessageSquare,
   UserCircle,
   Receipt,
   Check,
@@ -21,7 +20,6 @@ import {
 // Define which tabs can be toggled and their defaults
 const toggleableTabs = [
   { key: "analytics", name: "Analytics", icon: BarChart3, defaultEnabled: false },
-  { key: "inbox", name: "Inbox", icon: MessageSquare, defaultEnabled: true },
   { key: "leads", name: "Leads", icon: Users, defaultEnabled: true },
   { key: "customers", name: "Customers", icon: UserCircle, defaultEnabled: false },
   { key: "bookings", name: "Bookings", icon: CalendarCheck, defaultEnabled: true },

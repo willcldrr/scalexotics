@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createClient } from "@supabase/supabase-js"
+import { convertedStatus } from "@/lib/lead-status"
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
       await supabase
         .from("leads")
         .update({
-          status: "converted",
+          status: convertedStatus,
           notes: `Deposit paid: $${depositAmount} via Stripe`,
         })
         .eq("id", leadId)

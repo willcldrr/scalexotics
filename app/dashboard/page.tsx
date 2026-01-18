@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { useMemo } from "react"
+import { useDashboardCache } from "@/lib/dashboard-cache"
 import Link from "next/link"
 import {
   Users,
@@ -13,115 +13,55 @@ import {
   ArrowRight,
   Clock,
   Sparkles,
+  RefreshCw,
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
-
-interface Metrics {
-  totalLeads: number
-  leadsThisMonth: number
-  totalVehicles: number
-  bookingsThisMonth: number
-  revenueThisMonth: number
-  conversionRate: number
-}
-
-interface Lead {
-  id: string
-  name: string
-  email: string
-  phone: string
-  status: string
-  created_at: string
-}
-
-interface Booking {
-  id: string
-  customer_name: string
-  start_date: string
-  end_date: string
-  total_amount: number
-  status: string
-  vehicles?: { name: string; make: string; model: string }
-}
+import { convertedStatus } from "@/lib/lead-status"
 
 export default function DashboardPage() {
-  const supabase = createClient()
-  const [metrics, setMetrics] = useState<Metrics>({
-    totalLeads: 0,
-    leadsThisMonth: 0,
-    totalVehicles: 0,
-    bookingsThisMonth: 0,
-    revenueThisMonth: 0,
-    conversionRate: 0,
-  })
-  const [recentLeads, setRecentLeads] = useState<Lead[]>([])
-  const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data, refreshData } = useDashboardCache()
+  const { leads, vehicles, bookings, isLoading, lastFetched } = data
 
-  useEffect(() => {
-    fetchData()
-  }, [])
-
-  const fetchData = async () => {
-    setLoading(true)
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      setLoading(false)
-      return
-    }
-
+  // Compute metrics from cached data
+  const metrics = useMemo(() => {
     const startOfMonth = new Date()
     startOfMonth.setDate(1)
     startOfMonth.setHours(0, 0, 0, 0)
 
-    const { data: leads } = await supabase
-      .from("leads")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-
-    const { data: vehicles } = await supabase
-      .from("vehicles")
-      .select("*")
-      .eq("user_id", user.id)
-
-    const { data: bookings } = await supabase
-      .from("bookings")
-      .select("*, vehicles(name, make, model)")
-      .eq("user_id", user.id)
-      .order("start_date", { ascending: true })
-
-    const leadsThisMonth = leads?.filter(
+    const leadsThisMonth = leads.filter(
       (l) => new Date(l.created_at) >= startOfMonth
-    ).length || 0
+    ).length
 
-    const bookingsThisMonth = bookings?.filter(
+    const bookingsThisMonth = bookings.filter(
       (b) => new Date(b.start_date) >= startOfMonth
-    ) || []
+    )
 
     const revenueThisMonth = bookingsThisMonth
       .filter((b) => b.status !== "cancelled")
       .reduce((sum, b) => sum + (b.total_amount || 0), 0)
 
-    const convertedLeads = leads?.filter((l) => l.status === "converted").length || 0
-    const conversionRate = leads?.length ? (convertedLeads / leads.length) * 100 : 0
+    const convertedLeads = leads.filter((l) => l.status === convertedStatus).length
+    const conversionRate = leads.length ? (convertedLeads / leads.length) * 100 : 0
 
-    setMetrics({
-      totalLeads: leads?.length || 0,
+    return {
+      totalLeads: leads.length,
       leadsThisMonth,
-      totalVehicles: vehicles?.filter((v) => v.status !== "inactive").length || 0,
+      totalVehicles: vehicles.filter((v) => v.status !== "inactive").length,
       bookingsThisMonth: bookingsThisMonth.length,
       revenueThisMonth,
       conversionRate,
-    })
+    }
+  }, [leads, vehicles, bookings])
 
-    setRecentLeads(leads?.slice(0, 5) || [])
-    setUpcomingBookings(
-      bookings?.filter((b) => new Date(b.start_date) >= new Date()).slice(0, 5) || []
-    )
-    setLoading(false)
-  }
+  const recentLeads = useMemo(() => leads.slice(0, 5), [leads])
+
+  const upcomingBookings = useMemo(() => {
+    const now = new Date()
+    return bookings
+      .filter((b) => new Date(b.start_date) >= now)
+      .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
+      .slice(0, 5)
+  }, [bookings])
 
   const statCards = [
     {
@@ -138,27 +78,27 @@ export default function DashboardPage() {
       value: metrics.totalLeads,
       subtitle: `+${metrics.leadsThisMonth} this month`,
       icon: Users,
-      gradient: "from-white/[0.06] via-white/[0.03] to-transparent",
-      iconBg: "bg-white/[0.08]",
-      iconColor: "text-white/70",
+      gradient: "from-[#375DEE]/20 via-[#375DEE]/10 to-transparent",
+      iconBg: "bg-[#375DEE]/20",
+      iconColor: "text-[#375DEE]",
     },
     {
       name: "Bookings",
       value: metrics.bookingsThisMonth,
       subtitle: "This month",
       icon: Calendar,
-      gradient: "from-[#375DEE]/15 via-[#375DEE]/5 to-transparent",
-      iconBg: "bg-[#375DEE]/15",
-      iconColor: "text-[#375DEE]/80",
+      gradient: "from-[#375DEE]/20 via-[#375DEE]/10 to-transparent",
+      iconBg: "bg-[#375DEE]/20",
+      iconColor: "text-[#375DEE]",
     },
     {
       name: "Fleet Size",
       value: metrics.totalVehicles,
       subtitle: "Active vehicles",
       icon: Car,
-      gradient: "from-white/[0.06] via-white/[0.03] to-transparent",
-      iconBg: "bg-white/[0.08]",
-      iconColor: "text-white/70",
+      gradient: "from-[#375DEE]/20 via-[#375DEE]/10 to-transparent",
+      iconBg: "bg-[#375DEE]/20",
+      iconColor: "text-[#375DEE]",
     },
   ]
 
@@ -178,7 +118,16 @@ export default function DashboardPage() {
     return colors[status] || "bg-white/[0.06] text-white/50 border border-white/[0.08]"
   }
 
-  if (loading) {
+  const getLastUpdatedText = () => {
+    if (!lastFetched) return "Loading..."
+    const seconds = Math.floor((Date.now() - lastFetched) / 1000)
+    if (seconds < 5) return "Just now"
+    if (seconds < 60) return `${seconds}s ago`
+    const minutes = Math.floor(seconds / 60)
+    return `${minutes}m ago`
+  }
+
+  if (isLoading && leads.length === 0) {
     return (
       <div className="space-y-6">
         <div>
@@ -213,10 +162,13 @@ export default function DashboardPage() {
             Welcome back. Here's your business overview.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-white/40">
-          <Clock className="w-3.5 h-3.5" />
-          <span>Last updated just now</span>
-        </div>
+        <button
+          onClick={() => refreshData()}
+          className="flex items-center gap-2 text-xs text-white/40 hover:text-white/60 transition-colors"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+          <span>Updated {getLastUpdatedText()}</span>
+        </button>
       </div>
 
       {/* Stat Cards */}
