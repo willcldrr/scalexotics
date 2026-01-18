@@ -5,7 +5,6 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import OnboardingModal from "@/components/dashboard/onboarding-modal"
 import { DashboardCacheProvider } from "@/lib/dashboard-cache"
 import { getSidebarSettings, getDefaultSidebarSettings, SidebarSettings } from "./settings/sidebar-settings"
 import {
@@ -23,7 +22,6 @@ import {
   MessageSquare,
   UserCircle,
   Receipt,
-  Plug,
   ClipboardCheck,
   Truck,
   Globe,
@@ -44,7 +42,6 @@ const allNavItems = [
   { name: "Billing", href: "/dashboard/billing", icon: Receipt, key: "billing" },
   { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3, key: "analytics" },
   { name: "AI Assistant", href: "/dashboard/ai-assistant", icon: Bot, key: "ai-assistant" },
-  { name: "Connections", href: "/dashboard/connections", icon: Plug, key: "connections" },
   { name: "Settings", href: "/dashboard/settings", icon: Settings, key: "settings", alwaysVisible: true },
 ]
 
@@ -252,9 +249,6 @@ export default function DashboardLayout({
           </DashboardCacheProvider>
         </main>
       </div>
-
-      {/* Onboarding Modal */}
-      <OnboardingModal />
     </div>
   )
 }

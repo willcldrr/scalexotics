@@ -6,7 +6,7 @@ import { syne, inter, jetbrainsMono } from "./fonts"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Scale Exotics - Automate Your Rental Fleet to $50k/month+",
+  title: "Scale Exotics",
   description:
     "Learn how to scale your exotic car rental business to $50k/month+ with our automated booking assistant.",
   icons: {

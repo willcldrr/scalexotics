@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { Loader2, Monitor, Smartphone, Tablet, Trash2, AlertCircle, Check, MapPin } from "lucide-react"
+import { Loader2, Monitor, Smartphone, Tablet, Trash2, AlertCircle, Check, MapPin, RefreshCw } from "lucide-react"
 
 interface Session {
   id: string
@@ -24,8 +24,37 @@ export default function SessionsSettings() {
   const [revokingId, setRevokingId] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchSessions()
+    initializeSessions()
   }, [])
+
+  const initializeSessions = async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      // First, try to fetch existing sessions
+      let response = await fetch('/api/sessions')
+      let data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch sessions')
+      }
+
+      // If no sessions exist, create one for the current device
+      if (!data.sessions || data.sessions.length === 0) {
+        await fetch('/api/sessions', { method: 'POST' })
+        // Fetch again after creating
+        response = await fetch('/api/sessions')
+        data = await response.json()
+      }
+
+      setSessions(data.sessions || [])
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const fetchSessions = async () => {
     setLoading(true)
@@ -111,15 +140,50 @@ export default function SessionsSettings() {
 
   if (error) {
     return (
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-        <div className="flex items-center gap-3 text-red-400">
-          <AlertCircle className="w-5 h-5" />
-          <p>Failed to load sessions: {error}</p>
+      <div className="space-y-6">
+        <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+          <div className="flex items-center gap-3 text-red-400 mb-4">
+            <AlertCircle className="w-5 h-5" />
+            <p>Failed to load sessions: {error}</p>
+          </div>
+          <p className="text-white/50 text-sm mb-4">
+            The user_sessions table may not exist. Run this SQL in your Supabase SQL Editor:
+          </p>
+          <pre className="bg-black/50 p-4 rounded-xl text-xs text-white/70 overflow-x-auto">
+{`-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view their own sessions" ON user_sessions;
+DROP POLICY IF EXISTS "Users can insert their own sessions" ON user_sessions;
+DROP POLICY IF EXISTS "Users can update their own sessions" ON user_sessions;
+DROP POLICY IF EXISTS "Users can delete their own sessions" ON user_sessions;
+
+-- Create table
+CREATE TABLE IF NOT EXISTS user_sessions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  device_info TEXT,
+  browser TEXT,
+  os TEXT,
+  ip_address TEXT,
+  is_current BOOLEAN DEFAULT false,
+  last_active TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS and create policies
+ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own sessions" ON user_sessions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their own sessions" ON user_sessions FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own sessions" ON user_sessions FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own sessions" ON user_sessions FOR DELETE USING (auth.uid() = user_id);`}
+          </pre>
+          <button
+            onClick={initializeSessions}
+            className="mt-4 px-4 py-2 bg-[#375DEE] hover:bg-[#4169E1] text-white rounded-lg text-sm font-medium transition-colors"
+          >
+            Retry
+          </button>
         </div>
-        <p className="text-white/50 text-sm mt-4">
-          Note: You may need to run the SQL migration to create the user_sessions table.
-          Check <code className="bg-white/10 px-1.5 py-0.5 rounded">supabase/user_sessions.sql</code>
-        </p>
       </div>
     )
   }
@@ -145,19 +209,29 @@ export default function SessionsSettings() {
       )}
 
       <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Monitor className="w-5 h-5 text-[#375DEE]" />
-          <div>
-            <h2 className="text-lg font-semibold">Active Sessions</h2>
-            <p className="text-sm text-white/50">Devices currently logged into your account</p>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Monitor className="w-5 h-5 text-[#375DEE]" />
+            <div>
+              <h2 className="text-lg font-semibold">Active Sessions</h2>
+              <p className="text-sm text-white/50">Devices currently logged into your account</p>
+            </div>
           </div>
+          <button
+            onClick={initializeSessions}
+            disabled={loading}
+            className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors disabled:opacity-50"
+            title="Refresh sessions"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
         </div>
 
         {sessions.length === 0 ? (
           <div className="text-center py-8 text-white/50">
             <Monitor className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p>No active sessions found</p>
-            <p className="text-sm mt-1">Sessions will appear here after you log in</p>
+            <p className="text-sm mt-1">Click refresh to detect your current session</p>
           </div>
         ) : (
           <div className="space-y-3">
