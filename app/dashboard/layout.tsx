@@ -1,12 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { DashboardCacheProvider } from "@/lib/dashboard-cache"
 import { getSidebarSettings, getDefaultSidebarSettings, SidebarSettings } from "./settings/sidebar-settings"
+
+const SESSION_TOKEN_KEY = 'scale_exotics_session_token'
 import {
   LayoutDashboard,
   Users,
@@ -99,11 +101,56 @@ export default function DashboardLayout({
     item.alwaysVisible || sidebarSettings[item.key] === true
   )
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
+    localStorage.removeItem(SESSION_TOKEN_KEY)
     await supabase.auth.signOut()
     router.push("/login")
     router.refresh()
-  }
+  }, [supabase, router])
+
+  // Session validation - check if this device's session has been revoked
+  useEffect(() => {
+    const validateSession = async () => {
+      const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY)
+      if (!sessionToken) return // No session token yet, will be created when visiting sessions page
+
+      try {
+        const response = await fetch('/api/sessions/validate', {
+          headers: { 'x-session-token': sessionToken }
+        })
+
+        if (response.status === 401) {
+          // Session has been revoked or user is not authenticated
+          const data = await response.json()
+          if (data.revoked) {
+            // Session was explicitly revoked - sign out
+            handleSignOut()
+          }
+        }
+      } catch {
+        // Network error - don't sign out, just skip validation
+      }
+    }
+
+    // Validate on mount
+    validateSession()
+
+    // Validate every 30 seconds
+    const interval = setInterval(validateSession, 30000)
+
+    // Validate when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        validateSession()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [handleSignOut])
 
   return (
     <div className="min-h-screen bg-black text-white">

@@ -106,7 +106,39 @@ export async function POST(request: NextRequest) {
   const sessionToken = body.session_token || request.headers.get('x-session-token')
 
   if (!sessionToken) {
-    // Generate a new session token
+    // No token provided - check if there's already a session for this device fingerprint
+    const { data: existingDeviceSession } = await supabase
+      .from('user_sessions')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('browser', browser)
+      .eq('os', os)
+      .eq('ip_address', ip)
+      .not('session_token', 'is', null)
+      .order('last_active', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (existingDeviceSession) {
+      // Found existing session for this device - update and return its token
+      const { data: session, error } = await supabase
+        .from('user_sessions')
+        .update({
+          device_info: device,
+          last_active: new Date().toISOString(),
+        })
+        .eq('id', existingDeviceSession.id)
+        .select()
+        .single()
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 })
+      }
+
+      return NextResponse.json({ session, session_token: existingDeviceSession.session_token })
+    }
+
+    // No existing session for this device - create new one
     const newToken = crypto.randomUUID()
 
     const { data: session, error } = await supabase
