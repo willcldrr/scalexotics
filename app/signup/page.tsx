@@ -45,6 +45,12 @@ export default function SignUpPage() {
 
     if (data.user) {
       // Profile is automatically created by database trigger
+      // Record the session
+      try {
+        await fetch('/api/sessions', { method: 'POST' })
+      } catch (e) {
+        // Silently fail - session tracking is not critical
+      }
       // Redirect to access code verification page
       router.push('/verify-access')
     }

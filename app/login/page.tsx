@@ -32,6 +32,12 @@ function LoginForm() {
       setError(error.message)
       setLoading(false)
     } else {
+      // Record the session
+      try {
+        await fetch('/api/sessions', { method: 'POST' })
+      } catch (e) {
+        // Silently fail - session tracking is not critical
+      }
       router.push("/dashboard")
       router.refresh()
     }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { User, ClipboardList, Code, PanelLeft, Calendar, Palette } from "lucide-react"
+import { User, ClipboardList, Code, PanelLeft, Calendar, Palette, Monitor } from "lucide-react"
 
 // Import tab content
 import AccountSettings from "./account-settings"
@@ -10,9 +10,10 @@ import WidgetSettings from "./widget-settings"
 import SidebarSettings from "./sidebar-settings"
 import CalendarSettings from "./calendar-settings"
 import BrandingSettings from "./branding-settings"
+import SessionsSettings from "./sessions-settings"
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<"account" | "lead-capture" | "widget" | "calendar" | "sidebar" | "branding">("account")
+  const [activeTab, setActiveTab] = useState<"account" | "lead-capture" | "widget" | "calendar" | "sidebar" | "branding" | "sessions">("account")
 
   return (
     <div className="space-y-6">
@@ -92,6 +93,17 @@ export default function SettingsPage() {
           <Palette className="w-4 h-4" />
           Branding
         </button>
+        <button
+          onClick={() => setActiveTab("sessions")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+            activeTab === "sessions"
+              ? "bg-[#375DEE] text-white"
+              : "text-white/60 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <Monitor className="w-4 h-4" />
+          Sessions
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -101,6 +113,7 @@ export default function SettingsPage() {
       {activeTab === "calendar" && <CalendarSettings />}
       {activeTab === "sidebar" && <SidebarSettings />}
       {activeTab === "branding" && <BrandingSettings />}
+      {activeTab === "sessions" && <SessionsSettings />}
     </div>
   )
 }
