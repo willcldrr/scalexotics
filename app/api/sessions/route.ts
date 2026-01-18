@@ -70,9 +70,16 @@ export async function POST(request: NextRequest) {
 
   const headersList = await headers()
   const userAgent = headersList.get('user-agent') || ''
-  const forwardedFor = headersList.get('x-forwarded-for')
-  const realIp = headersList.get('x-real-ip')
-  const ip = forwardedFor?.split(',')[0]?.trim() || realIp || 'Unknown'
+
+  // Try multiple headers for IP detection (Vercel, Cloudflare, nginx, etc.)
+  const ip =
+    headersList.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ||
+    headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    headersList.get('x-real-ip') ||
+    headersList.get('cf-connecting-ip') ||
+    headersList.get('true-client-ip') ||
+    request.ip ||
+    'Unknown'
 
   const { device, browser, os } = parseUserAgent(userAgent)
 
