@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { Loader2, Monitor, Smartphone, Tablet, Trash2, AlertCircle, Check, MapPin, RefreshCw } from "lucide-react"
 
 interface Session {
@@ -15,8 +14,19 @@ interface Session {
   created_at: string
 }
 
+const SESSION_TOKEN_KEY = 'scale_exotics_session_token'
+
+function getSessionToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(SESSION_TOKEN_KEY)
+}
+
+function setSessionToken(token: string): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(SESSION_TOKEN_KEY, token)
+}
+
 export default function SessionsSettings() {
-  const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [sessions, setSessions] = useState<Session[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -32,43 +42,41 @@ export default function SessionsSettings() {
     setError(null)
 
     try {
-      // First, try to fetch existing sessions
-      let response = await fetch('/api/sessions')
-      let data = await response.json()
+      const existingToken = getSessionToken()
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch sessions')
+      // Register/update this device's session
+      const registerResponse = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(existingToken ? { 'x-session-token': existingToken } : {})
+        },
+        body: JSON.stringify({ session_token: existingToken })
+      })
+
+      const registerData = await registerResponse.json()
+
+      if (!registerResponse.ok) {
+        throw new Error(registerData.error || 'Failed to register session')
       }
 
-      // If no sessions exist, create one for the current device
-      if (!data.sessions || data.sessions.length === 0) {
-        await fetch('/api/sessions', { method: 'POST' })
-        // Fetch again after creating
-        response = await fetch('/api/sessions')
-        data = await response.json()
+      // Save the session token if we got a new one
+      if (registerData.session_token) {
+        setSessionToken(registerData.session_token)
       }
 
-      setSessions(data.sessions || [])
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
+      // Now fetch all sessions
+      const token = registerData.session_token || existingToken
+      const fetchResponse = await fetch('/api/sessions', {
+        headers: token ? { 'x-session-token': token } : {}
+      })
+      const fetchData = await fetchResponse.json()
 
-  const fetchSessions = async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const response = await fetch('/api/sessions')
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch sessions')
+      if (!fetchResponse.ok) {
+        throw new Error(fetchData.error || 'Failed to fetch sessions')
       }
 
-      setSessions(data.sessions || [])
+      setSessions(fetchData.sessions || [])
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -147,35 +155,17 @@ export default function SessionsSettings() {
             <p>Failed to load sessions: {error}</p>
           </div>
           <p className="text-white/50 text-sm mb-4">
-            The user_sessions table may not exist. Run this SQL in your Supabase SQL Editor:
+            You need to add a session_token column. Run this SQL in Supabase:
           </p>
           <pre className="bg-black/50 p-4 rounded-xl text-xs text-white/70 overflow-x-auto">
-{`-- Drop existing policies if they exist
-DROP POLICY IF EXISTS "Users can view their own sessions" ON user_sessions;
-DROP POLICY IF EXISTS "Users can insert their own sessions" ON user_sessions;
-DROP POLICY IF EXISTS "Users can update their own sessions" ON user_sessions;
-DROP POLICY IF EXISTS "Users can delete their own sessions" ON user_sessions;
+{`-- Add session_token column
+ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS session_token TEXT;
 
--- Create table
-CREATE TABLE IF NOT EXISTS user_sessions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  device_info TEXT,
-  browser TEXT,
-  os TEXT,
-  ip_address TEXT,
-  is_current BOOLEAN DEFAULT false,
-  last_active TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+-- Create index for faster lookups
+CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(session_token);
 
--- Enable RLS and create policies
-ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view their own sessions" ON user_sessions FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert their own sessions" ON user_sessions FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update their own sessions" ON user_sessions FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete their own sessions" ON user_sessions FOR DELETE USING (auth.uid() = user_id);`}
+-- Clear old sessions (they don't have tokens)
+DELETE FROM user_sessions WHERE session_token IS NULL;`}
           </pre>
           <button
             onClick={initializeSessions}
@@ -190,7 +180,6 @@ CREATE POLICY "Users can delete their own sessions" ON user_sessions FOR DELETE 
 
   return (
     <div className="space-y-6">
-      {/* Message */}
       {message && (
         <div
           className={`flex items-center gap-3 p-4 rounded-xl ${
@@ -214,7 +203,7 @@ CREATE POLICY "Users can delete their own sessions" ON user_sessions FOR DELETE 
             <Monitor className="w-5 h-5 text-[#375DEE]" />
             <div>
               <h2 className="text-lg font-semibold">Active Sessions</h2>
-              <p className="text-sm text-white/50">Devices currently logged into your account</p>
+              <p className="text-sm text-white/50">{sessions.length} device{sessions.length !== 1 ? 's' : ''} logged in</p>
             </div>
           </div>
           <button
@@ -231,7 +220,7 @@ CREATE POLICY "Users can delete their own sessions" ON user_sessions FOR DELETE 
           <div className="text-center py-8 text-white/50">
             <Monitor className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p>No active sessions found</p>
-            <p className="text-sm mt-1">Click refresh to detect your current session</p>
+            <p className="text-sm mt-1">Click refresh to register this device</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -255,17 +244,23 @@ CREATE POLICY "Users can delete their own sessions" ON user_sessions FOR DELETE 
                       </span>
                       {session.is_current && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-[#375DEE] text-white">
-                          Current
+                          This device
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-3 text-sm text-white/50 mt-1">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {session.ip_address}
-                      </span>
+                      {session.ip_address && session.ip_address !== 'Unknown' && (
+                        <>
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {session.ip_address}
+                          </span>
+                          <span>•</span>
+                        </>
+                      )}
+                      <span>{session.device_info}</span>
                       <span>•</span>
-                      <span>Last active {formatDate(session.last_active)}</span>
+                      <span>Active {formatDate(session.last_active)}</span>
                     </div>
                   </div>
                 </div>
@@ -293,8 +288,8 @@ CREATE POLICY "Users can delete their own sessions" ON user_sessions FOR DELETE 
       <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
         <h3 className="font-medium mb-2">Session Security</h3>
         <p className="text-sm text-white/50">
-          If you notice any unfamiliar sessions, revoke them immediately and consider changing your password.
-          Sessions are automatically created when you log in from a new device or browser.
+          Each device you log in from creates a unique session. If you see unfamiliar devices,
+          revoke their sessions immediately and change your password.
         </p>
       </div>
     </div>
