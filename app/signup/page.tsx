@@ -24,7 +24,6 @@ export default function SignUpPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: {
           full_name: fullName,
           company_name: companyName,
@@ -46,8 +45,8 @@ export default function SignUpPage() {
 
     if (data.user) {
       // Profile is automatically created by database trigger
-      // Redirect to check-email page for email verification
-      router.push(`/check-email?type=signup&email=${encodeURIComponent(email)}`)
+      // Redirect to access code verification page
+      router.push('/verify-access')
     }
   }
 

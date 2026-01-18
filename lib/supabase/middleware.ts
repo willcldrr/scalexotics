@@ -60,21 +60,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // For authenticated users, check email verification and access code
+  // For authenticated users, check access code verification
   if (user) {
-    const emailVerified = !!user.email_confirmed_at
-
     // Check access verification for dashboard routes
     if (pathname.startsWith('/dashboard')) {
-      // First check email verification
-      if (!emailVerified) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/check-email'
-        url.searchParams.set('type', 'signup')
-        url.searchParams.set('email', user.email || '')
-        return NextResponse.redirect(url)
-      }
-
       const { data: profile } = await supabase
         .from('profiles')
         .select('access_verified')
@@ -106,15 +95,6 @@ export async function updateSession(request: NextRequest) {
 
     // Redirect logged in users away from auth pages (login/signup)
     if (pathname === '/login' || pathname === '/signup') {
-      // First check email verification
-      if (!emailVerified) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/check-email'
-        url.searchParams.set('type', 'signup')
-        url.searchParams.set('email', user.email || '')
-        return NextResponse.redirect(url)
-      }
-
       // Check if they need to verify access first
       const { data: profile } = await supabase
         .from('profiles')

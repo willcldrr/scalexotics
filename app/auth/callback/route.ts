@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${origin}/reset-password`)
     }
 
-    // Email verification (signup) - redirect to verify-access or dashboard
+    // For any other auth flow - redirect to verify-access or dashboard
     const { data: { user } } = await supabase.auth.getUser()
 
     if (user) {
