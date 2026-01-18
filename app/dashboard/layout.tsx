@@ -110,7 +110,12 @@ export default function DashboardLayout({
 
   // Session validation - check if this device's session has been revoked
   useEffect(() => {
+    // Track if we've already triggered a sign out to prevent loops
+    let isSigningOut = false
+
     const validateSession = async () => {
+      if (isSigningOut) return
+
       const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY)
       if (!sessionToken) return // No session token yet, will be created when visiting sessions page
 
@@ -120,11 +125,15 @@ export default function DashboardLayout({
         })
 
         if (response.status === 401) {
-          // Session has been revoked or user is not authenticated
           const data = await response.json()
           if (data.revoked) {
-            // Session was explicitly revoked - sign out
-            handleSignOut()
+            // Session was explicitly revoked by another device - sign out this device
+            isSigningOut = true
+            // Clear the token first so they can log back in
+            localStorage.removeItem(SESSION_TOKEN_KEY)
+            await supabase.auth.signOut()
+            router.push("/login")
+            router.refresh()
           }
         }
       } catch {
@@ -132,8 +141,8 @@ export default function DashboardLayout({
       }
     }
 
-    // Validate on mount
-    validateSession()
+    // Small delay before first validation to let auth state settle after login
+    const initialTimeout = setTimeout(validateSession, 2000)
 
     // Validate every 30 seconds
     const interval = setInterval(validateSession, 30000)
@@ -147,10 +156,11 @@ export default function DashboardLayout({
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
+      clearTimeout(initialTimeout)
       clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [handleSignOut])
+  }, [supabase, router])
 
   return (
     <div className="min-h-screen bg-black text-white">

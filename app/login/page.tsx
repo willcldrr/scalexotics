@@ -1,10 +1,12 @@
 "use client"
 
-import { Suspense, useState } from "react"
+import { Suspense, useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Loader2 } from "lucide-react"
+
+const SESSION_TOKEN_KEY = 'scale_exotics_session_token'
 
 function LoginForm() {
   const [email, setEmail] = useState("")
@@ -18,10 +20,18 @@ function LoginForm() {
   const message = searchParams.get("message")
   const showPasswordResetSuccess = message === "password_reset"
 
+  // Clear any stale session token when visiting login page
+  useEffect(() => {
+    localStorage.removeItem(SESSION_TOKEN_KEY)
+  }, [])
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
+
+    // Clear any old session token before logging in
+    localStorage.removeItem(SESSION_TOKEN_KEY)
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -32,9 +42,17 @@ function LoginForm() {
       setError(error.message)
       setLoading(false)
     } else {
-      // Record the session
+      // Create a new session for this device
       try {
-        await fetch('/api/sessions', { method: 'POST' })
+        const response = await fetch('/api/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        })
+        const data = await response.json()
+        if (data.session_token) {
+          localStorage.setItem(SESSION_TOKEN_KEY, data.session_token)
+        }
       } catch (e) {
         // Silently fail - session tracking is not critical
       }
