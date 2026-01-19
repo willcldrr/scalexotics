@@ -377,7 +377,7 @@ export default function BookingsPage() {
       {activeTab === "by-vehicle" && (
         <div className="flex gap-4 h-[calc(100vh-180px)]">
           {/* Vehicle Sidebar */}
-          <div className={`${selectedVehicle ? "hidden lg:flex lg:w-72" : "w-full"} flex-shrink-0 flex-col`}>
+          <div className={`${selectedVehicle ? "hidden lg:flex" : "w-full"} lg:w-72 flex-shrink-0 flex-col`}>
             {/* Tab Switcher */}
             <div className="flex gap-1 p-1 bg-white/[0.03] rounded-xl mb-4">
               <button

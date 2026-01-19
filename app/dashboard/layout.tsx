@@ -108,59 +108,42 @@ export default function DashboardLayout({
     router.refresh()
   }, [supabase, router])
 
-  // Session validation - check if this device's session has been revoked
-  useEffect(() => {
-    // Track if we've already triggered a sign out to prevent loops
-    let isSigningOut = false
-
-    const validateSession = async () => {
-      if (isSigningOut) return
-
-      const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY)
-      if (!sessionToken) return // No session token yet, will be created when visiting sessions page
-
-      try {
-        const response = await fetch('/api/sessions/validate', {
-          headers: { 'x-session-token': sessionToken }
-        })
-
-        if (response.status === 401) {
-          const data = await response.json()
-          if (data.revoked) {
-            // Session was explicitly revoked by another device - sign out this device
-            isSigningOut = true
-            // Clear the token first so they can log back in
-            localStorage.removeItem(SESSION_TOKEN_KEY)
-            await supabase.auth.signOut()
-            router.push("/login")
-            router.refresh()
-          }
-        }
-      } catch {
-        // Network error - don't sign out, just skip validation
-      }
-    }
-
-    // Small delay before first validation to let auth state settle after login
-    const initialTimeout = setTimeout(validateSession, 2000)
-
-    // Validate every 30 seconds
-    const interval = setInterval(validateSession, 30000)
-
-    // Validate when tab becomes visible
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        validateSession()
-      }
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      clearTimeout(initialTimeout)
-      clearInterval(interval)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [supabase, router])
+  // Session validation - TEMPORARILY DISABLED for debugging
+  // TODO: Re-enable once session creation is fixed
+  // useEffect(() => {
+  //   let isSigningOut = false
+  //   const validateSession = async () => {
+  //     if (isSigningOut) return
+  //     const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY)
+  //     if (!sessionToken) return
+  //     try {
+  //       const response = await fetch('/api/sessions/validate', {
+  //         headers: { 'x-session-token': sessionToken }
+  //       })
+  //       if (response.status === 401) {
+  //         const data = await response.json()
+  //         if (data.revoked) {
+  //           isSigningOut = true
+  //           localStorage.removeItem(SESSION_TOKEN_KEY)
+  //           await supabase.auth.signOut()
+  //           router.push("/login")
+  //           router.refresh()
+  //         }
+  //       }
+  //     } catch {}
+  //   }
+  //   const initialTimeout = setTimeout(validateSession, 2000)
+  //   const interval = setInterval(validateSession, 30000)
+  //   const handleVisibilityChange = () => {
+  //     if (document.visibilityState === 'visible') validateSession()
+  //   }
+  //   document.addEventListener('visibilitychange', handleVisibilityChange)
+  //   return () => {
+  //     clearTimeout(initialTimeout)
+  //     clearInterval(interval)
+  //     document.removeEventListener('visibilitychange', handleVisibilityChange)
+  //   }
+  // }, [supabase, router])
 
   return (
     <div className="min-h-screen bg-black text-white">
