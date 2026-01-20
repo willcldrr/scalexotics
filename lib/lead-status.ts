@@ -1,7 +1,7 @@
 // Centralized lead status configuration
 // Used across the entire application for consistent lead state management
 
-export type LeadStatus = "new" | "contacted" | "converted" | "lost"
+export type LeadStatus = "new" | "contacted" | "qualified" | "converted" | "lost"
 
 export interface LeadStatusOption {
   value: LeadStatus
@@ -23,6 +23,12 @@ export const leadStatusOptions: LeadStatusOption[] = [
     label: "Contacted",
     color: "bg-purple-500/15 text-purple-400",
     description: "Initial outreach made",
+  },
+  {
+    value: "qualified",
+    label: "Qualified",
+    color: "bg-amber-500/15 text-amber-400",
+    description: "Verified and ready to book",
   },
   {
     value: "converted",
@@ -52,7 +58,7 @@ export const getStatusLabel = (status: string): string => {
 }
 
 // Status groups for filtering
-export const activeStatuses: LeadStatus[] = ["new", "contacted"]
+export const activeStatuses: LeadStatus[] = ["new", "contacted", "qualified"]
 export const customerStatuses: LeadStatus[] = ["converted"]
 export const closedStatuses: LeadStatus[] = ["converted", "lost"]
 
@@ -61,6 +67,9 @@ export const defaultLeadStatus: LeadStatus = "new"
 
 // Status after initial contact (SMS/call)
 export const contactedStatus: LeadStatus = "contacted"
+
+// Status after qualification (docs verified)
+export const qualifiedStatus: LeadStatus = "qualified"
 
 // Status after conversion (payment/booking)
 export const convertedStatus: LeadStatus = "converted"

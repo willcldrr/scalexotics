@@ -23,7 +23,9 @@ import {
   Car,
   StickyNote,
   ChevronDown,
+  LayoutGrid,
 } from "lucide-react"
+import Link from "next/link"
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns"
 import { leadStatusOptions, getStatusColor, getStatusLabel, defaultLeadStatus } from "@/lib/lead-status"
 
@@ -588,6 +590,13 @@ export default function LeadsPage() {
           <p className="text-white/50 mt-1">{leads.length} lead{leads.length !== 1 ? "s" : ""} from your campaigns</p>
         </div>
         <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/leads/pipeline"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white font-medium rounded-xl transition-colors"
+          >
+            <LayoutGrid className="w-4 h-4" />
+            <span className="hidden sm:inline">Pipeline</span>
+          </Link>
           <button
             onClick={() => {
               resetImportModal()
