@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/reactivation/cron/process",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}

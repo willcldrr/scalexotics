@@ -24,12 +24,11 @@ import {
   MessageSquare,
   UserCircle,
   Receipt,
-  ClipboardCheck,
-  Truck,
   Globe,
   Shield,
   FileText,
   Key,
+  RefreshCw,
 } from "lucide-react"
 
 // Ordered by frequency of use for rental fleet owners
@@ -39,10 +38,9 @@ const allNavItems = [
   { name: "Bookings", href: "/dashboard/bookings", icon: CalendarCheck, key: "bookings" },
   { name: "Customers", href: "/dashboard/customers", icon: UserCircle, key: "customers" },
   { name: "Vehicles", href: "/dashboard/vehicles", icon: Car, key: "vehicles" },
-  { name: "Inspections", href: "/dashboard/inspections", icon: ClipboardCheck, key: "inspections" },
-  { name: "Deliveries", href: "/dashboard/deliveries", icon: Truck, key: "deliveries" },
   { name: "Billing", href: "/dashboard/billing", icon: Receipt, key: "billing" },
   { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3, key: "analytics" },
+  { name: "Reactivation", href: "/dashboard/reactivation", icon: RefreshCw, key: "reactivation" },
   { name: "AI Assistant", href: "/dashboard/ai-assistant", icon: Bot, key: "ai-assistant" },
   { name: "Settings", href: "/dashboard/settings", icon: Settings, key: "settings", alwaysVisible: true },
 ]

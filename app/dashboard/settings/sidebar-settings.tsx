@@ -9,8 +9,7 @@ import {
   BarChart3,
   UserCircle,
   Receipt,
-  ClipboardCheck,
-  Truck,
+  RefreshCw,
 } from "lucide-react"
 
 // Define which tabs can be toggled and their defaults
@@ -20,9 +19,8 @@ const toggleableTabs = [
   { key: "customers", name: "Customers", icon: UserCircle, defaultEnabled: false },
   { key: "bookings", name: "Bookings", icon: CalendarCheck, defaultEnabled: true },
   { key: "vehicles", name: "Vehicles", icon: Car, defaultEnabled: true },
-  { key: "inspections", name: "Inspections", icon: ClipboardCheck, defaultEnabled: false },
-  { key: "deliveries", name: "Deliveries", icon: Truck, defaultEnabled: false },
   { key: "billing", name: "Billing", icon: Receipt, defaultEnabled: false },
+  { key: "reactivation", name: "Reactivation", icon: RefreshCw, defaultEnabled: true },
   { key: "ai-assistant", name: "AI Assistant", icon: Bot, defaultEnabled: true },
 ]
 
