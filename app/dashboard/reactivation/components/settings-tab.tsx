@@ -141,7 +141,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
     return (
       <div className="space-y-6">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-48 bg-white/5 rounded-2xl animate-pulse" />
+          <div key={i} className="h-48 bg-white/[0.02] rounded-2xl border border-white/[0.06] animate-pulse" />
         ))}
       </div>
     )
@@ -150,10 +150,10 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
   return (
     <div className="space-y-6 max-w-3xl">
       {/* AI Settings */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+      <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-purple-400" />
+          <div className="w-10 h-10 bg-[#375DEE]/15 rounded-xl flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-[#375DEE]" />
           </div>
           <div>
             <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
@@ -164,7 +164,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
         </div>
 
         <div className="space-y-6">
-          <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+          <label className="flex items-center justify-between p-4 bg-white/[0.02] rounded-xl border border-white/[0.04]">
             <div>
               <p className="font-medium">Enable AI Messages</p>
               <p className="text-sm text-white/50">Let AI personalize messages for each contact</p>
@@ -197,10 +197,10 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
               {tones.map((tone) => (
                 <label
                   key={tone.value}
-                  className={`p-4 rounded-xl border cursor-pointer transition-colors ${
+                  className={`p-4 rounded-xl border cursor-pointer transition-all ${
                     settings.default_ai_tone === tone.value
-                      ? "bg-[#375DEE]/20 border-[#375DEE]"
-                      : "bg-white/5 border-white/10 hover:border-white/20"
+                      ? "bg-[#375DEE]/15 border-[#375DEE]/30"
+                      : "bg-white/[0.02] border-white/[0.06] hover:border-white/[0.12]"
                   }`}
                 >
                   <input
@@ -221,10 +221,10 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
       </div>
 
       {/* Frequency Settings */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+      <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-            <Clock className="w-5 h-5 text-blue-400" />
+          <div className="w-10 h-10 bg-white/[0.06] rounded-xl flex items-center justify-center">
+            <Clock className="w-5 h-5 text-white/60" />
           </div>
           <div>
             <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
@@ -249,7 +249,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
                 }
                 min={1}
                 max={30}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+                className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white focus:outline-none focus:border-[#375DEE]/50 transition-colors"
               />
             </div>
             <div>
@@ -265,7 +265,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
                 }
                 min={1}
                 max={30}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+                className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white focus:outline-none focus:border-[#375DEE]/50 transition-colors"
               />
             </div>
           </div>
@@ -273,10 +273,10 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
       </div>
 
       {/* Do Not Disturb Settings */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+      <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
-            <Bell className="w-5 h-5 text-yellow-400" />
+          <div className="w-10 h-10 bg-white/[0.06] rounded-xl flex items-center justify-center">
+            <Bell className="w-5 h-5 text-white/60" />
           </div>
           <div>
             <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
@@ -287,7 +287,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
         </div>
 
         <div className="space-y-4">
-          <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+          <label className="flex items-center justify-between p-4 bg-white/[0.02] rounded-xl border border-white/[0.04]">
             <div>
               <p className="font-medium">Enable Do Not Disturb</p>
               <p className="text-sm text-white/50">Pause messages during specified hours</p>
@@ -323,7 +323,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
                     type="time"
                     value={settings.dnd_start_time}
                     onChange={(e) => setSettings({ ...settings, dnd_start_time: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+                    className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white focus:outline-none focus:border-[#375DEE]/50 transition-colors"
                   />
                 </div>
                 <div>
@@ -332,7 +332,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
                     type="time"
                     value={settings.dnd_end_time}
                     onChange={(e) => setSettings({ ...settings, dnd_end_time: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+                    className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white focus:outline-none focus:border-[#375DEE]/50 transition-colors"
                   />
                 </div>
               </div>
@@ -344,10 +344,10 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
                     <button
                       key={day.value}
                       onClick={() => toggleDndDay(day.value)}
-                      className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
+                      className={`flex-1 py-2.5 rounded-xl font-medium transition-all ${
                         settings.dnd_days.includes(day.value)
-                          ? "bg-[#375DEE] text-white"
-                          : "bg-white/5 text-white/50 hover:bg-white/10"
+                          ? "bg-[#375DEE]/15 text-[#375DEE] border border-[#375DEE]/30"
+                          : "bg-white/[0.03] text-white/50 hover:bg-white/[0.06] border border-white/[0.06]"
                       }`}
                     >
                       {day.label}
@@ -361,10 +361,10 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
       </div>
 
       {/* Email Settings */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+      <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-            <Mail className="w-5 h-5 text-green-400" />
+          <div className="w-10 h-10 bg-white/[0.06] rounded-xl flex items-center justify-center">
+            <Mail className="w-5 h-5 text-white/60" />
           </div>
           <div>
             <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
@@ -383,7 +383,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
                 value={settings.email_from_name}
                 onChange={(e) => setSettings({ ...settings, email_from_name: e.target.value })}
                 placeholder="e.g., Miami Exotics"
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+                className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]/50 transition-colors"
               />
             </div>
             <div>
@@ -393,13 +393,13 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
                 value={settings.email_reply_to}
                 onChange={(e) => setSettings({ ...settings, email_reply_to: e.target.value })}
                 placeholder="e.g., hello@miamiexotics.com"
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+                className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]/50 transition-colors"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <label className="flex items-center gap-3 p-4 bg-white/5 rounded-xl cursor-pointer">
+            <label className="flex items-center gap-3 p-4 bg-white/[0.02] rounded-xl cursor-pointer border border-white/[0.04] hover:border-white/[0.08] transition-colors">
               <input
                 type="checkbox"
                 checked={settings.track_opens}
@@ -411,7 +411,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
                 <p className="text-xs text-white/50">Monitor when emails are opened</p>
               </div>
             </label>
-            <label className="flex items-center gap-3 p-4 bg-white/5 rounded-xl cursor-pointer">
+            <label className="flex items-center gap-3 p-4 bg-white/[0.02] rounded-xl cursor-pointer border border-white/[0.04] hover:border-white/[0.08] transition-colors">
               <input
                 type="checkbox"
                 checked={settings.track_clicks}
@@ -428,10 +428,10 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
       </div>
 
       {/* Unsubscribe Settings */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+      <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
-            <AlertCircle className="w-5 h-5 text-red-400" />
+          <div className="w-10 h-10 bg-white/[0.06] rounded-xl flex items-center justify-center">
+            <AlertCircle className="w-5 h-5 text-white/60" />
           </div>
           <div>
             <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
@@ -442,7 +442,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
         </div>
 
         <div className="space-y-4">
-          <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+          <label className="flex items-center justify-between p-4 bg-white/[0.02] rounded-xl border border-white/[0.04]">
             <div>
               <p className="font-medium">Auto-unsubscribe on STOP</p>
               <p className="text-sm text-white/50">Automatically opt out contacts who reply STOP</p>
@@ -484,7 +484,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
                 setSettings({ ...settings, unsubscribe_confirmation_message: e.target.value })
               }
               rows={2}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE] resize-none"
+              className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white focus:outline-none focus:border-[#375DEE]/50 resize-none transition-colors"
             />
           </div>
         </div>
@@ -495,7 +495,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-6 py-3 bg-[#375DEE] rounded-lg text-white hover:bg-[#375DEE]/80 transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-6 py-3 bg-[#375DEE]/15 border border-[#375DEE]/25 rounded-xl text-[#375DEE] font-medium hover:bg-[#375DEE]/25 transition-all disabled:opacity-50"
         >
           {saving ? (
             <>

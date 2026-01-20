@@ -133,13 +133,13 @@ export default function TemplatesTab({ userId }: TemplatesTabProps) {
               placeholder="Search templates..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-[#375DEE]"
+              className="w-full pl-10 pr-4 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:border-[#375DEE]/50 transition-colors"
             />
           </div>
           <select
             value={channelFilter}
             onChange={(e) => setChannelFilter(e.target.value)}
-            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+            className="px-4 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white focus:outline-none focus:border-[#375DEE]/50 transition-colors"
           >
             <option value="all">All Channels</option>
             <option value="sms">SMS</option>
@@ -151,7 +151,7 @@ export default function TemplatesTab({ userId }: TemplatesTabProps) {
             setEditingTemplate(null)
             setShowEditor(true)
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-[#375DEE] rounded-lg text-white hover:bg-[#375DEE]/80 transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#375DEE]/15 border border-[#375DEE]/25 rounded-xl text-[#375DEE] text-sm font-medium hover:bg-[#375DEE]/25 transition-all"
         >
           <Plus className="w-4 h-4" />
           Create Template
@@ -162,13 +162,15 @@ export default function TemplatesTab({ userId }: TemplatesTabProps) {
       {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-48 bg-white/5 rounded-2xl animate-pulse" />
+            <div key={i} className="h-48 bg-white/[0.02] rounded-2xl border border-white/[0.06] animate-pulse" />
           ))}
         </div>
       ) : filteredTemplates.length === 0 ? (
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-12 text-center">
-          <FileText className="w-12 h-12 text-white/20 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No templates yet</h3>
+        <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] p-12 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-white/[0.03] flex items-center justify-center mx-auto mb-4">
+            <FileText className="w-7 h-7 text-white/20" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2" style={{ fontFamily: 'var(--font-display)' }}>No templates yet</h3>
           <p className="text-white/50 mb-6">
             Create message templates for your reactivation campaigns
           </p>
@@ -177,7 +179,7 @@ export default function TemplatesTab({ userId }: TemplatesTabProps) {
               setEditingTemplate(null)
               setShowEditor(true)
             }}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#375DEE] rounded-lg text-white hover:bg-[#375DEE]/80 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#375DEE]/15 border border-[#375DEE]/25 rounded-xl text-[#375DEE] font-medium hover:bg-[#375DEE]/25 transition-all"
           >
             <Plus className="w-5 h-5" />
             Create Template
@@ -188,15 +190,15 @@ export default function TemplatesTab({ userId }: TemplatesTabProps) {
           {filteredTemplates.map((template) => (
             <div
               key={template.id}
-              className="bg-white/5 rounded-2xl border border-white/10 p-6 hover:border-white/20 transition-colors"
+              className="bg-white/[0.02] rounded-2xl border border-white/[0.06] p-6 hover:border-white/[0.12] transition-all group"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                       template.channel === "sms"
-                        ? "bg-green-500/20 text-green-400"
-                        : "bg-blue-500/20 text-blue-400"
+                        ? "bg-[#375DEE]/15 text-[#375DEE]"
+                        : "bg-white/[0.06] text-white/60"
                     }`}
                   >
                     {template.channel === "sms" ? (
@@ -213,7 +215,7 @@ export default function TemplatesTab({ userId }: TemplatesTabProps) {
                   </div>
                 </div>
                 {template.ai_generated && (
-                  <span className="flex items-center gap-1 px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs">
+                  <span className="flex items-center gap-1 px-2 py-1 bg-[#375DEE]/15 text-[#375DEE] rounded-lg text-xs border border-[#375DEE]/20">
                     <Sparkles className="w-3 h-3" />
                     AI
                   </span>
@@ -228,12 +230,12 @@ export default function TemplatesTab({ userId }: TemplatesTabProps) {
 
               <p className="text-sm text-white/60 line-clamp-3 mb-4">{template.content}</p>
 
-              <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                <p className="text-xs text-white/40">Used {template.times_used || 0} times</p>
+              <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
+                <p className="text-xs text-white/40">Used <span className="font-numbers">{template.times_used || 0}</span> times</p>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleDuplicate(template)}
-                    className="p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                    className="p-2 text-white/40 hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors"
                     title="Duplicate"
                   >
                     <Copy className="w-4 h-4" />
@@ -243,14 +245,14 @@ export default function TemplatesTab({ userId }: TemplatesTabProps) {
                       setEditingTemplate(template)
                       setShowEditor(true)
                     }}
-                    className="p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                    className="p-2 text-white/40 hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors"
                     title="Edit"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(template.id)}
-                    className="p-2 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                    className="p-2 text-white/40 hover:text-white/70 hover:bg-white/[0.06] rounded-lg transition-colors"
                     title="Delete"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -415,14 +417,14 @@ function TemplateEditor({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/80" onClick={onClose} />
-      <div className="relative bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-3xl max-h-[90vh] overflow-hidden">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
+        <div className="flex items-center justify-between p-6 border-b border-white/[0.06]">
           <h2 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
             {template ? "Edit Template" : "Create Template"}
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-white/[0.06] rounded-lg transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -437,7 +439,7 @@ function TemplateEditor({
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g., Summer Win-Back SMS"
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+                className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]/50 transition-colors"
               />
             </div>
             <div>
@@ -445,7 +447,7 @@ function TemplateEditor({
               <select
                 value={formData.channel}
                 onChange={(e) => setFormData({ ...formData, channel: e.target.value })}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+                className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white focus:outline-none focus:border-[#375DEE]/50 transition-colors"
               >
                 <option value="sms">SMS</option>
                 <option value="email">Email</option>
@@ -459,7 +461,7 @@ function TemplateEditor({
               <select
                 value={formData.template_type}
                 onChange={(e) => setFormData({ ...formData, template_type: e.target.value })}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+                className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white focus:outline-none focus:border-[#375DEE]/50 transition-colors"
               >
                 {templateTypes.map((type) => (
                   <option key={type.value} value={type.value}>
@@ -473,7 +475,7 @@ function TemplateEditor({
               <select
                 value={formData.ai_tone}
                 onChange={(e) => setFormData({ ...formData, ai_tone: e.target.value })}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+                className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white focus:outline-none focus:border-[#375DEE]/50 transition-colors"
               >
                 {tones.map((tone) => (
                   <option key={tone.value} value={tone.value}>
@@ -492,7 +494,7 @@ function TemplateEditor({
                 value={formData.subject}
                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                 placeholder="e.g., {{name}}, we miss you!"
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+                className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]/50 transition-colors"
               />
             </div>
           )}
@@ -503,7 +505,7 @@ function TemplateEditor({
               <button
                 onClick={handleGenerateWithAI}
                 disabled={generating}
-                className="flex items-center gap-2 px-3 py-1 bg-purple-500/20 text-purple-400 rounded-lg text-sm hover:bg-purple-500/30 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-3 py-1.5 bg-[#375DEE]/15 text-[#375DEE] rounded-lg text-sm hover:bg-[#375DEE]/25 border border-[#375DEE]/20 transition-all disabled:opacity-50"
               >
                 {generating ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -518,12 +520,12 @@ function TemplateEditor({
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               placeholder="Write your message here... Use variables like {{name}} for personalization."
               rows={6}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] resize-none font-mono text-sm"
+              className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]/50 resize-none font-mono text-sm transition-colors"
             />
             <p className="text-xs text-white/40 mt-1">
               {formData.channel === "sms"
-                ? `${formData.content.length} characters (SMS limit: 160 per segment)`
-                : `${formData.content.length} characters`}
+                ? <><span className="font-numbers">{formData.content.length}</span> characters (SMS limit: 160 per segment)</>
+                : <><span className="font-numbers">{formData.content.length}</span> characters</>}
             </p>
           </div>
 
@@ -535,7 +537,7 @@ function TemplateEditor({
                 <button
                   key={v.variable}
                   onClick={() => insertVariable(v.variable)}
-                  className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-sm hover:bg-white/10 hover:border-[#375DEE] transition-colors group"
+                  className="px-3 py-1.5 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm hover:bg-white/[0.06] hover:border-[#375DEE]/30 transition-all group"
                   title={v.description}
                 >
                   <code className="text-[#375DEE]">{v.variable}</code>
@@ -546,17 +548,17 @@ function TemplateEditor({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-white/10">
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-white/[0.06]">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-white/60 hover:text-white transition-colors"
+            className="px-4 py-2.5 text-white/60 hover:text-white hover:bg-white/[0.04] rounded-xl transition-all"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving || !formData.name || !formData.content}
-            className="flex items-center gap-2 px-6 py-2 bg-[#375DEE] rounded-lg text-white hover:bg-[#375DEE]/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#375DEE]/15 border border-[#375DEE]/25 rounded-xl text-[#375DEE] font-medium hover:bg-[#375DEE]/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? (
               <>

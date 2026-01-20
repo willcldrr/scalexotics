@@ -47,16 +47,27 @@ export default function ReactivationPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-10 w-64 bg-white/10 rounded-lg mb-2" />
-          <div className="h-5 w-96 bg-white/5 rounded-lg" />
+        <div>
+          <div className="h-9 w-40 bg-white/5 rounded-lg animate-pulse" />
+          <div className="h-5 w-64 bg-white/5 rounded mt-2 animate-pulse" />
         </div>
         <div className="flex gap-2">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-10 w-28 bg-white/10 rounded-lg animate-pulse" />
+            <div key={i} className="h-9 w-24 bg-white/[0.03] rounded-lg animate-pulse" />
           ))}
         </div>
-        <div className="h-96 bg-white/5 rounded-2xl animate-pulse" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white/[0.03] rounded-2xl p-5 border border-white/[0.06] animate-pulse">
+              <div className="flex items-center justify-between mb-4">
+                <div className="h-4 w-20 bg-white/10 rounded" />
+                <div className="w-10 h-10 bg-white/10 rounded-xl" />
+              </div>
+              <div className="h-8 w-24 bg-white/10 rounded mb-2" />
+              <div className="h-3 w-16 bg-white/5 rounded" />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -65,27 +76,24 @@ export default function ReactivationPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-3">
-          <RefreshCw className="w-8 h-8 text-[#375DEE]" />
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-            Reactivation
-          </h1>
-        </div>
-        <p className="text-white/50 mt-1">
-          Re-engage past customers with AI-powered campaigns via SMS and Email
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
+          Reactivation
+        </h1>
+        <p className="text-white/50 text-sm sm:text-base mt-1">
+          Re-engage past customers with AI-powered campaigns
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-white/10 pb-4 overflow-x-auto">
+      <div className="flex gap-1.5 overflow-x-auto pb-1">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
               activeTab === tab.id
-                ? "bg-[#375DEE] text-white"
-                : "text-white/60 hover:text-white hover:bg-white/5"
+                ? "bg-[#375DEE]/15 text-[#375DEE] border border-[#375DEE]/20"
+                : "text-white/50 hover:text-white/70 hover:bg-white/[0.03] border border-transparent"
             }`}
           >
             <tab.icon className="w-4 h-4" />

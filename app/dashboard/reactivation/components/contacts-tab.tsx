@@ -5,8 +5,6 @@ import { createClient } from "@/lib/supabase/client"
 import {
   Upload,
   Search,
-  Filter,
-  MoreVertical,
   Phone,
   Mail,
   Calendar,
@@ -16,10 +14,7 @@ import {
   FileSpreadsheet,
   X,
   Check,
-  AlertCircle,
   ChevronDown,
-  Trash2,
-  Edit,
   Eye,
 } from "lucide-react"
 
@@ -42,14 +37,6 @@ interface Contact {
 
 interface ContactsTabProps {
   userId: string
-}
-
-const statusColors: Record<string, string> = {
-  active: "bg-green-500/20 text-green-400",
-  paused: "bg-yellow-500/20 text-yellow-400",
-  opted_out: "bg-red-500/20 text-red-400",
-  converted: "bg-blue-500/20 text-blue-400",
-  invalid: "bg-gray-500/20 text-gray-400",
 }
 
 export default function ContactsTab({ userId }: ContactsTabProps) {
@@ -96,45 +83,51 @@ export default function ContactsTab({ userId }: ContactsTabProps) {
     emailOptedIn: contacts.filter((c) => c.email_opted_in).length,
   }
 
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      active: "bg-[#375DEE]/15 text-[#375DEE] border border-[#375DEE]/20",
+      paused: "bg-white/[0.08] text-white/70 border border-white/10",
+      opted_out: "bg-white/[0.04] text-white/40 border border-white/[0.06]",
+      converted: "bg-white/10 text-white border border-white/15",
+      invalid: "bg-white/[0.04] text-white/30 border border-white/[0.04]",
+    }
+    return colors[status] || colors.active
+  }
+
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-          <p className="text-white/50 text-sm">Total Contacts</p>
-          <p className="text-2xl font-bold mt-1">{stats.total}</p>
-        </div>
-        <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-          <p className="text-white/50 text-sm">Active</p>
-          <p className="text-2xl font-bold mt-1 text-green-400">{stats.active}</p>
-        </div>
-        <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-          <p className="text-white/50 text-sm">SMS Opted In</p>
-          <p className="text-2xl font-bold mt-1">{stats.smsOptedIn}</p>
-        </div>
-        <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-          <p className="text-white/50 text-sm">Email Opted In</p>
-          <p className="text-2xl font-bold mt-1">{stats.emailOptedIn}</p>
-        </div>
+        {[
+          { label: "Total Contacts", value: stats.total },
+          { label: "Active", value: stats.active },
+          { label: "SMS Opted In", value: stats.smsOptedIn },
+          { label: "Email Opted In", value: stats.emailOptedIn },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-4">
+            <p className="text-white/50 text-sm">{stat.label}</p>
+            <p className="text-2xl font-bold font-numbers mt-1">{stat.value}</p>
+          </div>
+        ))}
       </div>
 
       {/* Actions Bar */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="flex gap-3 flex-1">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
             <input
               type="text"
               placeholder="Search contacts..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-[#375DEE]"
+              className="w-full pl-10 pr-4 py-2 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]/50 transition-colors"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+            className="px-4 py-2 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-[#375DEE]/50 transition-colors"
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
@@ -146,14 +139,14 @@ export default function ContactsTab({ userId }: ContactsTabProps) {
         <div className="flex gap-3">
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white hover:bg-white/10 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white/70 text-sm hover:bg-white/[0.06] hover:border-white/[0.12] transition-all"
           >
             <UserPlus className="w-4 h-4" />
             Add Contact
           </button>
           <button
             onClick={() => setShowImportModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#375DEE] rounded-lg text-white hover:bg-[#375DEE]/80 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[#375DEE]/15 border border-[#375DEE]/25 rounded-lg text-[#375DEE] text-sm hover:bg-[#375DEE]/25 transition-all"
           >
             <Upload className="w-4 h-4" />
             Import CSV
@@ -162,24 +155,24 @@ export default function ContactsTab({ userId }: ContactsTabProps) {
       </div>
 
       {/* Contacts Table */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+      <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] overflow-hidden">
         {loading ? (
           <div className="p-8 text-center">
             <div className="animate-spin w-8 h-8 border-2 border-[#375DEE] border-t-transparent rounded-full mx-auto" />
-            <p className="text-white/50 mt-4">Loading contacts...</p>
+            <p className="text-white/40 mt-4 text-sm">Loading contacts...</p>
           </div>
         ) : filteredContacts.length === 0 ? (
-          <div className="p-12 text-center">
-            <FileSpreadsheet className="w-12 h-12 text-white/20 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No contacts yet</h3>
-            <p className="text-white/50 mb-6">
-              Import your past customers via CSV to start reactivation campaigns
-            </p>
+          <div className="px-5 py-12 text-center">
+            <div className="w-12 h-12 rounded-full bg-white/[0.03] flex items-center justify-center mx-auto mb-3">
+              <FileSpreadsheet className="w-6 h-6 text-white/20" />
+            </div>
+            <p className="text-white/40 text-sm">No contacts yet</p>
+            <p className="text-white/25 text-xs mt-1 mb-4">Import your past customers via CSV</p>
             <button
               onClick={() => setShowImportModal(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#375DEE] rounded-lg text-white hover:bg-[#375DEE]/80 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#375DEE]/15 border border-[#375DEE]/25 rounded-lg text-[#375DEE] text-sm hover:bg-[#375DEE]/25 transition-all"
             >
-              <Upload className="w-5 h-5" />
+              <Upload className="w-4 h-4" />
               Import CSV
             </button>
           </div>
@@ -187,81 +180,82 @@ export default function ContactsTab({ userId }: ContactsTabProps) {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left p-4 text-white/50 font-medium">Contact</th>
-                  <th className="text-left p-4 text-white/50 font-medium">Status</th>
-                  <th className="text-left p-4 text-white/50 font-medium">Last Rental</th>
-                  <th className="text-left p-4 text-white/50 font-medium">Total Spend</th>
-                  <th className="text-left p-4 text-white/50 font-medium">Channels</th>
-                  <th className="text-left p-4 text-white/50 font-medium">Actions</th>
+                <tr className="border-b border-white/[0.06]">
+                  <th className="text-left px-5 py-3 text-white/40 text-xs font-medium uppercase tracking-wider">Contact</th>
+                  <th className="text-left px-5 py-3 text-white/40 text-xs font-medium uppercase tracking-wider">Status</th>
+                  <th className="text-left px-5 py-3 text-white/40 text-xs font-medium uppercase tracking-wider">Last Rental</th>
+                  <th className="text-left px-5 py-3 text-white/40 text-xs font-medium uppercase tracking-wider">Total Spend</th>
+                  <th className="text-left px-5 py-3 text-white/40 text-xs font-medium uppercase tracking-wider">Channels</th>
+                  <th className="text-left px-5 py-3 text-white/40 text-xs font-medium uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-white/[0.04]">
                 {filteredContacts.map((contact) => (
                   <tr
                     key={contact.id}
-                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                    className="hover:bg-white/[0.02] transition-colors"
                   >
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium">{contact.name}</p>
-                        <div className="flex items-center gap-3 mt-1 text-sm text-white/50">
-                          {contact.email && (
-                            <span className="flex items-center gap-1">
-                              <Mail className="w-3 h-3" />
-                              {contact.email}
-                            </span>
-                          )}
-                          {contact.phone && (
-                            <span className="flex items-center gap-1">
-                              <Phone className="w-3 h-3" />
-                              {contact.phone}
-                            </span>
-                          )}
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#375DEE]/20 to-[#375DEE]/10 flex items-center justify-center border border-white/[0.08]">
+                          <span className="text-sm font-semibold text-white/80">
+                            {contact.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{contact.name}</p>
+                          <div className="flex items-center gap-3 mt-0.5 text-xs text-white/40">
+                            {contact.email && (
+                              <span className="flex items-center gap-1">
+                                <Mail className="w-3 h-3" />
+                                {contact.email}
+                              </span>
+                            )}
+                            {contact.phone && (
+                              <span className="flex items-center gap-1">
+                                <Phone className="w-3 h-3" />
+                                {contact.phone}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className="p-4">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          statusColors[contact.status] || statusColors.active
-                        }`}
-                      >
+                    <td className="px-5 py-3.5">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wide ${getStatusColor(contact.status)}`}>
                         {contact.status}
                       </span>
                     </td>
-                    <td className="p-4 text-white/70">
+                    <td className="px-5 py-3.5 text-sm text-white/60 font-numbers">
                       {contact.last_rental_date
                         ? new Date(contact.last_rental_date).toLocaleDateString()
                         : "-"}
                     </td>
-                    <td className="p-4 text-white/70">
+                    <td className="px-5 py-3.5 text-sm text-white/60 font-numbers">
                       ${contact.total_spend?.toLocaleString() || "0"}
                     </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-1.5">
                         {contact.sms_opted_in && (
-                          <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">
+                          <span className="px-2 py-0.5 bg-[#375DEE]/10 text-[#375DEE] rounded text-[10px] font-medium">
                             SMS
                           </span>
                         )}
                         {contact.email_opted_in && (
-                          <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs">
+                          <span className="px-2 py-0.5 bg-white/[0.06] text-white/60 rounded text-[10px] font-medium">
                             Email
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setSelectedContact(contact)}
-                          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                          title="View details"
-                        >
-                          <Eye className="w-4 h-4 text-white/60" />
-                        </button>
-                      </div>
+                    <td className="px-5 py-3.5">
+                      <button
+                        onClick={() => setSelectedContact(contact)}
+                        className="p-2 hover:bg-white/[0.05] rounded-lg transition-colors"
+                        title="View details"
+                      >
+                        <Eye className="w-4 h-4 text-white/40" />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -319,7 +313,7 @@ function CSVImportModal({
 }) {
   const supabase = createClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [step, setStep] = useState<"upload" | "mapping" | "preview" | "importing" | "complete">("upload")
+  const [step, setStep] = useState<"upload" | "mapping" | "importing" | "complete">("upload")
   const [file, setFile] = useState<File | null>(null)
   const [csvData, setCsvData] = useState<string[][]>([])
   const [headers, setHeaders] = useState<string[]>([])
@@ -392,7 +386,6 @@ function CSVImportModal({
         setHeaders(rows[0])
         setCsvData(rows.slice(1))
 
-        // Auto-map columns based on header names
         const autoMapping: Record<string, string> = {}
         rows[0].forEach((header, index) => {
           const headerLower = header.toLowerCase()
@@ -422,7 +415,6 @@ function CSVImportModal({
   }
 
   const handleImport = async () => {
-    // Validate that name is mapped
     const hasName = Object.values(columnMapping).includes("name")
     const hasContact = Object.values(columnMapping).includes("email") || Object.values(columnMapping).includes("phone")
 
@@ -453,25 +445,20 @@ function CSVImportModal({
         email_opted_in: true,
       }
 
-      // Map columns to fields
       Object.entries(columnMapping).forEach(([colIndex, field]) => {
         if (field && row[parseInt(colIndex)]) {
           let value = row[parseInt(colIndex)].trim()
-
-          // Handle special fields
           if (field === "total_spend") {
             value = value.replace(/[$,]/g, "")
             contact[field] = parseFloat(value) || 0
           } else if (field === "rental_count") {
             contact[field] = parseInt(value) || 0
           } else if (field === "last_rental_date" || field === "birthday") {
-            // Try to parse date
             const date = new Date(value)
             if (!isNaN(date.getTime())) {
               contact[field] = date.toISOString().split("T")[0]
             }
           } else if (field === "phone") {
-            // Normalize phone
             contact[field] = value.replace(/[^\d+]/g, "")
           } else if (field === "email") {
             contact[field] = value.toLowerCase()
@@ -481,13 +468,11 @@ function CSVImportModal({
         }
       })
 
-      // Skip if no name
       if (!contact.name) {
         failed++
         continue
       }
 
-      // Check for duplicates
       if (contact.phone || contact.email) {
         let query = supabase
           .from("reactivation_contacts")
@@ -511,7 +496,6 @@ function CSVImportModal({
 
       const { error } = await supabase.from("reactivation_contacts").insert(contact)
       if (error) {
-        console.error("Import error:", error)
         failed++
       } else {
         success++
@@ -526,35 +510,30 @@ function CSVImportModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
-      <div className="relative bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
-          <h2 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+      <div className="relative bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-2xl max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+          <h2 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
             Import Contacts from CSV
           </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="p-2 hover:bg-white/[0.05] rounded-lg transition-colors">
+            <X className="w-5 h-5 text-white/40" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
           {step === "upload" && (
             <div
               className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors ${
-                dragActive ? "border-[#375DEE] bg-[#375DEE]/10" : "border-white/20"
+                dragActive ? "border-[#375DEE] bg-[#375DEE]/5" : "border-white/[0.08]"
               }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
             >
-              <FileSpreadsheet className="w-12 h-12 text-white/40 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">Drop your CSV file here</h3>
-              <p className="text-white/50 mb-6">or click to browse</p>
+              <FileSpreadsheet className="w-12 h-12 text-white/20 mx-auto mb-4" />
+              <h3 className="font-medium mb-1">Drop your CSV file here</h3>
+              <p className="text-white/40 text-sm mb-6">or click to browse</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -564,7 +543,7 @@ function CSVImportModal({
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="px-6 py-3 bg-[#375DEE] rounded-lg text-white hover:bg-[#375DEE]/80 transition-colors"
+                className="px-4 py-2 bg-[#375DEE]/15 border border-[#375DEE]/25 rounded-lg text-[#375DEE] text-sm hover:bg-[#375DEE]/25 transition-all"
               >
                 Select CSV File
               </button>
@@ -573,22 +552,22 @@ function CSVImportModal({
 
           {step === "mapping" && (
             <div className="space-y-6">
-              <p className="text-white/50">
-                Map your CSV columns to contact fields. Required: Name and at least one contact method (Email or Phone).
+              <p className="text-white/50 text-sm">
+                Map your CSV columns to contact fields. Required: Name and at least one contact method.
               </p>
               <div className="space-y-3">
                 {headers.map((header, index) => (
                   <div key={index} className="flex items-center gap-4">
-                    <div className="flex-1 px-4 py-2 bg-white/5 rounded-lg text-white/70 truncate">
+                    <div className="flex-1 px-3 py-2 bg-white/[0.03] rounded-lg text-white/60 text-sm truncate">
                       {header}
                     </div>
-                    <ChevronDown className="w-5 h-5 text-white/40" />
+                    <ChevronDown className="w-4 h-4 text-white/30" />
                     <select
                       value={columnMapping[index.toString()] || ""}
                       onChange={(e) =>
                         setColumnMapping({ ...columnMapping, [index.toString()]: e.target.value })
                       }
-                      className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+                      className="flex-1 px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-[#375DEE]/50"
                     >
                       {fieldOptions.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -599,24 +578,24 @@ function CSVImportModal({
                   </div>
                 ))}
               </div>
-              <div className="bg-white/5 rounded-xl p-4">
-                <p className="text-sm text-white/50 mb-2">Preview ({csvData.length} rows)</p>
+              <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-4">
+                <p className="text-xs text-white/40 mb-3">Preview ({csvData.length} rows)</p>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full text-xs">
                     <thead>
-                      <tr className="border-b border-white/10">
+                      <tr className="border-b border-white/[0.06]">
                         {headers.map((h, i) => (
-                          <th key={i} className="text-left p-2 text-white/50">
-                            {columnMapping[i.toString()] || <span className="italic">Skip</span>}
+                          <th key={i} className="text-left p-2 text-white/40">
+                            {columnMapping[i.toString()] || <span className="italic text-white/20">Skip</span>}
                           </th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {csvData.slice(0, 3).map((row, i) => (
-                        <tr key={i} className="border-b border-white/5">
+                        <tr key={i} className="border-b border-white/[0.04]">
                           {row.map((cell, j) => (
-                            <td key={j} className="p-2 text-white/70 truncate max-w-32">
+                            <td key={j} className="p-2 text-white/60 truncate max-w-32">
                               {cell}
                             </td>
                           ))}
@@ -631,57 +610,49 @@ function CSVImportModal({
 
           {step === "importing" && (
             <div className="text-center py-12">
-              <div className="animate-spin w-12 h-12 border-4 border-[#375DEE] border-t-transparent rounded-full mx-auto" />
-              <p className="text-white/70 mt-6">Importing contacts...</p>
-              <p className="text-white/50 text-sm mt-2">This may take a moment</p>
+              <div className="animate-spin w-10 h-10 border-2 border-[#375DEE] border-t-transparent rounded-full mx-auto" />
+              <p className="text-white/60 mt-6 text-sm">Importing contacts...</p>
             </div>
           )}
 
           {step === "complete" && results && (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Check className="w-8 h-8 text-green-400" />
+              <div className="w-14 h-14 bg-[#375DEE]/15 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Check className="w-7 h-7 text-[#375DEE]" />
               </div>
-              <h3 className="text-xl font-semibold mb-6">Import Complete</h3>
-              <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
-                <div className="bg-green-500/10 rounded-xl p-4">
-                  <p className="text-2xl font-bold text-green-400">{results.success}</p>
-                  <p className="text-sm text-white/50">Imported</p>
+              <h3 className="text-lg font-semibold mb-6">Import Complete</h3>
+              <div className="grid grid-cols-3 gap-4 max-w-sm mx-auto">
+                <div className="bg-[#375DEE]/10 rounded-xl p-4">
+                  <p className="text-2xl font-bold text-[#375DEE] font-numbers">{results.success}</p>
+                  <p className="text-xs text-white/50">Imported</p>
                 </div>
-                <div className="bg-yellow-500/10 rounded-xl p-4">
-                  <p className="text-2xl font-bold text-yellow-400">{results.duplicates}</p>
-                  <p className="text-sm text-white/50">Duplicates</p>
+                <div className="bg-white/[0.04] rounded-xl p-4">
+                  <p className="text-2xl font-bold text-white/60 font-numbers">{results.duplicates}</p>
+                  <p className="text-xs text-white/50">Duplicates</p>
                 </div>
-                <div className="bg-red-500/10 rounded-xl p-4">
-                  <p className="text-2xl font-bold text-red-400">{results.failed}</p>
-                  <p className="text-sm text-white/50">Failed</p>
+                <div className="bg-white/[0.04] rounded-xl p-4">
+                  <p className="text-2xl font-bold text-white/40 font-numbers">{results.failed}</p>
+                  <p className="text-xs text-white/50">Failed</p>
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-white/10">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/[0.06]">
           {step === "upload" && (
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-white/60 hover:text-white transition-colors"
-            >
+            <button onClick={onClose} className="px-4 py-2 text-white/50 text-sm hover:text-white transition-colors">
               Cancel
             </button>
           )}
           {step === "mapping" && (
             <>
-              <button
-                onClick={() => setStep("upload")}
-                className="px-4 py-2 text-white/60 hover:text-white transition-colors"
-              >
+              <button onClick={() => setStep("upload")} className="px-4 py-2 text-white/50 text-sm hover:text-white transition-colors">
                 Back
               </button>
               <button
                 onClick={handleImport}
-                className="px-6 py-2 bg-[#375DEE] rounded-lg text-white hover:bg-[#375DEE]/80 transition-colors"
+                className="px-4 py-2 bg-[#375DEE]/15 border border-[#375DEE]/25 rounded-lg text-[#375DEE] text-sm hover:bg-[#375DEE]/25 transition-all"
               >
                 Import {csvData.length} Contacts
               </button>
@@ -690,7 +661,7 @@ function CSVImportModal({
           {step === "complete" && (
             <button
               onClick={onSuccess}
-              className="px-6 py-2 bg-[#375DEE] rounded-lg text-white hover:bg-[#375DEE]/80 transition-colors"
+              className="px-4 py-2 bg-[#375DEE]/15 border border-[#375DEE]/25 rounded-lg text-[#375DEE] text-sm hover:bg-[#375DEE]/25 transition-all"
             >
               Done
             </button>
@@ -730,7 +701,7 @@ function AddContactModal({
       return
     }
     if (!formData.email && !formData.phone) {
-      alert("At least one contact method (Email or Phone) is required")
+      alert("At least one contact method is required")
       return
     }
 
@@ -751,7 +722,6 @@ function AddContactModal({
     })
 
     if (error) {
-      console.error("Error adding contact:", error)
       alert("Failed to add contact")
     } else {
       onSuccess()
@@ -762,97 +732,93 @@ function AddContactModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
-      <div className="relative bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-lg">
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
-          <h2 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+      <div className="relative bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-lg">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+          <h2 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
             Add Contact
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="p-2 hover:bg-white/[0.05] rounded-lg transition-colors">
+            <X className="w-5 h-5 text-white/40" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm text-white/50 mb-1">Name *</label>
+            <label className="block text-xs text-white/40 mb-1.5">Name *</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+              className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-[#375DEE]/50"
               required
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-white/50 mb-1">Email</label>
+              <label className="block text-xs text-white/40 mb-1.5">Email</label>
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+                className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-[#375DEE]/50"
               />
             </div>
             <div>
-              <label className="block text-sm text-white/50 mb-1">Phone</label>
+              <label className="block text-xs text-white/40 mb-1.5">Phone</label>
               <input
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+                className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-[#375DEE]/50"
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-white/50 mb-1">Last Rental Date</label>
+              <label className="block text-xs text-white/40 mb-1.5">Last Rental Date</label>
               <input
                 type="date"
                 value={formData.last_rental_date}
                 onChange={(e) => setFormData({ ...formData, last_rental_date: e.target.value })}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+                className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-[#375DEE]/50"
               />
             </div>
             <div>
-              <label className="block text-sm text-white/50 mb-1">Total Spend ($)</label>
+              <label className="block text-xs text-white/40 mb-1.5">Total Spend ($)</label>
               <input
                 type="number"
                 value={formData.total_spend}
                 onChange={(e) => setFormData({ ...formData, total_spend: e.target.value })}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+                className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-[#375DEE]/50"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm text-white/50 mb-1">Vehicle Preference</label>
+            <label className="block text-xs text-white/40 mb-1.5">Vehicle Preference</label>
             <input
               type="text"
               value={formData.preferred_vehicle_type}
               onChange={(e) => setFormData({ ...formData, preferred_vehicle_type: e.target.value })}
-              placeholder="e.g., Lamborghini, Ferrari, SUV"
-              className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+              placeholder="e.g., Lamborghini, Ferrari"
+              className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#375DEE]/50"
             />
           </div>
           <div>
-            <label className="block text-sm text-white/50 mb-1">Notes</label>
+            <label className="block text-xs text-white/40 mb-1.5">Notes</label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows={3}
-              className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE] resize-none"
+              rows={2}
+              className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white text-sm focus:outline-none focus:border-[#375DEE]/50 resize-none"
             />
           </div>
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-white/60 hover:text-white transition-colors"
-            >
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-white/50 text-sm hover:text-white transition-colors">
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2 bg-[#375DEE] rounded-lg text-white hover:bg-[#375DEE]/80 transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-[#375DEE]/15 border border-[#375DEE]/25 rounded-lg text-[#375DEE] text-sm hover:bg-[#375DEE]/25 transition-all disabled:opacity-50"
             >
               {saving ? "Adding..." : "Add Contact"}
             </button>
@@ -875,6 +841,17 @@ function ContactDetailModal({
 }) {
   const supabase = createClient()
 
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      active: "bg-[#375DEE]/15 text-[#375DEE] border border-[#375DEE]/20",
+      paused: "bg-white/[0.08] text-white/70 border border-white/10",
+      opted_out: "bg-white/[0.04] text-white/40 border border-white/[0.06]",
+      converted: "bg-white/10 text-white border border-white/15",
+      invalid: "bg-white/[0.04] text-white/30 border border-white/[0.04]",
+    }
+    return colors[status] || colors.active
+  }
+
   const handleOptOut = async (channel: "sms" | "email") => {
     const field = channel === "sms" ? "sms_opted_in" : "email_opted_in"
     const { error } = await supabase
@@ -890,23 +867,19 @@ function ContactDetailModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
-      <div className="relative bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-lg">
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
-          <h2 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+      <div className="relative bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-lg">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+          <h2 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
             Contact Details
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="p-2 hover:bg-white/[0.05] rounded-lg transition-colors">
+            <X className="w-5 h-5 text-white/40" />
           </button>
         </div>
         <div className="p-6 space-y-6">
           <div>
-            <h3 className="text-2xl font-bold">{contact.name}</h3>
-            <span
-              className={`inline-block mt-2 px-2 py-1 rounded-full text-xs font-medium ${
-                statusColors[contact.status]
-              }`}
-            >
+            <h3 className="text-xl font-bold">{contact.name}</h3>
+            <span className={`inline-block mt-2 px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wide ${getStatusColor(contact.status)}`}>
               {contact.status}
             </span>
           </div>
@@ -914,119 +887,83 @@ function ContactDetailModal({
           <div className="grid grid-cols-2 gap-4">
             {contact.email && (
               <div className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-white/40" />
+                <Mail className="w-4 h-4 text-white/30" />
                 <div>
-                  <p className="text-sm text-white/50">Email</p>
-                  <p>{contact.email}</p>
+                  <p className="text-xs text-white/40">Email</p>
+                  <p className="text-sm">{contact.email}</p>
                 </div>
               </div>
             )}
             {contact.phone && (
               <div className="flex items-center gap-3">
-                <Phone className="w-5 h-5 text-white/40" />
+                <Phone className="w-4 h-4 text-white/30" />
                 <div>
-                  <p className="text-sm text-white/50">Phone</p>
-                  <p>{contact.phone}</p>
+                  <p className="text-xs text-white/40">Phone</p>
+                  <p className="text-sm">{contact.phone}</p>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white/5 rounded-xl p-4">
-              <DollarSign className="w-5 h-5 text-[#375DEE] mb-2" />
-              <p className="text-lg font-bold">${contact.total_spend?.toLocaleString() || "0"}</p>
-              <p className="text-sm text-white/50">Total Spend</p>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-3">
+              <DollarSign className="w-4 h-4 text-[#375DEE] mb-1" />
+              <p className="font-semibold font-numbers">${contact.total_spend?.toLocaleString() || "0"}</p>
+              <p className="text-xs text-white/40">Total Spend</p>
             </div>
-            <div className="bg-white/5 rounded-xl p-4">
-              <Car className="w-5 h-5 text-[#375DEE] mb-2" />
-              <p className="text-lg font-bold">{contact.rental_count || 0}</p>
-              <p className="text-sm text-white/50">Rentals</p>
+            <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-3">
+              <Car className="w-4 h-4 text-[#375DEE] mb-1" />
+              <p className="font-semibold font-numbers">{contact.rental_count || 0}</p>
+              <p className="text-xs text-white/40">Rentals</p>
             </div>
-            <div className="bg-white/5 rounded-xl p-4">
-              <Calendar className="w-5 h-5 text-[#375DEE] mb-2" />
-              <p className="text-lg font-bold">
+            <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-3">
+              <Calendar className="w-4 h-4 text-[#375DEE] mb-1" />
+              <p className="font-semibold text-sm">
                 {contact.last_rental_date
-                  ? new Date(contact.last_rental_date).toLocaleDateString("en-US", {
-                      month: "short",
-                      year: "numeric",
-                    })
+                  ? new Date(contact.last_rental_date).toLocaleDateString("en-US", { month: "short", year: "numeric" })
                   : "-"}
               </p>
-              <p className="text-sm text-white/50">Last Rental</p>
+              <p className="text-xs text-white/40">Last Rental</p>
             </div>
           </div>
 
           {contact.preferred_vehicle_type && (
             <div>
-              <p className="text-sm text-white/50 mb-1">Vehicle Preference</p>
-              <p>{contact.preferred_vehicle_type}</p>
+              <p className="text-xs text-white/40 mb-1">Vehicle Preference</p>
+              <p className="text-sm">{contact.preferred_vehicle_type}</p>
             </div>
           )}
 
           <div>
-            <p className="text-sm text-white/50 mb-2">Communication Channels</p>
-            <div className="flex gap-3">
-              <div
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
-                  contact.sms_opted_in ? "bg-green-500/20" : "bg-red-500/20"
-                }`}
-              >
-                <Phone className={`w-4 h-4 ${contact.sms_opted_in ? "text-green-400" : "text-red-400"}`} />
-                <span className={contact.sms_opted_in ? "text-green-400" : "text-red-400"}>
-                  SMS {contact.sms_opted_in ? "Enabled" : "Disabled"}
+            <p className="text-xs text-white/40 mb-2">Communication Channels</p>
+            <div className="flex gap-2">
+              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${contact.sms_opted_in ? "bg-[#375DEE]/10" : "bg-white/[0.03]"}`}>
+                <Phone className={`w-4 h-4 ${contact.sms_opted_in ? "text-[#375DEE]" : "text-white/30"}`} />
+                <span className={`text-sm ${contact.sms_opted_in ? "text-[#375DEE]" : "text-white/40"}`}>
+                  SMS {contact.sms_opted_in ? "On" : "Off"}
                 </span>
                 {contact.sms_opted_in && (
-                  <button
-                    onClick={() => handleOptOut("sms")}
-                    className="ml-2 text-xs text-white/40 hover:text-white"
-                  >
+                  <button onClick={() => handleOptOut("sms")} className="ml-1 text-xs text-white/30 hover:text-white/50">
                     Opt out
                   </button>
                 )}
               </div>
-              <div
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
-                  contact.email_opted_in ? "bg-green-500/20" : "bg-red-500/20"
-                }`}
-              >
-                <Mail className={`w-4 h-4 ${contact.email_opted_in ? "text-green-400" : "text-red-400"}`} />
-                <span className={contact.email_opted_in ? "text-green-400" : "text-red-400"}>
-                  Email {contact.email_opted_in ? "Enabled" : "Disabled"}
+              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${contact.email_opted_in ? "bg-[#375DEE]/10" : "bg-white/[0.03]"}`}>
+                <Mail className={`w-4 h-4 ${contact.email_opted_in ? "text-[#375DEE]" : "text-white/30"}`} />
+                <span className={`text-sm ${contact.email_opted_in ? "text-[#375DEE]" : "text-white/40"}`}>
+                  Email {contact.email_opted_in ? "On" : "Off"}
                 </span>
                 {contact.email_opted_in && (
-                  <button
-                    onClick={() => handleOptOut("email")}
-                    className="ml-2 text-xs text-white/40 hover:text-white"
-                  >
+                  <button onClick={() => handleOptOut("email")} className="ml-1 text-xs text-white/30 hover:text-white/50">
                     Opt out
                   </button>
                 )}
               </div>
             </div>
           </div>
-
-          {contact.tags && contact.tags.length > 0 && (
-            <div>
-              <p className="text-sm text-white/50 mb-2">Tags</p>
-              <div className="flex flex-wrap gap-2">
-                {contact.tags.map((tag, i) => (
-                  <span
-                    key={i}
-                    className="px-2 py-1 bg-[#375DEE]/20 text-[#375DEE] rounded text-sm"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
-        <div className="flex justify-end p-6 border-t border-white/10">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-white/60 hover:text-white transition-colors"
-          >
+        <div className="flex justify-end px-6 py-4 border-t border-white/[0.06]">
+          <button onClick={onClose} className="px-4 py-2 text-white/50 text-sm hover:text-white transition-colors">
             Close
           </button>
         </div>

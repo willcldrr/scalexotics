@@ -58,21 +58,21 @@ const campaignTypeIcons: Record<string, any> = {
 }
 
 const campaignTypeColors: Record<string, string> = {
-  win_back: "bg-blue-500/20 text-blue-400",
-  holiday: "bg-red-500/20 text-red-400",
-  new_vehicle: "bg-purple-500/20 text-purple-400",
-  special_offer: "bg-green-500/20 text-green-400",
-  milestone: "bg-yellow-500/20 text-yellow-400",
-  custom: "bg-gray-500/20 text-gray-400",
+  win_back: "bg-[#375DEE]/15 text-[#375DEE]",
+  holiday: "bg-white/[0.08] text-white/70",
+  new_vehicle: "bg-[#375DEE]/15 text-[#375DEE]",
+  special_offer: "bg-[#375DEE]/15 text-[#375DEE]",
+  milestone: "bg-white/[0.08] text-white/70",
+  custom: "bg-white/[0.06] text-white/50",
 }
 
 const statusColors: Record<string, string> = {
-  draft: "bg-gray-500/20 text-gray-400",
-  scheduled: "bg-yellow-500/20 text-yellow-400",
-  active: "bg-green-500/20 text-green-400",
-  paused: "bg-orange-500/20 text-orange-400",
-  completed: "bg-blue-500/20 text-blue-400",
-  cancelled: "bg-red-500/20 text-red-400",
+  draft: "bg-white/[0.06] text-white/50 border border-white/[0.08]",
+  scheduled: "bg-white/[0.08] text-white/70 border border-white/10",
+  active: "bg-[#375DEE]/15 text-[#375DEE] border border-[#375DEE]/20",
+  paused: "bg-white/[0.08] text-white/60 border border-white/10",
+  completed: "bg-white/[0.06] text-white/50 border border-white/[0.08]",
+  cancelled: "bg-white/[0.04] text-white/40 border border-white/[0.06]",
 }
 
 export default function CampaignsTab({ userId }: CampaignsTabProps) {
@@ -143,13 +143,13 @@ export default function CampaignsTab({ userId }: CampaignsTabProps) {
               placeholder="Search campaigns..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-[#375DEE]"
+              className="w-full pl-10 pr-4 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:border-[#375DEE]/50 transition-colors"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+            className="px-4 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white focus:outline-none focus:border-[#375DEE]/50 transition-colors"
           >
             <option value="all">All Status</option>
             <option value="draft">Draft</option>
@@ -161,7 +161,7 @@ export default function CampaignsTab({ userId }: CampaignsTabProps) {
         </div>
         <button
           onClick={() => setShowWizard(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#375DEE] rounded-lg text-white hover:bg-[#375DEE]/80 transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#375DEE]/15 border border-[#375DEE]/25 rounded-xl text-[#375DEE] text-sm font-medium hover:bg-[#375DEE]/25 transition-all"
         >
           <Plus className="w-4 h-4" />
           Create Campaign
@@ -172,19 +172,21 @@ export default function CampaignsTab({ userId }: CampaignsTabProps) {
       {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-48 bg-white/5 rounded-2xl animate-pulse" />
+            <div key={i} className="h-48 bg-white/[0.02] rounded-2xl border border-white/[0.06] animate-pulse" />
           ))}
         </div>
       ) : filteredCampaigns.length === 0 ? (
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-12 text-center">
-          <Target className="w-12 h-12 text-white/20 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No campaigns yet</h3>
+        <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] p-12 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-white/[0.03] flex items-center justify-center mx-auto mb-4">
+            <Target className="w-7 h-7 text-white/20" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2" style={{ fontFamily: 'var(--font-display)' }}>No campaigns yet</h3>
           <p className="text-white/50 mb-6">
             Create your first reactivation campaign to re-engage past customers
           </p>
           <button
             onClick={() => setShowWizard(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#375DEE] rounded-lg text-white hover:bg-[#375DEE]/80 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#375DEE]/15 border border-[#375DEE]/25 rounded-xl text-[#375DEE] font-medium hover:bg-[#375DEE]/25 transition-all"
           >
             <Plus className="w-5 h-5" />
             Create Campaign
@@ -197,7 +199,7 @@ export default function CampaignsTab({ userId }: CampaignsTabProps) {
             return (
               <div
                 key={campaign.id}
-                className="bg-white/5 rounded-2xl border border-white/10 p-6 hover:border-white/20 transition-colors"
+                className="bg-white/[0.02] rounded-2xl border border-white/[0.06] p-6 hover:border-white/[0.12] transition-all group"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -216,7 +218,7 @@ export default function CampaignsTab({ userId }: CampaignsTabProps) {
                     </div>
                   </div>
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wide ${
                       statusColors[campaign.status] || statusColors.draft
                     }`}
                   >
@@ -229,41 +231,41 @@ export default function CampaignsTab({ userId }: CampaignsTabProps) {
                 )}
 
                 {/* Stats */}
-                <div className="grid grid-cols-4 gap-4 mb-4">
+                <div className="grid grid-cols-4 gap-4 mb-4 p-3 bg-white/[0.02] rounded-xl border border-white/[0.04]">
                   <div>
                     <p className="text-xs text-white/40">Contacts</p>
-                    <p className="font-semibold">{campaign.total_contacts || 0}</p>
+                    <p className="font-semibold font-numbers">{campaign.total_contacts || 0}</p>
                   </div>
                   <div>
                     <p className="text-xs text-white/40">Sent</p>
-                    <p className="font-semibold">{campaign.messages_sent || 0}</p>
+                    <p className="font-semibold font-numbers">{campaign.messages_sent || 0}</p>
                   </div>
                   <div>
                     <p className="text-xs text-white/40">Responses</p>
-                    <p className="font-semibold">{campaign.responses || 0}</p>
+                    <p className="font-semibold font-numbers">{campaign.responses || 0}</p>
                   </div>
                   <div>
                     <p className="text-xs text-white/40">Conversions</p>
-                    <p className="font-semibold">{campaign.conversions || 0}</p>
+                    <p className="font-semibold font-numbers">{campaign.conversions || 0}</p>
                   </div>
                 </div>
 
                 {/* Channels & AI */}
                 <div className="flex items-center gap-2 mb-4">
                   {campaign.channels?.includes("sms") && (
-                    <span className="flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">
+                    <span className="flex items-center gap-1 px-2 py-1 bg-[#375DEE]/15 text-[#375DEE] rounded-lg text-xs border border-[#375DEE]/20">
                       <Phone className="w-3 h-3" />
                       SMS
                     </span>
                   )}
                   {campaign.channels?.includes("email") && (
-                    <span className="flex items-center gap-1 px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs">
+                    <span className="flex items-center gap-1 px-2 py-1 bg-white/[0.06] text-white/60 rounded-lg text-xs border border-white/[0.08]">
                       <Mail className="w-3 h-3" />
                       Email
                     </span>
                   )}
                   {campaign.ai_enabled && (
-                    <span className="flex items-center gap-1 px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs">
+                    <span className="flex items-center gap-1 px-2 py-1 bg-white/[0.06] text-white/60 rounded-lg text-xs border border-white/[0.08]">
                       <Sparkles className="w-3 h-3" />
                       AI {campaign.ai_tone}
                     </span>
@@ -271,12 +273,12 @@ export default function CampaignsTab({ userId }: CampaignsTabProps) {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
                   <div className="flex items-center gap-2">
                     {campaign.status === "active" ? (
                       <button
                         onClick={() => handleStatusChange(campaign.id, "paused")}
-                        className="flex items-center gap-1 px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-lg text-sm hover:bg-yellow-500/30 transition-colors"
+                        className="flex items-center gap-1 px-3 py-1.5 bg-white/[0.06] text-white/70 rounded-lg text-sm hover:bg-white/[0.1] border border-white/[0.08] transition-colors"
                       >
                         <Pause className="w-4 h-4" />
                         Pause
@@ -284,7 +286,7 @@ export default function CampaignsTab({ userId }: CampaignsTabProps) {
                     ) : campaign.status === "draft" || campaign.status === "paused" ? (
                       <button
                         onClick={() => handleStatusChange(campaign.id, "active")}
-                        className="flex items-center gap-1 px-3 py-1 bg-green-500/20 text-green-400 rounded-lg text-sm hover:bg-green-500/30 transition-colors"
+                        className="flex items-center gap-1 px-3 py-1.5 bg-[#375DEE]/15 text-[#375DEE] rounded-lg text-sm hover:bg-[#375DEE]/25 border border-[#375DEE]/20 transition-colors"
                       >
                         <Play className="w-4 h-4" />
                         {campaign.status === "draft" ? "Launch" : "Resume"}
@@ -293,7 +295,7 @@ export default function CampaignsTab({ userId }: CampaignsTabProps) {
                   </div>
                   <button
                     onClick={() => handleDelete(campaign.id)}
-                    className="p-2 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                    className="p-2 text-white/40 hover:text-white/70 hover:bg-white/[0.06] rounded-lg transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -450,17 +452,17 @@ function CampaignWizard({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/80" onClick={onClose} />
-      <div className="relative bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
+        <div className="flex items-center justify-between p-6 border-b border-white/[0.06]">
           <div>
             <h2 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
               Create Campaign
             </h2>
             <p className="text-sm text-white/50">Step {step} of 4</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-white/[0.06] rounded-lg transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -472,7 +474,7 @@ function CampaignWizard({
               <div
                 key={s}
                 className={`flex-1 h-1 rounded-full transition-colors ${
-                  s <= step ? "bg-[#375DEE]" : "bg-white/10"
+                  s <= step ? "bg-[#375DEE]" : "bg-white/[0.08]"
                 }`}
               />
             ))}
@@ -490,7 +492,7 @@ function CampaignWizard({
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g., Summer Win-Back Campaign"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+                  className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]/50 transition-colors"
                 />
               </div>
               <div>
@@ -500,7 +502,7 @@ function CampaignWizard({
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Brief description of this campaign..."
                   rows={3}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] resize-none"
+                  className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]/50 resize-none transition-colors"
                 />
               </div>
               <div>
@@ -509,10 +511,10 @@ function CampaignWizard({
                   {campaignTypes.map((type) => (
                     <label
                       key={type.value}
-                      className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-colors ${
+                      className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${
                         formData.campaign_type === type.value
-                          ? "bg-[#375DEE]/20 border-[#375DEE]"
-                          : "bg-white/5 border-white/10 hover:border-white/20"
+                          ? "bg-[#375DEE]/15 border-[#375DEE]/30"
+                          : "bg-white/[0.02] border-white/[0.06] hover:border-white/[0.12]"
                       }`}
                     >
                       <input
@@ -525,7 +527,7 @@ function CampaignWizard({
                       />
                       <div
                         className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                          campaignTypeColors[type.value]
+                          formData.campaign_type === type.value ? "bg-[#375DEE]/20 text-[#375DEE]" : "bg-white/[0.06] text-white/60"
                         }`}
                       >
                         <type.icon className="w-5 h-5" />
@@ -547,10 +549,10 @@ function CampaignWizard({
                 <label className="block text-sm text-white/50 mb-3">Communication Channels</label>
                 <div className="flex gap-3">
                   <label
-                    className={`flex-1 flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${
+                    className={`flex-1 flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
                       formData.channels.includes("sms")
-                        ? "bg-green-500/20 border-green-500"
-                        : "bg-white/5 border-white/10"
+                        ? "bg-[#375DEE]/15 border-[#375DEE]/30"
+                        : "bg-white/[0.02] border-white/[0.06] hover:border-white/[0.12]"
                     }`}
                   >
                     <input
@@ -564,17 +566,17 @@ function CampaignWizard({
                       }}
                       className="sr-only"
                     />
-                    <Phone className={`w-5 h-5 ${formData.channels.includes("sms") ? "text-green-400" : "text-white/40"}`} />
+                    <Phone className={`w-5 h-5 ${formData.channels.includes("sms") ? "text-[#375DEE]" : "text-white/40"}`} />
                     <div>
                       <p className="font-medium">SMS</p>
                       <p className="text-xs text-white/50">Text messages via Twilio</p>
                     </div>
                   </label>
                   <label
-                    className={`flex-1 flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${
+                    className={`flex-1 flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
                       formData.channels.includes("email")
-                        ? "bg-blue-500/20 border-blue-500"
-                        : "bg-white/5 border-white/10"
+                        ? "bg-[#375DEE]/15 border-[#375DEE]/30"
+                        : "bg-white/[0.02] border-white/[0.06] hover:border-white/[0.12]"
                     }`}
                   >
                     <input
@@ -588,7 +590,7 @@ function CampaignWizard({
                       }}
                       className="sr-only"
                     />
-                    <Mail className={`w-5 h-5 ${formData.channels.includes("email") ? "text-blue-400" : "text-white/40"}`} />
+                    <Mail className={`w-5 h-5 ${formData.channels.includes("email") ? "text-[#375DEE]" : "text-white/40"}`} />
                     <div>
                       <p className="font-medium">Email</p>
                       <p className="text-xs text-white/50">Email campaigns</p>
@@ -598,9 +600,9 @@ function CampaignWizard({
               </div>
 
               <div>
-                <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
+                <label className="flex items-center justify-between p-4 bg-white/[0.02] rounded-xl border border-white/[0.06]">
                   <div className="flex items-center gap-3">
-                    <Sparkles className="w-5 h-5 text-purple-400" />
+                    <Sparkles className="w-5 h-5 text-[#375DEE]" />
                     <div>
                       <p className="font-medium">AI-Powered Messages</p>
                       <p className="text-sm text-white/50">Let AI personalize messages for each contact</p>
@@ -636,10 +638,10 @@ function CampaignWizard({
                     {tones.map((tone) => (
                       <label
                         key={tone.value}
-                        className={`p-3 rounded-xl border cursor-pointer transition-colors ${
+                        className={`p-3 rounded-xl border cursor-pointer transition-all ${
                           formData.ai_tone === tone.value
-                            ? "bg-[#375DEE]/20 border-[#375DEE]"
-                            : "bg-white/5 border-white/10 hover:border-white/20"
+                            ? "bg-[#375DEE]/15 border-[#375DEE]/30"
+                            : "bg-white/[0.02] border-white/[0.06] hover:border-white/[0.12]"
                         }`}
                       >
                         <input
@@ -666,7 +668,7 @@ function CampaignWizard({
                     onChange={(e) => setFormData({ ...formData, ai_instructions: e.target.value })}
                     placeholder="e.g., Mention our new Lamborghini Revuelto, offer 15% discount..."
                     rows={3}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] resize-none"
+                    className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]/50 resize-none transition-colors"
                   />
                 </div>
               )}
@@ -677,16 +679,18 @@ function CampaignWizard({
             <div className="space-y-6">
               <div>
                 <label className="block text-sm text-white/50 mb-2">Target Audience</label>
-                <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+                <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-4">
                   <div className="flex items-center gap-3 mb-4">
-                    <Users className="w-5 h-5 text-[#375DEE]" />
+                    <div className="w-10 h-10 rounded-lg bg-[#375DEE]/15 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-[#375DEE]" />
+                    </div>
                     <div>
-                      <p className="font-medium">{contacts.length} Active Contacts</p>
+                      <p className="font-medium"><span className="font-numbers">{contacts.length}</span> Active Contacts</p>
                       <p className="text-sm text-white/50">All contacts with opted-in status</p>
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <label className="flex items-center gap-3 p-3 bg-white/5 rounded-lg cursor-pointer">
+                    <label className="flex items-center gap-3 p-3 bg-white/[0.03] rounded-lg cursor-pointer border border-white/[0.04] hover:border-white/[0.08] transition-colors">
                       <input
                         type="radio"
                         name="audience"
@@ -698,7 +702,7 @@ function CampaignWizard({
                         <p className="text-xs text-white/50">Send to everyone who hasn't opted out</p>
                       </div>
                     </label>
-                    <label className="flex items-center gap-3 p-3 bg-white/5 rounded-lg cursor-pointer opacity-50">
+                    <label className="flex items-center gap-3 p-3 bg-white/[0.02] rounded-lg cursor-not-allowed opacity-50 border border-white/[0.04]">
                       <input type="radio" name="audience" disabled className="w-4 h-4" />
                       <div>
                         <p className="font-medium">Custom Segment</p>
@@ -716,7 +720,7 @@ function CampaignWizard({
                     type="date"
                     value={formData.start_date}
                     onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+                    className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white focus:outline-none focus:border-[#375DEE]/50 transition-colors"
                   />
                 </div>
                 <div>
@@ -725,7 +729,7 @@ function CampaignWizard({
                     type="date"
                     value={formData.end_date}
                     onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+                    className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white focus:outline-none focus:border-[#375DEE]/50 transition-colors"
                   />
                 </div>
               </div>
@@ -747,7 +751,7 @@ function CampaignWizard({
                       }
                       min={1}
                       max={10}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+                      className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white focus:outline-none focus:border-[#375DEE]/50 transition-colors"
                     />
                   </div>
                   <div>
@@ -760,39 +764,39 @@ function CampaignWizard({
                       }
                       min={1}
                       max={30}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#375DEE]"
+                      className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white focus:outline-none focus:border-[#375DEE]/50 transition-colors"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Summary */}
-              <div className="bg-white/5 rounded-xl border border-white/10 p-6">
-                <h3 className="font-semibold mb-4">Campaign Summary</h3>
+              <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-6">
+                <h3 className="font-semibold mb-4" style={{ fontFamily: 'var(--font-display)' }}>Campaign Summary</h3>
                 <div className="space-y-3 text-sm">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between py-2 border-b border-white/[0.04]">
                     <span className="text-white/50">Name</span>
-                    <span>{formData.name || "-"}</span>
+                    <span className="font-medium">{formData.name || "-"}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between py-2 border-b border-white/[0.04]">
                     <span className="text-white/50">Type</span>
-                    <span className="capitalize">{formData.campaign_type.replace("_", " ")}</span>
+                    <span className="capitalize font-medium">{formData.campaign_type.replace("_", " ")}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between py-2 border-b border-white/[0.04]">
                     <span className="text-white/50">Channels</span>
-                    <span>{formData.channels.join(", ").toUpperCase()}</span>
+                    <span className="font-medium">{formData.channels.join(", ").toUpperCase()}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between py-2 border-b border-white/[0.04]">
                     <span className="text-white/50">AI Enabled</span>
-                    <span>{formData.ai_enabled ? `Yes (${formData.ai_tone})` : "No"}</span>
+                    <span className="font-medium">{formData.ai_enabled ? `Yes (${formData.ai_tone})` : "No"}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between py-2 border-b border-white/[0.04]">
                     <span className="text-white/50">Target Contacts</span>
-                    <span>{contacts.length}</span>
+                    <span className="font-medium font-numbers">{contacts.length}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between py-2">
                     <span className="text-white/50">Start Date</span>
-                    <span>{formData.start_date || "Immediately"}</span>
+                    <span className="font-medium">{formData.start_date || "Immediately"}</span>
                   </div>
                 </div>
               </div>
@@ -801,10 +805,10 @@ function CampaignWizard({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-white/10">
+        <div className="flex items-center justify-between p-6 border-t border-white/[0.06]">
           <button
             onClick={() => (step > 1 ? setStep(step - 1) : onClose())}
-            className="px-4 py-2 text-white/60 hover:text-white transition-colors"
+            className="px-4 py-2.5 text-white/60 hover:text-white hover:bg-white/[0.04] rounded-xl transition-all"
           >
             {step > 1 ? "Back" : "Cancel"}
           </button>
@@ -812,7 +816,7 @@ function CampaignWizard({
             <button
               onClick={() => setStep(step + 1)}
               disabled={step === 1 && !formData.name}
-              className="flex items-center gap-2 px-6 py-2 bg-[#375DEE] rounded-lg text-white hover:bg-[#375DEE]/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-6 py-2.5 bg-[#375DEE]/15 border border-[#375DEE]/25 rounded-xl text-[#375DEE] font-medium hover:bg-[#375DEE]/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
               <ChevronRight className="w-4 h-4" />
@@ -821,7 +825,7 @@ function CampaignWizard({
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-2 bg-[#375DEE] rounded-lg text-white hover:bg-[#375DEE]/80 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-6 py-2.5 bg-[#375DEE]/15 border border-[#375DEE]/25 rounded-xl text-[#375DEE] font-medium hover:bg-[#375DEE]/25 transition-all disabled:opacity-50"
             >
               {saving ? "Creating..." : "Create Campaign"}
             </button>

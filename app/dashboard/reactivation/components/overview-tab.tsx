@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
+import Link from "next/link"
 import {
   Users,
   Megaphone,
@@ -10,8 +11,7 @@ import {
   Mail,
   Phone,
   ArrowUpRight,
-  ArrowDownRight,
-  Calendar,
+  ArrowRight,
   Target,
 } from "lucide-react"
 
@@ -28,13 +28,6 @@ interface Stats {
   totalConversions: number
   responseRate: number
   conversionRate: number
-}
-
-interface RecentActivity {
-  id: string
-  type: "message_sent" | "response" | "conversion" | "campaign_started"
-  description: string
-  created_at: string
 }
 
 export default function OverviewTab({ userId }: OverviewTabProps) {
@@ -59,13 +52,11 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
   const fetchStats = async () => {
     setLoading(true)
 
-    // Fetch contacts stats
     const { data: contacts } = await supabase
       .from("reactivation_contacts")
       .select("id, status")
       .eq("user_id", userId)
 
-    // Fetch campaigns
     const { data: campaignsData } = await supabase
       .from("reactivation_campaigns")
       .select("*")
@@ -73,7 +64,6 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
       .order("created_at", { ascending: false })
       .limit(5)
 
-    // Fetch campaign stats
     const { data: allCampaigns } = await supabase
       .from("reactivation_campaigns")
       .select("status, messages_sent, responses, conversions")
@@ -104,279 +94,253 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 bg-white/5 rounded-xl animate-pulse" />
+            <div key={i} className="bg-white/[0.03] rounded-2xl p-5 border border-white/[0.06] animate-pulse">
+              <div className="flex items-center justify-between mb-4">
+                <div className="h-4 w-20 bg-white/10 rounded" />
+                <div className="w-10 h-10 bg-white/10 rounded-xl" />
+              </div>
+              <div className="h-8 w-24 bg-white/10 rounded mb-2" />
+              <div className="h-3 w-16 bg-white/5 rounded" />
+            </div>
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="h-80 bg-white/5 rounded-2xl animate-pulse" />
-          <div className="h-80 bg-white/5 rounded-2xl animate-pulse" />
+          <div className="h-72 bg-white/[0.02] rounded-2xl border border-white/[0.06] animate-pulse" />
+          <div className="h-72 bg-white/[0.02] rounded-2xl border border-white/[0.06] animate-pulse" />
         </div>
       </div>
     )
   }
 
+  const statCards = [
+    {
+      name: "Total Contacts",
+      value: stats.totalContacts,
+      subtitle: `${stats.activeContacts} active`,
+      icon: Users,
+    },
+    {
+      name: "Active Campaigns",
+      value: stats.activeCampaigns,
+      subtitle: "Running now",
+      icon: Megaphone,
+    },
+    {
+      name: "Messages Sent",
+      value: stats.totalMessagesSent,
+      subtitle: `${stats.totalResponses} responses`,
+      icon: MessageSquare,
+    },
+    {
+      name: "Conversions",
+      value: stats.totalConversions,
+      subtitle: `${stats.conversionRate.toFixed(1)}% rate`,
+      icon: Target,
+    },
+  ]
+
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Contacts"
-          value={stats.totalContacts}
-          subtitle={`${stats.activeContacts} active`}
-          icon={Users}
-          color="blue"
-        />
-        <StatCard
-          title="Active Campaigns"
-          value={stats.activeCampaigns}
-          icon={Megaphone}
-          color="purple"
-        />
-        <StatCard
-          title="Messages Sent"
-          value={stats.totalMessagesSent}
-          subtitle={`${stats.totalResponses} responses`}
-          icon={MessageSquare}
-          color="green"
-        />
-        <StatCard
-          title="Conversions"
-          value={stats.totalConversions}
-          subtitle={`${stats.conversionRate.toFixed(1)}% rate`}
-          icon={Target}
-          color="orange"
-        />
-      </div>
-
-      {/* Performance Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Response Rate Card */}
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-          <h3 className="text-lg font-semibold mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-            Response Rate
-          </h3>
-          <div className="flex items-end gap-4">
-            <div className="text-5xl font-bold text-[#375DEE]">
-              {stats.responseRate.toFixed(1)}%
-            </div>
-            <div className="pb-2">
-              <div className="flex items-center gap-1 text-green-400 text-sm">
-                <ArrowUpRight className="w-4 h-4" />
-                <span>+2.4% from last month</span>
-              </div>
-            </div>
-          </div>
-          <div className="mt-6 h-2 bg-white/10 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#375DEE] rounded-full transition-all"
-              style={{ width: `${Math.min(stats.responseRate, 100)}%` }}
-            />
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-white/50 text-sm">Total Sent</p>
-              <p className="text-xl font-semibold">{stats.totalMessagesSent}</p>
-            </div>
-            <div>
-              <p className="text-white/50 text-sm">Responses</p>
-              <p className="text-xl font-semibold">{stats.totalResponses}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Channel Performance */}
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-          <h3 className="text-lg font-semibold mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-            Channel Performance
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-                  <Phone className="w-5 h-5 text-green-400" />
-                </div>
-                <div>
-                  <p className="font-medium">SMS</p>
-                  <p className="text-sm text-white/50">Text Messages</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-lg font-semibold">68%</p>
-                <p className="text-sm text-green-400">Response Rate</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                  <Mail className="w-5 h-5 text-blue-400" />
-                </div>
-                <div>
-                  <p className="font-medium">Email</p>
-                  <p className="text-sm text-white/50">Email Campaigns</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-lg font-semibold">24%</p>
-                <p className="text-sm text-blue-400">Open Rate</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Campaigns */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
-            Recent Campaigns
-          </h3>
-          <a
-            href="#"
-            className="text-sm text-[#375DEE] hover:underline"
-            onClick={(e) => {
-              e.preventDefault()
-              // Would switch to campaigns tab
-            }}
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map((stat) => (
+          <div
+            key={stat.name}
+            className="relative overflow-hidden bg-gradient-to-br from-[#375DEE]/20 via-[#375DEE]/10 to-transparent rounded-2xl p-5 border border-white/[0.08] hover:border-white/[0.15] transition-all duration-300 group"
           >
-            View all
-          </a>
-        </div>
-        {campaigns.length === 0 ? (
-          <div className="text-center py-8">
-            <Megaphone className="w-12 h-12 text-white/20 mx-auto mb-4" />
-            <p className="text-white/50">No campaigns yet</p>
-            <p className="text-sm text-white/30">Create your first reactivation campaign to get started</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {campaigns.map((campaign) => (
-              <div
-                key={campaign.id}
-                className="flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`w-3 h-3 rounded-full ${
-                      campaign.status === "active"
-                        ? "bg-green-400"
-                        : campaign.status === "completed"
-                        ? "bg-blue-400"
-                        : campaign.status === "paused"
-                        ? "bg-yellow-400"
-                        : "bg-white/30"
-                    }`}
-                  />
-                  <div>
-                    <p className="font-medium">{campaign.name}</p>
-                    <p className="text-sm text-white/50 capitalize">
-                      {campaign.campaign_type?.replace("_", " ")} Campaign
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-6 text-sm">
-                  <div className="text-right">
-                    <p className="text-white/50">Sent</p>
-                    <p className="font-medium">{campaign.messages_sent || 0}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-white/50">Responses</p>
-                    <p className="font-medium">{campaign.responses || 0}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-white/50">Status</p>
-                    <p className="font-medium capitalize">{campaign.status}</p>
-                  </div>
+            <div className="absolute -top-12 -right-12 w-24 h-24 bg-[#375DEE]/20 rounded-full blur-2xl opacity-50 group-hover:opacity-75 transition-opacity" />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-white/50 text-sm font-medium">{stat.name}</span>
+                <div className="w-10 h-10 rounded-xl bg-[#375DEE]/20 flex items-center justify-center">
+                  <stat.icon className="w-5 h-5 text-[#375DEE]" />
                 </div>
               </div>
-            ))}
+              <div className="space-y-1">
+                <h3 className="text-2xl sm:text-3xl font-bold font-numbers tracking-tight">
+                  {stat.value.toLocaleString()}
+                </h3>
+                <p className="text-xs text-white/40">{stat.subtitle}</p>
+              </div>
+            </div>
           </div>
-        )}
+        ))}
+      </div>
+
+      {/* Response Rate Highlight */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#375DEE]/20 via-[#375DEE]/10 to-transparent rounded-2xl p-6 border border-[#375DEE]/20">
+        <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#375DEE]/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-[#375DEE]/10 rounded-full blur-3xl" />
+
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-[#375DEE]/20 border border-[#375DEE]/30 flex items-center justify-center">
+              <TrendingUp className="w-7 h-7 text-[#375DEE]" />
+            </div>
+            <div>
+              <p className="text-white/50 text-sm font-medium">Response Rate</p>
+              <div className="flex items-baseline gap-2">
+                <h3 className="text-3xl sm:text-4xl font-bold font-numbers">
+                  {stats.responseRate.toFixed(1)}%
+                </h3>
+                {stats.responseRate > 0 && (
+                  <span className="flex items-center gap-0.5 text-[#375DEE] text-sm font-medium">
+                    <ArrowUpRight className="w-4 h-4" />
+                    Active
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="text-sm text-white/40">
+            Based on <span className="text-white/60 font-numbers">{stats.totalMessagesSent}</span> messages sent
+          </div>
+        </div>
+      </div>
+
+      {/* Activity Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Channel Performance */}
+        <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] overflow-hidden">
+          <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#375DEE]/15 flex items-center justify-center">
+                <MessageSquare className="w-4 h-4 text-[#375DEE]" />
+              </div>
+              <h2 className="font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+                Channel Performance
+              </h2>
+            </div>
+          </div>
+          <div className="p-5 space-y-3">
+            <div className="flex items-center justify-between p-4 bg-white/[0.02] rounded-xl border border-white/[0.04] hover:border-white/[0.08] transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#375DEE]/15 rounded-lg flex items-center justify-center">
+                  <Phone className="w-5 h-5 text-[#375DEE]" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">SMS</p>
+                  <p className="text-xs text-white/40">Text Messages</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-semibold font-numbers">68%</p>
+                <p className="text-xs text-white/40">Response Rate</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between p-4 bg-white/[0.02] rounded-xl border border-white/[0.04] hover:border-white/[0.08] transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/[0.06] rounded-lg flex items-center justify-center">
+                  <Mail className="w-5 h-5 text-white/60" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Email</p>
+                  <p className="text-xs text-white/40">Email Campaigns</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-semibold font-numbers">24%</p>
+                <p className="text-xs text-white/40">Open Rate</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Campaigns */}
+        <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] overflow-hidden">
+          <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center">
+                <Megaphone className="w-4 h-4 text-white/60" />
+              </div>
+              <h2 className="font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+                Recent Campaigns
+              </h2>
+            </div>
+            <Link
+              href="#"
+              className="text-xs text-white/40 hover:text-[#375DEE] transition-colors flex items-center gap-1 group"
+            >
+              View all
+              <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
+
+          <div className="divide-y divide-white/[0.04]">
+            {campaigns.length === 0 ? (
+              <div className="px-5 py-12 text-center">
+                <div className="w-12 h-12 rounded-full bg-white/[0.03] flex items-center justify-center mx-auto mb-3">
+                  <Megaphone className="w-6 h-6 text-white/20" />
+                </div>
+                <p className="text-white/40 text-sm">No campaigns yet</p>
+                <p className="text-white/25 text-xs mt-1">Create your first campaign to get started</p>
+              </div>
+            ) : (
+              campaigns.map((campaign) => (
+                <div
+                  key={campaign.id}
+                  className="px-5 py-3.5 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-2.5 h-2.5 rounded-full ${
+                        campaign.status === "active"
+                          ? "bg-[#375DEE]"
+                          : campaign.status === "completed"
+                          ? "bg-white/40"
+                          : campaign.status === "paused"
+                          ? "bg-white/30"
+                          : "bg-white/20"
+                      }`}
+                    />
+                    <div>
+                      <p className="font-medium text-sm">{campaign.name}</p>
+                      <p className="text-xs text-white/40 capitalize">
+                        {campaign.campaign_type?.replace("_", " ")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs">
+                    <div className="text-right">
+                      <p className="text-white/40">Sent</p>
+                      <p className="font-medium font-numbers">{campaign.messages_sent || 0}</p>
+                    </div>
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wide ${
+                      campaign.status === "active"
+                        ? "bg-[#375DEE]/15 text-[#375DEE] border border-[#375DEE]/20"
+                        : campaign.status === "completed"
+                        ? "bg-white/[0.08] text-white/70 border border-white/10"
+                        : "bg-white/[0.04] text-white/40 border border-white/[0.06]"
+                    }`}>
+                      {campaign.status}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <QuickActionCard
-          title="Import Contacts"
-          description="Upload a CSV of past customers"
-          icon={Users}
-          href="/dashboard/reactivation?tab=contacts"
-        />
-        <QuickActionCard
-          title="Create Campaign"
-          description="Start a new reactivation campaign"
-          icon={Megaphone}
-          href="/dashboard/reactivation?tab=campaigns"
-        />
-        <QuickActionCard
-          title="View Templates"
-          description="Browse or create message templates"
-          icon={MessageSquare}
-          href="/dashboard/reactivation?tab=templates"
-        />
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {[
+          { label: "Import Contacts", icon: Users, href: "#" },
+          { label: "Create Campaign", icon: Megaphone, href: "#" },
+          { label: "View Templates", icon: MessageSquare, href: "#" },
+        ].map((action) => (
+          <Link
+            key={action.label}
+            href={action.href}
+            className="flex items-center gap-3 px-4 py-3 bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.12] rounded-xl transition-all group"
+          >
+            <action.icon className="w-4 h-4 text-white/40 group-hover:text-[#375DEE] transition-colors" />
+            <span className="text-sm text-white/60 group-hover:text-white/80 transition-colors">{action.label}</span>
+          </Link>
+        ))}
       </div>
     </div>
-  )
-}
-
-function StatCard({
-  title,
-  value,
-  subtitle,
-  icon: Icon,
-  color,
-}: {
-  title: string
-  value: number
-  subtitle?: string
-  icon: any
-  color: "blue" | "purple" | "green" | "orange"
-}) {
-  const colors = {
-    blue: "bg-blue-500/20 text-blue-400",
-    purple: "bg-purple-500/20 text-purple-400",
-    green: "bg-green-500/20 text-green-400",
-    orange: "bg-orange-500/20 text-orange-400",
-  }
-
-  return (
-    <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-white/50 text-sm">{title}</p>
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colors[color]}`}>
-          <Icon className="w-4 h-4" />
-        </div>
-      </div>
-      <p className="text-3xl font-bold">{value.toLocaleString()}</p>
-      {subtitle && <p className="text-sm text-white/40 mt-1">{subtitle}</p>}
-    </div>
-  )
-}
-
-function QuickActionCard({
-  title,
-  description,
-  icon: Icon,
-  href,
-}: {
-  title: string
-  description: string
-  icon: any
-  href: string
-}) {
-  return (
-    <a
-      href={href}
-      className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 hover:border-[#375DEE]/50 transition-colors group"
-    >
-      <div className="w-12 h-12 bg-[#375DEE]/20 rounded-xl flex items-center justify-center group-hover:bg-[#375DEE]/30 transition-colors">
-        <Icon className="w-6 h-6 text-[#375DEE]" />
-      </div>
-      <div>
-        <p className="font-medium">{title}</p>
-        <p className="text-sm text-white/50">{description}</p>
-      </div>
-    </a>
   )
 }
