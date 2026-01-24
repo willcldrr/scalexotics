@@ -33,15 +33,30 @@ export default function OfferPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   // Handle viewport height for Instagram in-app browser
+  // Uses Visual Viewport API for more accurate height detection
   useEffect(() => {
     const setVH = () => {
-      const vh = window.innerHeight * 0.01
+      // Use visualViewport if available (better for in-app browsers)
+      // Fall back to innerHeight for older browsers
+      const height = window.visualViewport?.height ?? window.innerHeight
+      const vh = height * 0.01
       document.documentElement.style.setProperty('--vh', `${vh}px`)
     }
+
+    // Set initial value
     setVH()
+
+    // Listen to visualViewport resize if available (handles browser chrome changes)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', setVH)
+    }
     window.addEventListener('resize', setVH)
     window.addEventListener('orientationchange', setVH)
+
     return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', setVH)
+      }
       window.removeEventListener('resize', setVH)
       window.removeEventListener('orientationchange', setVH)
     }
@@ -258,7 +273,7 @@ export default function OfferPage() {
   }
 
   const renderLandingPage = () => (
-    <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 safe-area-inset">
+    <div className="min-h-full flex flex-col items-center justify-center px-6 py-8 safe-area-inset relative">
       {/* Background glows */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[#375DEE]/20 rounded-full blur-[120px]" />
@@ -339,7 +354,7 @@ export default function OfferPage() {
   )
 
   const renderSurvey = () => (
-    <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 safe-area-inset">
+    <div className="min-h-full flex flex-col items-center justify-center px-6 py-8 safe-area-inset relative">
       {/* Background glows */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[300px] h-[300px] bg-[#375DEE]/15 rounded-full blur-[100px]" />
@@ -368,7 +383,7 @@ export default function OfferPage() {
   )
 
   const renderThankYou = () => (
-    <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 safe-area-inset">
+    <div className="min-h-full flex flex-col items-center justify-center px-6 py-8 safe-area-inset relative">
       {/* Background glows */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[#375DEE]/20 rounded-full blur-[120px]" />
@@ -430,10 +445,16 @@ export default function OfferPage() {
   )
 
   return (
-    <div className={`${inter.className} min-h-screen bg-black text-white flex flex-col overflow-x-hidden relative`} style={{ minHeight: 'calc(var(--vh, 1vh) * 100)' }}>
+    <div
+      className={`${inter.className} fixed inset-0 bg-black text-white flex flex-col`}
+      style={{
+        height: 'calc(var(--vh, 1vh) * 100)',
+        touchAction: 'pan-y',
+      }}
+    >
       {/* Progress Bar (only show during survey) */}
       {funnelStep === 'survey' && (
-        <div className="fixed top-0 left-0 right-0 h-1 bg-white/10 z-50">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-white/10 z-50">
           <div
             className="h-full bg-[#375DEE] transition-all duration-500 ease-out shadow-[0_0_10px_rgba(55,93,238,0.5)]"
             style={{ width: `${progress}%` }}
@@ -441,10 +462,18 @@ export default function OfferPage() {
         </div>
       )}
 
-      {/* Main Content */}
-      {funnelStep === 'landing' && renderLandingPage()}
-      {funnelStep === 'survey' && renderSurvey()}
-      {funnelStep === 'thankyou' && renderThankYou()}
+      {/* Scrollable Content Container */}
+      <div
+        className="flex-1 overflow-y-auto overflow-x-hidden overscroll-none"
+        style={{
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
+        {/* Main Content */}
+        {funnelStep === 'landing' && renderLandingPage()}
+        {funnelStep === 'survey' && renderSurvey()}
+        {funnelStep === 'thankyou' && renderThankYou()}
+      </div>
 
       <style jsx>{`
         @keyframes fade-in {

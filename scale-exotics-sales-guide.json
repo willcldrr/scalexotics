@@ -1,0 +1,335 @@
+{
+  "company": {
+    "name": "Scale Exotics",
+    "tagline": "Only Pay Us When You Get Paid",
+    "mission": "Help exotic car rental fleet owners build automated systems that generate consistent $50k+ months",
+    "website": "scaleexotics.com"
+  },
+
+  "target_market": {
+    "primary": "Exotic and luxury car rental fleet owners",
+    "fleet_size_range": "1-50+ vehicles",
+    "ideal_client_profile": {
+      "current_situation": [
+        "Struggling to fill weekday bookings",
+        "Losing leads due to slow response times",
+        "Relying heavily on Turo or other platforms (losing 25-40% to fees)",
+        "Managing inquiries manually via Instagram DMs, texts, or calls",
+        "No systematic follow-up process"
+      ],
+      "goals": [
+        "Increase direct bookings (bypass platform fees)",
+        "Automate lead follow-up and qualification",
+        "Fill weekday gaps in their calendar",
+        "Scale revenue to $50k+/month",
+        "Build their own brand vs relying on platforms"
+      ]
+    },
+    "disqualifiers": [
+      "Fleet owners not serious about growth",
+      "Those unwilling to invest in systems",
+      "Owners with fewer than 1 vehicle",
+      "Those not operating in the exotic/luxury segment"
+    ]
+  },
+
+  "pricing_model": {
+    "type": "Performance-based",
+    "description": "We only get paid when the client gets paid",
+    "how_it_works": "Client pays a fee only after a lead we send secures a deposit",
+    "risk_to_client": "Zero upfront cost - completely risk-free",
+    "key_selling_point": "Unlike agencies that charge monthly retainers regardless of results, we have skin in the game"
+  },
+
+  "services": {
+    "lead_magnet": {
+      "name": "Lead Magnet",
+      "description": "Build nonstop inbound demand through targeted acquisition loops, automated funnels, and content that attracts people already ready to book",
+      "features": [
+        "Targeted acquisition systems",
+        "Automated inbound capture",
+        "High-intent traffic funnels",
+        "Multi-channel lead generation"
+      ],
+      "benefit": "Consistent flow of qualified renters actively looking to book exotic cars"
+    },
+    "conversion_system": {
+      "name": "Conversion System",
+      "description": "Convert every inquiry into revenue with instant responses, AI-driven qualification, and frictionless booking paths",
+      "features": [
+        "Instant response and follow-ups (under 30 seconds)",
+        "AI-driven lead qualification",
+        "Booking flow optimization",
+        "Automated nurture sequences",
+        "Automatic deposit link delivery"
+      ],
+      "benefit": "Never lose a lead to slow response times again"
+    },
+    "insight_engine": {
+      "name": "Insight Engine",
+      "description": "Complete visibility into business performance with live dashboards, forecasting, and actionable insights",
+      "features": [
+        "Live performance dashboards",
+        "Revenue and demand forecasting",
+        "Actionable insights and alerts",
+        "ROI tracking per channel"
+      ],
+      "benefit": "Make data-driven decisions to maximize revenue"
+    }
+  },
+
+  "ai_system": {
+    "name": "AI Follow-Up Assistant",
+    "description": "24/7 automated system that responds to leads instantly and converts them into booked rentals",
+    "capabilities": {
+      "instant_auto_reply": {
+        "description": "Responds to inquiries in under 30 seconds",
+        "why_it_matters": "After 5 minutes, chance of converting a lead drops by 80%"
+      },
+      "auto_deposit_links": {
+        "description": "Automatically sends payment/deposit links to qualified leads",
+        "why_it_matters": "Reduces friction and speeds up the booking process"
+      },
+      "custom_scripts": {
+        "description": "Fully customizable AI responses that match the client's voice and brand",
+        "why_it_matters": "Maintains brand consistency while automating communication"
+      },
+      "calendar_sync": {
+        "description": "Real-time availability syncing to prevent double bookings",
+        "why_it_matters": "Eliminates scheduling conflicts and manual calendar management"
+      },
+      "lead_pipeline": {
+        "description": "Track every conversation from inquiry to booking",
+        "why_it_matters": "Complete visibility into where leads are in the funnel"
+      }
+    },
+    "key_selling_points": [
+      "Works 24/7 - books while the client sleeps",
+      "Responds faster than any human could",
+      "100% customizable to match client's brand and voice",
+      "Only sends pre-qualified, ready-to-book renters"
+    ]
+  },
+
+  "value_propositions": {
+    "primary": [
+      {
+        "headline": "Pre-Qualified Renters Only",
+        "description": "We filter and qualify leads before sending them, so clients only deal with serious renters ready to book"
+      },
+      {
+        "headline": "Fill Your Weekday Gaps",
+        "description": "Most fleets are busy on weekends but empty Mon-Thu. Our system targets renters specifically for these slow periods"
+      },
+      {
+        "headline": "Your Cars Stay Booked, Not Parked",
+        "description": "Maximize fleet utilization with consistent bookings throughout the week"
+      }
+    ],
+    "vs_competition": {
+      "vs_turo": {
+        "turo_problems": [
+          "Takes 25-40% commission on every booking",
+          "Platform owns the customer relationship",
+          "Race to the bottom pricing",
+          "Algorithm controls visibility",
+          "Fees eat profit margins"
+        ],
+        "scale_exotics_advantages": [
+          "Client owns the customer relationship",
+          "Premium pricing power",
+          "Direct communication with renters",
+          "100% of revenue goes to client (minus our performance fee)",
+          "Build a real brand instead of platform dependence"
+        ]
+      },
+      "vs_marketing_agencies": {
+        "agency_problems": [
+          "Charge monthly retainers regardless of results",
+          "No accountability for actual bookings",
+          "Generic strategies not built for exotic rentals",
+          "Client bears all the risk"
+        ],
+        "scale_exotics_advantages": [
+          "Only pay when you get paid",
+          "Specialized in exotic/luxury rental market",
+          "Aligned incentives - we only win when client wins",
+          "Zero risk to try"
+        ]
+      }
+    }
+  },
+
+  "onboarding_process": {
+    "steps": [
+      {
+        "step": 1,
+        "name": "Discovery Call",
+        "description": "Learn about the fleet, goals, current challenges, and determine if we're a good fit",
+        "duration": "15-30 minutes"
+      },
+      {
+        "step": 2,
+        "name": "Custom Strategy",
+        "description": "Build a tailored growth plan for their specific market and fleet",
+        "duration": "1-2 days"
+      },
+      {
+        "step": 3,
+        "name": "System Setup",
+        "description": "Implement automated lead generation and booking systems",
+        "duration": "3-5 days"
+      },
+      {
+        "step": 4,
+        "name": "Scale & Optimize",
+        "description": "Continuously improve systems to maximize revenue",
+        "duration": "Ongoing"
+      }
+    ]
+  },
+
+  "qualification_survey": {
+    "purpose": "Pre-qualify leads before the sales call",
+    "questions": [
+      {
+        "question": "How many vehicles are in your fleet?",
+        "options": ["1-3", "4-7", "8-15", "16+"],
+        "why_we_ask": "Understand scale of operation"
+      },
+      {
+        "question": "What % of weekdays are typically booked?",
+        "options": ["<25%", "25-50%", "50-75%", "75%+"],
+        "why_we_ask": "Identify opportunity for improvement"
+      },
+      {
+        "question": "Where do most bookings come from?",
+        "options": ["Instagram DMs", "Website/Google", "Turo", "Referrals/brokers", "Mixed/unsure"],
+        "why_we_ask": "Understand current acquisition channels"
+      },
+      {
+        "question": "What's holding back more bookings?",
+        "options": ["Not enough leads", "Slow follow-ups", "Weak online presence", "Operational limits", "Not sure"],
+        "why_we_ask": "Identify primary pain point to address in sales call"
+      }
+    ]
+  },
+
+  "objection_handling": {
+    "ive_tried_marketing_before_it_didnt_work": {
+      "response": "Most marketing agencies charge regardless of results. We're different - you only pay when a lead actually puts down a deposit. Zero risk.",
+      "key_point": "Align incentives - we only succeed when you succeed"
+    },
+    "i_dont_have_budget_for_this": {
+      "response": "There's no upfront cost. You only pay after you've already been paid. It's literally free to start.",
+      "key_point": "Performance-based model eliminates budget concerns"
+    },
+    "i_can_handle_leads_myself": {
+      "response": "The problem isn't handling leads - it's response time. After 5 minutes, conversion drops 80%. Our AI responds in under 30 seconds, 24/7. Can you do that while running your business?",
+      "key_point": "Speed is everything in lead conversion"
+    },
+    "i_already_use_turo": {
+      "response": "Turo takes 25-40% of every booking. Same car, same renter - but you'd make 40% more profit going direct. We help you build that direct booking channel.",
+      "key_point": "Direct bookings = higher margins"
+    },
+    "how_do_i_know_the_leads_are_qualified": {
+      "response": "Every lead goes through our qualification system before reaching you. We filter out tire-kickers and time-wasters. You only talk to people ready to book.",
+      "key_point": "Pre-qualification saves time and increases conversion"
+    },
+    "what_if_it_doesnt_work": {
+      "response": "If you don't get bookings, you don't pay. Simple as that. We take on all the risk.",
+      "key_point": "Zero risk trial"
+    },
+    "i_need_to_think_about_it": {
+      "response": "Every day you wait, leads are going to competitors who respond faster. Our AI could be booking your cars tonight while you sleep. What specifically do you need to think about?",
+      "key_point": "Create urgency around lost opportunity cost"
+    }
+  },
+
+  "key_statistics": {
+    "response_time_impact": "After 5 minutes, lead conversion drops by 80%",
+    "turo_commission": "25-40% taken from every booking",
+    "ai_response_time": "Under 30 seconds",
+    "availability": "24/7 - works while you sleep",
+    "target_revenue": "$50,000+/month for serious fleet owners"
+  },
+
+  "dashboard_features": {
+    "overview": "Complete command center for managing leads, bookings, and fleet",
+    "modules": [
+      {
+        "name": "Lead Pipeline",
+        "description": "Visual pipeline tracking leads from inquiry to booking"
+      },
+      {
+        "name": "AI Assistant",
+        "description": "Configure and monitor AI follow-up system"
+      },
+      {
+        "name": "Vehicles",
+        "description": "Manage fleet, availability, and pricing"
+      },
+      {
+        "name": "Bookings",
+        "description": "View and manage all reservations"
+      },
+      {
+        "name": "Analytics",
+        "description": "Performance metrics, revenue tracking, and insights"
+      },
+      {
+        "name": "Invoices",
+        "description": "Billing and payment management"
+      },
+      {
+        "name": "Customers",
+        "description": "Customer database and history"
+      },
+      {
+        "name": "Settings",
+        "description": "Custom branding, AI scripts, calendar sync, and more"
+      }
+    ]
+  },
+
+  "sales_process": {
+    "step_1_lead_capture": {
+      "channels": ["Instagram bio link", "Website", "Paid ads", "Referrals"],
+      "destination": "Offer page with qualification survey"
+    },
+    "step_2_qualification": {
+      "method": "Survey on offer page",
+      "data_collected": ["Fleet size", "Weekday booking rate", "Current lead sources", "Biggest blocker", "Contact info"]
+    },
+    "step_3_follow_up": {
+      "timing": "Within 24 hours of submission",
+      "method": "Phone call or text",
+      "goal": "Schedule discovery call"
+    },
+    "step_4_discovery_call": {
+      "duration": "15-30 minutes",
+      "agenda": [
+        "Understand their current situation",
+        "Identify specific pain points",
+        "Present Scale Exotics solution",
+        "Handle objections",
+        "Close or schedule follow-up"
+      ]
+    },
+    "step_5_onboarding": {
+      "trigger": "After client agrees to start",
+      "process": "Custom strategy > System setup > Launch > Optimize"
+    }
+  },
+
+  "talking_points": {
+    "opening": "Most exotic fleet owners are leaving 40% on the table with Turo, and losing even more leads because they can't respond fast enough. We solve both problems.",
+    "pain_agitation": [
+      "How often do leads go cold because you couldn't respond in time?",
+      "What percentage of your revenue is Turo taking?",
+      "How many weekdays are your cars just sitting there?"
+    ],
+    "solution_bridge": "What if you had an AI that responded to every lead in under 30 seconds, qualified them, and sent a deposit link - all while you sleep?",
+    "close": "We only get paid when you get paid. Ready to see how many bookings you're missing?"
+  }
+}
