@@ -1,0 +1,429 @@
+{
+  "company": {
+    "name": "Scale Exotics",
+    "tagline": "The proven system that fills your fleet with premium bookings—on autopilot",
+    "tagline_alt": "The all in one growth engine for rental fleets",
+    "meta_description": "Learn how to scale your exotic car rental business to $50k/month+ with our automated booking assistant",
+    "mission": "We believe exotic car rental businesses deserve better than manual lead chasing and inconsistent revenue. Our mission is to give every fleet owner the automated systems they need to scale predictably.",
+    "elevator_pitch": "We help exotic car rental fleet owners build automated systems that generate consistent $50k+ months on autopilot",
+    "contact": {
+      "email": "info@scalexotics.com",
+      "phone": "+1 (844) 794-8871",
+      "website": "https://scalexotics.com",
+      "dashboard": "app.scalexotics.com/dashboard"
+    },
+    "target_audience": {
+      "primary": "Exotic car rental fleet owners",
+      "fleet_size": "6-50 vehicles",
+      "current_revenue": "$15-30k/month wanting to scale",
+      "characteristics": [
+        "Tired of manual lead chasing",
+        "Tech-forward entrepreneurs",
+        "Luxury car rental space",
+        "Looking for predictable revenue"
+      ]
+    }
+  },
+
+  "social_proof": {
+    "stats": {
+      "revenue_generated": "$2.4M+",
+      "fleet_partners": "50+",
+      "average_growth": "3X",
+      "days_to_results": "90",
+      "bookings_closed": "12,000+"
+    },
+    "testimonials": [
+      {
+        "quote": "We went from struggling to fill weekdays to being fully booked 3 weeks out. The lead quality is insane.",
+        "author": "Marcus J.",
+        "fleet": "12-Vehicle Fleet",
+        "location": "Miami"
+      },
+      {
+        "quote": "The automation alone saved me 20+ hours a week. Now I focus on growing the fleet instead of chasing leads.",
+        "author": "David R.",
+        "fleet": "8-Vehicle Fleet",
+        "location": "LA"
+      },
+      {
+        "quote": "Went from $18k to $52k/month in 90 days. Scale Exotics knows exactly what works in this industry.",
+        "author": "Anthony M.",
+        "fleet": "6-Vehicle Fleet",
+        "location": "Vegas"
+      },
+      {
+        "quote": "I was skeptical at first—I'd been burned by agencies before. But within 30 days, I had more qualified leads than I knew what to do with.",
+        "author": "Alex R.",
+        "location": "Los Angeles, CA"
+      },
+      {
+        "quote": "The AI assistant is a game-changer. I woke up to 3 bookings last Tuesday. All closed while I was sleeping.",
+        "author": "Marcus T.",
+        "location": "Miami, FL"
+      },
+      {
+        "quote": "Finally, a team that actually understands the exotic rental business. They speak our language.",
+        "author": "David K.",
+        "location": "Las Vegas, NV"
+      }
+    ]
+  },
+
+  "services": {
+    "core_offerings": [
+      {
+        "name": "Lead Magnet",
+        "tagline": "Build nonstop inbound demand",
+        "description": "Pulls high intent renters toward your fleet using targeted acquisition loops, automated funnels, and content that attracts people already ready to book.",
+        "features": [
+          "Targeted acquisition systems",
+          "Automated inbound capture",
+          "High-intent traffic funnels",
+          "Multi-channel lead generation"
+        ]
+      },
+      {
+        "name": "Conversion System",
+        "tagline": "Convert every inquiry into revenue",
+        "description": "Handles responses instantly, qualifies prospects, and moves them through a frictionless booking path built specifically for exotic and luxury rentals.",
+        "features": [
+          "Instant response + follow-ups",
+          "AI-driven qualification",
+          "Booking flow optimization",
+          "Automated nurture sequences"
+        ]
+      },
+      {
+        "name": "Insight Engine",
+        "tagline": "See the entire business with absolute clarity",
+        "description": "Tracks performance, forecasts demand, and exposes revenue opportunities before your competitors even notice.",
+        "features": [
+          "Live performance dashboards",
+          "Revenue + demand forecasting",
+          "Actionable insights and alerts",
+          "ROI tracking per channel"
+        ]
+      }
+    ],
+    "four_pillars": [
+      {
+        "name": "Attract",
+        "module": "Paid Ads",
+        "description": "Bring qualified traffic via Instagram, Google, and referral networks"
+      },
+      {
+        "name": "Capture",
+        "module": "Landing Pages",
+        "description": "High-converting funnels optimized for YOUR booking process"
+      },
+      {
+        "name": "Nurture",
+        "module": "AI Assistant",
+        "description": "24/7 AI that knows your vehicles and pricing"
+      },
+      {
+        "name": "Convert",
+        "module": "CRM + Booking",
+        "description": "Streamlined booking management and customer CRM"
+      }
+    ],
+    "dashboard_features": [
+      "Inbox - All conversations in one place",
+      "Bookings - Calendar & scheduling",
+      "Fleet Management - Vehicle management",
+      "Customers - CRM & lifetime value tracking",
+      "Agreements - Digital contracts & e-sign",
+      "Invoices - Billing & payments",
+      "AI Assistant - Smart automation",
+      "Analytics & Tracking - Real-time insights"
+    ]
+  },
+
+  "pricing": {
+    "models": [
+      {
+        "name": "Performance",
+        "price": "$125",
+        "unit": "per booking",
+        "description": "Pay only when you win",
+        "features": [
+          "No monthly retainer",
+          "Pay per completed booking",
+          "Full system access",
+          "All features included",
+          "Cancel anytime"
+        ],
+        "best_for": "Getting started risk-free"
+      },
+      {
+        "name": "Growth",
+        "price": "$1,500",
+        "unit": "per month",
+        "description": "Unlimited scale potential",
+        "features": [
+          "Flat monthly fee",
+          "Unlimited bookings",
+          "Priority support",
+          "Weekly strategy calls",
+          "Dedicated account manager"
+        ],
+        "best_for": "Serious scaling"
+      }
+    ],
+    "details": {
+      "ad_spend": "Separate and managed transparently",
+      "starting_budget": "$50-100/day recommended",
+      "guarantee": "Qualified leads in 30 days—or your money back",
+      "contracts": "No long-term contracts, cancel anytime"
+    }
+  },
+
+  "brand_voice": {
+    "tone": "Bold, confident, direct, results-driven",
+    "personality": [
+      "Speaks directly to pain points",
+      "Emphasizes automation and efficiency",
+      "Deep understanding of exotic rental industry",
+      "No fluff - focuses on ROI and proven results",
+      "Energetic but professional"
+    ],
+    "keywords": [
+      "Automated",
+      "Proven",
+      "Predictable Revenue",
+      "24/7",
+      "Scale",
+      "Empire",
+      "Premium",
+      "Growth System"
+    ],
+    "key_messages": [
+      "Stop leaving money on the table",
+      "Scale Your Rental Empire",
+      "Dominate Your Market",
+      "One dashboard to rule it all",
+      "The all in one growth engine",
+      "Build Your Empire",
+      "You didn't start this business to answer DMs all day"
+    ],
+    "ctas": [
+      "Start Scaling",
+      "Get Started",
+      "Learn More",
+      "Work With Us",
+      "Get Your Growth Plan",
+      "See How It Works For You",
+      "Schedule Your Strategy Call"
+    ]
+  },
+
+  "design_system": {
+    "colors": {
+      "primary": {
+        "brand_blue": "#375DEE",
+        "brand_blue_hover": "#4169E1",
+        "usage": "CTAs, highlights, accents, active states"
+      },
+      "backgrounds": {
+        "black": "#000000",
+        "card": "rgba(255, 255, 255, 0.02)",
+        "card_hover": "rgba(255, 255, 255, 0.04)",
+        "input": "rgba(255, 255, 255, 0.05)",
+        "overlay": "rgba(0, 0, 0, 0.60)"
+      },
+      "text": {
+        "primary": "#FFFFFF",
+        "secondary": "rgba(255, 255, 255, 0.60)",
+        "muted": "rgba(255, 255, 255, 0.40)",
+        "subtle": "rgba(255, 255, 255, 0.20)"
+      },
+      "borders": {
+        "default": "rgba(255, 255, 255, 0.06)",
+        "light": "rgba(255, 255, 255, 0.10)",
+        "hover": "rgba(55, 93, 238, 0.30)",
+        "active": "rgba(55, 93, 238, 0.50)"
+      },
+      "blue_accents": {
+        "bg_subtle": "rgba(55, 93, 238, 0.05)",
+        "bg_light": "rgba(55, 93, 238, 0.10)",
+        "bg_medium": "rgba(55, 93, 238, 0.20)",
+        "glow": "rgba(55, 93, 238, 0.30)"
+      }
+    },
+    "typography": {
+      "fonts": {
+        "display": {
+          "family": "Syne",
+          "weights": [400, 500, 600, 700, 800],
+          "usage": "Headlines, titles, hero text, large callouts",
+          "css_var": "var(--font-display)"
+        },
+        "body": {
+          "family": "Inter",
+          "weights": [300, 400, 500, 600],
+          "usage": "Body text, labels, descriptions",
+          "css_var": "var(--font-sans)"
+        },
+        "mono": {
+          "family": "JetBrains Mono",
+          "weights": [400, 500, 600, 700],
+          "usage": "Code, numbers, tabular data",
+          "css_var": "var(--font-mono)"
+        }
+      },
+      "scale": {
+        "hero": "text-7xl / text-8xl",
+        "h1": "text-5xl / text-6xl",
+        "h2": "text-3xl / text-5xl",
+        "h3": "text-xl / text-2xl",
+        "large": "text-lg / text-xl",
+        "base": "text-base",
+        "small": "text-sm",
+        "xs": "text-xs"
+      }
+    },
+    "spacing": {
+      "border_radius": {
+        "sm": "6px",
+        "md": "8px",
+        "lg": "10px",
+        "xl": "14px",
+        "2xl": "16px",
+        "full": "9999px"
+      },
+      "padding": {
+        "section": "py-16 md:py-32",
+        "container": "px-4 md:px-6 lg:px-8",
+        "card_sm": "p-4 md:p-5",
+        "card_md": "p-6 md:p-8",
+        "card_lg": "p-8 md:p-16"
+      }
+    },
+    "effects": {
+      "shadows": {
+        "glow_sm": "0 0 30px rgba(55, 93, 238, 0.3)",
+        "glow_md": "0 0 40px rgba(55, 93, 238, 0.4)",
+        "glow_lg": "0 0 60px rgba(55, 93, 238, 0.6)"
+      },
+      "blur": {
+        "backdrop": "backdrop-blur-2xl",
+        "glow": "blur-[100px]"
+      },
+      "transitions": {
+        "fast": "duration-200",
+        "default": "duration-300",
+        "slow": "duration-500",
+        "scroll": "duration-1000"
+      },
+      "animations": {
+        "fade_in": "0.6s ease-out, translateY(20px) to translateY(0)",
+        "pulse_glow": "3s ease-in-out infinite"
+      }
+    },
+    "components": {
+      "buttons": {
+        "primary": "px-8 py-4 bg-[#375DEE] hover:bg-[#4169E1] text-white rounded-full transition-all duration-300",
+        "secondary": "px-8 py-4 text-white/80 border border-white/20 hover:border-[#375DEE]/50 rounded-full",
+        "ghost": "px-8 py-4 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full"
+      },
+      "cards": {
+        "default": "p-6 md:p-8 bg-white/[0.02] border border-white/[0.06] rounded-2xl hover:border-[#375DEE]/30",
+        "highlighted": "p-6 md:p-10 rounded-2xl border border-[#375DEE]/30 bg-[#375DEE]/5"
+      },
+      "inputs": {
+        "default": "px-4 py-3.5 rounded-xl bg-white/5 border border-white/20 text-white placeholder:text-white/50 focus:border-[#375DEE]"
+      }
+    }
+  },
+
+  "assets": {
+    "logos": {
+      "primary": "/scalexoticslong.png",
+      "square": "/scalexotics.png",
+      "favicon": "/scalexoticslogo.png"
+    },
+    "images": {
+      "hero_background": "/exoticcarmock.png",
+      "dashboard_preview": "/exoticcarmockup.png"
+    }
+  },
+
+  "messaging": {
+    "pain_points": {
+      "before": [
+        "Chasing leads manually through DMs",
+        "Missing inquiries while you sleep",
+        "Inconsistent monthly revenue",
+        "Hours wasted on tire-kickers",
+        "No idea what's working or not",
+        "Weekdays sitting empty"
+      ],
+      "problems": [
+        "Leads scattered across 6+ places",
+        "Can't respond fast enough - leads book competitors",
+        "Tire-kickers drain your energy",
+        "No way to track anything"
+      ]
+    },
+    "solutions": {
+      "after": [
+        "Leads captured and qualified automatically",
+        "24/7 instant response to every inquiry",
+        "Predictable revenue with automated booking",
+        "Only talk to ready-to-book renters",
+        "Real-time dashboard shows what converts",
+        "Full fleet utilization, weekdays included"
+      ]
+    },
+    "differentiators": {
+      "not_this": [
+        "Generic marketing agency that disappears after setup",
+        "Agencies providing leads with zero follow-up",
+        "Cookie-cutter campaigns that don't convert",
+        "Long contracts with no accountability"
+      ],
+      "instead": [
+        "Done-for-you systems built specifically for YOUR fleet",
+        "24/7 AI that knows your vehicles and pricing",
+        "Real-time dashboard showing exactly what's working",
+        "Growth partnership - we only win when you win",
+        "Industry-specific expertise in exotic rentals",
+        "Money-back guarantee on results"
+      ]
+    }
+  },
+
+  "onboarding": {
+    "timeline": [
+      { "step": 1, "name": "Strategy Call", "description": "We map out your growth plan", "when": "Today" },
+      { "step": 2, "name": "Custom Build", "description": "We build your entire system", "when": "3-5 days" },
+      { "step": 3, "name": "Launch", "description": "Ads go live, leads start flowing", "when": "Week 1" },
+      { "step": 4, "name": "Scale", "description": "We optimize and you grow", "when": "Ongoing" }
+    ],
+    "survey_questions": [
+      "How many vehicles are currently in your fleet? (1-3, 4-7, 8-15, 16+)",
+      "What percentage of weekdays are typically booked? (<25%, 25-50%, 50-75%, 75%+)",
+      "Where do most of your bookings come from today?",
+      "What's the biggest thing holding back more bookings right now?",
+      "Name + best phone number to reach you"
+    ]
+  },
+
+  "technical": {
+    "stack": {
+      "framework": "Next.js 16",
+      "language": "TypeScript",
+      "styling": "Tailwind CSS 4",
+      "ui": "shadcn/ui + Radix UI",
+      "database": "Supabase",
+      "payments": "Stripe",
+      "hosting": "Vercel"
+    },
+    "integrations": {
+      "webhook_lead_capture": "https://willcldrr.app.n8n.cloud/webhook/lead-capture",
+      "communications": "Twilio",
+      "ai": "OpenRouter"
+    }
+  }
+}

@@ -1,6 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { Inter, Syne } from "next/font/google"
+import Image from "next/image"
+
+const syne = Syne({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"] })
 
 type SurveyAnswers = {
   fleetSize: string
@@ -11,11 +16,9 @@ type SurveyAnswers = {
   phoneNumber: string
 }
 
-type FunnelStep = 'landing' | 'survey' | 'calendly'
+type FunnelStep = 'landing' | 'survey' | 'thankyou'
 
 export default function OfferPage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [scrollY, setScrollY] = useState(0)
   const [funnelStep, setFunnelStep] = useState<FunnelStep>('landing')
   const [currentSurveyStep, setCurrentSurveyStep] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -29,24 +32,20 @@ export default function OfferPage() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  // Handle viewport height for Instagram in-app browser
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY)
-    window.addEventListener("scroll", handleScroll, { passive: true })
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
-
-  // Load Calendly script when reaching calendly step
-  useEffect(() => {
-    if (funnelStep === 'calendly') {
-      const script = document.createElement('script')
-      script.src = 'https://assets.calendly.com/assets/external/widget.js'
-      script.async = true
-      document.body.appendChild(script)
-      return () => {
-        document.body.removeChild(script)
-      }
+    const setVH = () => {
+      const vh = window.innerHeight * 0.01
+      document.documentElement.style.setProperty('--vh', `${vh}px`)
     }
-  }, [funnelStep])
+    setVH()
+    window.addEventListener('resize', setVH)
+    window.addEventListener('orientationchange', setVH)
+    return () => {
+      window.removeEventListener('resize', setVH)
+      window.removeEventListener('orientationchange', setVH)
+    }
+  }, [])
 
   const totalSteps = 5
   const progress = funnelStep === 'survey' ? ((currentSurveyStep + 1) / totalSteps) * 100 : 0
@@ -108,7 +107,7 @@ export default function OfferPage() {
         }),
       })
 
-      setFunnelStep('calendly')
+      setFunnelStep('thankyou')
     } catch (error) {
       console.error("Error submitting form:", error)
     } finally {
@@ -117,25 +116,30 @@ export default function OfferPage() {
   }
 
   const renderSurveyQuestion = () => {
+    const questionStyles = `${syne.className} text-2xl md:text-4xl font-bold text-white text-center leading-tight`
+    const optionStyles = (isSelected: boolean) => `
+      w-full px-5 py-4 rounded-xl border transition-all duration-200 text-left text-base
+      ${isSelected
+        ? "bg-[#375DEE] border-[#375DEE] text-white shadow-[0_0_30px_rgba(55,93,238,0.3)]"
+        : "bg-white/5 border-white/20 text-white active:bg-[#375DEE]/20 active:border-[#375DEE]/50"
+      }
+    `
+
     switch (currentSurveyStep) {
       case 0:
         return (
-          <div className="flex flex-col items-center gap-6 md:gap-8 animate-fade-in">
-            <h2 className="text-2xl md:text-4xl font-bold text-white text-center px-2" style={{ fontFamily: 'var(--font-display)' }}>
-              How many vehicles are currently in your fleet?
+          <div className="flex flex-col items-center gap-8 animate-fade-in">
+            <h2 className={questionStyles}>
+              How many vehicles are in your fleet?
             </h2>
-            <div className="w-full max-w-md flex flex-col gap-2 md:gap-3">
+            <div className="w-full max-w-md flex flex-col gap-3">
               {["1–3", "4–7", "8–15", "16+"].map((option) => (
                 <button
                   key={option}
                   onClick={() => handleOptionSelect("fleetSize", option)}
-                  className={`w-full px-5 md:px-6 py-3.5 md:py-4 rounded-xl border transition-all duration-200 text-left text-base md:text-lg
-                    ${answers.fleetSize === option
-                      ? "bg-[#375DEE] border-[#375DEE] text-white"
-                      : "bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-[#375DEE]/50"
-                    }`}
+                  className={optionStyles(answers.fleetSize === option)}
                 >
-                  {option}
+                  {option} vehicles
                 </button>
               ))}
             </div>
@@ -144,20 +148,16 @@ export default function OfferPage() {
 
       case 1:
         return (
-          <div className="flex flex-col items-center gap-6 md:gap-8 animate-fade-in">
-            <h2 className="text-2xl md:text-4xl font-bold text-white text-center px-2" style={{ fontFamily: 'var(--font-display)' }}>
-              What percentage of weekdays are typically booked?
+          <div className="flex flex-col items-center gap-8 animate-fade-in">
+            <h2 className={questionStyles}>
+              What % of weekdays are typically booked?
             </h2>
-            <div className="w-full max-w-md flex flex-col gap-2 md:gap-3">
+            <div className="w-full max-w-md flex flex-col gap-3">
               {["<25%", "25–50%", "50–75%", "75%+"].map((option) => (
                 <button
                   key={option}
                   onClick={() => handleOptionSelect("weekdayBookings", option)}
-                  className={`w-full px-5 md:px-6 py-3.5 md:py-4 rounded-xl border transition-all duration-200 text-left text-base md:text-lg
-                    ${answers.weekdayBookings === option
-                      ? "bg-[#375DEE] border-[#375DEE] text-white"
-                      : "bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-[#375DEE]/50"
-                    }`}
+                  className={optionStyles(answers.weekdayBookings === option)}
                 >
                   {option}
                 </button>
@@ -168,20 +168,16 @@ export default function OfferPage() {
 
       case 2:
         return (
-          <div className="flex flex-col items-center gap-6 md:gap-8 animate-fade-in">
-            <h2 className="text-2xl md:text-4xl font-bold text-white text-center px-2" style={{ fontFamily: 'var(--font-display)' }}>
-              Where do most of your bookings come from today?
+          <div className="flex flex-col items-center gap-8 animate-fade-in">
+            <h2 className={questionStyles}>
+              Where do most bookings come from?
             </h2>
-            <div className="w-full max-w-md flex flex-col gap-2 md:gap-3">
+            <div className="w-full max-w-md flex flex-col gap-3">
               {["Instagram DMs", "Website / Google", "Turo", "Referrals / brokers", "Mixed / unsure"].map((option) => (
                 <button
                   key={option}
                   onClick={() => handleOptionSelect("bookingSource", option)}
-                  className={`w-full px-5 md:px-6 py-3.5 md:py-4 rounded-xl border transition-all duration-200 text-left text-base md:text-lg
-                    ${answers.bookingSource === option
-                      ? "bg-[#375DEE] border-[#375DEE] text-white"
-                      : "bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-[#375DEE]/50"
-                    }`}
+                  className={optionStyles(answers.bookingSource === option)}
                 >
                   {option}
                 </button>
@@ -192,26 +188,22 @@ export default function OfferPage() {
 
       case 3:
         return (
-          <div className="flex flex-col items-center gap-6 md:gap-8 animate-fade-in">
-            <h2 className="text-2xl md:text-4xl font-bold text-white text-center px-2" style={{ fontFamily: 'var(--font-display)' }}>
-              What&apos;s the biggest thing holding back more bookings right now?
+          <div className="flex flex-col items-center gap-8 animate-fade-in">
+            <h2 className={questionStyles}>
+              What&apos;s holding back more bookings?
             </h2>
-            <div className="w-full max-w-md flex flex-col gap-2 md:gap-3">
+            <div className="w-full max-w-md flex flex-col gap-3">
               {[
-                "Not enough inbound leads",
-                "Slow response / missed follow-ups",
-                "Low trust or weak online presence",
+                "Not enough leads",
+                "Slow follow-ups",
+                "Weak online presence",
                 "Operational limits",
                 "Not sure"
               ].map((option) => (
                 <button
                   key={option}
                   onClick={() => handleOptionSelect("biggestBlocker", option)}
-                  className={`w-full px-5 md:px-6 py-3.5 md:py-4 rounded-xl border transition-all duration-200 text-left text-base md:text-lg
-                    ${answers.biggestBlocker === option
-                      ? "bg-[#375DEE] border-[#375DEE] text-white"
-                      : "bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-[#375DEE]/50"
-                    }`}
+                  className={optionStyles(answers.biggestBlocker === option)}
                 >
                   {option}
                 </button>
@@ -222,20 +214,21 @@ export default function OfferPage() {
 
       case 4:
         return (
-          <div className="flex flex-col items-center gap-6 md:gap-8 animate-fade-in">
-            <h2 className="text-2xl md:text-4xl font-bold text-white text-center px-2" style={{ fontFamily: 'var(--font-display)' }}>
-              Name + best phone number to reach you
+          <div className="flex flex-col items-center gap-8 animate-fade-in">
+            <h2 className={questionStyles}>
+              How should we reach you?
             </h2>
-            <div className="w-full max-w-md flex flex-col gap-3 md:gap-4">
+            <div className="w-full max-w-md flex flex-col gap-4">
               <div>
                 <input
                   type="text"
                   placeholder="Full Name"
                   value={answers.fullName}
                   onChange={(e) => handleInputChange("fullName", e.target.value)}
-                  className={`w-full px-4 md:px-5 py-3.5 md:py-4 rounded-xl bg-white/5 border ${errors.fullName ? "border-red-500" : "border-white/20"} text-white placeholder:text-white/50 focus:outline-none focus:border-[#375DEE] transition text-base md:text-lg`}
+                  autoComplete="name"
+                  className={`${inter.className} w-full px-5 py-4 rounded-xl bg-white/5 border ${errors.fullName ? "border-red-500" : "border-white/20"} text-white placeholder:text-white/40 focus:outline-none focus:border-[#375DEE] focus:bg-white/10 transition text-base`}
                 />
-                {errors.fullName && <p className="text-red-400 text-xs md:text-sm mt-1.5 md:mt-2 ml-1">{errors.fullName}</p>}
+                {errors.fullName && <p className="text-red-400 text-sm mt-2 ml-1">{errors.fullName}</p>}
               </div>
               <div>
                 <input
@@ -243,15 +236,15 @@ export default function OfferPage() {
                   placeholder="Phone Number"
                   value={answers.phoneNumber}
                   onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
-                  className={`w-full px-4 md:px-5 py-3.5 md:py-4 rounded-xl bg-white/5 border ${errors.phoneNumber ? "border-red-500" : "border-white/20"} text-white placeholder:text-white/50 focus:outline-none focus:border-[#375DEE] transition text-base md:text-lg`}
+                  autoComplete="tel"
+                  className={`${inter.className} w-full px-5 py-4 rounded-xl bg-white/5 border ${errors.phoneNumber ? "border-red-500" : "border-white/20"} text-white placeholder:text-white/40 focus:outline-none focus:border-[#375DEE] focus:bg-white/10 transition text-base`}
                 />
-                {errors.phoneNumber && <p className="text-red-400 text-xs md:text-sm mt-1.5 md:mt-2 ml-1">{errors.phoneNumber}</p>}
+                {errors.phoneNumber && <p className="text-red-400 text-sm mt-2 ml-1">{errors.phoneNumber}</p>}
               </div>
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="w-full py-4 md:py-5 text-white text-lg md:text-xl rounded-xl transition-all duration-300 hover:shadow-[0_0_40px_rgba(55,93,238,0.4)] mt-2 md:mt-4 disabled:opacity-50 disabled:cursor-not-allowed bg-[#375DEE] hover:bg-[#4169E1]"
-                style={{ fontFamily: 'var(--font-display)' }}
+                className={`${syne.className} w-full py-4 text-white text-lg font-semibold rounded-xl transition-all duration-300 mt-2 disabled:opacity-50 disabled:cursor-not-allowed bg-[#375DEE] active:bg-[#4169E1] shadow-[0_0_30px_rgba(55,93,238,0.3)]`}
               >
                 {isSubmitting ? "Submitting..." : "Submit"}
               </button>
@@ -265,84 +258,83 @@ export default function OfferPage() {
   }
 
   const renderLandingPage = () => (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] px-4 md:px-8 py-12 pt-28 md:pt-32">
-      {/* Hero Section */}
-      <div className="text-center max-w-4xl mx-auto mb-12 md:mb-16 animate-fade-in">
+    <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 safe-area-inset">
+      {/* Background glows */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[#375DEE]/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-1/4 right-0 w-[200px] h-[200px] bg-[#375DEE]/10 rounded-full blur-[80px]" />
+      </div>
+
+      {/* Logo */}
+      <div className="relative z-10 mb-8">
+        <Image
+          src="/scalexoticslogo.png"
+          alt="Scale Exotics"
+          width={56}
+          height={56}
+          className="w-14 h-14 object-contain"
+        />
+      </div>
+
+      {/* Hero Content */}
+      <div className="relative z-10 text-center max-w-lg mx-auto animate-fade-in">
         <h1
-          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 md:mb-6 leading-tight"
-          style={{ fontFamily: 'var(--font-display)' }}
+          className={`${syne.className} text-4xl sm:text-5xl font-bold text-white mb-2 leading-[1.1]`}
+          style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
         >
-          ONLY PAY US AFTER RENTERS PAY YOU
+          Only Pay Us
         </h1>
-        <p className="text-lg sm:text-xl md:text-2xl text-white/70 max-w-3xl mx-auto leading-relaxed">
-          We Send You Prepaid, Financially Qualified Renters. You Only Pay Us AFTER they secure a deposit.
+        <h2
+          className={`${syne.className} text-4xl sm:text-5xl font-bold mb-6 leading-[1.1]`}
+          style={{
+            background: 'linear-gradient(135deg, #375DEE 0%, #6B8CFF 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            filter: 'drop-shadow(0 4px 20px rgba(55, 93, 238, 0.4))'
+          }}
+        >
+          When You Get Paid
+        </h2>
+        <p className={`${inter.className} text-white/50 text-lg leading-relaxed mb-10 max-w-sm mx-auto`}>
+          We send you prepaid, qualified renters. You only pay after they secure a deposit.
         </p>
 
         {/* CTA Button */}
         <button
           onClick={() => setFunnelStep('survey')}
-          className="mt-8 md:mt-10 px-10 md:px-14 py-4 md:py-5 text-lg md:text-xl font-semibold text-white bg-[#375DEE] hover:bg-[#4169E1] rounded-full transition-all duration-300 hover:shadow-[0_0_50px_rgba(55,93,238,0.5)] hover:scale-105"
-          style={{ fontFamily: 'var(--font-display)' }}
+          className={`${syne.className} relative px-10 py-4 text-lg font-semibold text-white bg-[#375DEE] rounded-full transition-all duration-300 active:scale-95 border border-white/10 shadow-[0_0_40px_rgba(55,93,238,0.4)]`}
         >
-          Start Today →
+          See If You Qualify →
         </button>
       </div>
 
-      {/* Why Work With Us Section */}
-      <div className="w-full max-w-5xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-          {/* Card 1 */}
-          <div className="p-6 md:p-8 bg-white/[0.03] border border-white/[0.08] rounded-2xl hover:border-[#375DEE]/30 transition-all duration-300 group">
-            <div className="w-12 h-12 rounded-full bg-[#375DEE]/10 flex items-center justify-center mb-4 group-hover:bg-[#375DEE]/20 transition-colors">
-              <svg className="w-6 h-6 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-              Zero Upfront Cost
-            </h3>
-            <p className="text-white/60 text-sm md:text-base">
-              No monthly fees, no setup costs. We only get paid when you get paid first.
-            </p>
+      {/* Value Props */}
+      <div className="relative z-10 mt-12 w-full max-w-sm space-y-3">
+        {[
+          { icon: "💰", text: "Zero upfront cost" },
+          { icon: "✓", text: "Pre-qualified renters only" },
+          { icon: "📈", text: "Fill your weekday gaps" },
+        ].map((item, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-3 px-5 py-3.5 rounded-xl bg-white/5 border border-white/10"
+          >
+            <span className="text-xl">{item.icon}</span>
+            <p className={`${inter.className} text-white/70 text-base`}>{item.text}</p>
           </div>
-
-          {/* Card 2 */}
-          <div className="p-6 md:p-8 bg-white/[0.03] border border-white/[0.08] rounded-2xl hover:border-[#375DEE]/30 transition-all duration-300 group">
-            <div className="w-12 h-12 rounded-full bg-[#375DEE]/10 flex items-center justify-center mb-4 group-hover:bg-[#375DEE]/20 transition-colors">
-              <svg className="w-6 h-6 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-              Pre-Qualified Renters
-            </h3>
-            <p className="text-white/60 text-sm md:text-base">
-              Every lead is financially vetted and ready to book. No tire-kickers, no flakes.
-            </p>
-          </div>
-
-          {/* Card 3 */}
-          <div className="p-6 md:p-8 bg-white/[0.03] border border-white/[0.08] rounded-2xl hover:border-[#375DEE]/30 transition-all duration-300 group">
-            <div className="w-12 h-12 rounded-full bg-[#375DEE]/10 flex items-center justify-center mb-4 group-hover:bg-[#375DEE]/20 transition-colors">
-              <svg className="w-6 h-6 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-              Scale Your Fleet
-            </h3>
-            <p className="text-white/60 text-sm md:text-base">
-              Fill your weekday gaps and maximize fleet utilization without the marketing headaches.
-            </p>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   )
 
   const renderSurvey = () => (
-    <main className="flex-1 flex items-center justify-center px-4 md:px-8 py-8 md:py-12 pt-28 md:pt-32">
-      <div className="w-full max-w-2xl">
+    <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 safe-area-inset">
+      {/* Background glows */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[300px] h-[300px] bg-[#375DEE]/15 rounded-full blur-[100px]" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-lg">
         {renderSurveyQuestion()}
 
         {/* Back button */}
@@ -355,139 +347,105 @@ export default function OfferPage() {
                 setFunnelStep('landing')
               }
             }}
-            className="text-sm text-white/50 hover:text-white/70 transition cursor-pointer py-2"
+            className={`${inter.className} text-sm text-white/40 active:text-white/60 transition py-2 px-4`}
           >
             ← Back
           </button>
         </div>
       </div>
-    </main>
+    </div>
   )
 
-  const renderCalendly = () => (
-    <main className="flex-1 flex flex-col items-center px-4 md:px-8 py-8 md:py-12 pt-28 md:pt-32">
-      <div className="text-center mb-6 md:mb-8 animate-fade-in">
-        <h2
-          className="text-3xl md:text-5xl font-bold text-white mb-3 md:mb-4"
-          style={{ fontFamily: 'var(--font-display)' }}
-        >
-          One Last Step
-        </h2>
-        <p className="text-white/60 text-base md:text-lg max-w-md mx-auto">
-          Schedule a quick call to get started with your first qualified renters.
-        </p>
+  const renderThankYou = () => (
+    <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 safe-area-inset">
+      {/* Background glows */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[#375DEE]/20 rounded-full blur-[120px]" />
       </div>
 
-      {/* Calendly Embed */}
-      <div className="w-full max-w-3xl animate-fade-in" style={{ animationDelay: '0.2s' }}>
-        <div
-          className="calendly-inline-widget"
-          data-url="https://calendly.com/willfortunec/30min"
-          style={{ minWidth: '320px', height: '700px' }}
+      {/* Logo */}
+      <div className="relative z-10 mb-8">
+        <Image
+          src="/scalexoticslogo.png"
+          alt="Scale Exotics"
+          width={56}
+          height={56}
+          className="w-14 h-14 object-contain"
         />
       </div>
-    </main>
+
+      <div className="relative z-10 text-center max-w-md mx-auto animate-fade-in">
+        {/* Success Icon */}
+        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#375DEE]/20 border border-[#375DEE]/40 flex items-center justify-center shadow-[0_0_40px_rgba(55,93,238,0.3)]">
+          <svg className="w-10 h-10 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+
+        <h1
+          className={`${syne.className} text-3xl sm:text-4xl font-bold text-white mb-4 leading-tight`}
+          style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
+        >
+          You&apos;re In!
+        </h1>
+
+        <p className={`${inter.className} text-white/50 text-lg leading-relaxed mb-8`}>
+          We&apos;ll review your application and reach out within 24 hours to discuss next steps.
+        </p>
+
+        {/* What's Next Section */}
+        <div className="space-y-3 text-left">
+          <p className={`${syne.className} text-white/70 text-sm font-semibold uppercase tracking-wider mb-4 text-center`}>
+            What happens next
+          </p>
+          {[
+            { step: "1", text: "We review your fleet details" },
+            { step: "2", text: "Quick call to confirm fit" },
+            { step: "3", text: "Start receiving qualified renters" },
+          ].map((item, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-4 px-5 py-4 rounded-xl bg-white/5 border border-white/10"
+            >
+              <div className={`${syne.className} w-8 h-8 rounded-lg bg-[#375DEE]/20 border border-[#375DEE]/30 flex items-center justify-center text-[#375DEE] font-bold text-sm`}>
+                {item.step}
+              </div>
+              <p className={`${inter.className} text-white/70 text-base`}>{item.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col overflow-x-hidden" style={{ fontFamily: 'var(--font-sans)' }}>
+    <div className={`${inter.className} min-h-screen bg-black text-white flex flex-col overflow-x-hidden relative`} style={{ minHeight: 'calc(var(--vh, 1vh) * 100)' }}>
       {/* Progress Bar (only show during survey) */}
       {funnelStep === 'survey' && (
-        <div className="fixed top-0 left-0 right-0 h-1 bg-white/10 z-[70]">
+        <div className="fixed top-0 left-0 right-0 h-1 bg-white/10 z-50">
           <div
-            className="h-full bg-[#375DEE] transition-all duration-500 ease-out"
+            className="h-full bg-[#375DEE] transition-all duration-500 ease-out shadow-[0_0_10px_rgba(55,93,238,0.5)]"
             style={{ width: `${progress}%` }}
           />
         </div>
       )}
 
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50">
-        <div className={`transition-all duration-700 ${scrollY > 50 ? "bg-black/60 backdrop-blur-2xl border-b border-white/[0.08]" : ""}`}>
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <div className="flex items-center justify-between h-20">
-              <a href="/" className="relative group">
-                <img src="/scalexoticslong.png" alt="Scale Exotics" className="h-7 w-auto" />
-                <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-[#375DEE] group-hover:w-full transition-all duration-300" />
-              </a>
-              <nav className="hidden md:flex items-center">
-                <div className="flex items-center gap-1 p-1 bg-white/[0.03] rounded-full border border-white/[0.06]">
-                  <a href="/" className="px-5 py-2 text-sm text-white/60 hover:text-white hover:bg-white/[0.06] rounded-full transition-all duration-300">Home</a>
-                  <a href="/about" className="px-5 py-2 text-sm text-white/60 hover:text-white hover:bg-white/[0.06] rounded-full transition-all duration-300">About</a>
-                  <a href="/services" className="px-5 py-2 text-sm text-white/60 hover:text-white hover:bg-white/[0.06] rounded-full transition-all duration-300">Services</a>
-                </div>
-              </nav>
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden w-10 h-10 flex items-center justify-center rounded-full bg-white/[0.05] border border-white/[0.1]"
-                aria-label="Toggle menu"
-              >
-                <div className="relative w-4 h-3 flex flex-col justify-between">
-                  <span className={`block h-[1.5px] bg-white rounded-full transition-all duration-300 ${mobileMenuOpen ? "rotate-45 translate-y-[5px]" : ""}`} />
-                  <span className={`block h-[1.5px] bg-white rounded-full transition-all duration-300 ${mobileMenuOpen ? "opacity-0" : ""}`} />
-                  <span className={`block h-[1.5px] bg-white rounded-full transition-all duration-300 ${mobileMenuOpen ? "-rotate-45 -translate-y-[5px]" : ""}`} />
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Mobile Menu */}
-      <div className={`fixed inset-0 z-[60] md:hidden transition-all duration-500 ${mobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"}`}>
-        <div className="absolute inset-0 bg-black/98 backdrop-blur-3xl" />
-        <div className="relative h-full flex flex-col items-center justify-center gap-6">
-          {["Home", "About", "Services"].map((item, i) => (
-            <a
-              key={item}
-              href={item === "Home" ? "/" : `/${item.toLowerCase()}`}
-              onClick={() => setMobileMenuOpen(false)}
-              className={`text-4xl font-light text-white/80 hover:text-[#375DEE] transition-all duration-500 ${mobileMenuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}
-              style={{ transitionDelay: mobileMenuOpen ? `${i * 100}ms` : "0ms", fontFamily: 'var(--font-display)' }}
-            >
-              {item}
-            </a>
-          ))}
-        </div>
-        <button onClick={() => setMobileMenuOpen(false)} className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center" aria-label="Close menu">
-          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
       {/* Main Content */}
       {funnelStep === 'landing' && renderLandingPage()}
       {funnelStep === 'survey' && renderSurvey()}
-      {funnelStep === 'calendly' && renderCalendly()}
-
-      {/* Footer */}
-      <footer className="relative py-6 md:py-8 border-t border-white/[0.06]">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
-            <img src="/scalexoticslong.png" alt="Scale Exotics" className="h-4 md:h-5 w-auto opacity-40" />
-            <div className="flex items-center gap-3 md:gap-4 text-[10px] md:text-xs text-white/30">
-              <a href="/about" className="hover:text-[#375DEE] transition-colors">About</a>
-              <span className="text-white/10">•</span>
-              <a href="/services" className="hover:text-[#375DEE] transition-colors">Services</a>
-              <span className="text-white/10">•</span>
-              <a href="/tos" className="hover:text-[#375DEE] transition-colors">Terms</a>
-              <span className="text-white/10">•</span>
-              <a href="/privacy-policy" className="hover:text-[#375DEE] transition-colors">Privacy</a>
-            </div>
-            <span className="text-white/20 text-[10px] md:text-xs">© {new Date().getFullYear()} Scale Exotics</span>
-          </div>
-        </div>
-      </footer>
+      {funnelStep === 'thankyou' && renderThankYou()}
 
       <style jsx>{`
         @keyframes fade-in {
-          from { opacity: 0; transform: translateY(20px); }
+          from { opacity: 0; transform: translateY(16px); }
           to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in {
           animation: fade-in 0.5s ease-out forwards;
-          opacity: 0;
+        }
+        .safe-area-inset {
+          padding-top: max(env(safe-area-inset-top), 1rem);
+          padding-bottom: max(env(safe-area-inset-bottom), 1rem);
         }
       `}</style>
     </div>
