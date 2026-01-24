@@ -316,7 +316,7 @@ export default function OfferPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           </div>
-          <p className={`${inter.className} text-white/70 text-base`}>Pre-qualified renters only</p>
+          <p className={`${inter.className} text-white/70 text-base`}>Pre Qualified Renters Only</p>
         </div>
         <div className="flex items-center gap-3 px-5 py-3.5 rounded-xl bg-white/5 border border-white/10">
           <div className="w-6 h-6 rounded-md bg-[#375DEE]/20 border border-[#375DEE]/30 flex items-center justify-center flex-shrink-0">
@@ -324,15 +324,15 @@ export default function OfferPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
           </div>
-          <p className={`${inter.className} text-white/70 text-base`}>Fill your weekday gaps</p>
+          <p className={`${inter.className} text-white/70 text-base`}>Fill Your Weekday Gaps</p>
         </div>
         <div className="flex items-center gap-3 px-5 py-3.5 rounded-xl bg-white/5 border border-white/10">
           <div className="w-6 h-6 rounded-md bg-[#375DEE]/20 border border-[#375DEE]/30 flex items-center justify-center flex-shrink-0">
             <svg className="w-4 h-4 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <p className={`${inter.className} text-white/70 text-base`}>Stop leaving money on the table</p>
+          <p className={`${inter.className} text-white/70 text-base`}>Your Cars Stay Booked, Not Parked</p>
         </div>
       </div>
     </div>
