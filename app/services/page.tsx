@@ -266,7 +266,7 @@ export default function Services() {
               Ready to <span className="text-[#375DEE]">Scale</span>?
             </h2>
             <p className="text-white/50 text-base md:text-lg max-w-xl mx-auto mb-8 md:mb-10">
-              Book a call to discuss how Scale Exotics can help your fleet reach $50k+/month.
+              Book a call to discuss how Scale Exotics can help scale your fleet.
             </p>
             <a
               href="/survey"
@@ -289,7 +289,7 @@ export default function Services() {
             <div className="col-span-2">
               <img src="/scalexoticslong.png" alt="Scale Exotics" className="h-6 md:h-7 w-auto mb-3 md:mb-4" />
               <p className="text-white/40 text-xs md:text-sm max-w-sm leading-relaxed">
-                Helping exotic car rental fleet owners build automated systems that generate consistent $50k+ months.
+                AI-powered lead capture and booking platform built for exotic car rental fleets.
               </p>
               <div className="w-12 md:w-16 h-1 bg-[#375DEE] mt-4 md:mt-6" />
             </div>

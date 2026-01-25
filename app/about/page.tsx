@@ -195,7 +195,7 @@ export default function About() {
               <div className="flex flex-row items-center justify-center text-white mb-12 animate-fade-in" style={{ animationDelay: "0.3s" }}>
                 {[
                   { value: "$2.4M+", label: "Revenue Generated" },
-                  { value: "50+", label: "Fleet Partners" },
+                  { value: "20+", label: "Fleet Partners" },
                   { value: "3X", label: "Avg. Growth" }
                 ].map((stat, i) => (
                   <div key={stat.label} className="flex flex-col items-center px-4 md:px-12">

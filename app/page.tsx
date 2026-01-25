@@ -194,7 +194,7 @@ export default function Home() {
               className="text-lg md:text-xl text-white/60 max-w-xl leading-relaxed mb-12 animate-fade-in font-light"
               style={{ animationDelay: "0.2s" }}
             >
-              The all in one growth engine for rental fleets. Lead capture, automated follow up, and booking management trusted by 50+ fleet owners nationwide.
+              The all in one growth engine for rental fleets. Lead capture, automated follow up, and booking management trusted by 20+ fleet owners nationwide.
             </p>
 
             {/* CTAs */}
@@ -232,7 +232,7 @@ export default function Home() {
           <div className="grid grid-cols-2 md:flex md:flex-row items-center justify-between gap-4 md:gap-8">
             {[
               { value: "$2.4M+", label: "Revenue Generated" },
-              { value: "50+", label: "Fleet Partners" },
+              { value: "20+", label: "Fleet Partners" },
               { value: "3X", label: "Avg Revenue Growth" },
               { value: "90", label: "Days to Results" }
             ].map((stat, i) => (
@@ -606,7 +606,7 @@ export default function Home() {
               </div>
               {/* Floating card */}
               <div className="absolute -bottom-4 right-4 md:-bottom-8 md:-right-8 bg-[#375DEE] rounded-xl md:rounded-2xl p-4 md:p-6 shadow-2xl shadow-[#375DEE]/20">
-                <div className="text-2xl md:text-3xl font-bold text-white mb-1" style={{ fontFamily: 'var(--font-display)' }}>50+</div>
+                <div className="text-2xl md:text-3xl font-bold text-white mb-1" style={{ fontFamily: 'var(--font-display)' }}>20+</div>
                 <div className="text-xs md:text-sm text-white/70">Fleet Partners</div>
               </div>
             </div>

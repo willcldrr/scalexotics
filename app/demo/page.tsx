@@ -18,7 +18,7 @@ export default function Demo() {
     { id: 1, section: "intro", type: "hero", content: {
       title: "Scale Exotics",
       subtitle: "Your Growth Partner",
-      tagline: "The system behind 47+ exotic rental fleets doing $50K+ months",
+      tagline: "The system behind 20+ exotic rental fleets doing $50K+ months",
       credibility: "Trusted by fleet owners in Miami, LA, Vegas, and beyond"
     }},
     { id: 2, section: "intro", type: "social-proof-screenshots", content: {
@@ -80,7 +80,7 @@ export default function Demo() {
     }},
     { id: 7, section: "opportunity", type: "gap-analysis", content: {
       title: "The 3 Revenue Killers",
-      subtitle: "Data from analyzing 50+ rental operations",
+      subtitle: "Data from analyzing 20+ rental operations",
       gaps: [
         {
           stat: "80%",
