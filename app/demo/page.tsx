@@ -14,354 +14,341 @@ export default function Demo() {
   const LOGO_URL = "https://imagedelivery.net/CVEJyzst_6io-ETn1V_PSw/3bdba65e-fb1a-4a3e-ff6f-1aa89b081f00/public"
 
   const slides = [
-    // SECTION 1: INTRO + CREDIBILITY
+    // SECTION 1: OPENING & PROCESS
     { id: 1, section: "intro", type: "hero", content: {
       title: "Scale Exotics",
-      subtitle: "Your Growth Partner",
-      tagline: "The system behind 20+ exotic rental fleets doing $50K+ months",
-      credibility: "Trusted by fleet owners in Miami, LA, Vegas, and beyond"
+      subtitle: "Partner Demo"
     }},
-    { id: 2, section: "intro", type: "social-proof-screenshots", content: {
-      title: "What Our Partners Are Saying",
-      subtitle: "Real feedback from real fleet owners",
-      placeholders: [
-        { type: "google-review", label: "Google Review Screenshot" },
-        { type: "instagram-dm", label: "Instagram DM Screenshot" },
-        { type: "text-message", label: "Text Message Screenshot" },
-        { type: "google-review", label: "Google Review Screenshot" }
-      ]
-    }},
-    { id: 3, section: "intro", type: "agenda", content: {
-      title: "What We'll Cover",
-      items: [
-        { num: "01", title: "The Opportunity", desc: "The math behind $50K+ months" },
-        { num: "02", title: "The System", desc: "How top fleets operate" },
-        { num: "03", title: "Live Demo", desc: "See it in action" },
-        { num: "04", title: "Your Path Forward", desc: "Getting started" }
-      ]
-    }},
-
-    // SECTION 2: THE OPPORTUNITY (Not problems - show the gap)
-    { id: 4, section: "opportunity", type: "section-header", content: {
-      number: "01",
-      title: "The Opportunity",
-      subtitle: "The math behind $50K+ months"
-    }},
-    { id: 5, section: "opportunity", type: "revenue-math", content: {
-      title: "The Revenue Gap",
-      subtitle: "Most fleets leave 40-60% of potential revenue on the table",
-      scenario: {
-        fleetSize: "5-car fleet",
-        avgDaily: "$800/day average",
-        current: {
-          label: "Current (40% utilization)",
-          weekday: "1.5 cars/day weekdays",
-          weekend: "4 cars/day weekends",
-          monthly: "$38,400/month"
-        },
-        potential: {
-          label: "Optimized (75% utilization)",
-          weekday: "3 cars/day weekdays",
-          weekend: "5 cars/day weekends",
-          monthly: "$72,000/month"
-        },
-        gap: "$33,600/month left on the table"
-      }
-    }},
-    { id: 6, section: "opportunity", type: "top-performers", content: {
-      title: "What 6-Figure Fleets Do Differently",
-      subtitle: "The 4 things that separate $20K months from $70K months",
-      items: [
-        { icon: "speed", metric: "<60 sec", label: "Response Time", desc: "They respond to every inquiry in under 60 seconds—not hours" },
-        { icon: "pipeline", metric: "100%", label: "Lead Tracking", desc: "Every lead is tracked from first click to deposit secured" },
-        { icon: "calendar", metric: "70%+", label: "Weekday Bookings", desc: "They fill weekdays, not just weekends" },
-        { icon: "direct", metric: "0%", label: "Platform Fees", desc: "They own the customer relationship—no Turo cuts" }
-      ]
-    }},
-    { id: 7, section: "opportunity", type: "gap-analysis", content: {
-      title: "The 3 Revenue Killers",
-      subtitle: "Data from analyzing 20+ rental operations",
-      gaps: [
-        {
-          stat: "80%",
-          label: "of leads go cold",
-          detail: "when response time exceeds 5 minutes",
-          insight: "Speed wins. Period."
-        },
-        {
-          stat: "35%",
-          label: "of leads fall through",
-          detail: "without a proper tracking system",
-          insight: "If it's not tracked, it's lost."
-        },
-        {
-          stat: "40%",
-          label: "weekday vacancy",
-          detail: "is the industry average",
-          insight: "Weekdays are where margin lives."
-        }
-      ],
-      cta: "We solve all three. Here's how."
-    }},
-
-    // SECTION 3: THE SYSTEM
-    { id: 8, section: "solution", type: "section-header", content: {
-      number: "02",
-      title: "The System",
-      subtitle: "Built for exotic rentals. Proven 47 times."
-    }},
-    { id: 9, section: "solution", type: "system-flow", content: {
-      title: "From Ad Click to Deposit Secured",
-      subtitle: "The complete journey—fully automated",
+    { id: 2, section: "intro", type: "process-timeline", content: {
+      title: "The 14-Day Process",
+      subtitle: "From this call to leads flowing in just two weeks",
       steps: [
-        { num: "1", label: "Attract", desc: "Targeted ads reach your ideal renter", icon: "ad" },
-        { num: "2", label: "Capture", desc: "They land on your custom booking page", icon: "page" },
-        { num: "3", label: "Nurture", desc: "AI qualifies and follows up instantly", icon: "ai" },
-        { num: "4", label: "Convert", desc: "Deposit secured, lead handed to you", icon: "money" }
-      ],
-      outcome: "You get deposit-secured leads. We handle everything else."
+        { num: "1", title: "Intro Call", desc: "Learn about your business", status: "completed", day: "Day 1" },
+        { num: "2", title: "Demo Call", desc: "See the system in action", status: "current", day: "Day 1" },
+        { num: "3", title: "Technical Setup", desc: "Connect your accounts", status: "upcoming", day: "Days 2-3" },
+        { num: "4", title: "System Buildout", desc: "Build your custom system", status: "upcoming", day: "Days 4-10" },
+        { num: "5", title: "Launch Call", desc: "Review & go-live prep", status: "upcoming", day: "Day 13" },
+        { num: "6", title: "Go Live", desc: "Leads start flowing", status: "upcoming", day: "Day 14" }
+      ]
     }},
-    { id: 10, section: "solution", type: "differentiator", content: {
-      title: "Why This Is Different",
+
+    // SECTION 2: WHAT THIS IS NOT
+    { id: 3, section: "clarity", type: "section-header", content: {
+      number: "01",
+      title: "What This Is NOT",
+      subtitle: "Let's clear the air first"
+    }},
+    { id: 4, section: "clarity", type: "problems-list", content: {
+      title: "This Is NOT...",
+      problems: [
+        { main: "Another marketing agency", sub: "We don't charge you monthly and disappear. We only get paid when you get paid." },
+        { main: "A lead generation service", sub: "We don't hand you cold leads and wish you luck. We nurture them until deposit secured." },
+        { main: "A course or coaching program", sub: "We don't teach you how to do it yourself. We do it FOR you." },
+        { main: "A quick fix or magic button", sub: "This is a real system that requires a real partnership. Results take 30-90 days." }
+      ]
+    }},
+
+    // SECTION 3: WHAT THIS IS (Big Bold Claim)
+    { id: 5, section: "solution", type: "section-header", content: {
+      number: "02",
+      title: "What This IS",
+      subtitle: "The system that changes everything"
+    }},
+    { id: 6, section: "solution", type: "solution-intro", content: {
+      label: "THE BIG IDEA",
+      title: "A Done-For-You Booking Machine",
+      subtitle: "We build, manage, and optimize your entire lead-to-booking system",
+      highlight: "You get deposit-secured leads. We handle everything else."
+    }},
+
+    // SECTION 4: US VS THEM
+    { id: 7, section: "comparison", type: "section-header", content: {
+      number: "03",
+      title: "Why We're Different",
+      subtitle: "This isn't your typical agency"
+    }},
+    { id: 8, section: "comparison", type: "differentiator", content: {
+      title: "Scale Exotics vs Everyone Else",
       comparison: {
         left: {
-          title: "Typical Marketing Agency",
+          title: "Other Agencies",
           items: [
-            { text: "Charges monthly regardless of results", icon: "x" },
-            { text: "Generic campaigns, not rental-specific", icon: "x" },
-            { text: "Hands you leads, disappears", icon: "x" },
-            { text: "No accountability for bookings", icon: "x" }
+            { text: "Charge $2-5K/month regardless of results", icon: "x" },
+            { text: "Hand you leads and disappear", icon: "x" },
+            { text: "Generic campaigns that don't convert", icon: "x" },
+            { text: "No accountability for actual bookings", icon: "x" },
+            { text: "You still do all the follow-up", icon: "x" }
           ]
         },
         right: {
           title: "Scale Exotics",
           items: [
-            { text: "Pay only when you get paid", icon: "check" },
+            { text: "Pay per deposit-secured lead only", icon: "check" },
+            { text: "We nurture until booking is secured", icon: "check" },
             { text: "Built specifically for exotic rentals", icon: "check" },
-            { text: "Nurtures leads until deposit secured", icon: "check" },
-            { text: "We only win when you win", icon: "check" }
+            { text: "We only win when you win", icon: "check" },
+            { text: "AI handles follow-up 24/7", icon: "check" }
           ]
         }
       }
     }},
 
-    // SECTION 4: LIVE DEMO
-    { id: 11, section: "demo", type: "section-header", content: {
-      number: "03",
-      title: "Live Demo",
-      subtitle: "Let me show you exactly what you'll get"
+    // SECTION 5: THE SYSTEM (Show & Tell)
+    { id: 9, section: "demo", type: "section-header", content: {
+      number: "04",
+      title: "The System",
+      subtitle: "Let me show you exactly how it works"
     }},
-    { id: 12, section: "demo", type: "system-overview", content: {
-      title: "The Four Pillars",
-      subtitle: "Each piece works together to create a booking machine",
+    { id: 10, section: "demo", type: "system-overview", content: {
+      title: "Three Steps to More Bookings",
+      subtitle: "A complete system that works while you sleep",
       pillars: [
-        { icon: "target", name: "Attract", module: "Paid Ads", desc: "Bring qualified traffic" },
-        { icon: "funnel", name: "Capture", module: "Landing Pages", desc: "Convert visitors to leads" },
-        { icon: "robot", name: "Nurture", module: "AI Assistant", desc: "Engage & qualify 24/7" },
-        { icon: "calendar", name: "Convert", module: "CRM + Booking", desc: "Close & manage deals" }
+        { icon: "target", name: "Step 1: Attract", module: "Paid Ads", desc: "We bring qualified renters to you" },
+        { icon: "robot", name: "Step 2: Engage", module: "AI Assistant", desc: "We qualify and nurture 24/7" },
+        { icon: "calendar", name: "Step 3: Convert", module: "Booking System", desc: "We secure deposits automatically" }
       ]
     }},
-    { id: 13, section: "demo", type: "module-with-screenshot", content: {
+    { id: 11, section: "demo", type: "module-detail", content: {
       moduleNum: "01",
-      moduleName: "Paid Advertising",
+      moduleName: "Attract",
       tagline: "Targeted ads that reach renters ready to book",
       features: [
-        "Custom audiences built around YOUR ideal customer",
-        "Platform selection based on where YOUR renters are",
-        "Creative that showcases YOUR fleet and brand",
-        "Weekly optimization based on real performance data"
+        "Custom audiences built for YOUR market (locals, tourists, events)",
+        "Platform selection based on YOUR ideal renter (Instagram, TikTok, Google)",
+        "Creative that showcases YOUR exact fleet and brand",
+        "Weekly optimization—we cut what doesn't work, scale what does"
       ],
-      result: "Average 4.2x ROAS for our partners",
-      screenshot: {
-        type: "ad-dashboard",
-        label: "Meta Ads Dashboard Screenshot",
-        secondaryLabel: "Ad Creative Example"
-      }
+      result: "Average 4-6x return on ad spend for our partners",
+      visual: "ads"
     }},
-    { id: 14, section: "demo", type: "module-with-screenshot", content: {
+    { id: 12, section: "demo", type: "module-detail", content: {
       moduleNum: "02",
-      moduleName: "High-Converting Funnels",
-      tagline: "Landing pages that turn clicks into leads",
-      features: [
-        "Custom pages featuring YOUR vehicles and pricing",
-        "Mobile-first design (80%+ of traffic is mobile)",
-        "Lightning-fast load times for better conversions",
-        "Lead capture optimized for YOUR booking process"
-      ],
-      result: "2-3x higher conversion than generic pages",
-      screenshot: {
-        type: "landing-page",
-        label: "Landing Page Screenshot",
-        secondaryLabel: "Mobile View"
-      }
-    }},
-    { id: 15, section: "demo", type: "module-with-screenshot", content: {
-      moduleNum: "03",
-      moduleName: "AI Booking Assistant",
-      tagline: "Never miss another lead—even at 3am",
+      moduleName: "Engage",
+      tagline: "AI that responds in seconds, not hours",
       features: [
         "Trained on YOUR fleet, pricing, policies, and FAQs",
-        "Responds in under 60 seconds, 24 hours a day",
-        "Qualifies leads based on YOUR criteria",
-        "Follows up automatically until they book or say no"
+        "Responds to every inquiry in under 60 seconds—24/7",
+        "Qualifies leads (budget, dates, requirements) automatically",
+        "Follows up until they book or say no—never drops a lead"
       ],
       result: "85% of leads engaged within 60 seconds",
-      screenshot: {
-        type: "conversation",
-        label: "Real AI Conversation Screenshot",
-        secondaryLabel: "Shows timestamps"
-      }
+      visual: "chat"
     }},
-    { id: 16, section: "demo", type: "module-with-screenshot", content: {
-      moduleNum: "04",
-      moduleName: "Your Command Center",
-      tagline: "Full visibility into your pipeline",
+    { id: 13, section: "demo", type: "module-detail", content: {
+      moduleNum: "03",
+      moduleName: "Convert",
+      tagline: "Deposits secured before leads reach your inbox",
       features: [
-        "Track every lead from first click to booking",
-        "Visual pipeline shows where each prospect is",
-        "Automated follow-up sequences run 24/7",
-        "Real-time metrics so you know what's working"
+        "Seamless booking flow optimized for conversions",
+        "Automatic deposit collection—no chasing payments",
+        "You only see leads who've already put money down",
+        "Full pipeline visibility so you know exactly what's coming"
       ],
-      result: "Complete control over your entire operation",
-      screenshot: {
-        type: "dashboard",
-        label: "Dashboard Screenshot",
-        secondaryLabel: "Pipeline View"
-      }
+      result: "You focus on the rentals. We handle the rest.",
+      visual: "dashboard"
     }},
 
-    // SECTION 5: RESULTS & PROOF
-    { id: 17, section: "results", type: "section-header", content: {
-      number: "04",
-      title: "Real Results",
-      subtitle: "From real partners, in their own words"
+    // SECTION 6: FAQs
+    { id: 14, section: "faq", type: "section-header", content: {
+      number: "05",
+      title: "Common Questions",
+      subtitle: "Let me address what you're probably thinking"
     }},
-    { id: 18, section: "results", type: "case-study-with-proof", content: {
-      label: "CASE STUDY",
-      title: "From $18K to $67K Months",
-      client: "5-car fleet in Miami",
-      timeline: "90 days",
+    { id: 15, section: "faq", type: "problems-list", content: {
+      title: "You Might Be Wondering...",
+      problems: [
+        { main: "\"How much ad spend do I need?\"", sub: "We recommend starting with $50-100/day. This gives us enough data to optimize quickly. You control the budget—scale up when you see results." },
+        { main: "\"How long until I see results?\"", sub: "Most partners see their first deposit-secured leads within 7-14 days. Full optimization takes 30-90 days as we learn what works best for your market." },
+        { main: "\"What if the leads don't convert?\"", sub: "You only pay for deposit-secured leads. If someone inquires but doesn't put down a deposit, that's on us—not you." },
+        { main: "\"Do I need to do anything?\"", sub: "Just approve rentals and hand over the keys. We handle everything from ad to deposit. You'll have a dashboard to see what's coming." }
+      ]
+    }},
+
+    // SECTION 7: GUARANTEE
+    { id: 16, section: "guarantee", type: "guarantee", content: {
+      title: "The Guarantee",
+      main: "Deposit-secured leads in 30 days—or your money back.",
+      sub: "We've done this with 47+ fleets. We know it works. That's why we can guarantee it.",
+      details: ["No long-term contracts", "Cancel anytime", "100% money-back if we don't deliver"]
+    }},
+
+    // SECTION 8: WHAT'S INCLUDED
+    { id: 17, section: "bonuses", type: "section-header", content: {
+      number: "06",
+      title: "What's Included",
+      subtitle: "Everything you get when you partner with us"
+    }},
+    { id: 18, section: "bonuses", type: "package-grid", content: {
+      title: "The Complete Package",
+      subtitle: "Everything built, managed, and optimized for you",
+      items: [
+        { icon: "target", title: "Paid Ads", desc: "Custom campaigns on Meta, TikTok & Google" },
+        { icon: "robot", title: "AI Assistant", desc: "24/7 lead engagement & qualification" },
+        { icon: "funnel", title: "Funnels", desc: "High-converting landing pages" },
+        { icon: "calendar", title: "CRM", desc: "Full pipeline visibility & tracking" }
+      ]
+    }},
+    { id: 19, section: "bonuses", type: "case-study", content: {
+      label: "BONUS",
+      title: "Dedicated Account Manager",
       before: {
-        title: "Before",
-        metrics: [
-          { label: "Monthly Revenue", value: "$15-20K", subtext: "inconsistent" },
-          { label: "Response Time", value: "2-4 hours", subtext: "leads going cold" },
-          { label: "Ad Tracking", value: "None", subtext: "$3K/mo wasted" }
+        title: "Without Scale Exotics",
+        points: [
+          "You manage ads yourself (or pay an agency $2-5K/mo)",
+          "You answer every DM and inquiry manually",
+          "You follow up with leads who ghost you",
+          "You have no idea which ads are working"
         ]
       },
       after: {
-        title: "After 90 Days",
-        metrics: [
-          { label: "Monthly Revenue", value: "$60-70K", subtext: "consistent" },
-          { label: "Response Time", value: "<60 sec", subtext: "24/7 coverage" },
-          { label: "Ad ROAS", value: "4.1x", subtext: "every dollar tracked" }
+        title: "With Scale Exotics",
+        points: [
+          "Dedicated expert manages everything for you",
+          "Weekly strategy calls to review performance",
+          "Direct line to your account manager",
+          "Full transparency on every dollar spent"
         ]
-      },
-      proofPlaceholders: [
-        { type: "revenue", label: "Revenue Screenshot (Stripe/Square)" },
-        { type: "calendar", label: "Booking Calendar Comparison" }
-      ]
-    }},
-    { id: 19, section: "results", type: "testimonial-screenshots", content: {
-      title: "Straight From Our Partners",
-      subtitle: "Real messages. Unedited.",
-      placeholders: [
-        { type: "instagram-dm", label: "Instagram DM Screenshot" },
-        { type: "text-message", label: "Text Message Screenshot" },
-        { type: "google-review", label: "Google Review Screenshot" },
-        { type: "instagram-dm", label: "Instagram DM Screenshot" },
-        { type: "text-message", label: "Text Message Screenshot" },
-        { type: "google-review", label: "Google Review Screenshot" }
-      ]
-    }},
-    { id: 20, section: "results", type: "guarantee", content: {
-      title: "The Guarantee",
-      main: "Qualified leads in 30 days—or your money back.",
-      sub: "We've done this 47 times. We know it works. That's why we guarantee it.",
-      details: ["No long-term contracts", "Cancel anytime", "100% money-back guarantee"]
+      }
     }},
 
-    // SECTION 6: NEXT STEPS
-    { id: 21, section: "close", type: "section-header", content: {
-      number: "05",
-      title: "Next Steps",
-      subtitle: "Two ways to get started"
+    // SECTION 9: BONUSES
+    { id: 20, section: "bonuses", type: "section-header", content: {
+      number: "07",
+      title: "Bonuses",
+      subtitle: "Extra value included with every partnership"
     }},
-    { id: 22, section: "close", type: "pricing", content: {
+    { id: 21, section: "bonuses", type: "bonus-card", content: {
+      badge: "BONUS #1",
+      title: "Google SEO Optimization",
+      subtitle: "Get found by renters searching for exotic cars in your area",
+      description: "We optimize your Google Business Profile and local SEO so you rank higher in searches like \"exotic car rental [your city]\" — bringing you free, organic leads on top of paid ads.",
+      highlights: [
+        "Google Business Profile optimization",
+        "Local SEO keyword targeting",
+        "Review generation strategy",
+        "Map pack ranking improvement"
+      ],
+      value: "$2,000+ value"
+    }},
+    { id: 22, section: "bonuses", type: "bonus-card", content: {
+      badge: "BONUS #2",
+      title: "Client Reactivation Campaign",
+      subtitle: "Turn your past renters into repeat customers",
+      description: "We build automated campaigns that re-engage your previous customers with personalized offers, bringing back renters who already trust you.",
+      highlights: [
+        "Automated email/SMS sequences",
+        "Personalized offers based on history",
+        "Birthday & anniversary campaigns",
+        "Win-back sequences for cold leads"
+      ],
+      value: "$1,500+ value"
+    }},
+    { id: 23, section: "bonuses", type: "referral-program", content: {
+      badge: "BONUS #3",
+      title: "Let Us Pay You",
+      subtitle: "Referral Program",
+      description: "Know other exotic rental owners? For every fleet owner you refer who invests a minimum of $1,500/month with us, we send you $500 cash per month — as long as they stay.",
+      example: {
+        referrals: "3",
+        monthly: "$1,500",
+        yearly: "$18,000"
+      },
+      cta: "Refer 3 friends = $1,500/month passive income"
+    }},
+
+    // SECTION 10: PRICING
+    { id: 24, section: "close", type: "section-header", content: {
+      number: "08",
+      title: "Investment",
+      subtitle: "Two options to get started"
+    }},
+    { id: 25, section: "close", type: "pricing", content: {
       title: "Choose Your Path",
-      subtitle: "Both include the complete system. Pick what fits your stage.",
+      cta: "Which option sounds best for you?",
       options: [
         {
-          name: "Performance",
-          price: "$125",
-          unit: "per deposit-secured lead",
-          desc: "You only pay when you get paid",
-          highlight: false,
+          name: "Performance Model",
+          highlight: true,
+          badge: "MOST POPULAR",
+          mainPrice: "$150",
+          mainUnit: "per deposit-secured booking",
           details: [
-            "No upfront cost",
-            "Pay per qualified, deposit-secured lead",
-            "Full system access",
-            "All features included",
-            "Cancel anytime"
+            { label: "Setup Fee", value: "$0" },
+            { label: "Per Booking", value: "$150" },
+            { label: "Minimum", value: "10 booking credit" }
           ],
-          best: "Best for: Testing the waters risk-free"
+          toStart: "$1,497",
+          toStartNote: "to get started + adspend"
         },
         {
-          name: "Growth",
-          price: "$1,500",
-          unit: "per month",
-          desc: "Unlimited leads, maximum scale",
-          highlight: true,
+          name: "Retainer",
+          highlight: false,
+          badge: null,
+          mainPrice: "$1,997",
+          mainUnit: "per month",
           details: [
-            "Flat monthly fee",
-            "Unlimited deposit-secured leads",
-            "Priority support",
-            "Weekly strategy calls",
-            "Dedicated account manager"
+            { label: "Monthly Fee", value: "$1,997" },
+            { label: "Per Booking", value: "$0" },
+            { label: "Bookings", value: "Unlimited" }
           ],
-          best: "Best for: Ready to scale aggressively"
+          toStart: "$1,997",
+          toStartNote: "to get started + adspend"
         }
-      ],
-      note: "Ad spend is separate and transparent. Recommended: $50-100/day to start."
-    }},
-    { id: 23, section: "close", type: "timeline", content: {
-      title: "Here's What Happens Next",
-      subtitle: "From today to leads flowing",
-      steps: [
-        { num: "1", title: "Strategy Call", desc: "We map your growth plan together", time: "Today", icon: "phone" },
-        { num: "2", title: "System Build", desc: "We build your custom system", time: "Days 1-5", icon: "build" },
-        { num: "3", title: "Launch", desc: "Ads go live, leads start flowing", time: "Day 6", icon: "rocket" },
-        { num: "4", title: "Optimize & Scale", desc: "We refine and you grow", time: "Ongoing", icon: "chart" }
       ]
     }},
-    { id: 24, section: "close", type: "urgency", content: {
-      title: "Why Start Now?",
-      points: [
-        { icon: "chart", text: "Every day without this system = leads going to competitors with faster response" },
-        { icon: "calendar", text: "Peak season is approaching—build momentum before the rush" },
-        { icon: "shield", text: "Zero risk with our performance model—you only pay when you get paid" }
+    { id: 26, section: "close", type: "adspend-tiers", content: {
+      title: "Ad Spend Options",
+      subtitle: "You control the budget. Scale up as you see results.",
+      tiers: [
+        { level: "Good", daily: "$50", monthly: "$1,500/mo", desc: "Test & learn phase", results: "5-10 leads/month" },
+        { level: "Better", daily: "$75", monthly: "$2,250/mo", desc: "Steady growth", results: "10-18 leads/month", recommended: true },
+        { level: "Best", daily: "$100", monthly: "$3,000/mo", desc: "Aggressive scale", results: "18-30 leads/month" }
       ],
-      cta: "The math is simple: waiting costs you money."
+      note: "These are estimates. Actual results vary by market and season."
     }},
-    { id: 25, section: "close", type: "deposit", content: {
+
+    // SECTION 11: DOWNSELL DEPOSIT (Hidden - only via up arrow)
+    { id: 27, section: "close", type: "deposit", content: {
       title: "Not Ready to Decide Today?",
-      subtitle: "No pressure.",
+      subtitle: "That's completely fine.",
       main: "$100 fully refundable deposit",
       details: [
         "Holds your onboarding slot for 7 days",
         "100% refundable if you decide it's not for you",
         "Applied to your first invoice if you move forward"
       ],
-      cta: "Zero risk. Just keeps your spot warm."
+      cta: "Zero risk. Just keeps your spot warm while you think."
     }},
-    { id: 26, section: "close", type: "final", content: {
+
+    // SECTION 12: NEXT STEPS
+    { id: 28, section: "close", type: "process-timeline", content: {
+      title: "What Happens Next",
+      subtitle: "From today to leads flowing in just two weeks",
+      steps: [
+        { num: "1", title: "Onboarding Call", desc: "We gather your fleet info", status: "upcoming", day: "Day 1" },
+        { num: "2", title: "Technical Setup", desc: "Connect your accounts", status: "upcoming", day: "Days 2-3" },
+        { num: "3", title: "System Buildout", desc: "Build your custom system", status: "upcoming", day: "Days 4-10" },
+        { num: "4", title: "Launch Call", desc: "Review & go-live prep", status: "upcoming", day: "Day 13" },
+        { num: "5", title: "Go Live", desc: "Leads start flowing", status: "upcoming", day: "Day 14" }
+      ]
+    }},
+    { id: 29, section: "close", type: "urgency", content: {
+      title: "Why Start Now?",
+      points: [
+        { icon: "clock", text: "Every day without this system = leads going to competitors who respond faster" },
+        { icon: "calendar", text: "Peak season is coming—build momentum before the rush" },
+        { icon: "users", text: "We only onboard 3 new partners per month to maintain quality" }
+      ],
+      cta: "The math is simple: waiting costs you money."
+    }},
+    { id: 30, section: "close", type: "final", content: {
       title: "Ready to Scale?",
       subtitle: "You've got the fleet. We've got the system.",
-      cta: "Let's talk."
+      cta: "Let's do this."
     }}
   ]
 
-  const sections = ["intro", "opportunity", "solution", "demo", "results", "close"]
+  const sections = ["intro", "clarity", "solution", "comparison", "demo", "faq", "guarantee", "bonuses", "close"]
   const currentSection = slides[currentSlide].section
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
@@ -374,23 +361,40 @@ export default function Demo() {
     }
   }
 
+  // Find deposit slide index (hidden from normal navigation)
+  const depositSlideIndex = slides.findIndex(s => s.type === "deposit")
+
   const nextSlide = useCallback(() => {
     if (currentSlide < slides.length - 1 && !isAnimating) {
       setIsAnimating(true)
       setSlideDirection('next')
-      setCurrentSlide(prev => prev + 1)
+      // Skip deposit slide in normal navigation
+      let nextIndex = currentSlide + 1
+      if (nextIndex === depositSlideIndex) {
+        nextIndex = depositSlideIndex + 1
+      }
+      if (nextIndex < slides.length) {
+        setCurrentSlide(nextIndex)
+      }
       setTimeout(() => setIsAnimating(false), 400)
     }
-  }, [currentSlide, slides.length, isAnimating])
+  }, [currentSlide, slides.length, isAnimating, depositSlideIndex])
 
   const prevSlide = useCallback(() => {
     if (currentSlide > 0 && !isAnimating) {
       setIsAnimating(true)
       setSlideDirection('prev')
-      setCurrentSlide(prev => prev - 1)
+      // Skip deposit slide in normal navigation
+      let prevIndex = currentSlide - 1
+      if (prevIndex === depositSlideIndex) {
+        prevIndex = depositSlideIndex - 1
+      }
+      if (prevIndex >= 0) {
+        setCurrentSlide(prevIndex)
+      }
       setTimeout(() => setIsAnimating(false), 400)
     }
-  }, [currentSlide, isAnimating])
+  }, [currentSlide, isAnimating, depositSlideIndex])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -400,13 +404,39 @@ export default function Demo() {
       } else if (e.key === "ArrowLeft") {
         e.preventDefault()
         prevSlide()
+      } else if (e.key === "ArrowUp") {
+        // Special: On pricing slide, up arrow jumps to deposit slide
+        const currentSlideType = slides[currentSlide]?.type
+        if (currentSlideType === "pricing") {
+          e.preventDefault()
+          const depositIndex = slides.findIndex(s => s.type === "deposit")
+          if (depositIndex !== -1 && !isAnimating) {
+            setIsAnimating(true)
+            setSlideDirection('next')
+            setCurrentSlide(depositIndex)
+            setTimeout(() => setIsAnimating(false), 400)
+          }
+        }
+      } else if (e.key === "ArrowDown") {
+        // Special: On deposit slide, down arrow jumps back to pricing slide
+        const currentSlideType = slides[currentSlide]?.type
+        if (currentSlideType === "deposit") {
+          e.preventDefault()
+          const pricingIndex = slides.findIndex(s => s.type === "pricing")
+          if (pricingIndex !== -1 && !isAnimating) {
+            setIsAnimating(true)
+            setSlideDirection('prev')
+            setCurrentSlide(pricingIndex)
+            setTimeout(() => setIsAnimating(false), 400)
+          }
+        }
       }
     }
     if (isAuthenticated) {
       window.addEventListener("keydown", handleKeyDown)
       return () => window.removeEventListener("keydown", handleKeyDown)
     }
-  }, [isAuthenticated, nextSlide, prevSlide])
+  }, [isAuthenticated, nextSlide, prevSlide, currentSlide, isAnimating])
 
   const renderSlide = (slide: typeof slides[0]) => {
     const content = slide.content as any
@@ -415,48 +445,30 @@ export default function Demo() {
       case "hero":
         return (
           <div className="h-full flex flex-col items-center justify-center text-center relative overflow-hidden px-8">
-            {/* Enhanced background effects */}
+            {/* Premium background effects */}
             <div className="absolute inset-0">
-              <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-[#375DEE]/20 rounded-full blur-[200px] -translate-y-1/3 translate-x-1/4" />
-              <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-[#375DEE]/10 rounded-full blur-[150px] translate-y-1/3 -translate-x-1/4" />
-              {/* Additional center glow */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#375DEE]/5 rounded-full blur-[100px]" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-[#375DEE]/15 rounded-full blur-[200px]" />
+              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#375DEE]/5 via-transparent to-transparent" />
             </div>
-            {/* Grid background */}
-            <div className="absolute inset-0 opacity-[0.03]" style={{
+            {/* Subtle grid */}
+            <div className="absolute inset-0 opacity-[0.02]" style={{
               backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
-              backgroundSize: '60px 60px'
+              backgroundSize: '80px 80px'
             }} />
-            {/* Radial gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50" />
 
-            <div className="relative z-10 max-w-5xl">
-              <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/[0.03] backdrop-blur-sm border border-white/10 rounded-full mb-8 fade-up">
-                <div className="w-2 h-2 rounded-full bg-[#375DEE] animate-pulse" />
-                <span className="text-sm text-white/60 tracking-wide">For Exotic Car Rental Fleet Owners</span>
-              </div>
-              <h1 className="text-7xl md:text-8xl lg:text-9xl font-bold mb-6 tracking-tight fade-up delay-1" style={{ fontFamily: 'var(--font-display)' }}>
-                <span className="bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">{content.title}</span>
+            <div className="relative z-10 max-w-4xl">
+              {/* Logo */}
+              <img src={LOGO_URL} alt="Scale Exotics" className="h-16 w-auto mx-auto mb-12 fade-up" />
+
+              {/* Main title */}
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tight fade-up delay-1" style={{ fontFamily: 'var(--font-display)' }}>
+                <span className="bg-gradient-to-r from-white via-white to-white/90 bg-clip-text text-transparent">{content.title}</span>
               </h1>
-              <p className="text-3xl md:text-4xl font-medium mb-8 fade-up delay-2" style={{ fontFamily: 'var(--font-display)' }}>
+
+              {/* Subtitle */}
+              <p className="text-2xl md:text-3xl font-medium fade-up delay-2" style={{ fontFamily: 'var(--font-display)' }}>
                 <span className="bg-gradient-to-r from-[#375DEE] to-[#6B8DFF] bg-clip-text text-transparent">{content.subtitle}</span>
               </p>
-              <p className="text-xl text-white/50 max-w-2xl mx-auto mb-10 fade-up delay-3">{content.tagline}</p>
-              {/* Status indicators */}
-              <div className="flex items-center justify-center gap-8 fade-up delay-4">
-                <div className="flex items-center gap-2 text-white/30 text-sm">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                  <span>AI-Powered</span>
-                </div>
-                <div className="flex items-center gap-2 text-white/30 text-sm">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                  <span>24/7 Automated</span>
-                </div>
-                <div className="flex items-center gap-2 text-white/30 text-sm">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                  <span>Performance-Based</span>
-                </div>
-              </div>
             </div>
           </div>
         )
@@ -571,6 +583,207 @@ export default function Demo() {
               <span className="text-[#375DEE] text-sm tracking-[0.3em] mb-6 block fade-up">SECTION {content.number}</span>
               <h2 className="text-7xl lg:text-8xl font-bold mb-6 fade-up delay-1" style={{ fontFamily: 'var(--font-display)' }}>{content.title}</h2>
               <p className="text-xl text-white/40 fade-up delay-2">{content.subtitle}</p>
+            </div>
+          </div>
+        )
+
+      case "process-timeline":
+        return (
+          <div className="h-full flex flex-col justify-center px-8 lg:px-16 relative overflow-hidden">
+            {/* Premium background */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[500px] bg-[#375DEE]/8 rounded-full blur-[150px]" />
+            </div>
+
+            <div className="relative z-10 max-w-6xl mx-auto w-full">
+              {/* Header */}
+              <div className="text-center mb-12 fade-up">
+                <h2 className="text-4xl lg:text-5xl font-bold mb-3" style={{ fontFamily: 'var(--font-display)' }}>{content.title}</h2>
+                <p className="text-white/40 text-lg">{content.subtitle}</p>
+              </div>
+
+              {/* Timeline container */}
+              <div className="relative bg-white/[0.02] backdrop-blur-sm border border-white/10 rounded-3xl p-8 lg:p-10 overflow-hidden">
+                {/* Subtle inner glow */}
+                <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 via-[#375DEE]/5 to-white/5 pointer-events-none" />
+
+                {/* Connection line */}
+                <div className="absolute top-[72px] left-[8%] right-[8%] h-[3px] rounded-full overflow-hidden">
+                  <div className="absolute inset-0 bg-white/10" />
+                  {/* Progress fill - first step complete, second is current */}
+                  <div className="absolute left-0 top-0 bottom-0 w-[10%] bg-gradient-to-r from-green-500 to-green-400" />
+                  <div className="absolute left-[10%] top-0 bottom-0 w-[8%] bg-gradient-to-r from-green-400 to-[#375DEE]" />
+                </div>
+
+                <div className="relative flex justify-between">
+                  {content.steps.map((step: any, i: number) => {
+                    const isCompleted = step.status === 'completed';
+                    const isCurrent = step.status === 'current';
+
+                    return (
+                      <div key={i} className={`flex flex-col items-center fade-up delay-${i + 1}`} style={{ width: '15%' }}>
+                        {/* Step indicator */}
+                        <div className="relative mb-5">
+                          {/* Outer glow for current */}
+                          {isCurrent && (
+                            <div className="absolute inset-[-6px] bg-[#375DEE] rounded-full blur-lg opacity-50 animate-pulse" />
+                          )}
+
+                          {/* Circle */}
+                          <div className={`relative w-16 h-16 rounded-full flex items-center justify-center transition-all ${
+                            isCompleted
+                              ? 'bg-gradient-to-br from-green-500 to-green-600 shadow-lg shadow-green-500/30'
+                              : isCurrent
+                                ? 'bg-gradient-to-br from-[#375DEE] to-[#5B7FFF] shadow-lg shadow-[#375DEE]/40 ring-4 ring-[#375DEE]/20'
+                                : 'bg-white/5 border-2 border-white/10'
+                          }`}>
+                            {isCompleted ? (
+                              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : isCurrent ? (
+                              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            ) : (
+                              <span className="text-xl font-bold text-white/20" style={{ fontFamily: 'var(--font-display)' }}>{step.num}</span>
+                            )}
+                          </div>
+
+                          {/* Status badge */}
+                          {(isCurrent || isCompleted) && (
+                            <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full ${
+                              isCompleted ? 'bg-green-500' : 'bg-[#375DEE]'
+                            }`}>
+                              <span className="text-[9px] text-white font-bold uppercase tracking-wider whitespace-nowrap">
+                                {isCompleted ? 'Done' : 'Now'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Step content */}
+                        <div className="text-center mt-3">
+                          <h3 className={`text-sm lg:text-base font-bold mb-1 ${
+                            isCompleted ? 'text-green-400' :
+                            isCurrent ? 'text-white' : 'text-white/30'
+                          }`}>{step.title}</h3>
+                          <p className={`text-xs leading-relaxed mb-2 ${
+                            isCompleted || isCurrent ? 'text-white/50' : 'text-white/20'
+                          }`}>{step.desc}</p>
+                          {/* Day label */}
+                          <span className={`text-[10px] font-medium px-2 py-1 rounded-full ${
+                            isCompleted ? 'bg-green-500/20 text-green-400' :
+                            isCurrent ? 'bg-[#375DEE]/20 text-[#375DEE]' : 'bg-white/5 text-white/30'
+                          }`}>{step.day}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 14-day guarantee badge */}
+              <div className="flex justify-center mt-8 fade-up delay-7">
+                <div className="inline-flex items-center gap-3 px-6 py-3 bg-[#375DEE]/10 border border-[#375DEE]/20 rounded-full">
+                  <svg className="w-5 h-5 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-[#375DEE] font-semibold">Full system live in just 14 days</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+
+      case "package-grid":
+        return (
+          <div className="h-full flex flex-col justify-center px-12 lg:px-20 relative overflow-hidden">
+            {/* Background */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#375DEE]/8 rounded-full blur-[150px]" />
+            </div>
+
+            <div className="relative z-10">
+              {/* Header */}
+              <div className="text-center mb-16 fade-up">
+                <h2 className="text-4xl lg:text-5xl font-bold mb-4" style={{ fontFamily: 'var(--font-display)' }}>{content.title}</h2>
+                <p className="text-white/40 text-xl">{content.subtitle}</p>
+              </div>
+
+              {/* Horizontal cards */}
+              <div className="flex justify-center gap-6 max-w-5xl mx-auto">
+                {content.items.map((item: any, i: number) => (
+                  <div key={i} className={`flex-1 fade-up delay-${i + 1}`}>
+                    <div className="group relative text-center">
+                      {/* Icon container */}
+                      <div className="relative mx-auto mb-6">
+                        {/* Glow effect */}
+                        <div className="absolute inset-0 bg-[#375DEE] rounded-2xl blur-xl opacity-0 group-hover:opacity-30 transition-opacity" />
+                        <div className="relative w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-[#375DEE]/20 to-[#375DEE]/10 border border-[#375DEE]/30 flex items-center justify-center group-hover:border-[#375DEE]/50 transition-all">
+                          {item.icon === "target" && <svg className="w-9 h-9 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth={1.5} /><circle cx="12" cy="12" r="6" strokeWidth={1.5} /><circle cx="12" cy="12" r="2" strokeWidth={1.5} /></svg>}
+                          {item.icon === "robot" && <svg className="w-9 h-9 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>}
+                          {item.icon === "funnel" && <svg className="w-9 h-9 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>}
+                          {item.icon === "calendar" && <svg className="w-9 h-9 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+                        </div>
+                      </div>
+
+                      {/* Text */}
+                      <h3 className="text-xl font-bold text-white mb-2">{item.title}</h3>
+                      <p className="text-white/50 text-sm leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bottom tagline */}
+              <div className="text-center mt-14 fade-up delay-5">
+                <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/[0.03] border border-white/10 rounded-full">
+                  <svg className="w-5 h-5 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-white/60">All built, managed, and optimized by our team</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+
+      case "problems-list":
+        return (
+          <div className="h-full flex flex-col justify-center px-16 lg:px-24 relative overflow-hidden">
+            {/* Background effects */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-1/4 left-0 w-[500px] h-[500px] bg-red-500/5 rounded-full blur-[150px]" />
+              <div className="absolute bottom-1/4 right-0 w-[400px] h-[400px] bg-[#375DEE]/5 rounded-full blur-[120px]" />
+            </div>
+
+            <div className="relative z-10 max-w-5xl mx-auto w-full">
+              <h2 className="text-4xl lg:text-5xl font-bold mb-12 text-center fade-up" style={{ fontFamily: 'var(--font-display)' }}>{content.title}</h2>
+
+              <div className="space-y-5">
+                {content.problems.map((problem: any, i: number) => (
+                  <div key={i} className={`fade-up delay-${i + 1}`}>
+                    <div className="group relative bg-white/[0.02] backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all overflow-hidden">
+                      {/* Subtle glow on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                      <div className="relative flex items-start gap-5">
+                        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0 mt-1">
+                          <svg className="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-white mb-2 group-hover:text-[#375DEE] transition-colors">{problem.main}</h3>
+                          <p className="text-white/50 text-sm leading-relaxed">{problem.sub}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )
@@ -1255,53 +1468,53 @@ export default function Demo() {
       case "differentiator":
         return (
           <div className="h-full grid grid-cols-2 gap-0 items-stretch relative overflow-hidden">
-            {/* Left side - Comparison left */}
-            <div className="flex flex-col justify-center px-12 lg:px-16 relative bg-gradient-to-r from-white/[0.02] to-transparent">
+            {/* Left side - Other Agencies */}
+            <div className="flex flex-col justify-center px-10 lg:px-14 relative bg-gradient-to-r from-red-500/[0.03] to-transparent">
               <div className="absolute inset-0 opacity-[0.02]" style={{
                 backgroundImage: 'repeating-linear-gradient(45deg, #fff, #fff 1px, transparent 1px, transparent 8px)'
               }} />
               <div className="relative fade-up">
-                <h2 className="text-2xl lg:text-3xl font-bold mb-6 text-white/60" style={{ fontFamily: 'var(--font-display)' }}>{content.comparison.left.title}</h2>
-                <div className="space-y-3">
+                <h2 className="text-3xl lg:text-4xl font-bold mb-8 text-white/50" style={{ fontFamily: 'var(--font-display)' }}>{content.comparison.left.title}</h2>
+                <div className="space-y-4">
                   {content.comparison.left.items.map((item: any, i: number) => (
-                    <div key={i} className="flex items-center gap-4 p-4 bg-white/[0.02] border border-white/5 rounded-xl">
-                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
-                        <svg className="w-4 h-4 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div key={i} className={`flex items-center gap-5 p-5 bg-white/[0.02] border border-white/5 rounded-2xl fade-up delay-${i + 1}`}>
+                      <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-6 h-6 text-red-400/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </div>
-                      <p className="text-white/40 text-sm">{item.text}</p>
+                      <p className="text-white/50 text-lg">{item.text}</p>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Center divider with title */}
+            {/* Center divider */}
             <div className="absolute left-1/2 top-0 bottom-0 flex flex-col items-center justify-center -translate-x-1/2 z-10">
               <div className="w-[2px] flex-1 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
-              <div className="py-4">
-                <span className="text-xl font-bold text-white/20 rotate-90 block" style={{ fontFamily: 'var(--font-display)' }}>VS</span>
+              <div className="py-6 px-4 bg-black">
+                <span className="text-2xl font-bold text-white/30" style={{ fontFamily: 'var(--font-display)' }}>VS</span>
               </div>
-              <div className="w-[2px] flex-1 bg-gradient-to-b from-transparent via-[#375DEE]/30 to-transparent" />
+              <div className="w-[2px] flex-1 bg-gradient-to-b from-transparent via-[#375DEE]/40 to-transparent" />
             </div>
 
-            {/* Right side - Comparison right */}
-            <div className="flex flex-col justify-center px-12 lg:px-16 relative bg-gradient-to-l from-[#375DEE]/10 to-transparent">
-              <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[300px] h-[300px] bg-[#375DEE]/20 rounded-full blur-[100px]" />
-              <div className="relative fade-up delay-2">
-                <h2 className="text-2xl lg:text-3xl font-bold mb-6" style={{ fontFamily: 'var(--font-display)' }}>
+            {/* Right side - Scale Exotics */}
+            <div className="flex flex-col justify-center px-10 lg:px-14 relative bg-gradient-to-l from-[#375DEE]/10 to-transparent">
+              <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[400px] h-[400px] bg-[#375DEE]/20 rounded-full blur-[120px]" />
+              <div className="relative fade-up delay-1">
+                <h2 className="text-3xl lg:text-4xl font-bold mb-8" style={{ fontFamily: 'var(--font-display)' }}>
                   <span className="bg-gradient-to-r from-[#375DEE] to-[#6B8DFF] bg-clip-text text-transparent">{content.comparison.right.title}</span>
                 </h2>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {content.comparison.right.items.map((item: any, i: number) => (
-                    <div key={i} className="flex items-center gap-4 p-4 bg-[#375DEE]/5 border border-[#375DEE]/20 rounded-xl hover:border-[#375DEE]/40 hover:bg-[#375DEE]/10 transition-all">
-                      <div className="w-8 h-8 rounded-lg bg-[#375DEE]/20 flex items-center justify-center flex-shrink-0">
-                        <svg className="w-4 h-4 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    <div key={i} className={`flex items-center gap-5 p-5 bg-[#375DEE]/10 border border-[#375DEE]/30 rounded-2xl hover:border-[#375DEE]/50 hover:bg-[#375DEE]/15 transition-all fade-up delay-${i + 2}`}>
+                      <div className="w-12 h-12 rounded-xl bg-[#375DEE]/20 border border-[#375DEE]/30 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-6 h-6 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
-                      <p className="text-white text-sm">{item.text}</p>
+                      <p className="text-white text-lg">{item.text}</p>
                     </div>
                   ))}
                 </div>
@@ -1397,6 +1610,131 @@ export default function Demo() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        )
+
+      case "bonus-card":
+        return (
+          <div className="h-full flex flex-col justify-center px-16 lg:px-24 relative overflow-hidden">
+            {/* Background */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#375DEE]/8 rounded-full blur-[150px]" />
+            </div>
+
+            <div className="relative z-10 max-w-4xl mx-auto w-full">
+              {/* Badge */}
+              <div className="flex justify-center mb-6 fade-up">
+                <span className="px-4 py-2 bg-gradient-to-r from-[#375DEE] to-[#5B7FFF] rounded-full text-sm font-bold text-white tracking-wider">{content.badge}</span>
+              </div>
+
+              {/* Title */}
+              <div className="text-center mb-10 fade-up delay-1">
+                <h2 className="text-4xl lg:text-5xl font-bold mb-3" style={{ fontFamily: 'var(--font-display)' }}>{content.title}</h2>
+                <p className="text-white/50 text-xl">{content.subtitle}</p>
+              </div>
+
+              {/* Card */}
+              <div className="bg-white/[0.03] backdrop-blur-sm border border-white/10 rounded-3xl p-10 fade-up delay-2">
+                <p className="text-white/70 text-lg leading-relaxed mb-8">{content.description}</p>
+
+                {/* Highlights grid */}
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  {content.highlights.map((item: string, i: number) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[#375DEE]/20 border border-[#375DEE]/30 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-4 h-4 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span className="text-white/80">{item}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Value badge */}
+                <div className="flex justify-center">
+                  <div className="px-6 py-3 bg-[#375DEE]/10 border border-[#375DEE]/30 rounded-full">
+                    <span className="text-[#375DEE] font-bold text-lg">{content.value}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+
+      case "referral-program":
+        return (
+          <div className="h-full flex flex-col justify-center px-16 lg:px-24 relative overflow-hidden">
+            {/* Background glow */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[600px] bg-green-500/10 rounded-full blur-[180px]" />
+            </div>
+
+            <div className="relative z-10 max-w-5xl mx-auto w-full">
+              {/* Badge */}
+              <div className="flex justify-center mb-4 fade-up">
+                <span className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-400 rounded-full text-sm font-bold text-white tracking-wider shadow-lg shadow-green-500/30">{content.badge}</span>
+              </div>
+
+              {/* Title */}
+              <div className="text-center mb-8 fade-up delay-1">
+                <h2 className="text-5xl lg:text-6xl font-bold mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+                  <span className="bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">{content.title}</span>
+                </h2>
+                <p className="text-white/60 text-2xl font-medium">{content.subtitle}</p>
+              </div>
+
+              {/* Main card with cash background */}
+              <div className="relative rounded-3xl overflow-hidden fade-up delay-2">
+                {/* Cash background image */}
+                <div className="absolute inset-0">
+                  <img
+                    src="https://images.unsplash.com/photo-1561414927-6d86591d0c4f?w=1200&q=80"
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Dark overlay */}
+                  <div className="absolute inset-0 bg-black/85" />
+                  {/* Green tint overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-900/40 to-emerald-900/20" />
+                </div>
+
+                {/* Content */}
+                <div className="relative p-10 lg:p-12">
+                  <p className="text-white/80 text-xl leading-relaxed mb-10 text-center max-w-2xl mx-auto">{content.description}</p>
+
+                  {/* Example calculation - larger and more prominent */}
+                  <div className="bg-black/40 backdrop-blur-sm border border-green-500/30 rounded-2xl p-8 mb-8">
+                    <div className="flex items-center justify-center gap-6 lg:gap-10">
+                      <div className="text-center">
+                        <p className="text-6xl lg:text-7xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-display)' }}>{content.example.referrals}</p>
+                        <p className="text-white/50 text-sm uppercase tracking-wider">Referrals</p>
+                      </div>
+                      <div className="text-4xl text-green-400/50">=</div>
+                      <div className="text-center">
+                        <p className="text-6xl lg:text-7xl font-bold text-green-400 mb-2" style={{ fontFamily: 'var(--font-display)' }}>{content.example.monthly}</p>
+                        <p className="text-white/50 text-sm uppercase tracking-wider">Per Month</p>
+                      </div>
+                      <div className="text-4xl text-green-400/50">=</div>
+                      <div className="text-center">
+                        <p className="text-6xl lg:text-7xl font-bold text-green-400 mb-2" style={{ fontFamily: 'var(--font-display)' }}>{content.example.yearly}</p>
+                        <p className="text-white/50 text-sm uppercase tracking-wider">Per Year</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CTA */}
+                  <div className="text-center">
+                    <div className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full shadow-lg shadow-green-500/30">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-xl font-bold text-white">{content.cta}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )
@@ -1595,37 +1933,144 @@ export default function Demo() {
           </div>
         )
 
+      case "adspend-tiers":
+        return (
+          <div className="h-full flex flex-col justify-center px-12 lg:px-20 relative overflow-hidden">
+            {/* Background */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#375DEE]/8 rounded-full blur-[150px]" />
+            </div>
+
+            <div className="relative z-10">
+              {/* Header */}
+              <div className="text-center mb-12 fade-up">
+                <h2 className="text-4xl lg:text-5xl font-bold mb-3" style={{ fontFamily: 'var(--font-display)' }}>{content.title}</h2>
+                <p className="text-white/40 text-lg">{content.subtitle}</p>
+              </div>
+
+              {/* Tier cards */}
+              <div className="flex justify-center gap-6 max-w-4xl mx-auto mb-10">
+                {content.tiers.map((tier: any, i: number) => (
+                  <div key={i} className={`flex-1 fade-up delay-${i + 1}`}>
+                    <div className={`relative rounded-2xl overflow-hidden h-full ${
+                      tier.recommended
+                        ? 'ring-2 ring-[#375DEE] shadow-lg shadow-[#375DEE]/20'
+                        : 'border border-white/10'
+                    }`}>
+                      {/* Recommended badge */}
+                      {tier.recommended && (
+                        <div className="bg-gradient-to-r from-[#375DEE] to-[#5B7FFF] text-center py-2">
+                          <span className="text-xs font-bold text-white tracking-wider">RECOMMENDED</span>
+                        </div>
+                      )}
+
+                      <div className={`p-8 h-full ${
+                        tier.recommended
+                          ? 'bg-gradient-to-br from-[#375DEE]/20 to-[#375DEE]/5'
+                          : 'bg-white/[0.02]'
+                      }`}>
+                        {/* Level label */}
+                        <p className={`text-sm font-medium mb-2 ${tier.recommended ? 'text-[#375DEE]' : 'text-white/40'}`}>{tier.level}</p>
+
+                        {/* Daily amount */}
+                        <div className="mb-1">
+                          <span className={`text-5xl font-bold ${tier.recommended ? 'text-white' : 'text-white/80'}`} style={{ fontFamily: 'var(--font-display)' }}>{tier.daily}</span>
+                          <span className="text-white/40 ml-2">/day</span>
+                        </div>
+
+                        {/* Monthly */}
+                        <p className="text-white/30 text-sm mb-4">{tier.monthly}</p>
+
+                        {/* Description */}
+                        <p className={`mb-4 ${tier.recommended ? 'text-white/70' : 'text-white/50'}`}>{tier.desc}</p>
+
+                        {/* Results estimate */}
+                        <div className={`rounded-xl p-3 ${tier.recommended ? 'bg-[#375DEE]/20 border border-[#375DEE]/30' : 'bg-white/5 border border-white/10'}`}>
+                          <p className={`text-sm font-medium ${tier.recommended ? 'text-[#375DEE]' : 'text-white/50'}`}>
+                            Est. {tier.results}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Note */}
+              <p className="text-center text-white/30 text-sm fade-up delay-4">{content.note}</p>
+            </div>
+          </div>
+        )
+
       case "pricing":
         return (
-          <div className="h-full flex flex-col justify-center px-12 lg:px-16">
-            <h2 className="text-4xl lg:text-5xl font-bold mb-12 text-center fade-up" style={{ fontFamily: 'var(--font-display)' }}>{content.title}</h2>
-            <div className="flex gap-8 justify-center mb-8">
-              {content.options.map((option: any, i: number) => (
-                <div key={i} className={`w-[400px] rounded-3xl overflow-hidden fade-up delay-${i + 1} ${option.highlight ? 'scale-105' : ''}`}>
-                  {option.highlight && <div className="bg-[#375DEE] text-center py-2 text-sm font-bold text-white">MOST POPULAR</div>}
-                  <div className={`p-10 h-full ${option.highlight ? 'bg-[#375DEE]' : 'bg-white/[0.03] border border-white/10'}`}>
-                    <h3 className="text-3xl font-bold mb-2" style={{ fontFamily: 'var(--font-display)' }}>{option.name}</h3>
-                    <div className="flex items-baseline gap-2 mb-2">
-                      <span className={`text-5xl font-bold ${option.highlight ? 'text-white' : 'text-[#375DEE]'}`}>{option.price}</span>
-                      <span className={option.highlight ? 'text-white/70' : 'text-white/40'}>{option.unit}</span>
-                    </div>
-                    <p className={`mb-8 ${option.highlight ? 'text-white/70' : 'text-white/40'}`}>{option.desc}</p>
-                    <div className="space-y-4 mb-8">
-                      {option.details.map((detail: string, j: number) => (
-                        <div key={j} className="flex items-center gap-3">
-                          <svg className={`w-5 h-5 ${option.highlight ? 'text-white' : 'text-[#375DEE]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <p className={option.highlight ? 'text-white/90' : 'text-white/60'}>{detail}</p>
-                        </div>
-                      ))}
-                    </div>
-                    <p className={`text-sm ${option.highlight ? 'text-white/60' : 'text-white/30'}`}>{option.best}</p>
-                  </div>
-                </div>
-              ))}
+          <div className="h-full flex flex-col justify-center px-12 lg:px-20 relative overflow-hidden">
+            {/* Background effects */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-[#375DEE]/8 rounded-full blur-[150px]" />
             </div>
-            <p className="text-center text-white/30 text-sm fade-up delay-3">{content.note}</p>
+
+            <div className="relative z-10 max-w-3xl mx-auto w-full">
+              {/* Header */}
+              <div className="text-center mb-10 fade-up">
+                <h2 className="text-4xl lg:text-5xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>{content.title}</h2>
+              </div>
+
+              {/* Stacked pricing cards */}
+              <div className="space-y-5">
+                {content.options.map((option: any, i: number) => (
+                  <div key={i} className={`fade-up delay-${i + 1}`}>
+                    <div className={`relative rounded-2xl overflow-hidden transition-all ${
+                      option.highlight
+                        ? 'ring-2 ring-[#375DEE] shadow-xl shadow-[#375DEE]/20'
+                        : 'border border-white/10'
+                    }`}>
+                      {/* Badge */}
+                      {option.badge && (
+                        <div className="absolute top-4 right-4 px-3 py-1 bg-gradient-to-r from-[#375DEE] to-[#5B7FFF] rounded-full">
+                          <span className="text-xs font-bold text-white tracking-wider">{option.badge}</span>
+                        </div>
+                      )}
+
+                      {/* Card content */}
+                      <div className={`p-6 lg:p-8 ${
+                        option.highlight
+                          ? 'bg-gradient-to-br from-[#375DEE]/15 to-[#375DEE]/5'
+                          : 'bg-white/[0.02]'
+                      }`}>
+                        <div className="flex items-start justify-between gap-8">
+                          {/* Left side - Plan info */}
+                          <div className="flex-1">
+                            <h3 className="text-2xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>{option.name}</h3>
+
+                            {/* Details row */}
+                            <div className="flex gap-6">
+                              {option.details.map((detail: any, j: number) => (
+                                <div key={j} className="text-center">
+                                  <p className={`text-2xl font-bold ${option.highlight ? 'text-white' : 'text-white/80'}`} style={{ fontFamily: 'var(--font-display)' }}>{detail.value}</p>
+                                  <p className="text-white/40 text-sm">{detail.label}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Right side - To start */}
+                          <div className={`text-right flex-shrink-0 pl-8 border-l ${option.highlight ? 'border-[#375DEE]/30' : 'border-white/10'}`}>
+                            <p className={`text-4xl font-bold mb-1 ${option.highlight ? 'text-[#375DEE]' : 'text-white/70'}`} style={{ fontFamily: 'var(--font-display)' }}>{option.toStart}</p>
+                            <p className="text-white/40 text-sm">{option.toStartNote}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA */}
+              <div className="text-center mt-10 fade-up delay-3">
+                <p className="text-2xl text-white/70 font-medium" style={{ fontFamily: 'var(--font-display)' }}>{content.cta}</p>
+              </div>
+            </div>
           </div>
         )
 
