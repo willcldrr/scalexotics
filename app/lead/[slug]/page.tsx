@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, use } from "react"
-import { Loader2, CheckCircle, AlertCircle, ChevronRight, ChevronLeft, Calendar, Car, User, Phone, Mail } from "lucide-react"
+import { Loader2, CheckCircle, AlertCircle, ChevronRight, ChevronLeft, Calendar, Car, User, Phone, Mail, Shield, Check } from "lucide-react"
 
 interface SurveyConfig {
   business_name: string
@@ -50,6 +50,7 @@ interface FormData {
   vehicle_id: string
   start_date: string
   end_date: string
+  smsConsent: boolean
 }
 
 export default function LeadCapturePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -76,6 +77,7 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
     vehicle_id: "",
     start_date: "",
     end_date: "",
+    smsConsent: false,
   })
 
   // Calendar state
@@ -290,7 +292,7 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
     }
   }
 
-  // Calculate total steps based on enabled fields - new order: name, phone, vehicle, dates, email, age
+  // Calculate total steps based on enabled fields - new order: name, phone, vehicle, dates, email, age, consent
   const getSteps = () => {
     if (!config) return []
     const steps: string[] = []
@@ -300,6 +302,8 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
     if (config.fields.dates) steps.push("dates")
     if (config.fields.email) steps.push("email")
     if (config.fields.age) steps.push("age")
+    // Always add SMS consent as final step (required for Twilio compliance)
+    steps.push("consent")
     return steps
   }
 
@@ -789,6 +793,51 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
                   "Submit"
                 ) : (
                   <>Continue<ChevronRight className="w-5 h-5 lg:w-6 lg:h-6" /></>
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* SMS Consent Step */}
+          {currentStepName === "consent" && (
+            <div className="text-center">
+              <Shield className="w-12 h-12 lg:w-14 lg:h-14 mx-auto mb-4" style={{ color: primaryColor }} />
+              <h2 className="text-2xl lg:text-3xl font-bold text-white mb-2">Almost done!</h2>
+              <p className="text-white/60 mb-6 lg:text-lg">Just one more step to complete your inquiry</p>
+
+              {/* SMS Consent Checkbox */}
+              <label className="flex items-start gap-4 p-5 rounded-xl bg-white/5 border border-white/10 text-left cursor-pointer hover:bg-white/10 transition-colors mb-6">
+                <div
+                  className={`w-6 h-6 rounded-md border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                    formData.smsConsent
+                      ? "border-transparent"
+                      : "border-white/30"
+                  }`}
+                  style={{ backgroundColor: formData.smsConsent ? primaryColor : "transparent" }}
+                >
+                  {formData.smsConsent && <Check className="w-4 h-4 text-white" />}
+                </div>
+                <input
+                  type="checkbox"
+                  checked={formData.smsConsent}
+                  onChange={(e) => setFormData({ ...formData, smsConsent: e.target.checked })}
+                  className="sr-only"
+                />
+                <span className="text-sm text-white/70 leading-relaxed">
+                  By submitting this form, you agree to receive SMS messages from {config.business_name} regarding your rental inquiry. Message frequency varies. Message & data rates may apply. Reply STOP to opt out, HELP for help.
+                </span>
+              </label>
+
+              <button
+                onClick={handleSubmit}
+                disabled={!formData.smsConsent || submitting}
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 lg:py-5 rounded-xl text-white font-semibold text-lg lg:text-xl transition-all disabled:opacity-50"
+                style={{ backgroundColor: primaryColor }}
+              >
+                {submitting ? (
+                  <Loader2 className="w-5 h-5 lg:w-6 lg:h-6 animate-spin" />
+                ) : (
+                  "Submit Inquiry"
                 )}
               </button>
             </div>
