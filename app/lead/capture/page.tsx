@@ -106,12 +106,30 @@ export default function LeadCapturePage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor }}>
       {/* Header */}
-      <div className="p-6 lg:p-8 flex items-center justify-between max-w-lg lg:max-w-xl mx-auto w-full">
-        <div className="flex items-center gap-2">
-          <Car className="w-6 h-6" style={{ color: primaryColor }} />
-          <span className="text-white font-semibold text-lg">Dior's Exotic Rentals</span>
+      <div className="p-6 lg:p-8 max-w-lg lg:max-w-xl mx-auto w-full">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Car className="w-6 h-6" style={{ color: primaryColor }} />
+            <span className="text-white font-semibold text-lg">Dior's Exotic Rentals</span>
+          </div>
+          <span className="text-white/40 text-sm">{step + 1} of {steps.length}</span>
         </div>
-        <span className="text-white/40 text-sm">{step + 1} of {steps.length}</span>
+        <div className="flex items-center justify-center gap-4 mt-3 text-xs">
+          <Link
+            href="/lead/privacy-policy"
+            className="text-white/50 hover:text-white/80 underline transition-colors"
+            target="_blank"
+          >
+            Privacy Policy
+          </Link>
+          <Link
+            href="/lead/tos"
+            className="text-white/50 hover:text-white/80 underline transition-colors"
+            target="_blank"
+          >
+            Terms of Service
+          </Link>
+        </div>
       </div>
 
       {/* Content */}
@@ -287,11 +305,11 @@ export default function LeadCapturePage() {
               </label>
 
               {/* Policy Links */}
-              <div className="text-xs text-white/50 mb-6 text-center">
+              <div className="text-sm text-white/70 mb-6 text-center">
                 By submitting, you also agree to our{" "}
                 <Link
                   href="/lead/privacy-policy"
-                  className="underline hover:text-white/70 transition-colors"
+                  className="text-blue-400 underline hover:text-blue-300 transition-colors"
                   target="_blank"
                 >
                   Privacy Policy
@@ -299,7 +317,7 @@ export default function LeadCapturePage() {
                 and{" "}
                 <Link
                   href="/lead/tos"
-                  className="underline hover:text-white/70 transition-colors"
+                  className="text-blue-400 underline hover:text-blue-300 transition-colors"
                   target="_blank"
                 >
                   SMS Terms &amp; Conditions
