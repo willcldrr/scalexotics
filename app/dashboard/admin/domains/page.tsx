@@ -225,7 +225,7 @@ export default function AdminDomainsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             Domain Management
           </h1>
           <p className="text-white/50 mt-1">Loading...</p>
@@ -241,7 +241,7 @@ export default function AdminDomainsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             Access Denied
           </h1>
           <p className="text-white/50 mt-1">You don&apos;t have permission to access this page.</p>
@@ -255,7 +255,7 @@ export default function AdminDomainsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             Domain Management
           </h1>
           <p className="text-white/50 mt-1">{domains.length} custom domains configured</p>
@@ -402,7 +402,7 @@ export default function AdminDomainsPage() {
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
           <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-md">
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Add Custom Domain</h2>
+              <h2 className="text-xl font-bold">Add Custom Domain</h2>
               <button
                 onClick={() => {
                   setShowAddModal(false)
@@ -505,7 +505,7 @@ export default function AdminDomainsPage() {
           <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-lg">
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-semibold">{selectedDomain.domain}</h2>
+                <h2 className="text-xl font-bold">{selectedDomain.domain}</h2>
                 <p className="text-sm text-white/50">
                   {selectedDomain.profiles?.company_name || "Unassigned"}
                 </p>
@@ -536,7 +536,7 @@ export default function AdminDomainsPage() {
 
               {/* DNS Instructions */}
               <div className="bg-white/5 rounded-xl p-4">
-                <h3 className="font-medium mb-3">DNS Configuration</h3>
+                <h3 className="font-bold mb-3">DNS Configuration</h3>
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center justify-between p-2 bg-black/30 rounded-lg">
                     <span className="text-white/50">Type</span>
@@ -557,7 +557,7 @@ export default function AdminDomainsPage() {
               {selectedDomain.verification_token && (
                 <div className="bg-white/5 rounded-xl p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium">Verification Token</h3>
+                    <h3 className="font-bold">Verification Token</h3>
                     <button
                       onClick={() => copyToken(selectedDomain.verification_token)}
                       className="text-sm text-[#375DEE] hover:underline flex items-center gap-1"

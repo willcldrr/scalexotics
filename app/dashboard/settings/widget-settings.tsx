@@ -169,7 +169,7 @@ export default function WidgetSettings() {
         <div className="space-y-6">
           {/* API Key */}
           <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-            <h2 className="text-lg font-semibold mb-4">Your Widget API Key</h2>
+            <h2 className="text-lg font-bold mb-4">Your Widget API Key</h2>
             <div className="flex items-center gap-3">
               <input
                 type="text"
@@ -193,7 +193,7 @@ export default function WidgetSettings() {
           <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-lg font-semibold">JavaScript Embed (Recommended)</h2>
+                <h2 className="text-lg font-bold">JavaScript Embed (Recommended)</h2>
                 <p className="text-sm text-white/50">Full-featured widget with dynamic updates</p>
               </div>
               <button
@@ -213,7 +213,7 @@ export default function WidgetSettings() {
           <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-lg font-semibold">iFrame Embed (Simple)</h2>
+                <h2 className="text-lg font-bold">iFrame Embed (Simple)</h2>
                 <p className="text-sm text-white/50">Easy to add, works everywhere</p>
               </div>
               <button
@@ -231,7 +231,7 @@ export default function WidgetSettings() {
 
           {/* Installation Steps */}
           <div className="bg-[#375DEE]/10 rounded-2xl border border-[#375DEE]/30 p-6">
-            <h3 className="font-semibold text-[#375DEE] mb-3">Installation Steps</h3>
+            <h3 className="font-bold text-[#375DEE] mb-3">Installation Steps</h3>
             <ol className="text-sm text-white/70 space-y-2 list-decimal list-inside">
               <li>Copy the embed code above</li>
               <li>Paste it into your website's HTML where you want the widget to appear</li>
@@ -246,7 +246,7 @@ export default function WidgetSettings() {
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Customization Options */}
           <div className="bg-white/5 rounded-2xl border border-white/10 p-6 space-y-6">
-            <h2 className="text-lg font-semibold">Widget Settings</h2>
+            <h2 className="text-lg font-bold">Widget Settings</h2>
 
             {/* Theme */}
             <div>
@@ -349,7 +349,7 @@ export default function WidgetSettings() {
 
           {/* Live Preview */}
           <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-            <h2 className="text-lg font-semibold mb-4">Live Preview</h2>
+            <h2 className="text-lg font-bold mb-4">Live Preview</h2>
             <div
               className={`rounded-xl p-4 ${
                 widgetConfig.theme === "dark" ? "bg-black" : "bg-white"
@@ -360,7 +360,7 @@ export default function WidgetSettings() {
                   widgetConfig.theme === "dark" ? "text-white" : "text-black"
                 }`}
               >
-                <h3 className="font-semibold text-lg">Available Vehicles</h3>
+                <h3 className="font-bold text-lg">Available Vehicles</h3>
               </div>
 
               {/* Sample Vehicle Cards */}
@@ -407,7 +407,7 @@ export default function WidgetSettings() {
       {activeTab === "preview" && (
         <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold">Full Widget Preview</h2>
+            <h2 className="text-lg font-bold">Full Widget Preview</h2>
             <a
               href={`/embed?key=${apiKey}&theme=${widgetConfig.theme}&color=${encodeURIComponent(widgetConfig.primaryColor)}`}
               target="_blank"

@@ -169,8 +169,8 @@ export default function PipelinePage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1
-            className="text-2xl sm:text-3xl font-bold tracking-tight"
-            style={{ fontFamily: "var(--font-display)" }}
+            className="text-2xl sm:text-3xl font-bold tracking-tight dashboard-heading"
+           
           >
             Lead Pipeline
           </h1>

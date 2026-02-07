@@ -306,7 +306,7 @@ export default function CalendarSettings() {
             <Calendar className="w-5 h-5 text-[#375DEE]" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+            <h3 className="text-lg font-bold">
               Export Your Calendar
             </h3>
             <p className="text-sm text-white/50">
@@ -367,7 +367,7 @@ export default function CalendarSettings() {
               <Link2 className="w-5 h-5 text-green-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+              <h3 className="text-lg font-bold">
                 Import External Calendars
               </h3>
               <p className="text-sm text-white/50">
@@ -465,12 +465,12 @@ export default function CalendarSettings() {
 
       {/* Instructions */}
       <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-        <h3 className="text-lg font-semibold mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+        <h3 className="text-lg font-bold mb-4">
           How Calendar Sync Works
         </h3>
         <div className="grid md:grid-cols-2 gap-6 text-sm">
           <div>
-            <h4 className="font-medium text-[#375DEE] mb-2">Export (Your Calendar → Others)</h4>
+            <h4 className="font-bold text-[#375DEE] mb-2">Export (Your Calendar → Others)</h4>
             <ol className="list-decimal list-inside space-y-1 text-white/60">
               <li>Copy the iCal URL for your vehicle</li>
               <li>In Google Calendar, click "+" next to "Other calendars"</li>
@@ -479,7 +479,7 @@ export default function CalendarSettings() {
             </ol>
           </div>
           <div>
-            <h4 className="font-medium text-green-400 mb-2">Import (Others → Your Calendar)</h4>
+            <h4 className="font-bold text-green-400 mb-2">Import (Others → Your Calendar)</h4>
             <ol className="list-decimal list-inside space-y-1 text-white/60">
               <li>Find the iCal/ICS export URL from Turo, Getaround, etc.</li>
               <li>Click "Add Calendar" and paste the URL</li>
@@ -495,7 +495,7 @@ export default function CalendarSettings() {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-lg">
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-xl font-bold">
                 Add External Calendar
               </h2>
               <button

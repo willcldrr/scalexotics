@@ -1,8 +1,22 @@
 "use client"
 
-import { useMemo } from "react"
+import { useState, useMemo } from "react"
 import { useDashboardCache } from "@/lib/dashboard-cache"
 import Link from "next/link"
+import {
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts"
 import {
   Users,
   Car,
@@ -10,49 +24,222 @@ import {
   DollarSign,
   TrendingUp,
   ArrowUpRight,
+  ArrowDownRight,
   ArrowRight,
   Clock,
   Sparkles,
   RefreshCw,
+  CalendarCheck,
+  Target,
+  Activity,
+  Zap,
+  PieChart as PieChartIcon,
 } from "lucide-react"
-import { formatDistanceToNow } from "date-fns"
+import { formatDistanceToNow, format, subDays, eachDayOfInterval } from "date-fns"
 import { convertedStatus } from "@/lib/lead-status"
+
+const COLORS = ["#375DEE", "#5b7cf2", "#8aa0f6", "#b8c4fa", "#ffffff", "#d1d5db", "#9ca3af", "#6b7280"]
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-zinc-900/95 backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3 shadow-2xl">
+        <p className="text-white/50 text-xs font-medium mb-2">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <div key={index} className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+            <span className="text-white/70 text-sm">{entry.name}:</span>
+            <span className="text-white font-semibold text-sm">
+              {typeof entry.value === 'number' && entry.name?.toLowerCase().includes('revenue')
+                ? `$${entry.value.toLocaleString()}`
+                : entry.value?.toLocaleString()}
+            </span>
+          </div>
+        ))}
+      </div>
+    )
+  }
+  return null
+}
 
 export default function DashboardPage() {
   const { data, refreshData } = useDashboardCache()
   const { leads, vehicles, bookings, isLoading, lastFetched } = data
+  const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "all">("30d")
 
-  // Compute metrics from cached data
-  const metrics = useMemo(() => {
-    const startOfMonth = new Date()
-    startOfMonth.setDate(1)
-    startOfMonth.setHours(0, 0, 0, 0)
+  // Filter data by time range
+  const filteredData = useMemo(() => {
+    const now = new Date()
+    let startDate: Date
 
-    const leadsThisMonth = leads.filter(
-      (l) => new Date(l.created_at) >= startOfMonth
-    ).length
-
-    const bookingsThisMonth = bookings.filter(
-      (b) => new Date(b.start_date) >= startOfMonth
-    )
-
-    const revenueThisMonth = bookingsThisMonth
-      .filter((b) => b.status !== "cancelled")
-      .reduce((sum, b) => sum + (b.total_amount || 0), 0)
-
-    const convertedLeads = leads.filter((l) => l.status === convertedStatus).length
-    const conversionRate = leads.length ? (convertedLeads / leads.length) * 100 : 0
+    switch (timeRange) {
+      case "7d":
+        startDate = subDays(now, 7)
+        break
+      case "30d":
+        startDate = subDays(now, 30)
+        break
+      case "90d":
+        startDate = subDays(now, 90)
+        break
+      default:
+        startDate = new Date(0)
+    }
 
     return {
-      totalLeads: leads.length,
-      leadsThisMonth,
-      totalVehicles: vehicles.filter((v) => v.status !== "inactive").length,
-      bookingsThisMonth: bookingsThisMonth.length,
-      revenueThisMonth,
-      conversionRate,
+      bookings: bookings.filter(b => new Date(b.created_at) >= startDate),
+      leads: leads.filter(l => new Date(l.created_at) >= startDate),
     }
-  }, [leads, vehicles, bookings])
+  }, [bookings, leads, timeRange])
 
+  // KPI metrics with period-over-period change
+  const kpis = useMemo(() => {
+    const totalRevenue = filteredData.bookings
+      .filter(b => b.status === "confirmed" || b.status === "completed")
+      .reduce((sum, b) => sum + (b.total_amount || 0), 0)
+
+    const totalBookings = filteredData.bookings.length
+    const totalLeads = filteredData.leads.length
+    const convertedLeads = filteredData.leads.filter(l => l.status === convertedStatus).length
+    const conversionRate = totalLeads > 0 ? (convertedLeads / totalLeads) * 100 : 0
+    const avgBookingValue = totalBookings > 0 ? totalRevenue / totalBookings : 0
+
+    const periodDays = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : timeRange === "90d" ? 90 : 365
+    const previousStart = subDays(new Date(), periodDays * 2)
+    const previousEnd = subDays(new Date(), periodDays)
+
+    const previousBookings = bookings.filter(b => {
+      const date = new Date(b.created_at)
+      return date >= previousStart && date < previousEnd
+    })
+    const previousRevenue = previousBookings
+      .filter(b => b.status === "confirmed" || b.status === "completed")
+      .reduce((sum, b) => sum + (b.total_amount || 0), 0)
+
+    const revenueChange = previousRevenue > 0 ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 : 0
+    const bookingsChange = previousBookings.length > 0
+      ? ((totalBookings - previousBookings.length) / previousBookings.length) * 100
+      : 0
+
+    return {
+      totalRevenue,
+      totalBookings,
+      totalLeads,
+      convertedLeads,
+      conversionRate,
+      avgBookingValue,
+      revenueChange,
+      bookingsChange,
+    }
+  }, [filteredData, bookings, timeRange])
+
+  // Revenue over time chart data
+  const revenueOverTime = useMemo(() => {
+    const days = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : timeRange === "90d" ? 90 : 60
+    const interval = eachDayOfInterval({
+      start: subDays(new Date(), days),
+      end: new Date(),
+    })
+
+    return interval.map(day => {
+      const dayBookings = filteredData.bookings.filter(b =>
+        format(new Date(b.created_at), "yyyy-MM-dd") === format(day, "yyyy-MM-dd")
+      )
+      const revenue = dayBookings
+        .filter(b => b.status === "confirmed" || b.status === "completed")
+        .reduce((sum, b) => sum + (b.total_amount || 0), 0)
+
+      return {
+        date: format(day, "MMM dd"),
+        revenue,
+        bookings: dayBookings.length,
+      }
+    })
+  }, [filteredData, timeRange])
+
+  // Lead sources breakdown
+  const leadSourcesData = useMemo(() => {
+    const sourceCounts = filteredData.leads.reduce((acc, lead) => {
+      const source = lead.source || "Direct"
+      acc[source] = (acc[source] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+
+    return Object.entries(sourceCounts)
+      .map(([source, count]) => ({
+        name: source.charAt(0).toUpperCase() + source.slice(1).replace(/_/g, " "),
+        value: count,
+      }))
+      .sort((a, b) => b.value - a.value)
+  }, [filteredData.leads])
+
+  // Vehicle performance (top 5 by revenue)
+  const vehiclePerformance = useMemo(() => {
+    const vehicleStats = vehicles.map(vehicle => {
+      const vehicleBookings = filteredData.bookings.filter(b => b.vehicle_id === vehicle.id)
+      const revenue = vehicleBookings
+        .filter(b => b.status === "confirmed" || b.status === "completed")
+        .reduce((sum, b) => sum + (b.total_amount || 0), 0)
+
+      return {
+        name: `${vehicle.make} ${vehicle.model}`,
+        bookings: vehicleBookings.length,
+        revenue,
+      }
+    })
+
+    return vehicleStats.sort((a, b) => b.revenue - a.revenue).slice(0, 5)
+  }, [vehicles, filteredData.bookings])
+
+  // Booking status distribution
+  const bookingStatusData = useMemo(() => {
+    const statusCounts = filteredData.bookings.reduce((acc, booking) => {
+      acc[booking.status] = (acc[booking.status] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+
+    return Object.entries(statusCounts).map(([status, count]) => ({
+      name: status.charAt(0).toUpperCase() + status.slice(1),
+      value: count,
+    }))
+  }, [filteredData.bookings])
+
+  // Conversion funnel
+  const conversionFunnel = useMemo(() => {
+    const total = filteredData.leads.length
+    const contacted = filteredData.leads.filter(l => ["contacted", "converted"].includes(l.status)).length
+    const converted = filteredData.leads.filter(l => l.status === convertedStatus).length
+
+    return [
+      { stage: "New Leads", count: total, percentage: 100, color: "#375DEE" },
+      { stage: "Contacted", count: contacted, percentage: total > 0 ? (contacted / total) * 100 : 0, color: "#a855f7" },
+      { stage: "Converted", count: converted, percentage: total > 0 ? (converted / total) * 100 : 0, color: "#10b981" },
+    ]
+  }, [filteredData.leads])
+
+  // Fleet utilization
+  const vehicleUtilization = useMemo(() => {
+    return vehicles.map(vehicle => {
+      const vehicleBookings = bookings.filter(b => b.vehicle_id === vehicle.id && b.status !== "cancelled")
+      const totalDaysBooked = vehicleBookings.reduce((sum, b) => {
+        const start = new Date(b.start_date)
+        const end = new Date(b.end_date)
+        const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+        return sum + days
+      }, 0)
+
+      const periodDays = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : timeRange === "90d" ? 90 : 365
+      const utilization = Math.min((totalDaysBooked / periodDays) * 100, 100)
+
+      return {
+        name: `${vehicle.make} ${vehicle.model}`,
+        utilization: Math.round(utilization),
+        daysBooked: totalDaysBooked,
+      }
+    }).sort((a, b) => b.utilization - a.utilization)
+  }, [vehicles, bookings, timeRange])
+
+  // Recent leads & upcoming bookings (not time-range dependent)
   const recentLeads = useMemo(() => leads.slice(0, 5), [leads])
 
   const upcomingBookings = useMemo(() => {
@@ -62,45 +249,6 @@ export default function DashboardPage() {
       .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
       .slice(0, 5)
   }, [bookings])
-
-  const statCards = [
-    {
-      name: "Total Revenue",
-      value: `$${metrics.revenueThisMonth.toLocaleString()}`,
-      subtitle: "This month",
-      icon: DollarSign,
-      gradient: "from-[#375DEE]/20 via-[#375DEE]/10 to-transparent",
-      iconBg: "bg-[#375DEE]/20",
-      iconColor: "text-[#375DEE]",
-    },
-    {
-      name: "Total Leads",
-      value: metrics.totalLeads,
-      subtitle: `+${metrics.leadsThisMonth} this month`,
-      icon: Users,
-      gradient: "from-[#375DEE]/20 via-[#375DEE]/10 to-transparent",
-      iconBg: "bg-[#375DEE]/20",
-      iconColor: "text-[#375DEE]",
-    },
-    {
-      name: "Bookings",
-      value: metrics.bookingsThisMonth,
-      subtitle: "This month",
-      icon: Calendar,
-      gradient: "from-[#375DEE]/20 via-[#375DEE]/10 to-transparent",
-      iconBg: "bg-[#375DEE]/20",
-      iconColor: "text-[#375DEE]",
-    },
-    {
-      name: "Fleet Size",
-      value: metrics.totalVehicles,
-      subtitle: "Active vehicles",
-      icon: Car,
-      gradient: "from-[#375DEE]/20 via-[#375DEE]/10 to-transparent",
-      iconBg: "bg-[#375DEE]/20",
-      iconColor: "text-[#375DEE]",
-    },
-  ]
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -136,15 +284,20 @@ export default function DashboardPage() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white/[0.03] rounded-2xl p-5 border border-white/[0.06] animate-pulse">
-              <div className="flex items-center justify-between mb-4">
-                <div className="h-4 w-20 bg-white/10 rounded" />
-                <div className="w-10 h-10 bg-white/10 rounded-xl" />
+            <div key={i} className="p-[1px] rounded-2xl bg-gradient-to-br from-white/[0.08] via-white/[0.04] to-white/[0.02]">
+              <div className="rounded-[15px] bg-[#0a0a0a] p-5 animate-pulse">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-4 w-20 bg-white/10 rounded" />
+                  <div className="w-10 h-10 bg-white/10 rounded-xl" />
+                </div>
+                <div className="h-8 w-24 bg-white/10 rounded mb-2" />
+                <div className="h-3 w-16 bg-white/5 rounded" />
               </div>
-              <div className="h-8 w-24 bg-white/10 rounded mb-2" />
-              <div className="h-3 w-16 bg-white/5 rounded" />
             </div>
           ))}
+        </div>
+        <div className="h-72 p-[1px] rounded-2xl bg-gradient-to-br from-white/[0.06] via-white/[0.03] to-white/[0.01]">
+          <div className="rounded-[15px] bg-[#0a0a0a] h-full animate-pulse" />
         </div>
       </div>
     )
@@ -155,222 +308,611 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
             Dashboard
           </h1>
           <p className="text-white/50 text-sm sm:text-base mt-1">
-            Welcome back. Here's your business overview.
+            Welcome back. Here&apos;s your business overview.
           </p>
         </div>
-        <button
-          onClick={() => refreshData()}
-          className="flex items-center gap-2 text-xs text-white/40 hover:text-white/60 transition-colors"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-          <span>Updated {getLastUpdatedText()}</span>
-        </button>
-      </div>
-
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat) => (
-          <div
-            key={stat.name}
-            className={`relative overflow-hidden bg-gradient-to-br ${stat.gradient} rounded-2xl p-5 border border-white/[0.08] hover:border-white/[0.15] transition-all duration-300 group`}
+        <div className="flex items-center gap-4">
+          {/* Time Range Selector */}
+          <div className="flex p-1 bg-white/[0.03] rounded-xl border border-white/[0.06]">
+            {[
+              { value: "7d", label: "7D" },
+              { value: "30d", label: "30D" },
+              { value: "90d", label: "90D" },
+              { value: "all", label: "All" },
+            ].map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setTimeRange(option.value as any)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  timeRange === option.value
+                    ? "bg-[#375DEE] text-white shadow-lg shadow-[#375DEE]/25"
+                    : "text-white/50 hover:text-white/80"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => refreshData()}
+            className="flex items-center gap-2 text-xs text-white/40 hover:text-white/60 transition-colors"
           >
-            {/* Subtle glow effect */}
-            <div className={`absolute -top-12 -right-12 w-24 h-24 ${stat.iconBg} rounded-full blur-2xl opacity-50 group-hover:opacity-75 transition-opacity`} />
-
-            <div className="relative">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-white/50 text-sm font-medium">{stat.name}</span>
-                <div className={`w-10 h-10 rounded-xl ${stat.iconBg} flex items-center justify-center`}>
-                  <stat.icon className={`w-5 h-5 ${stat.iconColor}`} />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-2xl sm:text-3xl font-bold font-numbers tracking-tight">
-                  {stat.value}
-                </h3>
-                <p className="text-xs text-white/40">{stat.subtitle}</p>
-              </div>
-            </div>
-          </div>
-        ))}
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Updated {getLastUpdatedText()}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Conversion Rate Highlight */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#375DEE]/20 via-[#375DEE]/10 to-transparent rounded-2xl p-6 border border-[#375DEE]/20">
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#375DEE]/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-[#375DEE]/10 rounded-full blur-3xl" />
-
-        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-[#375DEE]/20 border border-[#375DEE]/30 flex items-center justify-center">
-              <TrendingUp className="w-7 h-7 text-[#375DEE]" />
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Revenue */}
+        <div className="p-[1px] rounded-2xl bg-gradient-to-br from-[#375DEE]/50 via-white/[0.15] to-[#375DEE]/20 hover:from-[#375DEE]/60 hover:via-white/[0.22] hover:to-[#375DEE]/30 transition-all duration-300 group">
+          <div className="h-full rounded-[15px] bg-[#0a0a0a] p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl border border-[#375DEE]/25 bg-[#375DEE]/[0.06] flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-[#375DEE]" />
+              </div>
+              {kpis.revenueChange !== 0 && (
+                <div className={`flex items-center gap-0.5 px-2 py-1 rounded-lg text-[11px] font-medium ${
+                  kpis.revenueChange >= 0
+                    ? "bg-[#375DEE]/15 text-[#375DEE]"
+                    : "bg-white/[0.06] text-white/50"
+                }`}>
+                  {kpis.revenueChange >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                  {Math.abs(kpis.revenueChange).toFixed(1)}%
+                </div>
+              )}
             </div>
-            <div>
-              <p className="text-white/50 text-sm font-medium">Lead Conversion Rate</p>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-3xl sm:text-4xl font-bold font-numbers">
-                  {metrics.conversionRate.toFixed(1)}%
-                </h3>
-                {metrics.conversionRate > 0 && (
-                  <span className="flex items-center gap-0.5 text-[#375DEE] text-sm font-medium">
-                    <ArrowUpRight className="w-4 h-4" />
-                    Good
-                  </span>
-                )}
+            <p className="text-white/50 text-xs font-medium mb-1">Total Revenue</p>
+            <p className="text-2xl sm:text-3xl font-bold tracking-tight">
+              ${kpis.totalRevenue >= 10000 ? `${(kpis.totalRevenue/1000).toFixed(1)}k` : kpis.totalRevenue.toLocaleString()}
+            </p>
+          </div>
+        </div>
+
+        {/* Bookings */}
+        <div className="p-[1px] rounded-2xl bg-gradient-to-br from-[#375DEE]/50 via-white/[0.15] to-[#375DEE]/20 hover:from-[#375DEE]/60 hover:via-white/[0.22] hover:to-[#375DEE]/30 transition-all duration-300 group">
+          <div className="h-full rounded-[15px] bg-[#0a0a0a] p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl border border-[#375DEE]/25 bg-[#375DEE]/[0.06] flex items-center justify-center">
+                <CalendarCheck className="w-5 h-5 text-[#375DEE]" />
+              </div>
+              {kpis.bookingsChange !== 0 && (
+                <div className={`flex items-center gap-0.5 px-2 py-1 rounded-lg text-[11px] font-medium ${
+                  kpis.bookingsChange >= 0
+                    ? "bg-[#375DEE]/15 text-[#375DEE]"
+                    : "bg-white/[0.06] text-white/50"
+                }`}>
+                  {kpis.bookingsChange >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                  {Math.abs(kpis.bookingsChange).toFixed(1)}%
+                </div>
+              )}
+            </div>
+            <p className="text-white/50 text-xs font-medium mb-1">Total Bookings</p>
+            <p className="text-2xl sm:text-3xl font-bold tracking-tight">{kpis.totalBookings}</p>
+          </div>
+        </div>
+
+        {/* Leads */}
+        <div className="p-[1px] rounded-2xl bg-gradient-to-br from-[#375DEE]/50 via-white/[0.15] to-[#375DEE]/20 hover:from-[#375DEE]/60 hover:via-white/[0.22] hover:to-[#375DEE]/30 transition-all duration-300 group">
+          <div className="h-full rounded-[15px] bg-[#0a0a0a] p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl border border-[#375DEE]/25 bg-[#375DEE]/[0.06] flex items-center justify-center">
+                <Users className="w-5 h-5 text-[#375DEE]" />
               </div>
             </div>
+            <p className="text-white/50 text-xs font-medium mb-1">Total Leads</p>
+            <p className="text-2xl sm:text-3xl font-bold tracking-tight">{kpis.totalLeads}</p>
+            <p className="text-xs text-white/40 mt-1">
+              <span className="text-[#375DEE]">{kpis.convertedLeads}</span> converted
+            </p>
           </div>
-          <div className="text-sm text-white/40">
-            Based on <span className="text-white/60 font-numbers">{metrics.totalLeads}</span> total leads
+        </div>
+
+        {/* Conversion Rate */}
+        <div className="p-[1px] rounded-2xl bg-gradient-to-br from-[#375DEE]/50 via-white/[0.15] to-[#375DEE]/20 hover:from-[#375DEE]/60 hover:via-white/[0.22] hover:to-[#375DEE]/30 transition-all duration-300 group">
+          <div className="h-full rounded-[15px] bg-[#0a0a0a] p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl border border-[#375DEE]/25 bg-[#375DEE]/[0.06] flex items-center justify-center">
+                <Target className="w-5 h-5 text-[#375DEE]" />
+              </div>
+            </div>
+            <p className="text-white/50 text-xs font-medium mb-1">Conversion Rate</p>
+            <p className="text-2xl sm:text-3xl font-bold tracking-tight">{kpis.conversionRate.toFixed(1)}%</p>
+            <p className="text-xs text-white/40 mt-1">
+              Avg: <span className="text-[#375DEE]">${Math.round(kpis.avgBookingValue).toLocaleString()}</span>
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Activity Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Leads */}
-        <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-[#375DEE]/15 flex items-center justify-center">
-                <Users className="w-4 h-4 text-[#375DEE]" />
-              </div>
-              <h2 className="font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
-                Recent Leads
-              </h2>
+      {/* Revenue Trend Chart */}
+      <div className="p-[1px] rounded-2xl bg-gradient-to-br from-[#375DEE]/40 via-white/[0.1] to-[#375DEE]/15">
+        <div className="rounded-[15px] bg-[#0a0a0a] overflow-hidden">
+          <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg border border-[#375DEE]/25 bg-[#375DEE]/[0.06] flex items-center justify-center">
+              <Activity className="w-4 h-4 text-[#375DEE]" />
             </div>
-            <Link
-              href="/dashboard/leads"
-              className="text-xs text-white/40 hover:text-[#375DEE] transition-colors flex items-center gap-1 group"
-            >
-              View all
-              <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
+            <div>
+              <h2 className="font-bold">Revenue Trend</h2>
+              <p className="text-xs text-white/40">Revenue and booking activity over time</p>
+            </div>
           </div>
+          <div className="p-5">
+            <div className="h-72 sm:h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenueOverTime} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#375DEE" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="#375DEE" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    stroke="#ffffff20"
+                    tick={{ fill: '#ffffff40', fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    stroke="#ffffff20"
+                    tick={{ fill: '#ffffff40', fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => `$${value >= 1000 ? `${(value/1000).toFixed(0)}k` : value}`}
+                    width={45}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    name="Revenue"
+                    stroke="#375DEE"
+                    fill="url(#revenueGradient)"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      </div>
 
-          <div className="divide-y divide-white/[0.04]">
-            {recentLeads.length === 0 ? (
-              <div className="px-5 py-12 text-center">
-                <div className="w-12 h-12 rounded-full bg-white/[0.03] flex items-center justify-center mx-auto mb-3">
-                  <Users className="w-6 h-6 text-white/20" />
+      {/* Conversion Funnel + Lead Sources */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Conversion Funnel */}
+        <div className="p-[1px] rounded-2xl bg-gradient-to-br from-[#375DEE]/40 via-white/[0.1] to-[#375DEE]/15">
+          <div className="rounded-[15px] bg-[#0a0a0a] overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg border border-[#375DEE]/25 bg-[#375DEE]/[0.06] flex items-center justify-center">
+                <Zap className="w-4 h-4 text-[#375DEE]" />
+              </div>
+              <div>
+                <h2 className="font-bold">Conversion Funnel</h2>
+                <p className="text-xs text-white/40">Lead progression through stages</p>
+              </div>
+            </div>
+            <div className="p-5 space-y-4">
+              {conversionFunnel.map((stage) => (
+                <div key={stage.stage}>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-white/70">{stage.stage}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold">{stage.count}</span>
+                      <span className="text-xs text-white/40">({stage.percentage.toFixed(0)}%)</span>
+                    </div>
+                  </div>
+                  <div className="h-2.5 bg-white/[0.04] rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700 ease-out"
+                      style={{
+                        width: `${stage.percentage}%`,
+                        backgroundColor: stage.color,
+                      }}
+                    />
+                  </div>
                 </div>
-                <p className="text-white/40 text-sm">No leads yet</p>
-                <p className="text-white/25 text-xs mt-1">New leads will appear here</p>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Lead Sources */}
+        <div className="p-[1px] rounded-2xl bg-gradient-to-br from-[#375DEE]/40 via-white/[0.1] to-[#375DEE]/15">
+          <div className="rounded-[15px] bg-[#0a0a0a] overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg border border-white/[0.12] bg-white/[0.03] flex items-center justify-center">
+                <PieChartIcon className="w-4 h-4 text-white/60" />
+              </div>
+              <div>
+                <h2 className="font-bold">Lead Sources</h2>
+                <p className="text-xs text-white/40">Where your leads come from</p>
+              </div>
+            </div>
+            <div className="p-5">
+              {leadSourcesData.length > 0 ? (
+                <div className="flex items-center gap-6">
+                  <div className="w-36 h-36 sm:w-44 sm:h-44 flex-shrink-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={leadSourcesData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={65}
+                          paddingAngle={3}
+                          dataKey="value"
+                          strokeWidth={0}
+                          style={{ cursor: 'default', outline: 'none' }}
+                        >
+                          {leadSourcesData.map((entry, index) => (
+                            <Cell key={entry.name} fill={COLORS[index % COLORS.length]} style={{ outline: 'none' }} />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<CustomTooltip />} cursor={false} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    {leadSourcesData.slice(0, 5).map((source, index) => (
+                      <div key={source.name} className="flex items-center gap-3">
+                        <div
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                        />
+                        <span className="text-sm text-white/60 flex-1 truncate">{source.name}</span>
+                        <span className="text-sm font-semibold">{source.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="py-12 text-center">
+                  <div className="w-12 h-12 rounded-full bg-white/[0.03] flex items-center justify-center mx-auto mb-3">
+                    <PieChartIcon className="w-6 h-6 text-white/20" />
+                  </div>
+                  <p className="text-white/40 text-sm">No lead data available</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Vehicle Performance */}
+      <div className="p-[1px] rounded-2xl bg-gradient-to-br from-[#375DEE]/40 via-white/[0.1] to-[#375DEE]/15">
+        <div className="rounded-[15px] bg-[#0a0a0a] overflow-hidden">
+          <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg border border-[#375DEE]/25 bg-[#375DEE]/[0.06] flex items-center justify-center">
+              <Car className="w-4 h-4 text-[#375DEE]" />
+            </div>
+            <div>
+              <h2 className="font-bold">Vehicle Performance</h2>
+              <p className="text-xs text-white/40">Revenue generated by each vehicle</p>
+            </div>
+          </div>
+          <div className="p-5">
+            {vehiclePerformance.length > 0 ? (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={vehiclePerformance} layout="vertical" margin={{ left: 0, right: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" horizontal={false} />
+                    <XAxis
+                      type="number"
+                      stroke="#ffffff20"
+                      tick={{ fill: '#ffffff40', fontSize: 11 }}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => `$${value >= 1000 ? `${(value/1000).toFixed(0)}k` : value}`}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      stroke="#ffffff20"
+                      tick={{ fill: '#ffffff60', fontSize: 11 }}
+                      tickLine={false}
+                      axisLine={false}
+                      width={110}
+                    />
+                    <Tooltip content={<CustomTooltip />} cursor={false} />
+                    <Bar dataKey="revenue" name="Revenue" fill="#375DEE" radius={[0, 6, 6, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             ) : (
-              recentLeads.map((lead) => (
-                <div
-                  key={lead.id}
-                  className="px-5 py-3.5 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#375DEE]/20 to-[#375DEE]/10 flex items-center justify-center border border-white/[0.08]">
-                      <span className="text-sm font-semibold text-white/80">
-                        {lead.name.charAt(0).toUpperCase()}
-                      </span>
+              <div className="py-12 text-center">
+                <div className="w-12 h-12 rounded-full bg-white/[0.03] flex items-center justify-center mx-auto mb-3">
+                  <Car className="w-6 h-6 text-white/20" />
+                </div>
+                <p className="text-white/40 text-sm">No vehicle data available</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Fleet Utilization + Booking Status */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Fleet Utilization */}
+        <div className="p-[1px] rounded-2xl bg-gradient-to-br from-[#375DEE]/40 via-white/[0.1] to-[#375DEE]/15">
+          <div className="rounded-[15px] bg-[#0a0a0a] overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg border border-white/[0.12] bg-white/[0.03] flex items-center justify-center">
+                <Clock className="w-4 h-4 text-white/60" />
+              </div>
+              <div>
+                <h2 className="font-bold">Fleet Utilization</h2>
+                <p className="text-xs text-white/40">How often each vehicle is booked</p>
+              </div>
+            </div>
+            <div className="p-5">
+              {vehicleUtilization.length > 0 ? (
+                <div className="space-y-4">
+                  {vehicleUtilization.slice(0, 5).map((vehicle) => (
+                    <div key={vehicle.name}>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-white/70 truncate pr-4">{vehicle.name}</span>
+                        <span className={`text-sm font-semibold ${
+                          vehicle.utilization >= 70 ? "text-[#375DEE]" :
+                          vehicle.utilization >= 40 ? "text-white/70" : "text-white/40"
+                        }`}>
+                          {vehicle.utilization}%
+                        </span>
+                      </div>
+                      <div className="h-2 bg-white/[0.04] rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${vehicle.utilization}%`,
+                            backgroundColor: vehicle.utilization >= 70 ? "#375DEE" : vehicle.utilization >= 40 ? "#8aa0f6" : "#6b7280",
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-sm">{lead.name}</p>
-                      <p className="text-xs text-white/40">{lead.phone}</p>
-                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-12 text-center">
+                  <div className="w-12 h-12 rounded-full bg-white/[0.03] flex items-center justify-center mx-auto mb-3">
+                    <Clock className="w-6 h-6 text-white/20" />
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-white/30 hidden sm:block">
-                      {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
-                    </span>
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wide ${getStatusColor(lead.status)}`}>
-                      {lead.status}
-                    </span>
+                  <p className="text-white/40 text-sm">No utilization data available</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Booking Status */}
+        <div className="p-[1px] rounded-2xl bg-gradient-to-br from-[#375DEE]/40 via-white/[0.1] to-[#375DEE]/15">
+          <div className="rounded-[15px] bg-[#0a0a0a] overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg border border-[#375DEE]/25 bg-[#375DEE]/[0.06] flex items-center justify-center">
+                <CalendarCheck className="w-4 h-4 text-[#375DEE]" />
+              </div>
+              <div>
+                <h2 className="font-bold">Booking Status</h2>
+                <p className="text-xs text-white/40">Distribution of booking statuses</p>
+              </div>
+            </div>
+            <div className="p-5">
+              {bookingStatusData.length > 0 ? (
+                <div className="flex items-center gap-6">
+                  <div className="w-36 h-36 sm:w-44 sm:h-44 flex-shrink-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={bookingStatusData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={65}
+                          paddingAngle={3}
+                          dataKey="value"
+                          strokeWidth={0}
+                          style={{ cursor: 'default', outline: 'none' }}
+                        >
+                          {bookingStatusData.map((entry) => (
+                            <Cell
+                              key={entry.name}
+                              style={{ outline: 'none' }}
+                              fill={
+                                entry.name.toLowerCase() === "completed" ? "#ffffff" :
+                                entry.name.toLowerCase() === "confirmed" ? "#375DEE" :
+                                entry.name.toLowerCase() === "pending" ? "#8aa0f6" :
+                                entry.name.toLowerCase() === "cancelled" ? "#4b5563" :
+                                "#6b7280"
+                              }
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<CustomTooltip />} cursor={false} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    {bookingStatusData.map((status) => (
+                      <div key={status.name} className="flex items-center gap-3">
+                        <div
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                          style={{
+                            backgroundColor:
+                              status.name.toLowerCase() === "completed" ? "#ffffff" :
+                              status.name.toLowerCase() === "confirmed" ? "#375DEE" :
+                              status.name.toLowerCase() === "pending" ? "#8aa0f6" :
+                              status.name.toLowerCase() === "cancelled" ? "#4b5563" :
+                              "#6b7280"
+                          }}
+                        />
+                        <span className="text-sm text-white/60 flex-1 truncate">{status.name}</span>
+                        <span className="text-sm font-semibold">{status.value}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))
-            )}
+              ) : (
+                <div className="py-12 text-center">
+                  <div className="w-12 h-12 rounded-full bg-white/[0.03] flex items-center justify-center mx-auto mb-3">
+                    <CalendarCheck className="w-6 h-6 text-white/20" />
+                  </div>
+                  <p className="text-white/40 text-sm">No booking data available</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Leads + Upcoming Bookings */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Leads */}
+        <div className="p-[1px] rounded-2xl bg-gradient-to-br from-[#375DEE]/40 via-white/[0.1] to-[#375DEE]/15">
+          <div className="rounded-[15px] bg-[#0a0a0a] overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg border border-[#375DEE]/25 bg-[#375DEE]/[0.06] flex items-center justify-center">
+                  <Users className="w-4 h-4 text-[#375DEE]" />
+                </div>
+                <h2 className="font-bold">Recent Leads</h2>
+              </div>
+              <Link
+                href="/dashboard/leads"
+                className="text-xs text-white/40 hover:text-[#375DEE] transition-colors flex items-center gap-1 group"
+              >
+                View all
+                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            </div>
+            <div className="divide-y divide-white/[0.04]">
+              {recentLeads.length === 0 ? (
+                <div className="px-5 py-12 text-center">
+                  <div className="w-12 h-12 rounded-full bg-white/[0.03] flex items-center justify-center mx-auto mb-3">
+                    <Users className="w-6 h-6 text-white/20" />
+                  </div>
+                  <p className="text-white/40 text-sm">No leads yet</p>
+                  <p className="text-white/25 text-xs mt-1">New leads will appear here</p>
+                </div>
+              ) : (
+                recentLeads.map((lead) => (
+                  <div
+                    key={lead.id}
+                    className="px-5 py-3.5 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#375DEE]/20 to-[#375DEE]/10 flex items-center justify-center border border-white/[0.08]">
+                        <span className="text-sm font-semibold text-white/80">
+                          {lead.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{lead.name}</p>
+                        <p className="text-xs text-white/40">{lead.phone}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-white/30 hidden sm:block">
+                        {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
+                      </span>
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wide ${getStatusColor(lead.status)}`}>
+                        {lead.status}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
 
         {/* Upcoming Bookings */}
-        <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-white/60" />
-              </div>
-              <h2 className="font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
-                Upcoming Bookings
-              </h2>
-            </div>
-            <Link
-              href="/dashboard/bookings"
-              className="text-xs text-white/40 hover:text-[#375DEE] transition-colors flex items-center gap-1 group"
-            >
-              View all
-              <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-          </div>
-
-          <div className="divide-y divide-white/[0.04]">
-            {upcomingBookings.length === 0 ? (
-              <div className="px-5 py-12 text-center">
-                <div className="w-12 h-12 rounded-full bg-white/[0.03] flex items-center justify-center mx-auto mb-3">
-                  <Calendar className="w-6 h-6 text-white/20" />
+        <div className="p-[1px] rounded-2xl bg-gradient-to-br from-[#375DEE]/40 via-white/[0.1] to-[#375DEE]/15">
+          <div className="rounded-[15px] bg-[#0a0a0a] overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg border border-white/[0.12] bg-white/[0.03] flex items-center justify-center">
+                  <Calendar className="w-4 h-4 text-white/60" />
                 </div>
-                <p className="text-white/40 text-sm">No upcoming bookings</p>
-                <p className="text-white/25 text-xs mt-1">Future bookings will appear here</p>
+                <h2 className="font-bold">Upcoming Bookings</h2>
               </div>
-            ) : (
-              upcomingBookings.map((booking) => (
-                <div
-                  key={booking.id}
-                  className="px-5 py-3.5 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#375DEE]/20 to-[#375DEE]/10 flex items-center justify-center border border-white/[0.08]">
-                      <Car className="w-4 h-4 text-[#375DEE]" />
+              <Link
+                href="/dashboard/bookings"
+                className="text-xs text-white/40 hover:text-[#375DEE] transition-colors flex items-center gap-1 group"
+              >
+                View all
+                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            </div>
+            <div className="divide-y divide-white/[0.04]">
+              {upcomingBookings.length === 0 ? (
+                <div className="px-5 py-12 text-center">
+                  <div className="w-12 h-12 rounded-full bg-white/[0.03] flex items-center justify-center mx-auto mb-3">
+                    <Calendar className="w-6 h-6 text-white/20" />
+                  </div>
+                  <p className="text-white/40 text-sm">No upcoming bookings</p>
+                  <p className="text-white/25 text-xs mt-1">Future bookings will appear here</p>
+                </div>
+              ) : (
+                upcomingBookings.map((booking) => (
+                  <div
+                    key={booking.id}
+                    className="px-5 py-3.5 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#375DEE]/20 to-[#375DEE]/10 flex items-center justify-center border border-white/[0.08]">
+                        <Car className="w-4 h-4 text-[#375DEE]" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{booking.customer_name}</p>
+                        <p className="text-xs text-white/40">
+                          {booking.vehicles?.make} {booking.vehicles?.model}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-sm">{booking.customer_name}</p>
-                      <p className="text-xs text-white/40">
-                        {booking.vehicles?.make} {booking.vehicles?.model}
+                    <div className="text-right">
+                      <p className="font-semibold text-sm text-white">
+                        ${booking.total_amount.toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-white/30">
+                        {new Date(booking.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        {" - "}
+                        {new Date(booking.end_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-sm text-white font-numbers">
-                      ${booking.total_amount.toLocaleString()}
-                    </p>
-                    <p className="text-[10px] text-white/30 font-numbers">
-                      {new Date(booking.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                      {" - "}
-                      {new Date(booking.end_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         {[
           { label: "Add Vehicle", href: "/dashboard/vehicles", icon: Car },
           { label: "View Leads", href: "/dashboard/leads", icon: Users },
-          { label: "Analytics", href: "/dashboard/analytics", icon: TrendingUp },
           { label: "AI Assistant", href: "/dashboard/ai-assistant", icon: Sparkles },
         ].map((action) => (
-          <Link
+          <div
             key={action.label}
-            href={action.href}
-            className="flex items-center gap-3 px-4 py-3 bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.12] rounded-xl transition-all group"
+            className="p-[1px] rounded-xl bg-gradient-to-br from-[#375DEE]/30 via-white/[0.08] to-[#375DEE]/10 hover:from-[#375DEE]/45 hover:via-white/[0.15] hover:to-[#375DEE]/20 transition-all group"
           >
-            <action.icon className="w-4 h-4 text-white/40 group-hover:text-[#375DEE] transition-colors" />
-            <span className="text-sm text-white/60 group-hover:text-white/80 transition-colors">{action.label}</span>
-          </Link>
+            <Link
+              href={action.href}
+              className="flex items-center gap-3 px-4 py-3 rounded-[11px] bg-[#0a0a0a] hover:bg-[#0e0e0e] transition-colors"
+            >
+              <action.icon className="w-4 h-4 text-white/40 group-hover:text-[#375DEE] transition-colors" />
+              <span className="text-sm text-white/60 group-hover:text-white/80 transition-colors">{action.label}</span>
+            </Link>
+          </div>
         ))}
       </div>
     </div>

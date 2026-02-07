@@ -206,7 +206,7 @@ export default function CustomersPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             Customers
           </h1>
           <p className="text-white/50 mt-1">Loading customer profiles...</p>
@@ -223,7 +223,7 @@ export default function CustomersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             Customers
           </h1>
           <p className="text-white/50 mt-1">{customers.length} customers with rental history</p>
@@ -358,7 +358,7 @@ export default function CustomersPage() {
                       className="text-xl font-semibold bg-white/5 border border-white/20 rounded-lg px-3 py-1"
                     />
                   ) : (
-                    <h2 className="text-xl font-semibold">{selectedCustomer.name}</h2>
+                    <h2 className="text-xl font-bold">{selectedCustomer.name}</h2>
                   )}
                   <p className="text-sm text-white/50">
                     Customer since {format(new Date(selectedCustomer.created_at), "MMMM yyyy")}
@@ -431,7 +431,7 @@ export default function CustomersPage() {
 
               {/* Contact Info */}
               <div className="space-y-3">
-                <h3 className="font-semibold text-white/70">Contact Information</h3>
+                <h3 className="font-bold text-white/70">Contact Information</h3>
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl">
                     <Phone className="w-4 h-4 text-white/40" />
@@ -465,7 +465,7 @@ export default function CustomersPage() {
 
               {/* Tags */}
               <div className="space-y-3">
-                <h3 className="font-semibold text-white/70">Tags</h3>
+                <h3 className="font-bold text-white/70">Tags</h3>
                 <div className="flex flex-wrap gap-2">
                   {selectedCustomer.tags?.map((tag) => (
                     <span
@@ -493,7 +493,7 @@ export default function CustomersPage() {
 
               {/* Notes */}
               <div className="space-y-3">
-                <h3 className="font-semibold text-white/70">Notes</h3>
+                <h3 className="font-bold text-white/70">Notes</h3>
                 {editing ? (
                   <textarea
                     value={editForm.notes}
@@ -511,7 +511,7 @@ export default function CustomersPage() {
 
               {/* Rental History */}
               <div className="space-y-3">
-                <h3 className="font-semibold text-white/70">Rental History</h3>
+                <h3 className="font-bold text-white/70">Rental History</h3>
                 {selectedCustomer.bookings && selectedCustomer.bookings.length > 0 ? (
                   <div className="space-y-2">
                     {selectedCustomer.bookings.map((booking) => (

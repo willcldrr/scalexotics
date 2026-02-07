@@ -156,7 +156,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
             <Sparkles className="w-5 h-5 text-[#375DEE]" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+            <h3 className="text-lg font-bold">
               AI Settings
             </h3>
             <p className="text-sm text-white/50">Configure AI-powered message generation</p>
@@ -227,7 +227,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
             <Clock className="w-5 h-5 text-white/60" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+            <h3 className="text-lg font-bold">
               Frequency Limits
             </h3>
             <p className="text-sm text-white/50">Control how often contacts receive messages</p>
@@ -279,7 +279,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
             <Bell className="w-5 h-5 text-white/60" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+            <h3 className="text-lg font-bold">
               Do Not Disturb
             </h3>
             <p className="text-sm text-white/50">Set quiet hours when messages won't be sent</p>
@@ -367,7 +367,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
             <Mail className="w-5 h-5 text-white/60" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+            <h3 className="text-lg font-bold">
               Email Settings
             </h3>
             <p className="text-sm text-white/50">Configure email campaign settings</p>
@@ -434,7 +434,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
             <AlertCircle className="w-5 h-5 text-white/60" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+            <h3 className="text-lg font-bold">
               Unsubscribe Settings
             </h3>
             <p className="text-sm text-white/50">Configure opt-out handling</p>

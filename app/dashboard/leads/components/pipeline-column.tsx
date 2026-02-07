@@ -50,7 +50,7 @@ export default function PipelineColumn({
             >
               {status.label}
             </span>
-            <span className="text-white/40 text-sm font-numbers">
+            <span className="text-white/40 text-sm">
               {leads.length}
             </span>
           </div>

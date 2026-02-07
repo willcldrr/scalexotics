@@ -6,7 +6,6 @@ import {
   Car,
   CalendarCheck,
   Bot,
-  BarChart3,
   UserCircle,
   Receipt,
   RefreshCw,
@@ -14,7 +13,6 @@ import {
 
 // Define which tabs can be toggled and their defaults
 const toggleableTabs = [
-  { key: "analytics", name: "Analytics", icon: BarChart3, defaultEnabled: true },
   { key: "leads", name: "Leads", icon: Users, defaultEnabled: true },
   { key: "customers", name: "Customers", icon: UserCircle, defaultEnabled: false },
   { key: "bookings", name: "Bookings", icon: CalendarCheck, defaultEnabled: true },
@@ -74,7 +72,7 @@ export default function SidebarSettingsComponent() {
     <div className="space-y-6">
       {/* Info */}
       <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-        <h3 className="text-lg font-semibold mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+        <h3 className="text-lg font-bold mb-2">
           Sidebar Navigation
         </h3>
         <p className="text-white/50 text-sm">

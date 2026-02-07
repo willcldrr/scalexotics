@@ -302,7 +302,7 @@ export default function LeadCapturePage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             Lead Capture
           </h1>
           <p className="text-white/50 mt-1">Loading your surveys...</p>
@@ -324,7 +324,7 @@ export default function LeadCapturePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             Lead Capture
           </h1>
           <p className="text-white/50 mt-1">Configure surveys for your ad campaigns</p>
@@ -360,7 +360,7 @@ export default function LeadCapturePage() {
       {surveys.length === 0 ? (
         <div className="bg-white/5 rounded-2xl border border-white/10 p-12 text-center">
           <FileText className="w-16 h-16 text-white/20 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+          <h3 className="text-xl font-bold mb-2">
             No surveys yet
           </h3>
           <p className="text-white/50 mb-6 max-w-md mx-auto">
@@ -386,7 +386,7 @@ export default function LeadCapturePage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+                    <h3 className="text-xl font-bold">
                       {survey.business_name}
                     </h3>
                     {!survey.is_active && (
@@ -482,7 +482,7 @@ export default function LeadCapturePage() {
           <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Modal Header */}
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-xl font-bold">
                 {editingSurvey ? "Edit Survey" : "Create Survey"}
               </h2>
               <button

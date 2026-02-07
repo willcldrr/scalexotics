@@ -408,7 +408,7 @@ export default function ConnectionsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
           Connections
         </h1>
         <p className="text-white/50 text-sm sm:text-base mt-1">
@@ -459,14 +459,14 @@ export default function ConnectionsPage() {
 
       {/* Stats */}
       <div className="flex items-center gap-4 text-sm text-white/50">
-        <span className="font-numbers">{filteredIntegrations.length}</span>
+        <span>{filteredIntegrations.length}</span>
         <span>integrations available</span>
         {filteredIntegrations.filter(i => i.popular).length > 0 && (
           <>
             <span className="text-white/20">|</span>
             <span className="flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5 text-[#375DEE]" />
-              <span className="font-numbers">{filteredIntegrations.filter(i => i.popular).length}</span>
+              <span>{filteredIntegrations.filter(i => i.popular).length}</span>
               <span>popular</span>
             </span>
           </>
@@ -502,7 +502,7 @@ export default function ConnectionsPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold truncate">{integration.name}</h3>
+                    <h3 className="font-bold truncate">{integration.name}</h3>
                     {integration.popular && (
                       <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#375DEE]/15 text-[#375DEE] text-[10px] font-medium">
                         <Sparkles className="w-2.5 h-2.5" />
@@ -552,7 +552,7 @@ export default function ConnectionsPage() {
           <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
             <Search className="w-8 h-8 text-white/20" />
           </div>
-          <h3 className="text-lg font-semibold mb-2">No integrations found</h3>
+          <h3 className="text-lg font-bold mb-2">No integrations found</h3>
           <p className="text-white/50 text-sm">
             Try adjusting your search or filter criteria
           </p>
@@ -578,7 +578,7 @@ export default function ConnectionsPage() {
                   )}
                 </div>
                 <div>
-                  <h2 className="font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+                  <h2 className="font-bold">
                     {selectedIntegration.name}
                   </h2>
                   <p className="text-xs text-white/40">{selectedIntegration.category}</p>
@@ -603,7 +603,7 @@ export default function ConnectionsPage() {
                   <div className="w-16 h-16 rounded-full bg-[#375DEE]/20 flex items-center justify-center mx-auto mb-4">
                     <Check className="w-8 h-8 text-[#375DEE]" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">Request Submitted!</h3>
+                  <h3 className="text-lg font-bold mb-2">Request Submitted!</h3>
                   <p className="text-white/50 text-sm">
                     We'll notify you when {selectedIntegration.name} integration is available.
                   </p>

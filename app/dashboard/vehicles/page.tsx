@@ -277,7 +277,7 @@ export default function VehiclesPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+            <h1 className="text-3xl font-bold dashboard-heading">
               Vehicles
             </h1>
             <p className="text-white/50 mt-1">Loading your fleet...</p>
@@ -303,7 +303,7 @@ export default function VehiclesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             Vehicles
           </h1>
           <p className="text-white/50 mt-1">
@@ -349,7 +349,7 @@ export default function VehiclesPage() {
       {filteredVehicles.length === 0 ? (
         <div className="text-center py-16">
           <Car className="w-16 h-16 text-white/20 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">No vehicles found</h3>
+          <h3 className="text-xl font-bold mb-2">No vehicles found</h3>
           <p className="text-white/50 mb-6">
             {vehicles.length === 0
               ? "Add your first vehicle to get started"
@@ -411,7 +411,7 @@ export default function VehiclesPage() {
 
               {/* Content */}
               <div className="p-6">
-                <h3 className="text-lg font-semibold mb-1" style={{ fontFamily: 'var(--font-display)' }}>
+                <h3 className="text-lg font-bold mb-1">
                   {vehicle.name}
                 </h3>
                 <p className="text-white/50 text-sm mb-4">
@@ -460,7 +460,7 @@ export default function VehiclesPage() {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h2 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-xl font-bold">
                 {editingVehicle ? "Edit Vehicle" : "Add Vehicle"}
               </h2>
               <button

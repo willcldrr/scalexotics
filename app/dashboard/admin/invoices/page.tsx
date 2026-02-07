@@ -243,7 +243,7 @@ export default function AdminInvoicesPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             Client Invoices
           </h1>
           <p className="text-white/50 mt-1">Loading...</p>
@@ -259,7 +259,7 @@ export default function AdminInvoicesPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             Access Denied
           </h1>
           <p className="text-white/50 mt-1">You don&apos;t have permission to access this page.</p>
@@ -273,7 +273,7 @@ export default function AdminInvoicesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             Client Invoices
           </h1>
           <p className="text-white/50 mt-1">Create and manage B2B invoices for fleet partners</p>
@@ -453,7 +453,7 @@ export default function AdminInvoicesPage() {
                   <Receipt className="w-5 h-5 text-[#375DEE]" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold">Create Invoice</h3>
+                  <h3 className="text-lg font-bold">Create Invoice</h3>
                   <p className="text-sm text-white/50">Scale Exotics Partner Invoice</p>
                 </div>
               </div>

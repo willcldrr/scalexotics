@@ -81,7 +81,7 @@ export default function PipelineCard({
           <span className="text-[#375DEE] text-xs font-semibold">{initials}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-sm truncate group-hover:text-white transition-colors">
+          <h4 className="font-bold text-sm truncate group-hover:text-white transition-colors">
             {lead.name}
           </h4>
           <div className="flex items-center gap-1 text-white/50 text-xs">

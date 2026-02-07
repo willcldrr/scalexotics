@@ -20,7 +20,6 @@ import {
   X,
   ChevronRight,
   Bot,
-  BarChart3,
   MessageSquare,
   UserCircle,
   Receipt,
@@ -39,7 +38,6 @@ const allNavItems = [
   { name: "Customers", href: "/dashboard/customers", icon: UserCircle, key: "customers" },
   { name: "Vehicles", href: "/dashboard/vehicles", icon: Car, key: "vehicles" },
   { name: "Billing", href: "/dashboard/billing", icon: Receipt, key: "billing" },
-  { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3, key: "analytics" },
   { name: "Reactivation", href: "/dashboard/reactivation", icon: RefreshCw, key: "reactivation" },
   { name: "AI Assistant", href: "/dashboard/ai-assistant", icon: Bot, key: "ai-assistant" },
   { name: "Settings", href: "/dashboard/settings", icon: Settings, key: "settings", alwaysVisible: true },
@@ -170,7 +168,7 @@ export default function DashboardLayout({
                 height={28}
                 className="h-7 w-auto"
               />
-              <span className="font-semibold text-xl" style={{ fontFamily: 'var(--font-display)' }}>
+              <span className="font-semibold text-xl">
                 Dashboard
               </span>
             </Link>

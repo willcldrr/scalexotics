@@ -223,7 +223,7 @@ export default function AgreementsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             Rental Agreements
           </h1>
           <p className="text-white/50 mt-1">Loading agreements...</p>
@@ -240,7 +240,7 @@ export default function AgreementsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             Rental Agreements
           </h1>
           <p className="text-white/50 mt-1">Manage digital contracts and e-signatures</p>
@@ -372,7 +372,7 @@ export default function AgreementsPage() {
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
           <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-lg">
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Create Agreement</h2>
+              <h2 className="text-xl font-bold">Create Agreement</h2>
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="p-2 rounded-lg hover:bg-white/5"
@@ -450,7 +450,7 @@ export default function AgreementsPage() {
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
           <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Rental Agreement</h2>
+              <h2 className="text-xl font-bold">Rental Agreement</h2>
               <button
                 onClick={() => setShowViewModal(false)}
                 className="p-2 rounded-lg hover:bg-white/5"

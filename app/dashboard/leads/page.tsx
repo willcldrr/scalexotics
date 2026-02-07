@@ -560,7 +560,7 @@ export default function LeadsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight dashboard-heading">
             Leads
           </h1>
           <p className="text-white/50 mt-1">Loading your CRM...</p>
@@ -578,7 +578,7 @@ export default function LeadsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight dashboard-heading">
               Leads
             </h1>
             {unreadCount > 0 && (
@@ -761,7 +761,7 @@ export default function LeadsPage() {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-white truncate">{selectedLead.name}</h3>
+                      <h3 className="font-bold text-white truncate">{selectedLead.name}</h3>
                       <div className="flex items-center gap-3 text-sm">
                         <span className="text-white/40 flex items-center gap-1.5">
                           <Phone className="w-3.5 h-3.5" />
@@ -961,7 +961,7 @@ export default function LeadsPage() {
                 <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#375DEE]/20 to-[#375DEE]/5 flex items-center justify-center mb-6 ring-1 ring-white/[0.06]">
                   <MessageSquare className="w-12 h-12 text-[#375DEE]/60" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">Select a lead</h3>
+                <h3 className="text-xl font-bold text-white mb-2">Select a lead</h3>
                 <p className="text-white/40 max-w-[280px]">
                   Choose a lead from the list to view details and manage their conversation
                 </p>
@@ -976,7 +976,7 @@ export default function LeadsPage() {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h2 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-xl font-bold">
                 {editingLead ? "Edit Lead" : "Add Lead"}
               </h2>
               <button
@@ -1109,7 +1109,7 @@ export default function LeadsPage() {
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <div className="flex items-center gap-3">
                 <FileSpreadsheet className="w-6 h-6 text-[#375DEE]" />
-                <h2 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+                <h2 className="text-xl font-bold">
                   Import Leads from CSV
                 </h2>
               </div>
@@ -1168,7 +1168,7 @@ export default function LeadsPage() {
                   )}
 
                   <div>
-                    <h3 className="text-sm font-medium text-white/60 mb-3">Map your columns</h3>
+                    <h3 className="text-sm font-bold text-white/60 mb-3">Map your columns</h3>
                     <div className="grid grid-cols-2 gap-3">
                       {csvHeaders.map(header => (
                         <div key={header} className="flex items-center gap-3">
@@ -1196,7 +1196,7 @@ export default function LeadsPage() {
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium text-white/60 mb-3">
+                    <h3 className="text-sm font-bold text-white/60 mb-3">
                       Preview ({csvData.length} rows)
                     </h3>
                     <div className="bg-white/5 rounded-xl overflow-hidden">

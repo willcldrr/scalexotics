@@ -242,7 +242,7 @@ export default function AIAssistantPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             AI Assistant
           </h1>
           <p className="text-white/50 mt-1">Loading configuration...</p>
@@ -260,7 +260,7 @@ export default function AIAssistantPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             AI Assistant
           </h1>
           <p className="text-white/50 mt-1">Configure your SMS booking assistant</p>
@@ -373,7 +373,7 @@ export default function AIAssistantPage() {
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Business Information */}
           <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Info className="w-5 h-5 text-[#375DEE]" />
               Business Information
             </h2>
@@ -413,7 +413,7 @@ export default function AIAssistantPage() {
 
           {/* Conversation Settings */}
           <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-[#375DEE]" />
               Conversation Style
             </h2>
@@ -451,7 +451,7 @@ export default function AIAssistantPage() {
 
           {/* Messages */}
           <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <FileText className="w-5 h-5 text-[#375DEE]" />
               Message Templates
             </h2>
@@ -491,7 +491,7 @@ export default function AIAssistantPage() {
 
           {/* Automation Settings */}
           <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Zap className="w-5 h-5 text-[#375DEE]" />
               Automation Settings
             </h2>
@@ -598,7 +598,7 @@ export default function AIAssistantPage() {
 
           {/* Vehicle Context */}
           <div className="bg-white/5 rounded-2xl border border-white/10 p-6 lg:col-span-2">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Car className="w-5 h-5 text-[#375DEE]" />
               Vehicle Information (AI Context)
             </h2>
@@ -631,7 +631,7 @@ export default function AIAssistantPage() {
                 <Bot className="w-5 h-5 text-[#375DEE]" />
               </div>
               <div>
-                <h3 className="font-semibold">Preview Conversation</h3>
+                <h3 className="font-bold">Preview Conversation</h3>
                 <p className="text-sm text-white/50">See how your AI will respond</p>
               </div>
             </div>
@@ -666,7 +666,7 @@ export default function AIAssistantPage() {
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Twilio Connection Status */}
           <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Phone className="w-5 h-5 text-[#375DEE]" />
               Twilio Connection
             </h2>
@@ -727,7 +727,7 @@ export default function AIAssistantPage() {
 
           {/* Webhook Setup */}
           <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Link className="w-5 h-5 text-[#375DEE]" />
               Webhook Setup
             </h2>
@@ -781,7 +781,7 @@ export default function AIAssistantPage() {
 
           {/* Send Test Message */}
           <div className="bg-white/5 rounded-2xl border border-white/10 p-6 lg:col-span-2">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Send className="w-5 h-5 text-[#375DEE]" />
               Send Test Message
             </h2>
@@ -857,7 +857,7 @@ export default function AIAssistantPage() {
           {/* System Prompt Editor */}
           <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-lg font-bold flex items-center gap-2">
                 <Code className="w-5 h-5 text-[#375DEE]" />
                 Custom System Prompt
               </h2>
@@ -891,7 +891,7 @@ export default function AIAssistantPage() {
 
           {/* Available Variables */}
           <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <FileText className="w-5 h-5 text-[#375DEE]" />
               Available Variables
             </h2>
@@ -932,7 +932,7 @@ export default function AIAssistantPage() {
 
           {/* Default Prompt Reference */}
           <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Info className="w-5 h-5 text-[#375DEE]" />
               Default System Prompt Reference
             </h2>
@@ -959,7 +959,7 @@ export default function AIAssistantPage() {
 
           {/* Tips */}
           <div className="bg-[#375DEE]/10 rounded-2xl border border-[#375DEE]/30 p-6">
-            <h3 className="font-semibold mb-3 text-[#375DEE]">Tips for Customizing</h3>
+            <h3 className="font-bold mb-3 text-[#375DEE]">Tips for Customizing</h3>
             <ul className="text-sm text-white/70 space-y-2">
               <li>• Keep instructions clear and specific for best results</li>
               <li>• Remember that SMS has a 160 character limit per segment, so instruct the AI to keep responses brief</li>

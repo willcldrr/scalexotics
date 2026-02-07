@@ -180,7 +180,7 @@ export default function CampaignsTab({ userId }: CampaignsTabProps) {
           <div className="w-14 h-14 rounded-2xl bg-white/[0.03] flex items-center justify-center mx-auto mb-4">
             <Target className="w-7 h-7 text-white/20" />
           </div>
-          <h3 className="text-lg font-semibold mb-2" style={{ fontFamily: 'var(--font-display)' }}>No campaigns yet</h3>
+          <h3 className="text-lg font-bold mb-2">No campaigns yet</h3>
           <p className="text-white/50 mb-6">
             Create your first reactivation campaign to re-engage past customers
           </p>
@@ -211,7 +211,7 @@ export default function CampaignsTab({ userId }: CampaignsTabProps) {
                       <TypeIcon className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="font-semibold">{campaign.name}</h3>
+                      <h3 className="font-bold">{campaign.name}</h3>
                       <p className="text-sm text-white/50 capitalize">
                         {campaign.campaign_type?.replace("_", " ")}
                       </p>
@@ -234,19 +234,19 @@ export default function CampaignsTab({ userId }: CampaignsTabProps) {
                 <div className="grid grid-cols-4 gap-4 mb-4 p-3 bg-white/[0.02] rounded-xl border border-white/[0.04]">
                   <div>
                     <p className="text-xs text-white/40">Contacts</p>
-                    <p className="font-semibold font-numbers">{campaign.total_contacts || 0}</p>
+                    <p className="font-semibold">{campaign.total_contacts || 0}</p>
                   </div>
                   <div>
                     <p className="text-xs text-white/40">Sent</p>
-                    <p className="font-semibold font-numbers">{campaign.messages_sent || 0}</p>
+                    <p className="font-semibold">{campaign.messages_sent || 0}</p>
                   </div>
                   <div>
                     <p className="text-xs text-white/40">Responses</p>
-                    <p className="font-semibold font-numbers">{campaign.responses || 0}</p>
+                    <p className="font-semibold">{campaign.responses || 0}</p>
                   </div>
                   <div>
                     <p className="text-xs text-white/40">Conversions</p>
-                    <p className="font-semibold font-numbers">{campaign.conversions || 0}</p>
+                    <p className="font-semibold">{campaign.conversions || 0}</p>
                   </div>
                 </div>
 
@@ -457,7 +457,7 @@ function CampaignWizard({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/[0.06]">
           <div>
-            <h2 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-xl font-bold">
               Create Campaign
             </h2>
             <p className="text-sm text-white/50">Step {step} of 4</p>
@@ -685,7 +685,7 @@ function CampaignWizard({
                       <Users className="w-5 h-5 text-[#375DEE]" />
                     </div>
                     <div>
-                      <p className="font-medium"><span className="font-numbers">{contacts.length}</span> Active Contacts</p>
+                      <p className="font-medium"><span>{contacts.length}</span> Active Contacts</p>
                       <p className="text-sm text-white/50">All contacts with opted-in status</p>
                     </div>
                   </div>
@@ -772,7 +772,7 @@ function CampaignWizard({
 
               {/* Summary */}
               <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-6">
-                <h3 className="font-semibold mb-4" style={{ fontFamily: 'var(--font-display)' }}>Campaign Summary</h3>
+                <h3 className="font-bold mb-4">Campaign Summary</h3>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between py-2 border-b border-white/[0.04]">
                     <span className="text-white/50">Name</span>
@@ -792,7 +792,7 @@ function CampaignWizard({
                   </div>
                   <div className="flex justify-between py-2 border-b border-white/[0.04]">
                     <span className="text-white/50">Target Contacts</span>
-                    <span className="font-medium font-numbers">{contacts.length}</span>
+                    <span className="font-medium">{contacts.length}</span>
                   </div>
                   <div className="flex justify-between py-2">
                     <span className="text-white/50">Start Date</span>

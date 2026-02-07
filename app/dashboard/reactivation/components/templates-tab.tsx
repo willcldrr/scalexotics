@@ -170,7 +170,7 @@ export default function TemplatesTab({ userId }: TemplatesTabProps) {
           <div className="w-14 h-14 rounded-2xl bg-white/[0.03] flex items-center justify-center mx-auto mb-4">
             <FileText className="w-7 h-7 text-white/20" />
           </div>
-          <h3 className="text-lg font-semibold mb-2" style={{ fontFamily: 'var(--font-display)' }}>No templates yet</h3>
+          <h3 className="text-lg font-bold mb-2">No templates yet</h3>
           <p className="text-white/50 mb-6">
             Create message templates for your reactivation campaigns
           </p>
@@ -208,7 +208,7 @@ export default function TemplatesTab({ userId }: TemplatesTabProps) {
                     )}
                   </div>
                   <div>
-                    <h3 className="font-semibold">{template.name}</h3>
+                    <h3 className="font-bold">{template.name}</h3>
                     <p className="text-xs text-white/50 capitalize">
                       {template.template_type?.replace("_", " ")} • {template.channel.toUpperCase()}
                     </p>
@@ -231,7 +231,7 @@ export default function TemplatesTab({ userId }: TemplatesTabProps) {
               <p className="text-sm text-white/60 line-clamp-3 mb-4">{template.content}</p>
 
               <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
-                <p className="text-xs text-white/40">Used <span className="font-numbers">{template.times_used || 0}</span> times</p>
+                <p className="text-xs text-white/40">Used <span>{template.times_used || 0}</span> times</p>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleDuplicate(template)}
@@ -421,7 +421,7 @@ function TemplateEditor({
       <div className="relative bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/[0.06]">
-          <h2 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h2 className="text-xl font-bold">
             {template ? "Edit Template" : "Create Template"}
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-white/[0.06] rounded-lg transition-colors">
@@ -524,8 +524,8 @@ function TemplateEditor({
             />
             <p className="text-xs text-white/40 mt-1">
               {formData.channel === "sms"
-                ? <><span className="font-numbers">{formData.content.length}</span> characters (SMS limit: 160 per segment)</>
-                : <><span className="font-numbers">{formData.content.length}</span> characters</>}
+                ? <><span>{formData.content.length}</span> characters (SMS limit: 160 per segment)</>
+                : <><span>{formData.content.length}</span> characters</>}
             </p>
           </div>
 

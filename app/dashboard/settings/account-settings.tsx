@@ -135,7 +135,7 @@ export default function AccountSettings() {
       <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
         <div className="flex items-center gap-3 mb-6">
           <User className="w-5 h-5 text-[#375DEE]" />
-          <h2 className="text-lg font-semibold">Profile Information</h2>
+          <h2 className="text-lg font-bold">Profile Information</h2>
         </div>
 
         <div className="space-y-5">
@@ -205,7 +205,7 @@ export default function AccountSettings() {
       <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
         <div className="flex items-center gap-3 mb-6">
           <Lock className="w-5 h-5 text-[#375DEE]" />
-          <h2 className="text-lg font-semibold">Change Password</h2>
+          <h2 className="text-lg font-bold">Change Password</h2>
         </div>
 
         <div className="space-y-5">

@@ -803,10 +803,38 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
             <div className="text-center">
               <Shield className="w-12 h-12 lg:w-14 lg:h-14 mx-auto mb-4" style={{ color: primaryColor }} />
               <h2 className="text-2xl lg:text-3xl font-bold text-white mb-2">Almost done!</h2>
-              <p className="text-white/60 mb-6 lg:text-lg">Just one more step to complete your inquiry</p>
+              <p className="text-white/60 mb-6 lg:text-lg">Please review and agree to receive text messages</p>
 
-              {/* SMS Consent Checkbox */}
-              <label className="flex items-start gap-4 p-5 rounded-xl bg-white/5 border border-white/10 text-left cursor-pointer hover:bg-white/10 transition-colors mb-6">
+              {/* SMS Consent Disclosure Box */}
+              <div className="p-5 rounded-xl bg-white/5 border border-white/10 text-left mb-4">
+                <h3 className="text-white font-semibold mb-3">SMS/Text Message Consent</h3>
+                <div className="text-sm text-white/70 leading-relaxed space-y-3">
+                  <p>
+                    By checking the box below and submitting this form, you expressly consent to receive recurring automated marketing and informational text messages from <strong className="text-white">{config.business_name}</strong> at the phone number you provided above.
+                  </p>
+                  <p>
+                    <strong className="text-white">Message Types:</strong> Promotional offers, booking confirmations, rental availability, appointment reminders, and customer service communications related to exotic and luxury vehicle rentals.
+                  </p>
+                  <p>
+                    <strong className="text-white">Message Frequency:</strong> Message frequency varies. You may receive up to 10 messages per month.
+                  </p>
+                  <p>
+                    <strong className="text-white">Rates:</strong> Message and data rates may apply. Check with your mobile carrier for details.
+                  </p>
+                  <p>
+                    <strong className="text-white">Opt-Out:</strong> You can opt out at any time by replying <span className="font-mono bg-white/10 px-1.5 py-0.5 rounded">STOP</span> to any message. For help, reply <span className="font-mono bg-white/10 px-1.5 py-0.5 rounded">HELP</span> or contact us at info@scalexotics.com.
+                  </p>
+                  <p>
+                    <strong className="text-white">Consent Not Required:</strong> Consent to receive text messages is not a condition of purchasing any goods or services.
+                  </p>
+                  <p className="text-white/60">
+                    By providing your phone number, you confirm you are at least 18 years old and the account holder or have authorization from the account holder to receive text messages at this number.
+                  </p>
+                </div>
+              </div>
+
+              {/* SMS Consent Checkbox - Not pre-checked */}
+              <label className="flex items-start gap-4 p-5 rounded-xl bg-white/5 border border-white/10 text-left cursor-pointer hover:bg-white/10 transition-colors mb-4">
                 <div
                   className={`w-6 h-6 rounded-md border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
                     formData.smsConsent
@@ -824,9 +852,21 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
                   className="sr-only"
                 />
                 <span className="text-sm text-white/70 leading-relaxed">
-                  By submitting this form, you agree to receive SMS messages from {config.business_name} regarding your rental inquiry. Message frequency varies. Message & data rates may apply. Reply STOP to opt out, HELP for help.
+                  I agree to receive recurring automated text messages from {config.business_name} at the phone number provided. I understand message and data rates may apply. I can reply STOP to opt out at any time.
                 </span>
               </label>
+
+              {/* Policy Links */}
+              <div className="text-xs text-white/50 mb-6">
+                By submitting, you also agree to our{" "}
+                <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="underline hover:text-white/70 transition-colors">
+                  Privacy Policy
+                </a>{" "}
+                and{" "}
+                <a href="/sms-terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-white/70 transition-colors">
+                  SMS Terms & Conditions
+                </a>.
+              </div>
 
               <button
                 onClick={handleSubmit}

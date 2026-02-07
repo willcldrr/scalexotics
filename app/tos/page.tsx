@@ -18,7 +18,7 @@ export default function TermsOfService() {
         <div className="max-w-3xl mx-auto space-y-8">
           <div className="space-y-4">
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Terms of Service</h1>
-            <p className="text-muted-foreground">Last updated: December 2025</p>
+            <p className="text-muted-foreground">Last updated: February 2026</p>
           </div>
 
           <div className="prose prose-invert max-w-none space-y-6 text-sm md:text-base leading-relaxed">
@@ -59,10 +59,13 @@ export default function TermsOfService() {
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">5. Data and Privacy</h2>
               <p className="text-muted-foreground">
-                By using Scale Exotics, you consent to the collection and use of your data as outlined in our Privacy Policy. We collect your name, business information, phone number, email, and other relevant details for the purpose of providing our services.
+                By using Scale Exotics, you consent to the collection and use of your data as outlined in our <a href="/privacy-policy" className="text-foreground underline hover:opacity-80">Privacy Policy</a>. We collect your name, business information, phone number, email, and other relevant details for the purpose of providing our services.
               </p>
               <p className="text-muted-foreground mt-4">
                 Data is shared only with partners and third-party service processors necessary to deliver our services. We do not sell your data.
+              </p>
+              <p className="text-muted-foreground mt-4">
+                If you opt in to receive SMS/text messages, additional terms apply. Please review our <a href="/sms-terms" className="text-foreground underline hover:opacity-80">SMS Terms &amp; Conditions</a> for complete details about our text messaging program.
               </p>
             </section>
 
@@ -132,10 +135,11 @@ export default function TermsOfService() {
       <footer className="px-6 py-12 border-t border-border/30">
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="text-sm text-muted-foreground">© 2025 Scale Exotics Marketing. All rights reserved.</div>
+            <div className="text-sm text-muted-foreground">&copy; 2026 Scale Exotics Marketing. All rights reserved.</div>
             <div className="flex gap-6 text-sm text-muted-foreground">
               <a href="/privacy-policy" className="hover:text-foreground transition">Privacy Policy</a>
               <a href="/tos" className="hover:text-foreground transition">Terms of Service</a>
+              <a href="/sms-terms" className="hover:text-foreground transition">SMS Terms</a>
               <a href="mailto:info@scalexotics.com" className="hover:text-foreground transition">Support</a>
             </div>
           </div>

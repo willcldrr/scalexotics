@@ -138,8 +138,8 @@ export default function LeadDetailModal({
             </div>
             <div>
               <h2
-                className="text-xl font-semibold"
-                style={{ fontFamily: "var(--font-display)" }}
+                className="text-xl font-bold"
+               
               >
                 {lead.name}
               </h2>

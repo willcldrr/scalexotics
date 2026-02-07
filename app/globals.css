@@ -172,6 +172,15 @@
   letter-spacing: -0.02em;
 }
 
+/* Dashboard page heading gradient */
+.dashboard-heading {
+  background: linear-gradient(to right, #ffffff 0%, #94a8e8 45%, #375DEE 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 24px rgba(55, 93, 238, 0.3));
+}
+
 /* Custom Scrollbar Styles */
 * {
   scrollbar-width: thin;

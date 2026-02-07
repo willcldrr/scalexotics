@@ -272,7 +272,7 @@ export default function BrandingSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold mb-1">Business Branding</h2>
+        <h2 className="text-xl font-bold mb-1">Business Branding</h2>
         <p className="text-white/50 text-sm">
           Customize how your business appears on customer-facing pages like invoices, booking confirmations, and agreements.
         </p>
@@ -289,7 +289,7 @@ export default function BrandingSettings() {
       <div className="bg-white/5 rounded-2xl border border-white/10 p-6 space-y-6">
         <div className="flex items-center gap-2">
           <LinkIcon className="w-5 h-5 text-[#375DEE]" />
-          <h3 className="text-lg font-semibold">Custom Domain</h3>
+          <h3 className="text-lg font-bold">Custom Domain</h3>
         </div>
         <p className="text-white/50 text-sm">
           Use your own domain for all customer-facing pages. Your customers will never see Scale Exotics branding.
@@ -370,14 +370,14 @@ export default function BrandingSettings() {
                 <div className="bg-[#375DEE]/10 border border-[#375DEE]/30 rounded-xl p-5 space-y-5">
                   <div className="flex items-center gap-2">
                     <Globe className="w-5 h-5 text-[#375DEE]" />
-                    <h4 className="font-semibold text-[#375DEE]">Complete These Steps to Connect Your Domain</h4>
+                    <h4 className="font-bold text-[#375DEE]">Complete These Steps to Connect Your Domain</h4>
                   </div>
 
                   {/* Step 1 */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-[#375DEE] flex items-center justify-center text-xs font-bold text-white">1</div>
-                      <h5 className="font-medium text-white">Log in to your domain provider</h5>
+                      <h5 className="font-bold text-white">Log in to your domain provider</h5>
                     </div>
                     <p className="text-white/60 text-sm ml-8">
                       Go to where you bought your domain (GoDaddy, Namecheap, Google Domains, Cloudflare, etc.) and find the DNS settings.
@@ -388,7 +388,7 @@ export default function BrandingSettings() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-[#375DEE] flex items-center justify-center text-xs font-bold text-white">2</div>
-                      <h5 className="font-medium text-white">Add a new CNAME record</h5>
+                      <h5 className="font-bold text-white">Add a new CNAME record</h5>
                     </div>
                     <p className="text-white/60 text-sm ml-8">
                       Click "Add Record" or "Add DNS Record" and create a <span className="text-white font-medium">new</span> record with these exact values.
@@ -439,7 +439,7 @@ export default function BrandingSettings() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-[#375DEE] flex items-center justify-center text-xs font-bold text-white">3</div>
-                      <h5 className="font-medium text-white">Save and verify your DNS</h5>
+                      <h5 className="font-bold text-white">Save and verify your DNS</h5>
                     </div>
                     <p className="text-white/60 text-sm ml-8">
                       Save your DNS changes, then click the button below to verify. DNS propagation usually takes 5-15 minutes, but can take up to 48 hours.
@@ -702,7 +702,7 @@ export default function BrandingSettings() {
 
         {/* Contact Info */}
         <div className="pt-4 border-t border-white/10">
-          <h3 className="text-sm font-medium mb-4">Contact Information (shown on customer pages)</h3>
+          <h3 className="text-sm font-bold mb-4">Contact Information (shown on customer pages)</h3>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className="flex items-center gap-2 text-sm text-white/60 mb-2">
@@ -750,7 +750,7 @@ export default function BrandingSettings() {
         <div className="pt-4 border-t border-white/10">
           <div className="flex items-center gap-2 mb-4">
             <Eye className="w-4 h-4 text-white/60" />
-            <h3 className="text-sm font-medium">Preview</h3>
+            <h3 className="text-sm font-bold">Preview</h3>
           </div>
           <div
             className="rounded-xl p-6 border"
@@ -810,7 +810,7 @@ export default function BrandingSettings() {
 
       {/* Info Box */}
       <div className="bg-[#375DEE]/10 border border-[#375DEE]/30 rounded-xl p-4">
-        <h4 className="font-medium text-[#375DEE] mb-2">Where is this branding used?</h4>
+        <h4 className="font-bold text-[#375DEE] mb-2">Where is this branding used?</h4>
         <ul className="text-sm text-white/60 space-y-1">
           <li>• Lead capture surveys (/lead/...)</li>
           <li>• Online booking portal (/book/...)</li>

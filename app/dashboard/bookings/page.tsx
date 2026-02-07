@@ -349,7 +349,7 @@ export default function BookingsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight dashboard-heading">
             Bookings
           </h1>
           <p className="text-white/50 mt-1">Loading bookings...</p>
@@ -365,7 +365,7 @@ export default function BookingsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight dashboard-heading">
           Bookings
         </h1>
         <p className="text-white/50 text-sm sm:text-base mt-1">
@@ -429,7 +429,7 @@ export default function BookingsPage() {
                         <Grid3X3 className={`w-5 h-5 ${selectedVehicle?.id === "all" ? "text-white" : "text-[#375DEE]"}`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-sm">All Vehicles</h4>
+                        <h4 className="font-bold text-sm">All Vehicles</h4>
                         <p className={`text-xs ${selectedVehicle?.id === "all" ? "text-white/70" : "text-white/40"}`}>
                           {allActiveBookings.length} bookings
                         </p>
@@ -461,7 +461,7 @@ export default function BookingsPage() {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-sm truncate">{vehicle.make} {vehicle.model}</h4>
+                            <h4 className="font-bold text-sm truncate">{vehicle.make} {vehicle.model}</h4>
                             <p className={`text-xs ${isSelected ? "text-white/70" : "text-white/40"}`}>
                               {bookingCount} booking{bookingCount !== 1 ? "s" : ""} · ${vehicle.daily_rate}/day
                             </p>
@@ -508,7 +508,7 @@ export default function BookingsPage() {
                     </div>
                   )}
                   <div>
-                    <h2 className="text-lg font-semibold">
+                    <h2 className="text-lg font-bold">
                       {selectedVehicle.id === "all" ? "All Vehicles" : `${selectedVehicle.make} ${selectedVehicle.model}`}
                     </h2>
                     <p className="text-sm text-white/50">
@@ -670,7 +670,7 @@ export default function BookingsPage() {
               {/* Booking Details List */}
               {(selectedVehicle.id === "all" ? allActiveBookings : vehicleBookings).filter(b => new Date(b.end_date) >= new Date()).length > 0 && (
                 <div className="mt-4 bg-white/[0.02] rounded-2xl border border-white/[0.06] p-4">
-                  <h4 className="text-sm font-semibold text-white/60 mb-3">Upcoming Bookings</h4>
+                  <h4 className="text-sm font-bold text-white/60 mb-3">Upcoming Bookings</h4>
                   <div className="grid gap-2 max-h-[200px] overflow-y-auto">
                     {(selectedVehicle.id === "all" ? allActiveBookings : vehicleBookings)
                       .filter(b => new Date(b.end_date) >= new Date())
@@ -720,7 +720,7 @@ export default function BookingsPage() {
                 <div className="w-16 h-16 rounded-2xl bg-white/[0.03] flex items-center justify-center mx-auto mb-4">
                   <Calendar className="w-8 h-8 text-white/20" />
                 </div>
-                <h3 className="text-lg font-semibold mb-1">Select a vehicle</h3>
+                <h3 className="text-lg font-bold mb-1">Select a vehicle</h3>
                 <p className="text-sm text-white/40">Choose a vehicle to view its calendar</p>
               </div>
             </div>
@@ -838,7 +838,7 @@ export default function BookingsPage() {
               {/* Upcoming Bookings */}
               {upcomingBookings.length > 0 && (
                 <div>
-                  <h2 className="text-sm font-semibold text-white/60 mb-3">Upcoming & Active</h2>
+                  <h2 className="text-sm font-bold text-white/60 mb-3">Upcoming & Active</h2>
                   <div className="space-y-2">
                     {upcomingBookings.map((booking) => (
                       <div
@@ -858,7 +858,7 @@ export default function BookingsPage() {
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-1">
-                                <h3 className="font-semibold text-sm">{booking.customer_name}</h3>
+                                <h3 className="font-bold text-sm">{booking.customer_name}</h3>
                                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
                                   {statusOptions.find((s) => s.value === booking.status)?.label}
                                 </span>
@@ -910,7 +910,7 @@ export default function BookingsPage() {
               {/* Past Bookings */}
               {pastBookings.length > 0 && (
                 <div>
-                  <h2 className="text-sm font-semibold text-white/40 mb-3">Past & Cancelled</h2>
+                  <h2 className="text-sm font-bold text-white/40 mb-3">Past & Cancelled</h2>
                   <div className="space-y-2 opacity-60">
                     {pastBookings.map((booking) => (
                       <div key={booking.id} className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-3">
@@ -924,7 +924,7 @@ export default function BookingsPage() {
                               )}
                             </div>
                             <div>
-                              <h3 className="font-medium text-sm">{booking.customer_name}</h3>
+                              <h3 className="font-bold text-sm">{booking.customer_name}</h3>
                               <p className="text-xs text-white/40">{booking.vehicles?.make} {booking.vehicles?.model} · {format(parseISO(booking.start_date), "MMM d, yyyy")}</p>
                             </div>
                           </div>
@@ -947,7 +947,7 @@ export default function BookingsPage() {
                     <div className="w-16 h-16 rounded-2xl bg-white/[0.03] flex items-center justify-center mx-auto mb-4">
                       <Calendar className="w-8 h-8 text-white/20" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-1">No bookings found</h3>
+                    <h3 className="text-lg font-bold mb-1">No bookings found</h3>
                     <p className="text-sm text-white/40">{bookings.length === 0 ? "Create your first booking to get started" : "Try adjusting your filters"}</p>
                   </div>
                 </div>
@@ -962,14 +962,14 @@ export default function BookingsPage() {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setSelectedBooking(null)}>
           <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-5 border-b border-white/10">
-              <h2 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>Booking Details</h2>
+              <h2 className="text-lg font-bold">Booking Details</h2>
               <button onClick={() => setSelectedBooking(null)} className="p-2 rounded-lg hover:bg-white/5 transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center"><User className="w-6 h-6 text-white/40" /></div>
                 <div>
-                  <h3 className="font-semibold">{selectedBooking.customer_name}</h3>
+                  <h3 className="font-bold">{selectedBooking.customer_name}</h3>
                   <div className="flex items-center gap-3 text-sm text-white/40">
                     <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{selectedBooking.customer_phone}</span>
                     {selectedBooking.customer_email && <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{selectedBooking.customer_email}</span>}
@@ -1024,7 +1024,7 @@ export default function BookingsPage() {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h2 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>{editingBooking ? "Edit Booking" : "New Booking"}</h2>
+              <h2 className="text-xl font-bold">{editingBooking ? "Edit Booking" : "New Booking"}</h2>
               <button onClick={() => setShowModal(false)} className="p-2 rounded-lg hover:bg-white/5 transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-5">

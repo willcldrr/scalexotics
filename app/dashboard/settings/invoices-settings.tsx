@@ -226,7 +226,7 @@ export default function InvoicesSettings() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Invoices</h2>
+          <h2 className="text-xl font-bold">Invoices</h2>
           <p className="text-white/50 text-sm mt-1">
             Create and manage client invoices
           </p>
@@ -410,7 +410,7 @@ export default function InvoicesSettings() {
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h3 className="text-lg font-semibold">Create Invoice</h3>
+              <h3 className="text-lg font-bold">Create Invoice</h3>
               <button
                 onClick={() => setShowModal(false)}
                 className="p-2 hover:bg-white/10 rounded-lg transition-colors"

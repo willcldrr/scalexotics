@@ -202,7 +202,7 @@ DELETE FROM user_sessions WHERE session_token IS NULL;`}
           <div className="flex items-center gap-3">
             <Monitor className="w-5 h-5 text-[#375DEE]" />
             <div>
-              <h2 className="text-lg font-semibold">Active Sessions</h2>
+              <h2 className="text-lg font-bold">Active Sessions</h2>
               <p className="text-sm text-white/50">{sessions.length} device{sessions.length !== 1 ? 's' : ''} logged in</p>
             </div>
           </div>
@@ -286,7 +286,7 @@ DELETE FROM user_sessions WHERE session_token IS NULL;`}
       </div>
 
       <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-        <h3 className="font-medium mb-2">Session Security</h3>
+        <h3 className="font-bold mb-2">Session Security</h3>
         <p className="text-sm text-white/50">
           Each device you log in from creates a unique session. If you see unfamiliar devices,
           revoke their sessions immediately and change your password.

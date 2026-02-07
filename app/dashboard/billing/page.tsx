@@ -14,7 +14,7 @@ export default function BillingPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+        <h1 className="text-3xl font-bold dashboard-heading">
           Billing
         </h1>
         <p className="text-white/50 mt-1">Manage invoices and rental agreements</p>

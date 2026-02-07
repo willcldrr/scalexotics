@@ -76,7 +76,7 @@ export default function ReactivationPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight dashboard-heading">
           Reactivation
         </h1>
         <p className="text-white/50 text-sm sm:text-base mt-1">

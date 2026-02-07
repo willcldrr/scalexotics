@@ -114,7 +114,7 @@ export default function ConnectionsSettings() {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
-        <h3 className="text-lg font-semibold mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+        <h3 className="text-lg font-bold mb-2">
           Connections
         </h3>
         <p className="text-white/50 text-sm">
@@ -188,7 +188,7 @@ export default function ConnectionsSettings() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-sm truncate">{integration.name}</h3>
+                    <h3 className="font-bold text-sm truncate">{integration.name}</h3>
                     {integration.popular && (
                       <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#375DEE]/15 text-[#375DEE] text-[9px] font-medium">
                         <Sparkles className="w-2 h-2" />
@@ -247,7 +247,7 @@ export default function ConnectionsSettings() {
                   )}
                 </div>
                 <div>
-                  <h2 className="font-semibold">{selectedIntegration.name}</h2>
+                  <h2 className="font-bold">{selectedIntegration.name}</h2>
                   <p className="text-xs text-white/40">{selectedIntegration.category}</p>
                 </div>
               </div>
@@ -264,7 +264,7 @@ export default function ConnectionsSettings() {
                   <div className="w-16 h-16 rounded-full bg-[#375DEE]/20 flex items-center justify-center mx-auto mb-4">
                     <Check className="w-8 h-8 text-[#375DEE]" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">Request Submitted!</h3>
+                  <h3 className="text-lg font-bold mb-2">Request Submitted!</h3>
                   <p className="text-white/50 text-sm">We'll notify you when {selectedIntegration.name} integration is available.</p>
                 </div>
               ) : (

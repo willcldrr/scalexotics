@@ -32,7 +32,55 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = getSupabase()
 
-    // Get API key from header
+    // Parse body first to check for A2P compliance form
+    const body = await request.json()
+    const { name, email, phone, vehicle_interest, notes, source, sms_consent, consent_timestamp } = body
+
+    // Handle A2P compliance form submissions (no API key required)
+    if (source === "lead-capture-a2p") {
+      // Validate required fields
+      if (!name || !phone) {
+        return NextResponse.json(
+          { error: "Name and phone are required" },
+          { status: 400, headers: corsHeaders }
+        )
+      }
+
+      // Clean phone number
+      let cleanPhone = phone.replace(/\D/g, "")
+      if (cleanPhone.length === 10) {
+        cleanPhone = "1" + cleanPhone
+      }
+      if (cleanPhone.length < 10) {
+        return NextResponse.json(
+          { error: "Invalid phone number" },
+          { status: 400, headers: corsHeaders }
+        )
+      }
+      const formattedPhone = "+" + cleanPhone
+
+      // Store in a2p_leads table (create if needed) or just log success
+      // For A2P compliance, just return success - actual lead handling can be configured separately
+      console.log("A2P Lead captured:", {
+        name,
+        email,
+        phone: formattedPhone,
+        vehicle_interest,
+        sms_consent,
+        consent_timestamp,
+      })
+
+      return NextResponse.json(
+        {
+          success: true,
+          message: "Lead captured successfully",
+          is_new: true
+        },
+        { status: 201, headers: corsHeaders }
+      )
+    }
+
+    // Get API key from header for non-A2P submissions
     const apiKey = request.headers.get("X-API-Key")
 
     if (!apiKey) {
@@ -63,9 +111,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Parse lead data from request
-    const body = await request.json()
-    const { name, email, phone, vehicle_interest, notes, source } = body
+    // Body already parsed above for A2P check
+    // const { name, email, phone, vehicle_interest, notes, source } = body
 
     // Validate required fields
     if (!name || !phone) {

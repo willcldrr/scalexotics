@@ -486,7 +486,7 @@ export default function InvoicesContent() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <p className="font-bold text-lg font-numbers">${invoice.total.toLocaleString()}</p>
+                      <p className="font-bold text-lg">${invoice.total.toLocaleString()}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -546,7 +546,7 @@ export default function InvoicesContent() {
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
           <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Create Invoice</h2>
+              <h2 className="text-xl font-bold">Create Invoice</h2>
               <button onClick={() => { setShowCreateModal(false); resetForm(); }} className="p-2 rounded-lg hover:bg-white/5">
                 <X className="w-5 h-5" />
               </button>
@@ -700,7 +700,7 @@ export default function InvoicesContent() {
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b flex items-center justify-between print:hidden">
-              <h2 className="text-xl font-semibold text-gray-800">Invoice Preview</h2>
+              <h2 className="text-xl font-bold text-gray-800">Invoice Preview</h2>
               <div className="flex items-center gap-2">
                 {selectedInvoice.status !== "paid" && (
                   <>
@@ -758,7 +758,7 @@ export default function InvoicesContent() {
 
               {/* Bill To */}
               <div className="mb-8">
-                <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Bill To</h3>
+                <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Bill To</h3>
                 <p className="font-semibold">{selectedInvoice.customer_name}</p>
                 {selectedInvoice.customer_email && <p className="text-gray-600">{selectedInvoice.customer_email}</p>}
                 {selectedInvoice.customer_phone && <p className="text-gray-600">{selectedInvoice.customer_phone}</p>}
@@ -818,7 +818,7 @@ export default function InvoicesContent() {
               {/* Notes */}
               {selectedInvoice.notes && (
                 <div className="mt-8 pt-4 border-t">
-                  <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Notes</h3>
+                  <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Notes</h3>
                   <p className="text-gray-600">{selectedInvoice.notes}</p>
                 </div>
               )}

@@ -207,7 +207,7 @@ export default function AdminAccessCodesPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             Access Codes
           </h1>
           <p className="text-white/50 mt-1">Loading...</p>
@@ -223,7 +223,7 @@ export default function AdminAccessCodesPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             Access Denied
           </h1>
           <p className="text-white/50 mt-1">You don&apos;t have permission to access this page.</p>
@@ -237,7 +237,7 @@ export default function AdminAccessCodesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold dashboard-heading">
             Access Codes
           </h1>
           <p className="text-white/50 mt-1">Generate and manage access codes for new clients</p>
@@ -299,7 +299,7 @@ export default function AdminAccessCodesPage() {
       {codes.length === 0 ? (
         <div className="bg-white/5 rounded-2xl border border-white/10 p-12 text-center">
           <Key className="w-16 h-16 text-white/20 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+          <h3 className="text-xl font-bold mb-2">
             No access codes yet
           </h3>
           <p className="text-white/50 mb-6 max-w-md mx-auto">
@@ -409,7 +409,7 @@ export default function AdminAccessCodesPage() {
           <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-md overflow-hidden">
             {/* Modal Header */}
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-xl font-bold">
                 Generate Access Code
               </h2>
               <button

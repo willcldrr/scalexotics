@@ -106,7 +106,7 @@ export default function ContactsTab({ userId }: ContactsTabProps) {
         ].map((stat) => (
           <div key={stat.label} className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-4">
             <p className="text-white/50 text-sm">{stat.label}</p>
-            <p className="text-2xl font-bold font-numbers mt-1">{stat.value}</p>
+            <p className="text-2xl font-bold mt-1">{stat.value}</p>
           </div>
         ))}
       </div>
@@ -226,12 +226,12 @@ export default function ContactsTab({ userId }: ContactsTabProps) {
                         {contact.status}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-sm text-white/60 font-numbers">
+                    <td className="px-5 py-3.5 text-sm text-white/60">
                       {contact.last_rental_date
                         ? new Date(contact.last_rental_date).toLocaleDateString()
                         : "-"}
                     </td>
-                    <td className="px-5 py-3.5 text-sm text-white/60 font-numbers">
+                    <td className="px-5 py-3.5 text-sm text-white/60">
                       ${contact.total_spend?.toLocaleString() || "0"}
                     </td>
                     <td className="px-5 py-3.5">
@@ -512,7 +512,7 @@ function CSVImportModal({
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
       <div className="relative bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-2xl max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
-          <h2 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h2 className="text-lg font-bold">
             Import Contacts from CSV
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-white/[0.05] rounded-lg transition-colors">
@@ -532,7 +532,7 @@ function CSVImportModal({
               onDrop={handleDrop}
             >
               <FileSpreadsheet className="w-12 h-12 text-white/20 mx-auto mb-4" />
-              <h3 className="font-medium mb-1">Drop your CSV file here</h3>
+              <h3 className="font-bold mb-1">Drop your CSV file here</h3>
               <p className="text-white/40 text-sm mb-6">or click to browse</p>
               <input
                 ref={fileInputRef}
@@ -620,18 +620,18 @@ function CSVImportModal({
               <div className="w-14 h-14 bg-[#375DEE]/15 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Check className="w-7 h-7 text-[#375DEE]" />
               </div>
-              <h3 className="text-lg font-semibold mb-6">Import Complete</h3>
+              <h3 className="text-lg font-bold mb-6">Import Complete</h3>
               <div className="grid grid-cols-3 gap-4 max-w-sm mx-auto">
                 <div className="bg-[#375DEE]/10 rounded-xl p-4">
-                  <p className="text-2xl font-bold text-[#375DEE] font-numbers">{results.success}</p>
+                  <p className="text-2xl font-bold text-[#375DEE]">{results.success}</p>
                   <p className="text-xs text-white/50">Imported</p>
                 </div>
                 <div className="bg-white/[0.04] rounded-xl p-4">
-                  <p className="text-2xl font-bold text-white/60 font-numbers">{results.duplicates}</p>
+                  <p className="text-2xl font-bold text-white/60">{results.duplicates}</p>
                   <p className="text-xs text-white/50">Duplicates</p>
                 </div>
                 <div className="bg-white/[0.04] rounded-xl p-4">
-                  <p className="text-2xl font-bold text-white/40 font-numbers">{results.failed}</p>
+                  <p className="text-2xl font-bold text-white/40">{results.failed}</p>
                   <p className="text-xs text-white/50">Failed</p>
                 </div>
               </div>
@@ -734,7 +734,7 @@ function AddContactModal({
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
       <div className="relative bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-lg">
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
-          <h2 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h2 className="text-lg font-bold">
             Add Contact
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-white/[0.05] rounded-lg transition-colors">
@@ -869,7 +869,7 @@ function ContactDetailModal({
       <div className="fixed inset-0 bg-black/80" onClick={onClose} />
       <div className="relative bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-lg">
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
-          <h2 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h2 className="text-lg font-bold">
             Contact Details
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-white/[0.05] rounded-lg transition-colors">
@@ -908,12 +908,12 @@ function ContactDetailModal({
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-3">
               <DollarSign className="w-4 h-4 text-[#375DEE] mb-1" />
-              <p className="font-semibold font-numbers">${contact.total_spend?.toLocaleString() || "0"}</p>
+              <p className="font-semibold">${contact.total_spend?.toLocaleString() || "0"}</p>
               <p className="text-xs text-white/40">Total Spend</p>
             </div>
             <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-3">
               <Car className="w-4 h-4 text-[#375DEE] mb-1" />
-              <p className="font-semibold font-numbers">{contact.rental_count || 0}</p>
+              <p className="font-semibold">{contact.rental_count || 0}</p>
               <p className="text-xs text-white/40">Rentals</p>
             </div>
             <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-3">
