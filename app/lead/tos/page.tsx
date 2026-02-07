@@ -14,7 +14,7 @@ export default function TermsOfServicePage() {
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Car className="w-6 h-6" style={{ color: primaryColor }} />
-            <span className="text-white font-semibold text-lg">Exotic Car Rentals</span>
+            <span className="text-white font-semibold text-lg">Dior's Exotic Rentals</span>
           </div>
           <Link
             href="/lead/capture"
@@ -34,7 +34,7 @@ export default function TermsOfServicePage() {
         <div className="text-sm text-white/70 space-y-6">
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">1. Program Overview</h2>
-            <p><strong className="text-white">Program Name:</strong> Exotic Car Rental Alerts</p>
+            <p><strong className="text-white">Program Name:</strong> Dior's Exotic Rentals Alerts</p>
             <p className="mt-2"><strong className="text-white">Description:</strong> By opting in, you agree to receive recurring automated marketing and informational text messages about exotic and luxury vehicle rentals, including promotional offers, booking confirmations, availability updates, and customer service communications.</p>
           </section>
 
@@ -117,7 +117,7 @@ export default function TermsOfServicePage() {
           <div className="grid md:grid-cols-2 gap-4 text-sm text-white/70">
             <div>
               <p className="text-white font-medium">Program Name</p>
-              <p>Exotic Car Rental Alerts</p>
+              <p>Dior's Exotic Rentals Alerts</p>
             </div>
             <div>
               <p className="text-white font-medium">Message Frequency</p>
@@ -144,7 +144,7 @@ export default function TermsOfServicePage() {
 
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-white/10 text-center text-sm text-white/50">
-          <p>&copy; 2026 Exotic Car Rentals. All rights reserved.</p>
+          <p>&copy; 2026 Dior's Exotic Rentals. All rights reserved.</p>
           <p className="mt-2">
             <Link href="/lead/privacy-policy" className="hover:text-white/70">Privacy Policy</Link>
             {" | "}

@@ -109,7 +109,7 @@ export default function LeadCapturePage() {
       <div className="p-6 lg:p-8 flex items-center justify-between max-w-lg lg:max-w-xl mx-auto w-full">
         <div className="flex items-center gap-2">
           <Car className="w-6 h-6" style={{ color: primaryColor }} />
-          <span className="text-white font-semibold text-lg">Exotic Car Rentals</span>
+          <span className="text-white font-semibold text-lg">Dior's Exotic Rentals</span>
         </div>
         <span className="text-white/40 text-sm">{step + 1} of {steps.length}</span>
       </div>
@@ -242,7 +242,7 @@ export default function LeadCapturePage() {
                 <h3 className="text-white font-semibold mb-3">SMS/Text Message Consent</h3>
                 <div className="text-sm text-white/70 leading-relaxed space-y-3">
                   <p>
-                    By checking the box below and submitting this form, you expressly consent to receive recurring automated marketing and informational text messages from <strong className="text-white">Exotic Car Rentals</strong> at the phone number you provided.
+                    By checking the box below and submitting this form, you expressly consent to receive recurring automated marketing and informational text messages from <strong className="text-white">Dior's Exotic Rentals</strong> at the phone number you provided.
                   </p>
                   <p>
                     <strong className="text-white">Message Types:</strong> Promotional offers, booking confirmations, rental availability, appointment reminders, and customer service communications related to exotic and luxury vehicle rentals.
@@ -282,7 +282,7 @@ export default function LeadCapturePage() {
                   className="sr-only"
                 />
                 <span className="text-sm text-white/70 leading-relaxed">
-                  I agree to receive recurring automated text messages from Exotic Car Rentals at the phone number provided. I understand message and data rates may apply. I can reply STOP to opt out at any time.
+                  I agree to receive recurring automated text messages from Dior's Exotic Rentals at the phone number provided. I understand message and data rates may apply. I can reply STOP to opt out at any time.
                 </span>
               </label>
 

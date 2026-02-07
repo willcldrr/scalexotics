@@ -14,7 +14,7 @@ export default function PrivacyPolicyPage() {
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Car className="w-6 h-6" style={{ color: primaryColor }} />
-            <span className="text-white font-semibold text-lg">Exotic Car Rentals</span>
+            <span className="text-white font-semibold text-lg">Dior's Exotic Rentals</span>
           </div>
           <Link
             href="/lead/capture"
@@ -125,7 +125,7 @@ export default function PrivacyPolicyPage() {
 
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-white/10 text-center text-sm text-white/50">
-          <p>&copy; 2026 Exotic Car Rentals. All rights reserved.</p>
+          <p>&copy; 2026 Dior's Exotic Rentals. All rights reserved.</p>
           <p className="mt-2">
             <Link href="/lead/privacy-policy" className="hover:text-white/70">Privacy Policy</Link>
             {" | "}
