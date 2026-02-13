@@ -119,9 +119,9 @@ CREATE TABLE IF NOT EXISTS crm_events (
 
   -- Location & Meeting
   location VARCHAR(500), -- Physical address
-  meeting_link VARCHAR(500), -- Zoom/Google Meet link
-  meeting_provider VARCHAR(50), -- zoom, google_meet
-  meeting_id VARCHAR(255), -- Provider's meeting ID
+  meeting_link VARCHAR(500), -- Google Meet link
+  meeting_provider VARCHAR(50) DEFAULT 'google_meet', -- google_meet
+  meeting_id VARCHAR(255), -- Google Meet ID
 
   -- Google Calendar Sync
   google_event_id VARCHAR(255),

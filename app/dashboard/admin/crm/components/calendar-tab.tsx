@@ -63,6 +63,7 @@ export default function CalendarTab() {
   const [showEventModal, setShowEventModal] = useState(false)
   const [editingEvent, setEditingEvent] = useState<CRMEvent | null>(null)
   const [selectedHour, setSelectedHour] = useState<number | null>(null)
+  const [isGoogleConnected, setIsGoogleConnected] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -82,9 +83,10 @@ export default function CalendarTab() {
   }, [])
 
   const fetchData = async () => {
-    const [eventsRes, leadsRes] = await Promise.all([
+    const [eventsRes, leadsRes, tokensRes] = await Promise.all([
       supabase.from("crm_events").select("*").order("start_time", { ascending: true }),
       supabase.from("crm_leads").select("id, company_name, contact_name"),
+      supabase.from("crm_oauth_tokens").select("provider").eq("provider", "google"),
     ])
 
     if (eventsRes.data) {
@@ -93,6 +95,8 @@ export default function CalendarTab() {
     if (leadsRes.data) {
       setLeads(leadsRes.data as CRMLead[])
     }
+    // Check if Google is connected
+    setIsGoogleConnected(tokensRes.data && tokensRes.data.length > 0)
     setLoading(false)
   }
 
@@ -292,6 +296,7 @@ export default function CalendarTab() {
               setSelectedHour(null)
             }}
             onDelete={handleDeleteEvent}
+            isGoogleConnected={isGoogleConnected}
           />
         )}
       </div>
@@ -439,6 +444,7 @@ export default function CalendarTab() {
             setSelectedHour(null)
           }}
           onDelete={handleDeleteEvent}
+          isGoogleConnected={isGoogleConnected}
         />
       )}
     </div>
@@ -454,6 +460,7 @@ function EventFormModal({
   onClose,
   onSave,
   onDelete,
+  isGoogleConnected,
 }: {
   date: Date
   hour: number | null
@@ -462,9 +469,11 @@ function EventFormModal({
   onClose: () => void
   onSave: () => void
   onDelete: (id: string) => void
+  isGoogleConnected: boolean
 }) {
   const supabase = createClient()
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const defaultStartTime = hour !== null ? `${hour.toString().padStart(2, "0")}:00` : "09:00"
   const defaultEndTime = hour !== null ? `${(hour + 1).toString().padStart(2, "0")}:00` : "10:00"
@@ -479,38 +488,68 @@ function EventFormModal({
     end_time: event ? format(parseISO(event.end_time), "HH:mm") : defaultEndTime,
     location: event?.location || "",
     meeting_link: event?.meeting_link || "",
+    sync_to_google: isGoogleConnected && !event, // Default to sync for new events if connected
+    create_meet_link: isGoogleConnected && !event, // Default to create Meet link for new events
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
-
-    const { data: { user } } = await supabase.auth.getUser()
+    setError(null)
 
     const startDateTime = new Date(`${formData.start_date}T${formData.start_time}`)
     const endDateTime = new Date(`${formData.start_date}T${formData.end_time}`)
 
-    const eventData = {
-      user_id: user?.id,
-      title: formData.title,
-      description: formData.description || null,
-      event_type: formData.event_type,
-      lead_id: formData.lead_id || null,
-      start_time: startDateTime.toISOString(),
-      end_time: endDateTime.toISOString(),
-      location: formData.location || null,
-      meeting_link: formData.meeting_link || null,
-      is_all_day: false,
-    }
+    try {
+      if (event) {
+        // Update existing event (direct Supabase for now)
+        const { data: { user } } = await supabase.auth.getUser()
+        const eventData = {
+          user_id: user?.id,
+          title: formData.title,
+          description: formData.description || null,
+          event_type: formData.event_type,
+          lead_id: formData.lead_id || null,
+          start_time: startDateTime.toISOString(),
+          end_time: endDateTime.toISOString(),
+          location: formData.location || null,
+          meeting_link: formData.meeting_link || null,
+          is_all_day: false,
+        }
+        await supabase.from("crm_events").update(eventData).eq("id", event.id)
+      } else {
+        // Create new event via API (supports Google Calendar sync)
+        const response = await fetch("/api/admin/crm/events", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: formData.title,
+            description: formData.description || null,
+            event_type: formData.event_type,
+            lead_id: formData.lead_id || null,
+            start_time: startDateTime.toISOString(),
+            end_time: endDateTime.toISOString(),
+            location: formData.location || null,
+            is_all_day: false,
+            sync_to_google: formData.sync_to_google,
+            create_meet_link: formData.create_meet_link,
+          }),
+        })
 
-    if (event) {
-      await supabase.from("crm_events").update(eventData).eq("id", event.id)
-    } else {
-      await supabase.from("crm_events").insert(eventData)
-    }
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.error || "Failed to create event")
+        }
+      }
 
-    setSaving(false)
-    onSave()
+      setSaving(false)
+      onSave()
+    } catch (err: any) {
+      setError(err.message || "Something went wrong")
+      setSaving(false)
+    }
   }
 
   return (
@@ -539,6 +578,12 @@ function EventFormModal({
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
+          {error && (
+            <div className="p-3 rounded-lg bg-white/5 border border-white/20 text-white/70 text-sm">
+              {error}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm text-white/60 mb-2">Event Title *</label>
             <input
@@ -618,23 +663,54 @@ function EventFormModal({
             <label className="block text-sm text-white/60 mb-2">Location</label>
             <input
               type="text"
-              placeholder="Office, Zoom, etc."
+              placeholder="Office, Google Meet, etc."
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
             />
           </div>
 
-          <div>
-            <label className="block text-sm text-white/60 mb-2">Meeting Link</label>
-            <input
-              type="url"
-              placeholder="https://zoom.us/j/..."
-              value={formData.meeting_link}
-              onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
-            />
-          </div>
+          {/* Google Calendar Integration Options - only for new events */}
+          {!event && isGoogleConnected && (
+            <div className="p-4 rounded-xl bg-[#375DEE]/10 border border-[#375DEE]/20 space-y-3">
+              <p className="text-sm font-medium text-[#375DEE]">Google Calendar Integration</p>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.sync_to_google}
+                  onChange={(e) => setFormData({ ...formData, sync_to_google: e.target.checked })}
+                  className="w-4 h-4 rounded border-white/20 bg-white/5 text-[#375DEE] focus:ring-[#375DEE] focus:ring-offset-0"
+                />
+                <span className="text-sm text-white/80">Add to Google Calendar</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.create_meet_link}
+                  onChange={(e) => setFormData({ ...formData, create_meet_link: e.target.checked })}
+                  disabled={!formData.sync_to_google}
+                  className="w-4 h-4 rounded border-white/20 bg-white/5 text-[#375DEE] focus:ring-[#375DEE] focus:ring-offset-0 disabled:opacity-50"
+                />
+                <span className={`text-sm ${formData.sync_to_google ? "text-white/80" : "text-white/40"}`}>
+                  Create Google Meet link
+                </span>
+              </label>
+            </div>
+          )}
+
+          {/* Manual Meet link input - only show if not creating auto link */}
+          {(!isGoogleConnected || !formData.create_meet_link || event) && (
+            <div>
+              <label className="block text-sm text-white/60 mb-2">Google Meet Link</label>
+              <input
+                type="url"
+                placeholder="https://meet.google.com/..."
+                value={formData.meeting_link}
+                onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+              />
+            </div>
+          )}
 
           <div>
             <label className="block text-sm text-white/60 mb-2">Description</label>
@@ -664,7 +740,7 @@ function EventFormModal({
             {saving ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Saving...
+                {formData.sync_to_google ? "Syncing..." : "Saving..."}
               </>
             ) : (
               <>{event ? "Save Changes" : "Create Event"}</>
