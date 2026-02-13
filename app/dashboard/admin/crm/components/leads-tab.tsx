@@ -8,6 +8,8 @@ import {
   Upload,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Pencil,
   Trash2,
   X,
@@ -15,13 +17,10 @@ import {
   AlertCircle,
   Loader2,
   Building2,
-  MapPin,
   Filter,
   Phone,
   Mail,
-  Calendar,
 } from "lucide-react"
-import { format } from "date-fns"
 import { type CRMLeadStatus } from "../lib/crm-status"
 import { useCRMStatuses } from "../hooks/use-crm-statuses"
 import LeadDetailModal from "./lead-detail-modal"
@@ -67,6 +66,8 @@ export default function LeadsTab() {
   const [sortField, setSortField] = useState<SortField>("last_contacted_at")
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc")
   const [showFilters, setShowFilters] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const leadsPerPage = 50
 
   // Modals
   const [selectedLead, setSelectedLead] = useState<CRMLead | null>(null)
@@ -75,13 +76,9 @@ export default function LeadsTab() {
   const [editingLead, setEditingLead] = useState<CRMLead | null>(null)
   const [showImportModal, setShowImportModal] = useState(false)
 
-  // Inline editing
+  // Inline status dropdown
   const [inlineStatusId, setInlineStatusId] = useState<string | null>(null)
-  const [inlineEditId, setInlineEditId] = useState<string | null>(null)
-  const [inlineEditField, setInlineEditField] = useState<"value" | "follow_up" | null>(null)
-  const [inlineEditValue, setInlineEditValue] = useState("")
   const statusDropdownRef = useRef<HTMLDivElement>(null)
-  const inlineEditRef = useRef<HTMLDivElement>(null)
 
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -90,10 +87,6 @@ export default function LeadsTab() {
 
   // Message state
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
-
-  // Touch/swipe state for mobile
-  const [swipedRowId, setSwipedRowId] = useState<string | null>(null)
-  const touchStartX = useRef<number>(0)
 
   useEffect(() => {
     fetchLeads()
@@ -112,10 +105,6 @@ export default function LeadsTab() {
       if (bulkMenuRef.current && !bulkMenuRef.current.contains(e.target as Node)) {
         setShowBulkStatusMenu(false)
       }
-      if (inlineEditRef.current && !inlineEditRef.current.contains(e.target as Node)) {
-        setInlineEditId(null)
-        setInlineEditField(null)
-      }
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
@@ -130,17 +119,45 @@ export default function LeadsTab() {
   }, [message])
 
   const fetchLeads = async () => {
-    const { data, error, count } = await supabase
+    // Supabase has a 1000 row default limit, so we need to fetch in batches
+    const batchSize = 1000
+    const maxLeads = 20000
+    let allLeads: CRMLead[] = []
+    let totalCount = 0
+
+    // First, get the total count
+    const { count } = await supabase
       .from("crm_leads")
-      .select("*", { count: "exact" })
-      .order("created_at", { ascending: false })
-      .limit(10000)
-    if (error) {
-      setMessage({ type: "error", text: "Failed to load leads" })
-    } else {
-      setLeads(data || [])
-      setTotalCount(count || data?.length || 0)
+      .select("*", { count: "exact", head: true })
+
+    totalCount = count || 0
+
+    // Fetch in batches using range
+    const batches = Math.ceil(Math.min(totalCount, maxLeads) / batchSize)
+
+    for (let i = 0; i < batches; i++) {
+      const from = i * batchSize
+      const to = from + batchSize - 1
+
+      const { data, error } = await supabase
+        .from("crm_leads")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(from, to)
+
+      if (error) {
+        setMessage({ type: "error", text: "Failed to load leads" })
+        setLoading(false)
+        return
+      }
+
+      if (data) {
+        allLeads = [...allLeads, ...data]
+      }
     }
+
+    setLeads(allLeads)
+    setTotalCount(totalCount)
     setLoading(false)
   }
 
@@ -156,32 +173,9 @@ export default function LeadsTab() {
     }
   }
 
-  const handleInlineEdit = async (leadId: string, field: "estimated_value" | "next_follow_up", value: string) => {
-    let updateData: any = {}
-
-    if (field === "estimated_value") {
-      const numValue = parseFloat(value.replace(/[^0-9.-]/g, ""))
-      updateData.estimated_value = isNaN(numValue) ? null : numValue
-    } else if (field === "next_follow_up") {
-      updateData.next_follow_up = value || null
-    }
-
-    // Optimistic update
-    setLeads(leads.map((l) => (l.id === leadId ? { ...l, ...updateData } : l)))
-    setInlineEditId(null)
-    setInlineEditField(null)
-
-    const { error } = await supabase.from("crm_leads").update(updateData).eq("id", leadId)
-    if (error) {
-      fetchLeads()
-      setMessage({ type: "error", text: "Failed to update" })
-    }
-  }
-
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this lead?")) return
     setLeads(leads.filter((l) => l.id !== id))
-    setSwipedRowId(null)
 
     const { error } = await supabase.from("crm_leads").delete().eq("id", id)
     if (error) {
@@ -191,10 +185,18 @@ export default function LeadsTab() {
   }
 
   const handleSelectAll = () => {
-    if (selectedIds.size === filteredLeads.length) {
-      setSelectedIds(new Set())
+    const currentPageIds = paginatedLeads.map((l) => l.id)
+    const allSelected = currentPageIds.every(id => selectedIds.has(id))
+    if (allSelected) {
+      // Deselect all on current page
+      const newSelected = new Set(selectedIds)
+      currentPageIds.forEach(id => newSelected.delete(id))
+      setSelectedIds(newSelected)
     } else {
-      setSelectedIds(new Set(filteredLeads.map((l) => l.id)))
+      // Select all on current page
+      const newSelected = new Set(selectedIds)
+      currentPageIds.forEach(id => newSelected.add(id))
+      setSelectedIds(newSelected)
     }
   }
 
@@ -242,21 +244,6 @@ export default function LeadsTab() {
     }
   }
 
-  // Touch handlers for swipe
-  const handleTouchStart = (e: React.TouchEvent, id: string) => {
-    touchStartX.current = e.touches[0].clientX
-  }
-
-  const handleTouchEnd = (e: React.TouchEvent, id: string) => {
-    const touchEndX = e.changedTouches[0].clientX
-    const diff = touchStartX.current - touchEndX
-    if (diff > 80) {
-      setSwipedRowId(id)
-    } else if (diff < -80) {
-      setSwipedRowId(null)
-    }
-  }
-
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc")
@@ -271,10 +258,10 @@ export default function LeadsTab() {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(value)
   }
 
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "-"
-    return format(new Date(dateStr), "MMM d")
-  }
+  // Reset to page 1 when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, statusFilter])
 
   const filteredLeads = leads
     .filter((lead) => {
@@ -297,6 +284,29 @@ export default function LeadsTab() {
       if (typeof aVal === "string") { aVal = aVal.toLowerCase(); bVal = (bVal || "").toLowerCase() }
       return sortDirection === "asc" ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1)
     })
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredLeads.length / leadsPerPage)
+  const startIndex = (currentPage - 1) * leadsPerPage
+  const endIndex = startIndex + leadsPerPage
+  const paginatedLeads = filteredLeads.slice(startIndex, endIndex)
+
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = []
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+    } else {
+      if (currentPage <= 3) {
+        pages.push(1, 2, 3, 4, "...", totalPages)
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1, "...", totalPages - 3, totalPages - 2, totalPages - 1, totalPages)
+      } else {
+        pages.push(1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages)
+      }
+    }
+    return pages
+  }
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return null
@@ -417,7 +427,7 @@ export default function LeadsTab() {
             onClick={handleSelectAll}
             className="w-6 h-6 rounded border-2 border-white/50 flex items-center justify-center hover:bg-white/10"
           >
-            {selectedIds.size === filteredLeads.length && <Check className="w-4 h-4" />}
+            {paginatedLeads.length > 0 && paginatedLeads.every(l => selectedIds.has(l.id)) && <Check className="w-4 h-4" />}
           </button>
           <span className="text-sm font-medium">{selectedIds.size} selected</span>
           <div className="flex-1" />
@@ -459,99 +469,102 @@ export default function LeadsTab() {
           <p className="text-white/50 text-sm">{leads.length === 0 ? "No leads yet" : "No matches"}</p>
         </div>
       ) : (
-        <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+        <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] overflow-hidden">
           {/* Desktop Table */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="hidden md:block">
+            <table className="w-full text-sm table-fixed">
               <thead>
-                <tr className="border-b border-white/10 bg-white/[0.02]">
-                  <th className="w-10 px-3 py-3">
-                    <button onClick={handleSelectAll} className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                      selectedIds.size === filteredLeads.length ? "bg-[#375DEE] border-[#375DEE]" : "border-white/30 hover:border-white/50"
+                <tr className="border-b border-white/[0.08]">
+                  <th className="w-12 px-4 py-3">
+                    <button onClick={handleSelectAll} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
+                      paginatedLeads.length > 0 && paginatedLeads.every(l => selectedIds.has(l.id))
+                        ? "bg-[#375DEE] border-[#375DEE]"
+                        : "border-white/20 hover:border-white/40"
                     }`}>
-                      {selectedIds.size === filteredLeads.length && filteredLeads.length > 0 && <Check className="w-2.5 h-2.5" />}
+                      {paginatedLeads.length > 0 && paginatedLeads.every(l => selectedIds.has(l.id)) && <Check className="w-3 h-3" />}
                     </button>
                   </th>
-                  <th onClick={() => handleSort("company_name")} className="text-left text-xs text-white/40 font-medium px-3 py-3 cursor-pointer hover:text-white">
-                    <div className="flex items-center gap-1">Company <SortIcon field="company_name" /></div>
+                  <th onClick={() => handleSort("company_name")} className="text-left text-[11px] uppercase tracking-wider text-white/40 font-semibold px-4 py-3 cursor-pointer hover:text-white/70 transition-colors">
+                    <div className="flex items-center gap-1.5">Company <SortIcon field="company_name" /></div>
                   </th>
-                  <th onClick={() => handleSort("contact_name")} className="text-left text-xs text-white/40 font-medium px-3 py-3 cursor-pointer hover:text-white">
-                    <div className="flex items-center gap-1">Contact <SortIcon field="contact_name" /></div>
+                  <th onClick={() => handleSort("contact_name")} className="text-left text-[11px] uppercase tracking-wider text-white/40 font-semibold px-4 py-3 cursor-pointer hover:text-white/70 transition-colors w-48">
+                    <div className="flex items-center gap-1.5">Contact <SortIcon field="contact_name" /></div>
                   </th>
-                  <th onClick={() => handleSort("status")} className="text-left text-xs text-white/40 font-medium px-3 py-3 cursor-pointer hover:text-white">
-                    <div className="flex items-center gap-1">Status <SortIcon field="status" /></div>
+                  <th onClick={() => handleSort("status")} className="text-left text-[11px] uppercase tracking-wider text-white/40 font-semibold px-4 py-3 cursor-pointer hover:text-white/70 transition-colors w-36">
+                    <div className="flex items-center gap-1.5">Status <SortIcon field="status" /></div>
                   </th>
-                  <th onClick={() => handleSort("estimated_value")} className="text-left text-xs text-white/40 font-medium px-3 py-3 cursor-pointer hover:text-white">
-                    <div className="flex items-center gap-1">Value <SortIcon field="estimated_value" /></div>
-                  </th>
-                  <th onClick={() => handleSort("next_follow_up")} className="text-left text-xs text-white/40 font-medium px-3 py-3 cursor-pointer hover:text-white whitespace-nowrap">
-                    <div className="flex items-center gap-1">Follow Up <SortIcon field="next_follow_up" /></div>
-                  </th>
-                  <th className="w-20 px-3 py-3"></th>
+                  <th className="w-24 px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody>
-                {filteredLeads.map((lead) => (
+                {paginatedLeads.map((lead, index) => (
                   <tr
                     key={lead.id}
-                    className={`border-b border-white/5 hover:bg-white/[0.03] transition-colors ${selectedIds.has(lead.id) ? "bg-[#375DEE]/10" : ""}`}
+                    className={`group border-b border-white/[0.04] last:border-0 hover:bg-white/[0.03] transition-colors cursor-pointer ${
+                      selectedIds.has(lead.id) ? "bg-[#375DEE]/10" : ""
+                    }`}
+                    onClick={() => { setSelectedLead(lead); setShowDetailModal(true) }}
                   >
-                    <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => handleSelectOne(lead.id)}
-                        className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                          selectedIds.has(lead.id) ? "bg-[#375DEE] border-[#375DEE]" : "border-white/30 hover:border-white/50"
+                        className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
+                          selectedIds.has(lead.id)
+                            ? "bg-[#375DEE] border-[#375DEE]"
+                            : "border-white/20 hover:border-white/40"
                         }`}
                       >
-                        {selectedIds.has(lead.id) && <Check className="w-2.5 h-2.5" />}
+                        {selectedIds.has(lead.id) && <Check className="w-3 h-3" />}
                       </button>
                     </td>
-                    <td className="px-3 py-2 cursor-pointer" onClick={() => { setSelectedLead(lead); setShowDetailModal(true) }}>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-[#375DEE]/20 flex items-center justify-center flex-shrink-0">
-                          <Building2 className="w-4 h-4 text-[#375DEE]" />
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-[#375DEE]/10 flex items-center justify-center flex-shrink-0">
+                          <span className="text-[#375DEE] text-xs font-bold">
+                            {lead.company_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                          </span>
                         </div>
                         <div className="min-w-0">
-                          <p className="font-medium text-white truncate">{lead.company_name}</p>
+                          <p className="font-semibold text-white truncate group-hover:text-[#375DEE] transition-colors">{lead.company_name}</p>
                           {lead.location && <p className="text-xs text-white/40 truncate">{lead.location}</p>}
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-2 cursor-pointer" onClick={() => { setSelectedLead(lead); setShowDetailModal(true) }}>
-                      <div className="min-w-0">
-                        <p className="text-white truncate">{lead.contact_name}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {lead.contact_email && (
-                            <a href={`mailto:${lead.contact_email}`} onClick={(e) => e.stopPropagation()} className="text-[#375DEE] hover:underline">
-                              <Mail className="w-3 h-3" />
-                            </a>
-                          )}
-                          {lead.contact_phone && (
-                            <a href={`tel:${lead.contact_phone}`} onClick={(e) => e.stopPropagation()} className="text-white/50 hover:text-white">
-                              <Phone className="w-3 h-3" />
-                            </a>
-                          )}
-                        </div>
+                    <td className="px-4 py-3">
+                      <p className="text-white/80 truncate">{lead.contact_name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {lead.contact_email && (
+                          <a href={`mailto:${lead.contact_email}`} onClick={(e) => e.stopPropagation()} className="text-[#375DEE] hover:text-[#4169E1] transition-colors">
+                            <Mail className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                        {lead.contact_phone && (
+                          <a href={`tel:${lead.contact_phone}`} onClick={(e) => e.stopPropagation()} className="text-white/30 hover:text-white/70 transition-colors">
+                            <Phone className="w-3.5 h-3.5" />
+                          </a>
+                        )}
                       </div>
                     </td>
-                    <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="relative" ref={inlineStatusId === lead.id ? statusDropdownRef : null}>
                         <button
                           onClick={() => setInlineStatusId(inlineStatusId === lead.id ? null : lead.id)}
-                          className={`px-2 py-1 rounded-lg text-xs font-medium whitespace-nowrap flex items-center gap-1 hover:opacity-80 transition-opacity ${getStatusColor(lead.status)}`}
+                          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex items-center gap-1.5 hover:opacity-90 transition-all ${getStatusColor(lead.status)}`}
                         >
                           {getStatusLabel(lead.status)}
-                          <ChevronDown className="w-3 h-3 opacity-50" />
+                          <ChevronDown className="w-3 h-3 opacity-60" />
                         </button>
                         {inlineStatusId === lead.id && (
-                          <div className="absolute left-0 top-full mt-1 w-36 bg-[#1a1a1a] rounded-lg border border-white/10 shadow-xl z-20 overflow-hidden">
+                          <div className="absolute left-0 top-full mt-1.5 w-40 bg-[#1a1a1a] rounded-xl border border-white/10 shadow-2xl z-20 overflow-hidden py-1">
                             {statusOptions.map((status) => (
                               <button
                                 key={status.value}
                                 onClick={() => handleStatusChange(lead.id, status.value)}
-                                className={`w-full px-3 py-1.5 text-left text-xs hover:bg-white/5 flex items-center gap-2 ${lead.status === status.value ? "bg-white/5" : ""}`}
+                                className={`w-full px-3 py-2 text-left text-xs hover:bg-white/5 flex items-center gap-2.5 transition-colors ${
+                                  lead.status === status.value ? "bg-white/5" : ""
+                                }`}
                               >
-                                <div className={`w-1.5 h-1.5 rounded-full ${status.bgColor}`} />
+                                <div className={`w-2 h-2 rounded-full ${status.bgColor}`} />
                                 {status.label}
                               </button>
                             ))}
@@ -559,65 +572,21 @@ export default function LeadsTab() {
                         )}
                       </div>
                     </td>
-                    <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                      <div ref={inlineEditId === lead.id && inlineEditField === "value" ? inlineEditRef : null}>
-                        {inlineEditId === lead.id && inlineEditField === "value" ? (
-                          <input
-                            type="text"
-                            autoFocus
-                            value={inlineEditValue}
-                            onChange={(e) => setInlineEditValue(e.target.value)}
-                            onBlur={() => handleInlineEdit(lead.id, "estimated_value", inlineEditValue)}
-                            onKeyDown={(e) => { if (e.key === "Enter") handleInlineEdit(lead.id, "estimated_value", inlineEditValue) }}
-                            className="w-20 px-2 py-0.5 rounded bg-white/10 border border-[#375DEE] text-sm focus:outline-none"
-                          />
-                        ) : (
-                          <button
-                            onClick={() => { setInlineEditId(lead.id); setInlineEditField("value"); setInlineEditValue(lead.estimated_value?.toString() || "") }}
-                            className="text-sm text-white/80 hover:text-white hover:bg-white/5 px-1 py-0.5 rounded transition-colors"
-                          >
-                            {formatCurrency(lead.estimated_value)}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                      <div ref={inlineEditId === lead.id && inlineEditField === "follow_up" ? inlineEditRef : null}>
-                        {inlineEditId === lead.id && inlineEditField === "follow_up" ? (
-                          <input
-                            type="date"
-                            autoFocus
-                            value={inlineEditValue}
-                            onChange={(e) => setInlineEditValue(e.target.value)}
-                            onBlur={() => handleInlineEdit(lead.id, "next_follow_up", inlineEditValue)}
-                            className="px-2 py-0.5 rounded bg-white/10 border border-[#375DEE] text-sm focus:outline-none"
-                          />
-                        ) : (
-                          <button
-                            onClick={() => { setInlineEditId(lead.id); setInlineEditField("follow_up"); setInlineEditValue(lead.next_follow_up?.split("T")[0] || "") }}
-                            className={`text-sm hover:bg-white/5 px-1 py-0.5 rounded transition-colors flex items-center gap-1 ${lead.next_follow_up ? "text-white/80 hover:text-white" : "text-white/30"}`}
-                          >
-                            <Calendar className="w-3 h-3 opacity-50" />
-                            {formatDate(lead.next_follow_up)}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-1">
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => { setEditingLead(lead); setShowFormModal(true) }}
-                          className="p-1.5 rounded hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                          className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-all"
                           title="Edit"
                         >
-                          <Pencil className="w-3.5 h-3.5" />
+                          <Pencil className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(lead.id)}
-                          className="p-1.5 rounded hover:bg-red-500/20 text-white/50 hover:text-red-400 transition-colors"
+                          className="p-2 rounded-lg hover:bg-red-500/20 text-white/50 hover:text-red-400 transition-all"
                           title="Delete"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -628,77 +597,89 @@ export default function LeadsTab() {
           </div>
 
           {/* Mobile List */}
-          <div className="md:hidden divide-y divide-white/5">
-            {filteredLeads.map((lead) => (
+          <div className="md:hidden divide-y divide-white/[0.04]">
+            {paginatedLeads.map((lead) => (
               <div
                 key={lead.id}
-                className="relative overflow-hidden"
-                onTouchStart={(e) => handleTouchStart(e, lead.id)}
-                onTouchEnd={(e) => handleTouchEnd(e, lead.id)}
+                className={`flex items-center gap-3 px-4 py-3 ${selectedIds.has(lead.id) ? "bg-[#375DEE]/10" : ""}`}
               >
-                {/* Swipe Actions */}
-                <div className={`absolute inset-y-0 right-0 flex items-center transition-transform duration-200 ${swipedRowId === lead.id ? "translate-x-0" : "translate-x-full"}`}>
-                  <button
-                    onClick={() => { setEditingLead(lead); setShowFormModal(true); setSwipedRowId(null) }}
-                    className="h-full px-4 bg-[#375DEE] flex items-center"
-                  >
-                    <Pencil className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(lead.id)}
-                    className="h-full px-4 bg-red-500 flex items-center"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </div>
-
-                {/* Row Content */}
-                <div
-                  className={`flex items-center gap-3 p-3 bg-[#0a0a0a] transition-transform duration-200 ${swipedRowId === lead.id ? "-translate-x-24" : "translate-x-0"} ${selectedIds.has(lead.id) ? "bg-[#375DEE]/10" : ""}`}
-                  onClick={() => { if (swipedRowId !== lead.id) { setSelectedLead(lead); setShowDetailModal(true) } }}
+                <button
+                  onClick={() => handleSelectOne(lead.id)}
+                  className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all ${
+                    selectedIds.has(lead.id) ? "bg-[#375DEE] border-[#375DEE]" : "border-white/20"
+                  }`}
                 >
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleSelectOne(lead.id) }}
-                    className={`w-5 h-5 rounded border-2 flex-shrink-0 flex items-center justify-center ${
-                      selectedIds.has(lead.id) ? "bg-[#375DEE] border-[#375DEE]" : "border-white/30"
-                    }`}
-                  >
-                    {selectedIds.has(lead.id) && <Check className="w-3 h-3" />}
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-medium truncate">{lead.company_name}</p>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setInlineStatusId(inlineStatusId === lead.id ? null : lead.id) }}
-                        className={`px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${getStatusColor(lead.status)}`}
-                      >
-                        {getStatusLabel(lead.status)}
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between gap-2 mt-1">
-                      <p className="text-xs text-white/50 truncate">{lead.contact_name}</p>
-                      <p className="text-xs text-white/40">{formatCurrency(lead.estimated_value)}</p>
-                    </div>
-                  </div>
+                  {selectedIds.has(lead.id) && <Check className="w-3 h-3" />}
+                </button>
+                <div
+                  className="flex-1 min-w-0 cursor-pointer"
+                  onClick={() => { setSelectedLead(lead); setShowDetailModal(true) }}
+                >
+                  <p className="font-semibold truncate">{lead.company_name}</p>
+                  <p className="text-xs text-white/40 truncate">{lead.contact_name}</p>
                 </div>
-
-                {/* Mobile Status Dropdown */}
-                {inlineStatusId === lead.id && (
-                  <div className="absolute left-12 top-2 w-36 bg-[#1a1a1a] rounded-lg border border-white/10 shadow-xl z-20 overflow-hidden" ref={statusDropdownRef}>
-                    {statusOptions.map((status) => (
-                      <button
-                        key={status.value}
-                        onClick={(e) => { e.stopPropagation(); handleStatusChange(lead.id, status.value) }}
-                        className="w-full px-3 py-2 text-left text-xs hover:bg-white/5 flex items-center gap-2"
-                      >
-                        <div className={`w-1.5 h-1.5 rounded-full ${status.bgColor}`} />
-                        {status.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => { setSelectedLead(lead); setShowDetailModal(true) }}
+                    className="w-9 h-9 rounded-xl bg-white/5 border border-white/[0.06] text-white/50 hover:text-white hover:bg-white/10 hover:border-white/10 transition-all flex items-center justify-center"
+                  >
+                    <Building2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => { setEditingLead(lead); setShowFormModal(true) }}
+                    className="w-9 h-9 rounded-xl bg-white/5 border border-white/[0.06] text-white/50 hover:text-white hover:bg-white/10 hover:border-white/10 transition-all flex items-center justify-center"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {filteredLeads.length > leadsPerPage && (
+        <div className="flex items-center justify-between px-2 py-3">
+          <p className="text-sm text-white/40">
+            Showing {startIndex + 1}-{Math.min(endIndex, filteredLeads.length)} of {filteredLeads.length}
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-1">
+              {getPageNumbers().map((page, index) => (
+                typeof page === "number" ? (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentPage(page)}
+                    className={`min-w-[36px] h-9 px-3 rounded-lg text-sm font-medium transition-all ${
+                      currentPage === page
+                        ? "bg-[#375DEE] text-white"
+                        : "hover:bg-white/10 text-white/60 hover:text-white"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ) : (
+                  <span key={index} className="px-2 text-white/30">...</span>
+                )
+              ))}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}

@@ -192,14 +192,40 @@ export default function PipelineTab() {
   }, [])
 
   const fetchLeads = async () => {
-    const { data, error } = await supabase
-      .from("crm_leads")
-      .select("*")
-      .order("created_at", { ascending: false })
+    // Supabase has a 1000 row default limit, so we need to fetch in batches
+    const batchSize = 1000
+    const maxLeads = 20000
+    let allLeads: CRMLead[] = []
 
-    if (data) {
-      setLeads(data)
+    // First, get the total count
+    const { count } = await supabase
+      .from("crm_leads")
+      .select("*", { count: "exact", head: true })
+
+    const totalCount = count || 0
+    const batches = Math.ceil(Math.min(totalCount, maxLeads) / batchSize)
+
+    for (let i = 0; i < batches; i++) {
+      const from = i * batchSize
+      const to = from + batchSize - 1
+
+      const { data, error } = await supabase
+        .from("crm_leads")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(from, to)
+
+      if (error) {
+        console.error("Failed to fetch leads batch:", error)
+        break
+      }
+
+      if (data) {
+        allLeads = [...allLeads, ...data]
+      }
     }
+
+    setLeads(allLeads)
     setLoading(false)
   }
 

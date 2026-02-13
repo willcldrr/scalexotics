@@ -35,14 +35,43 @@ export default function AnalyticsTab() {
   }, [])
 
   const fetchData = async () => {
-    const [leadsRes, notesRes, eventsRes] = await Promise.all([
-      supabase.from("crm_leads").select("*").order("created_at", { ascending: false }),
-      supabase.from("crm_notes").select("created_at, note_type").order("created_at", { ascending: false }),
-      supabase.from("crm_events").select("start_time, event_type").order("start_time", { ascending: false }),
+    // Supabase has a 1000 row default limit, so we need to fetch leads in batches
+    const batchSize = 1000
+    const maxLeads = 20000
+    let allLeads: CRMLead[] = []
+
+    // Get total count first
+    const { count } = await supabase
+      .from("crm_leads")
+      .select("*", { count: "exact", head: true })
+
+    const totalCount = count || 0
+    const batches = Math.ceil(Math.min(totalCount, maxLeads) / batchSize)
+
+    // Fetch leads in batches
+    for (let i = 0; i < batches; i++) {
+      const from = i * batchSize
+      const to = from + batchSize - 1
+
+      const { data } = await supabase
+        .from("crm_leads")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(from, to)
+
+      if (data) {
+        allLeads = [...allLeads, ...data]
+      }
+    }
+
+    // Notes and events typically won't exceed 1000, but apply same logic if needed
+    const [notesRes, eventsRes] = await Promise.all([
+      supabase.from("crm_notes").select("created_at, note_type").order("created_at", { ascending: false }).limit(5000),
+      supabase.from("crm_events").select("start_time, event_type").order("start_time", { ascending: false }).limit(5000),
     ])
 
     setData({
-      leads: leadsRes.data || [],
+      leads: allLeads,
       notes: notesRes.data || [],
       events: eventsRes.data || [],
     })
@@ -80,7 +109,7 @@ export default function AnalyticsTab() {
   const leadsByStatus = crmStatusOptions.map((status) => ({
     ...status,
     count: leads.filter((l) => l.status === status.value).length,
-    value: leads.filter((l) => l.status === status.value).reduce((sum, l) => sum + (l.estimated_value || 0), 0),
+    totalValue: leads.filter((l) => l.status === status.value).reduce((sum, l) => sum + (l.estimated_value || 0), 0),
   }))
 
   // Pipeline funnel data
@@ -252,8 +281,8 @@ export default function AnalyticsTab() {
                 </div>
                 <div className="text-right">
                   <span className="font-bold">{status.count}</span>
-                  {status.value > 0 && (
-                    <span className="text-white/40 text-sm ml-2">({formatCurrency(status.value)})</span>
+                  {status.totalValue > 0 && (
+                    <span className="text-white/40 text-sm ml-2">({formatCurrency(status.totalValue)})</span>
                   )}
                 </div>
               </div>

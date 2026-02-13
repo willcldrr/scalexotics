@@ -149,9 +149,13 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
           "value", "deal value", "estimated value", "amount", "revenue",
           "estimatedvalue", "estimated_value", "deal_value"
         ],
+        instagram: [
+          "instagram", "ig", "insta", "instagram handle", "ig handle",
+          "social", "social media"
+        ],
         notes: [
           "notes", "note", "comments", "description", "comment", "info",
-          "details", "additional", "instagram", "social", "social media"
+          "details", "additional"
         ],
       }
 
@@ -227,6 +231,7 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
     const fleetCol = getColumn("fleet_size")
     const sourceCol = getColumn("source")
     const valueCol = getColumn("estimated_value")
+    const instagramCol = getColumn("instagram")
     const notesCol = getColumn("notes")
 
     if (!companyCol) {
@@ -285,6 +290,14 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
       if (valueCol) {
         const value = parseFloat(row[valueCol]?.trim().replace(/[$,]/g, ""))
         if (!isNaN(value)) leadData.estimated_value = value
+      }
+
+      // Store instagram in custom_fields
+      if (instagramCol) {
+        const instagram = row[instagramCol]?.trim()
+        if (instagram) {
+          leadData.custom_fields = { instagram: instagram.replace(/^@/, '') }
+        }
       }
 
       // Track notes to add after batch insert
