@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import {
   Search,
@@ -174,9 +175,11 @@ export default function ConnectionsSettings() {
               <div className="flex items-start gap-3 mb-3">
                 <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
                   {integration.icon ? (
-                    <img
+                    <Image
                       src={integration.icon}
                       alt={integration.name}
+                      width={20}
+                      height={20}
                       className="w-5 h-5 object-contain"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none'
@@ -241,7 +244,7 @@ export default function ConnectionsSettings() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
                   {selectedIntegration.icon ? (
-                    <img src={selectedIntegration.icon} alt={selectedIntegration.name} className="w-6 h-6 object-contain" />
+                    <Image src={selectedIntegration.icon} alt={selectedIntegration.name} width={24} height={24} className="w-6 h-6 object-contain" />
                   ) : (
                     <Plug className="w-5 h-5 text-white/40" />
                   )}

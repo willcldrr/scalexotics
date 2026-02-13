@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import {
   Palette,
@@ -642,10 +643,12 @@ export default function BrandingSettings() {
           {branding.logo_url && (
             <div className="mt-3 p-4 bg-white/5 rounded-xl">
               <p className="text-xs text-white/40 mb-2">Preview:</p>
-              <img
+              <Image
                 src={branding.logo_url}
                 alt="Logo preview"
-                className="h-12 object-contain"
+                width={150}
+                height={48}
+                className="h-12 w-auto object-contain"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none'
                 }}
@@ -761,7 +764,7 @@ export default function BrandingSettings() {
           >
             <div className="flex items-center gap-3 mb-4">
               {branding.logo_url ? (
-                <img src={branding.logo_url} alt="" className="h-8 object-contain" />
+                <Image src={branding.logo_url} alt="" width={120} height={32} className="h-8 w-auto object-contain" />
               ) : (
                 <div
                   className="w-10 h-10 rounded-lg flex items-center justify-center"

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import Image from "next/image"
 
 export default function Services() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -47,7 +48,7 @@ export default function Services() {
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="flex items-center justify-between h-20">
               <a href="/" className="relative group">
-                <img src="/scalexoticslong.png" alt="Scale Exotics" className="h-7 w-auto" />
+                <Image src="/scalexoticslong.png" alt="Scale Exotics" width={140} height={28} priority className="h-7 w-auto" />
                 <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-[#375DEE] group-hover:w-full transition-all duration-300" />
               </a>
               <nav className="hidden md:flex items-center">
@@ -191,11 +192,14 @@ export default function Services() {
 
                   {/* Image */}
                   <div className={`relative ${i % 2 === 1 ? "lg:order-1" : ""}`}>
-                    <div className="relative rounded-xl md:rounded-2xl overflow-hidden">
-                      <img
+                    <div className="relative aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden">
+                      <Image
                         src={service.image}
                         alt={service.title}
-                        className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-700"
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 50vw"
+                        loading="lazy"
+                        className="object-cover group-hover:scale-105 transition-transform duration-700"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                       <div className="absolute inset-0 bg-[#375DEE]/10" />
@@ -287,7 +291,7 @@ export default function Services() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10 md:mb-12">
             <div className="col-span-2">
-              <img src="/scalexoticslong.png" alt="Scale Exotics" className="h-6 md:h-7 w-auto mb-3 md:mb-4" />
+              <Image src="/scalexoticslong.png" alt="Scale Exotics" width={140} height={28} className="h-6 md:h-7 w-auto mb-3 md:mb-4" />
               <p className="text-white/40 text-xs md:text-sm max-w-sm leading-relaxed">
                 AI-powered lead capture and booking platform built for exotic car rental fleets.
               </p>

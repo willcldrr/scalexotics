@@ -1,12 +1,14 @@
 'use client'
 
+import Image from "next/image"
+
 export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Navigation */}
       <nav className="flex items-center justify-between px-6 py-4 border-b border-white/10">
         <a href="/" className="flex items-center">
-          <img src="/scalexoticslogo.png" alt="Scale Exotics" className="h-12 w-auto" />
+          <Image src="/scalexoticslogo.png" alt="Scale Exotics" width={160} height={48} className="h-12 w-auto" priority />
         </a>
         <a href="/" className="text-sm text-muted-foreground hover:text-foreground transition">
           ← Back to Home

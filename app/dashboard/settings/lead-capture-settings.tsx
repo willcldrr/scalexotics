@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import {
   Plus,
@@ -686,7 +687,7 @@ export default function LeadCaptureSettings() {
                       style={{ backgroundColor: formData.background_color }}
                     >
                       {formData.logo_url && (
-                        <img src={formData.logo_url} alt="Logo" className="h-8 mb-4" />
+                        <Image src={formData.logo_url} alt="Logo" width={120} height={32} className="h-8 w-auto mb-4" />
                       )}
                       <h3 className="text-xl font-bold mb-2" style={{ color: formData.primary_color }}>
                         {formData.business_name || "Your Business"}

@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import Image from "next/image"
+import LazyVideo from "@/app/components/lazy-video"
 
 export default function About() {
   const [showForm, setShowForm] = useState(false)
@@ -102,7 +104,7 @@ export default function About() {
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="flex items-center justify-between h-20">
               <a href="/" className="relative group">
-                <img src="/scalexoticslong.png" alt="Scale Exotics" className="h-7 w-auto" />
+                <Image src="/scalexoticslong.png" alt="Scale Exotics" width={140} height={28} className="h-7 w-auto" priority />
                 <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-[#375DEE] group-hover:w-full transition-all duration-300" />
               </a>
               <nav className="hidden md:flex items-center">
@@ -161,19 +163,15 @@ export default function About() {
 
       {/* Hero Section with Video */}
       <section className="relative min-h-screen flex items-center">
-        {/* Video Background */}
+        {/* Video Background - Lazy loaded for performance */}
         <div className="absolute inset-0">
-          <iframe
+          <LazyVideo
             src="https://customer-d0ejbh5tg4plprv9.cloudflarestream.com/51c203f4112210e3cec774edc299a14f/iframe?autoplay=true&muted=true&controls=false&defaultQuality=max&loop=true"
             className="absolute inset-0 w-full h-full hidden md:block"
-            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-            allowFullScreen
           />
-          <iframe
+          <LazyVideo
             src="https://customer-d0ejbh5tg4plprv9.cloudflarestream.com/0be1cc7d9f67938db82c2b20665cb194/iframe?autoplay=true&muted=true&controls=false&defaultQuality=max&loop=true"
-            className="absolute inset-0 w-full h-full block md:hidden object-cover"
-            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-            allowFullScreen
+            className="absolute inset-0 w-full h-full block md:hidden"
           />
           <div className="absolute inset-0 bg-black/60" />
           <div className="absolute inset-0 bg-[#375DEE]/10 mix-blend-overlay" />
@@ -287,11 +285,14 @@ export default function About() {
               </p>
             </div>
             <div className={`relative transition-all duration-1000 ${isVisible("mission") ? "opacity-100 translate-x-0" : "opacity-0 translate-x-12"}`} style={{ transitionDelay: "200ms" }}>
-              <div className="relative rounded-2xl md:rounded-3xl overflow-hidden">
-                <img
+              <div className="relative rounded-2xl md:rounded-3xl overflow-hidden aspect-[4/3]">
+                <Image
                   src="https://images.unsplash.com/photo-1583121274602-3e2820c69888?q=80&w=2670&auto=format&fit=crop"
                   alt="Exotic car"
-                  className="w-full aspect-[4/3] object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                 <div className="absolute inset-0 bg-[#375DEE]/10" />
@@ -387,7 +388,7 @@ export default function About() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10 md:mb-12">
             <div className="col-span-2">
-              <img src="/scalexoticslong.png" alt="Scale Exotics" className="h-6 md:h-7 w-auto mb-3 md:mb-4" />
+              <Image src="/scalexoticslong.png" alt="Scale Exotics" width={140} height={28} className="h-6 md:h-7 w-auto mb-3 md:mb-4" loading="lazy" />
               <p className="text-white/40 text-xs md:text-sm max-w-sm leading-relaxed">
                 Helping exotic car rental fleet owners build automated systems that generate consistent $50k+ months.
               </p>

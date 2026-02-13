@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import { Loader2 } from "lucide-react"
 
@@ -65,10 +66,13 @@ function LoginForm() {
     <div className="w-full max-w-md">
       <div className="text-center mb-12">
         <Link href="/">
-          <img
+          <Image
             src="https://imagedelivery.net/CVEJyzst_6io-ETn1V_PSw/3bdba65e-fb1a-4a3e-ff6f-1aa89b081f00/public"
             alt="Scale Exotics"
+            width={180}
+            height={48}
             className="h-12 w-auto mx-auto mb-8"
+            priority
           />
         </Link>
         <h1 className="text-4xl font-bold mb-3" style={{ fontFamily: 'var(--font-display)' }}>

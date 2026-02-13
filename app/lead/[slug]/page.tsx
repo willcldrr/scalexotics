@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, use } from "react"
+import Image from "next/image"
 import { Loader2, CheckCircle, AlertCircle, ChevronRight, ChevronLeft, Calendar, Car, User, Phone, Mail, Shield, Check } from "lucide-react"
 
 interface SurveyConfig {
@@ -358,7 +359,7 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
       <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor }}>
         <div className="max-w-md w-full text-center">
           {config.logo_url && (
-            <img src={config.logo_url} alt={config.business_name} className="h-12 mx-auto mb-6" />
+            <Image src={config.logo_url} alt={config.business_name} width={150} height={48} className="h-12 w-auto mx-auto mb-6" />
           )}
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
@@ -380,7 +381,7 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
         {/* Header */}
         <div className="p-6 lg:p-8 text-center">
           {config.logo_url && (
-            <img src={config.logo_url} alt={config.business_name} className="h-10 lg:h-12 mx-auto" />
+            <Image src={config.logo_url} alt={config.business_name} width={150} height={48} className="h-10 lg:h-12 w-auto mx-auto" />
           )}
         </div>
 
@@ -439,7 +440,7 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
         {/* Header */}
         <div className="p-4 lg:p-6 flex items-center justify-between border-b border-white/10 max-w-7xl mx-auto w-full">
           {config.logo_url ? (
-            <img src={config.logo_url} alt={config.business_name} className="h-8 lg:h-10" />
+            <Image src={config.logo_url} alt={config.business_name} width={120} height={40} className="h-8 lg:h-10 w-auto" />
           ) : (
             <span className="text-white font-semibold text-lg">{config.business_name}</span>
           )}
@@ -464,11 +465,13 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
                   className="w-full rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all overflow-hidden text-left group"
                 >
                   {vehicle.image_url && (
-                    <div className="aspect-video w-full bg-black/30 overflow-hidden">
-                      <img
+                    <div className="aspect-video w-full bg-black/30 overflow-hidden relative">
+                      <Image
                         src={vehicle.image_url}
                         alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     </div>
                   )}
@@ -519,7 +522,7 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
         {/* Header */}
         <div className="p-4 lg:p-6 flex items-center justify-between border-b border-white/10 max-w-4xl mx-auto w-full">
           {config.logo_url ? (
-            <img src={config.logo_url} alt={config.business_name} className="h-8 lg:h-10" />
+            <Image src={config.logo_url} alt={config.business_name} width={120} height={40} className="h-8 lg:h-10 w-auto" />
           ) : (
             <span className="text-white font-semibold text-lg">{config.business_name}</span>
           )}
@@ -698,7 +701,7 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
       {/* Header */}
       <div className="p-6 lg:p-8 flex items-center justify-between max-w-lg lg:max-w-xl mx-auto w-full">
         {config.logo_url ? (
-          <img src={config.logo_url} alt={config.business_name} className="h-8 lg:h-10" />
+          <Image src={config.logo_url} alt={config.business_name} width={120} height={40} className="h-8 lg:h-10 w-auto" />
         ) : (
           <span className="text-white font-semibold text-lg">{config.business_name}</span>
         )}

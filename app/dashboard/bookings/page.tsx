@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import {
   Plus,
@@ -453,7 +454,7 @@ export default function BookingsPage() {
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-xl bg-white/10 overflow-hidden flex-shrink-0">
                             {vehicle.image_url ? (
-                              <img src={vehicle.image_url} alt={vehicle.name} className="w-full h-full object-cover" />
+                              <Image src={vehicle.image_url} alt={vehicle.name} fill sizes="48px" className="object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
                                 <Car className="w-5 h-5 text-white/30" />
@@ -499,7 +500,7 @@ export default function BookingsPage() {
                   ) : (
                     <div className="w-11 h-11 rounded-xl bg-white/[0.06] overflow-hidden">
                       {selectedVehicle.image_url ? (
-                        <img src={selectedVehicle.image_url} alt={selectedVehicle.name} className="w-full h-full object-cover" />
+                        <Image src={selectedVehicle.image_url} alt={selectedVehicle.name} fill sizes="44px" className="object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Car className="w-5 h-5 text-white/30" />
@@ -849,7 +850,7 @@ export default function BookingsPage() {
                           <div className="flex items-start gap-4">
                             <div className="w-16 h-12 rounded-lg bg-white/[0.04] overflow-hidden flex-shrink-0">
                               {booking.vehicles?.image_url ? (
-                                <img src={booking.vehicles.image_url} alt={booking.vehicles.name} className="w-full h-full object-cover" />
+                                <Image src={booking.vehicles.image_url} alt={booking.vehicles.name} fill sizes="64px" className="object-cover" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center">
                                   <Car className="w-5 h-5 text-white/20" />
@@ -918,7 +919,7 @@ export default function BookingsPage() {
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-10 rounded-lg bg-white/[0.04] overflow-hidden flex-shrink-0">
                               {booking.vehicles?.image_url ? (
-                                <img src={booking.vehicles.image_url} alt={booking.vehicles.name} className="w-full h-full object-cover" />
+                                <Image src={booking.vehicles.image_url} alt={booking.vehicles.name} fill sizes="64px" className="object-cover" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center"><Car className="w-4 h-4 text-white/20" /></div>
                               )}

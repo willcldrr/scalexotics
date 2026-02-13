@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import Image from "next/image"
 
 export default function Demo() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -458,7 +459,7 @@ export default function Demo() {
 
             <div className="relative z-10 max-w-4xl">
               {/* Logo */}
-              <img src={LOGO_URL} alt="Scale Exotics" className="h-16 w-auto mx-auto mb-12 fade-up" />
+              <Image src={LOGO_URL} alt="Scale Exotics" width={200} height={64} className="h-16 w-auto mx-auto mb-12 fade-up" />
 
               {/* Main title */}
               <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tight fade-up delay-1" style={{ fontFamily: 'var(--font-display)' }}>
@@ -1689,10 +1690,13 @@ export default function Demo() {
               <div className="relative rounded-3xl overflow-hidden fade-up delay-2">
                 {/* Cash background image */}
                 <div className="absolute inset-0">
-                  <img
+                  <Image
                     src="https://images.unsplash.com/photo-1561414927-6d86591d0c4f?w=1200&q=80"
                     alt=""
+                    fill
+                    sizes="100vw"
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                   {/* Dark overlay */}
                   <div className="absolute inset-0 bg-black/85" />
@@ -2145,7 +2149,7 @@ export default function Demo() {
               <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-[#375DEE]/15 rounded-t-full blur-[150px]" />
             </div>
             <div className="relative z-10 text-center max-w-3xl px-8">
-              <img src={LOGO_URL} alt="Scale Exotics" className="h-14 w-auto mx-auto mb-12 fade-up" />
+              <Image src={LOGO_URL} alt="Scale Exotics" width={175} height={56} className="h-14 w-auto mx-auto mb-12 fade-up" />
               <h2 className="text-5xl lg:text-6xl font-bold mb-6 fade-up delay-1" style={{ fontFamily: 'var(--font-display)' }}>{content.title}</h2>
               <p className="text-xl text-white/50 mb-12 fade-up delay-2">{content.subtitle}</p>
               <p className="text-3xl text-[#375DEE] font-bold fade-up delay-3" style={{ fontFamily: 'var(--font-display)' }}>{content.cta}</p>
@@ -2175,7 +2179,7 @@ export default function Demo() {
         <style>{animationStyles}</style>
         <div className="w-full max-w-md fade-up">
           <div className="text-center mb-12">
-            <img src={LOGO_URL} alt="Scale Exotics" className="h-12 w-auto mx-auto mb-8" />
+            <Image src={LOGO_URL} alt="Scale Exotics" width={150} height={48} className="h-12 w-auto mx-auto mb-8" />
             <h1 className="text-4xl font-bold mb-3" style={{ fontFamily: 'var(--font-display)' }}>Demo Access</h1>
             <p className="text-lg text-white/50">Enter password to continue</p>
           </div>
@@ -2195,7 +2199,7 @@ export default function Demo() {
       <style>{animationStyles}</style>
 
       <div className="fixed top-0 left-0 right-0 z-50 px-8 py-6 flex items-center justify-between">
-        <img src={LOGO_URL} alt="Scale Exotics" className="h-7 w-auto opacity-50" />
+        <Image src={LOGO_URL} alt="Scale Exotics" width={88} height={28} priority className="h-7 w-auto opacity-50" />
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             {sections.map((section, i) => (

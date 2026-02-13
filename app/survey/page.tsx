@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 
 type SurveyAnswers = {
   fleetSize: string
@@ -264,7 +265,7 @@ export default function Survey() {
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="flex items-center justify-between h-20">
               <a href="/" className="relative group">
-                <img src="/scalexoticslong.png" alt="Scale Exotics" className="h-7 w-auto" />
+                <Image src="/scalexoticslong.png" alt="Scale Exotics" width={140} height={28} className="h-7 w-auto" priority />
                 <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-[#375DEE] group-hover:w-full transition-all duration-300" />
               </a>
               <nav className="hidden md:flex items-center">
@@ -356,7 +357,7 @@ export default function Survey() {
       <footer className="relative py-6 md:py-8 border-t border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
-            <img src="/scalexoticslong.png" alt="Scale Exotics" className="h-4 md:h-5 w-auto opacity-40" />
+            <Image src="/scalexoticslong.png" alt="Scale Exotics" width={100} height={20} className="h-4 md:h-5 w-auto opacity-40" loading="lazy" />
             <div className="flex items-center gap-3 md:gap-4 text-[10px] md:text-xs text-white/30">
               <a href="/about" className="hover:text-[#375DEE] transition-colors">About</a>
               <span className="text-white/10">•</span>

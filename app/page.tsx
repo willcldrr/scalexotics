@@ -700,10 +700,13 @@ export default function Home() {
 
                 {/* Author */}
                 <div className="flex items-center gap-3 md:gap-4">
-                  <img
+                  <Image
                     src={testimonial.img}
                     alt={testimonial.name}
+                    width={48}
+                    height={48}
                     className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-[#375DEE]/30 group-hover:border-[#375DEE]/60 group-hover:shadow-[0_0_15px_rgba(55,93,238,0.3)] transition-all duration-300"
+                    loading="lazy"
                   />
                   <div>
                     <div className="text-white font-medium text-sm md:text-base">{testimonial.name}</div>

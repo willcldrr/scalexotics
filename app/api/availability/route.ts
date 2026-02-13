@@ -12,6 +12,7 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, X-API-Key",
+  "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
 }
 
 export async function OPTIONS() {
