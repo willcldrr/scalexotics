@@ -81,43 +81,59 @@ export default function CustomersPage() {
         .order("created_at", { ascending: false })
 
       if (leadsData) {
-        // Enrich with booking data
-        const customersWithData = await Promise.all(
-          leadsData.map(async (lead) => {
-            const { data: bookings } = await supabase
-              .from("bookings")
-              .select(`
-                id,
-                vehicle_id,
-                start_date,
-                end_date,
-                total_amount,
-                status,
-                created_at,
-                vehicles (make, model, year)
-              `)
-              .eq("user_id", user.id)
-              .eq("customer_phone", lead.phone)
-              .order("created_at", { ascending: false })
+        // Get all customer phone numbers for batch query
+        const phoneNumbers = leadsData.map(lead => lead.phone)
 
-            const completedBookings = bookings?.filter(b => b.status === "completed" || b.status === "confirmed") || []
-            const lifetimeValue = completedBookings.reduce((sum, b) => sum + (b.total_amount || 0), 0)
+        // OPTIMIZED: Fetch ALL bookings for all customers in ONE query
+        const { data: allBookings } = await supabase
+          .from("bookings")
+          .select(`
+            id,
+            vehicle_id,
+            customer_phone,
+            start_date,
+            end_date,
+            total_amount,
+            status,
+            created_at,
+            vehicles (make, model, year)
+          `)
+          .eq("user_id", user.id)
+          .in("customer_phone", phoneNumbers)
+          .order("created_at", { ascending: false })
 
-            // Parse tags from notes or a dedicated field
-            const tags = lead.notes?.match(/#\w+/g)?.map((t: string) => t.slice(1)) || []
-
-            return {
-              ...lead,
-              bookings: bookings?.map(b => ({
-                ...b,
-                vehicle: Array.isArray(b.vehicles) ? b.vehicles[0] : b.vehicles
-              })) || [],
-              lifetime_value: lifetimeValue,
-              total_rentals: completedBookings.length,
-              tags,
+        // Group bookings by customer_phone
+        const bookingsByPhone = new Map<string, typeof allBookings>()
+        if (allBookings) {
+          for (const booking of allBookings) {
+            const phone = booking.customer_phone
+            if (!bookingsByPhone.has(phone)) {
+              bookingsByPhone.set(phone, [])
             }
-          })
-        )
+            bookingsByPhone.get(phone)!.push(booking)
+          }
+        }
+
+        // Enrich leads with booking data (no additional queries needed)
+        const customersWithData = leadsData.map(lead => {
+          const bookings = bookingsByPhone.get(lead.phone) || []
+          const completedBookings = bookings.filter(b => b.status === "completed" || b.status === "confirmed")
+          const lifetimeValue = completedBookings.reduce((sum, b) => sum + (b.total_amount || 0), 0)
+
+          // Parse tags from notes or a dedicated field
+          const tags = lead.notes?.match(/#\w+/g)?.map((t: string) => t.slice(1)) || []
+
+          return {
+            ...lead,
+            bookings: bookings.map(b => ({
+              ...b,
+              vehicle: Array.isArray(b.vehicles) ? b.vehicles[0] : b.vehicles
+            })),
+            lifetime_value: lifetimeValue,
+            total_rentals: completedBookings.length,
+            tags,
+          }
+        })
 
         // Sort by lifetime value
         customersWithData.sort((a, b) => (b.lifetime_value || 0) - (a.lifetime_value || 0))

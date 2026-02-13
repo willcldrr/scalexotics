@@ -220,28 +220,44 @@ export default function LeadsPage() {
       const storedRead = localStorage.getItem("readConversations")
       const readSet = storedRead ? new Set(JSON.parse(storedRead)) : new Set()
 
-      // Fetch last message for each lead
-      const leadsWithMessages = await Promise.all(
-        leadsRes.data.map(async (lead) => {
-          const { data: lastMsg } = await supabase
-            .from("messages")
-            .select("content, created_at, direction")
-            .eq("lead_id", lead.id)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .single()
+      // Get all lead IDs for batch query
+      const leadIds = leadsRes.data.map(lead => lead.id)
 
-          const isUnread = lastMsg?.direction === "inbound" && !readSet.has(lead.id)
+      // OPTIMIZED: Fetch all recent messages in ONE query instead of N queries
+      // We fetch the most recent messages and group by lead_id client-side
+      const { data: allMessages } = await supabase
+        .from("messages")
+        .select("lead_id, content, created_at, direction")
+        .in("lead_id", leadIds)
+        .order("created_at", { ascending: false })
 
-          return {
-            ...lead,
-            last_message: lastMsg?.content,
-            last_message_time: lastMsg?.created_at,
-            last_message_direction: lastMsg?.direction,
-            unread: isUnread,
+      // Build a map of lead_id -> last message (first occurrence is most recent due to ordering)
+      const lastMessageMap = new Map<string, { content: string; created_at: string; direction: string }>()
+      if (allMessages) {
+        for (const msg of allMessages) {
+          if (!lastMessageMap.has(msg.lead_id)) {
+            lastMessageMap.set(msg.lead_id, {
+              content: msg.content,
+              created_at: msg.created_at,
+              direction: msg.direction,
+            })
           }
-        })
-      )
+        }
+      }
+
+      // Enrich leads with last message data
+      const leadsWithMessages = leadsRes.data.map(lead => {
+        const lastMsg = lastMessageMap.get(lead.id)
+        const isUnread = lastMsg?.direction === "inbound" && !readSet.has(lead.id)
+
+        return {
+          ...lead,
+          last_message: lastMsg?.content,
+          last_message_time: lastMsg?.created_at,
+          last_message_direction: lastMsg?.direction as "inbound" | "outbound" | undefined,
+          unread: isUnread,
+        }
+      })
 
       // Sort by last message time (most recent first)
       leadsWithMessages.sort((a, b) => {

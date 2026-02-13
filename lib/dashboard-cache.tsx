@@ -149,21 +149,22 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
 
     try {
       // Fetch all data in parallel for speed
+      // OPTIMIZED: Only select columns actually needed for dashboard
       const [leadsRes, vehiclesRes, bookingsRes] = await Promise.all([
         supabase
           .from("leads")
-          .select("*")
+          .select("id, name, email, phone, status, source, vehicle_interest, notes, created_at, user_id")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
-          .limit(500), // Limit to prevent huge payloads
+          .limit(500),
         supabase
           .from("vehicles")
-          .select("*")
+          .select("id, name, make, model, year, type, status, daily_rate, image_url, created_at, user_id")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         supabase
           .from("bookings")
-          .select("*, vehicles(*)")
+          .select("id, vehicle_id, customer_name, customer_email, customer_phone, start_date, end_date, status, total_amount, deposit_amount, deposit_paid, notes, created_at, user_id, vehicles(id, name, make, model, year, image_url, daily_rate)")
           .eq("user_id", user.id)
           .order("start_date", { ascending: false })
           .limit(500),
@@ -254,7 +255,7 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
 
     const { data: bookings } = await supabase
       .from("bookings")
-      .select("*, vehicles(*)")
+      .select("id, vehicle_id, customer_name, customer_email, customer_phone, start_date, end_date, status, total_amount, deposit_amount, deposit_paid, notes, created_at, user_id, vehicles(id, name, make, model, year, image_url, daily_rate)")
       .eq("user_id", user.id)
       .order("start_date", { ascending: false })
       .limit(500)

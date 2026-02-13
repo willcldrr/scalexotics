@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, Suspense } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import dynamic from "next/dynamic"
 import { useDashboardCache } from "@/lib/dashboard-cache"
 import Link from "next/link"
@@ -25,7 +25,7 @@ import {
 import { formatDistanceToNow, format, subDays, eachDayOfInterval } from "date-fns"
 import { convertedStatus } from "@/lib/lead-status"
 
-// Lazy load heavy chart components
+// Lazy load heavy chart components - only on desktop
 const RevenueChart = dynamic(
   () => import("./components/dashboard-charts").then(mod => ({ default: mod.RevenueChart })),
   { ssr: false, loading: () => <ChartLoading /> }
@@ -50,12 +50,56 @@ const ChartLoading = () => (
   </div>
 )
 
+// Hook to detect if we're on mobile
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  return isMobile
+}
+
+// Hook for lazy loading sections when visible
+const useInView = () => {
+  const ref = useRef<HTMLDivElement>(null)
+  const [inView, setInView] = useState(false)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '100px' }
+    )
+
+    if (ref.current) observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [])
+
+  return { ref, inView }
+}
+
 const COLORS = ["#375DEE", "#5b7cf2", "#8aa0f6", "#b8c4fa", "#ffffff", "#d1d5db", "#9ca3af", "#6b7280"]
 
 export default function DashboardPage() {
   const { data, refreshData } = useDashboardCache()
   const { leads, vehicles, bookings, isLoading, lastFetched } = data
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "all">("30d")
+  const isMobile = useIsMobile()
+
+  // Lazy load sections
+  const revenueSection = useInView()
+  const chartsSection = useInView()
+  const vehicleSection = useInView()
+  const utilizationSection = useInView()
 
   // Filter data by time range
   const filteredData = useMemo(() => {
@@ -123,18 +167,30 @@ export default function DashboardPage() {
     }
   }, [filteredData, bookings, timeRange])
 
-  // Revenue over time chart data
+  // Revenue over time chart data - OPTIMIZED: pre-group bookings by date
+  // Skip computation on mobile since charts are hidden
   const revenueOverTime = useMemo(() => {
+    if (isMobile) return []
+
     const days = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : timeRange === "90d" ? 90 : 60
     const interval = eachDayOfInterval({
       start: subDays(new Date(), days),
       end: new Date(),
     })
 
+    // Pre-group bookings by date string (O(n) instead of O(n*m))
+    const bookingsByDate = new Map<string, typeof filteredData.bookings>()
+    for (const b of filteredData.bookings) {
+      const dateKey = format(new Date(b.created_at), "yyyy-MM-dd")
+      if (!bookingsByDate.has(dateKey)) {
+        bookingsByDate.set(dateKey, [])
+      }
+      bookingsByDate.get(dateKey)!.push(b)
+    }
+
     return interval.map(day => {
-      const dayBookings = filteredData.bookings.filter(b =>
-        format(new Date(b.created_at), "yyyy-MM-dd") === format(day, "yyyy-MM-dd")
-      )
+      const dateKey = format(day, "yyyy-MM-dd")
+      const dayBookings = bookingsByDate.get(dateKey) || []
       const revenue = dayBookings
         .filter(b => b.status === "confirmed" || b.status === "completed")
         .reduce((sum, b) => sum + (b.total_amount || 0), 0)
@@ -145,10 +201,12 @@ export default function DashboardPage() {
         bookings: dayBookings.length,
       }
     })
-  }, [filteredData, timeRange])
+  }, [filteredData, timeRange, isMobile])
 
-  // Lead sources breakdown
+  // Lead sources breakdown - Skip on mobile
   const leadSourcesData = useMemo(() => {
+    if (isMobile) return []
+
     const sourceCounts = filteredData.leads.reduce((acc, lead) => {
       const source = lead.source || "Direct"
       acc[source] = (acc[source] || 0) + 1
@@ -161,12 +219,23 @@ export default function DashboardPage() {
         value: count,
       }))
       .sort((a, b) => b.value - a.value)
-  }, [filteredData.leads])
+  }, [filteredData.leads, isMobile])
 
-  // Vehicle performance (top 5 by revenue)
+  // Vehicle performance (top 5 by revenue) - Skip on mobile
   const vehiclePerformance = useMemo(() => {
+    if (isMobile) return []
+
+    // Pre-group bookings by vehicle_id (O(n) instead of O(n*m))
+    const bookingsByVehicle = new Map<string, typeof filteredData.bookings>()
+    for (const b of filteredData.bookings) {
+      if (!bookingsByVehicle.has(b.vehicle_id)) {
+        bookingsByVehicle.set(b.vehicle_id, [])
+      }
+      bookingsByVehicle.get(b.vehicle_id)!.push(b)
+    }
+
     const vehicleStats = vehicles.map(vehicle => {
-      const vehicleBookings = filteredData.bookings.filter(b => b.vehicle_id === vehicle.id)
+      const vehicleBookings = bookingsByVehicle.get(vehicle.id) || []
       const revenue = vehicleBookings
         .filter(b => b.status === "confirmed" || b.status === "completed")
         .reduce((sum, b) => sum + (b.total_amount || 0), 0)
@@ -179,10 +248,12 @@ export default function DashboardPage() {
     })
 
     return vehicleStats.sort((a, b) => b.revenue - a.revenue).slice(0, 5)
-  }, [vehicles, filteredData.bookings])
+  }, [vehicles, filteredData.bookings, isMobile])
 
-  // Booking status distribution
+  // Booking status distribution - Skip on mobile
   const bookingStatusData = useMemo(() => {
+    if (isMobile) return []
+
     const statusCounts = filteredData.bookings.reduce((acc, booking) => {
       acc[booking.status] = (acc[booking.status] || 0) + 1
       return acc
@@ -192,10 +263,12 @@ export default function DashboardPage() {
       name: status.charAt(0).toUpperCase() + status.slice(1),
       value: count,
     }))
-  }, [filteredData.bookings])
+  }, [filteredData.bookings, isMobile])
 
-  // Conversion funnel
+  // Conversion funnel - Skip on mobile
   const conversionFunnel = useMemo(() => {
+    if (isMobile) return []
+
     const total = filteredData.leads.length
     const contacted = filteredData.leads.filter(l => ["contacted", "converted"].includes(l.status)).length
     const converted = filteredData.leads.filter(l => l.status === convertedStatus).length
@@ -205,20 +278,26 @@ export default function DashboardPage() {
       { stage: "Contacted", count: contacted, percentage: total > 0 ? (contacted / total) * 100 : 0, color: "#a855f7" },
       { stage: "Converted", count: converted, percentage: total > 0 ? (converted / total) * 100 : 0, color: "#10b981" },
     ]
-  }, [filteredData.leads])
+  }, [filteredData.leads, isMobile])
 
-  // Fleet utilization
+  // Fleet utilization - Skip on mobile
   const vehicleUtilization = useMemo(() => {
-    return vehicles.map(vehicle => {
-      const vehicleBookings = bookings.filter(b => b.vehicle_id === vehicle.id && b.status !== "cancelled")
-      const totalDaysBooked = vehicleBookings.reduce((sum, b) => {
-        const start = new Date(b.start_date)
-        const end = new Date(b.end_date)
-        const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
-        return sum + days
-      }, 0)
+    if (isMobile) return []
 
-      const periodDays = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : timeRange === "90d" ? 90 : 365
+    // Pre-group non-cancelled bookings by vehicle_id with pre-calculated days
+    const utilizationByVehicle = new Map<string, number>()
+    for (const b of bookings) {
+      if (b.status === "cancelled") continue
+      const start = new Date(b.start_date)
+      const end = new Date(b.end_date)
+      const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+      utilizationByVehicle.set(b.vehicle_id, (utilizationByVehicle.get(b.vehicle_id) || 0) + days)
+    }
+
+    const periodDays = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : timeRange === "90d" ? 90 : 365
+
+    return vehicles.map(vehicle => {
+      const totalDaysBooked = utilizationByVehicle.get(vehicle.id) || 0
       const utilization = Math.min((totalDaysBooked / periodDays) * 100, 100)
 
       return {
@@ -227,7 +306,7 @@ export default function DashboardPage() {
         daysBooked: totalDaysBooked,
       }
     }).sort((a, b) => b.utilization - a.utilization)
-  }, [vehicles, bookings, timeRange])
+  }, [vehicles, bookings, timeRange, isMobile])
 
   // Recent leads & upcoming bookings (not time-range dependent)
   const recentLeads = useMemo(() => leads.slice(0, 5), [leads])
@@ -408,8 +487,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Revenue Trend Chart */}
-      <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden hover:border-white/[0.1] transition-colors">
+      {/* Revenue Trend Chart - Hidden on mobile for performance */}
+      <div ref={revenueSection.ref} className="hidden sm:block rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden hover:border-white/[0.1] transition-colors">
         <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-[#375DEE]/10 flex items-center justify-center">
             <Activity className="w-4 h-4 text-[#375DEE]" />
@@ -421,13 +500,13 @@ export default function DashboardPage() {
         </div>
         <div className="p-5">
           <div className="h-72 sm:h-80">
-            <RevenueChart data={revenueOverTime} />
+            {revenueSection.inView ? <RevenueChart data={revenueOverTime} /> : <ChartLoading />}
           </div>
         </div>
       </div>
 
-      {/* Conversion Funnel + Lead Sources */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      {/* Conversion Funnel + Lead Sources - Hidden on mobile for performance */}
+      <div ref={chartsSection.ref} className="hidden sm:grid lg:grid-cols-2 gap-6">
         {/* Conversion Funnel */}
         <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden hover:border-white/[0.1] transition-colors">
           <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
@@ -478,7 +557,7 @@ export default function DashboardPage() {
             {leadSourcesData.length > 0 ? (
               <div className="flex items-center gap-6">
                 <div className="w-36 h-36 sm:w-44 sm:h-44 flex-shrink-0">
-                  <LeadSourcesPieChart data={leadSourcesData} />
+                  {chartsSection.inView ? <LeadSourcesPieChart data={leadSourcesData} /> : <ChartLoading />}
                 </div>
                 <div className="flex-1 space-y-3">
                   {leadSourcesData.slice(0, 5).map((source, index) => (
@@ -505,8 +584,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Vehicle Performance */}
-      <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden hover:border-white/[0.1] transition-colors">
+      {/* Vehicle Performance - Hidden on mobile for performance */}
+      <div ref={vehicleSection.ref} className="hidden sm:block rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden hover:border-white/[0.1] transition-colors">
         <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-[#375DEE]/10 flex items-center justify-center">
             <Car className="w-4 h-4 text-[#375DEE]" />
@@ -519,7 +598,7 @@ export default function DashboardPage() {
         <div className="p-5">
           {vehiclePerformance.length > 0 ? (
             <div className="h-64">
-              <VehiclePerformanceChart data={vehiclePerformance} />
+              {vehicleSection.inView ? <VehiclePerformanceChart data={vehiclePerformance} /> : <ChartLoading />}
             </div>
           ) : (
             <div className="py-12 text-center">
@@ -532,8 +611,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Fleet Utilization + Booking Status */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      {/* Fleet Utilization + Booking Status - Hidden on mobile for performance */}
+      <div ref={utilizationSection.ref} className="hidden sm:grid lg:grid-cols-2 gap-6">
         {/* Fleet Utilization */}
         <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden hover:border-white/[0.1] transition-colors">
           <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
@@ -597,7 +676,7 @@ export default function DashboardPage() {
             {bookingStatusData.length > 0 ? (
               <div className="flex items-center gap-6">
                 <div className="w-36 h-36 sm:w-44 sm:h-44 flex-shrink-0">
-                  <BookingStatusPieChart data={bookingStatusData} />
+                  {utilizationSection.inView ? <BookingStatusPieChart data={bookingStatusData} /> : <ChartLoading />}
                 </div>
                 <div className="flex-1 space-y-3">
                   {bookingStatusData.map((status) => (
@@ -750,8 +829,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* Quick Actions - Hidden on mobile */}
+      <div className="hidden sm:grid grid-cols-3 gap-3">
         {[
           { label: "Add Vehicle", href: "/dashboard/vehicles", icon: Car },
           { label: "View Leads", href: "/dashboard/leads", icon: Users },
