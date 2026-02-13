@@ -200,28 +200,28 @@ export default function LeadDetailModal({
     : notes
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-4xl h-[85vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-2 md:p-4">
+      <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-4xl h-[95vh] md:h-[85vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#375DEE]/20 flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-[#375DEE]" />
+        <div className="flex items-center justify-between px-3 md:px-5 py-3 md:py-4 border-b border-white/10 flex-shrink-0">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-[#375DEE]/20 flex items-center justify-center flex-shrink-0">
+              <Building2 className="w-4 h-4 md:w-5 md:h-5 text-[#375DEE]" />
             </div>
-            <div>
-              <h2 className="text-lg font-bold">{localLead.company_name}</h2>
-              <p className="text-sm text-white/50">{localLead.contact_name}</p>
+            <div className="min-w-0">
+              <h2 className="text-base md:text-lg font-bold truncate">{localLead.company_name}</h2>
+              <p className="text-xs md:text-sm text-white/50 truncate">{localLead.contact_name}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1 md:gap-1.5 flex-shrink-0">
             <div className="relative" ref={statusDropdownRef}>
               <button
                 onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${getStatusColor(localLead.status)}`}
+                className={`px-2 md:px-2.5 py-1 rounded-lg text-[10px] md:text-xs font-medium flex items-center gap-0.5 md:gap-1 transition-colors whitespace-nowrap ${getStatusColor(localLead.status)}`}
               >
                 {getStatusLabel(localLead.status)}
-                <ChevronDown className="w-3.5 h-3.5" />
+                <ChevronDown className="w-3 h-3 md:w-3.5 md:h-3.5" />
               </button>
               {showStatusDropdown && (
                 <div className="absolute right-0 top-full mt-1 w-40 bg-[#1a1a1a] rounded-xl border border-white/10 shadow-xl z-10 overflow-hidden">
@@ -262,11 +262,96 @@ export default function LeadDetailModal({
           </div>
         </div>
 
-        {/* Two Column Layout */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Left Side - Lead Info Card */}
-          <div className="w-72 flex-shrink-0 border-r border-white/10 overflow-y-auto p-5">
-            <div className="space-y-3">
+        {/* Two Column Layout - Stacked on mobile */}
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+          {/* Left Side - Lead Info Card (Top on mobile) */}
+          <div className="w-full md:w-72 flex-shrink-0 border-b md:border-b-0 md:border-r border-white/10 overflow-y-auto p-4 md:p-5 max-h-[40vh] md:max-h-none">
+            {/* Mobile: Compact grid layout */}
+            <div className="md:hidden">
+              {/* Contact info grid */}
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {localLead.contact_email && (
+                  <a
+                    href={`mailto:${localLead.contact_email}`}
+                    className="flex items-center gap-2 p-2.5 bg-white/5 rounded-xl text-sm text-white/70 hover:text-[#375DEE] hover:bg-white/10 transition-colors"
+                  >
+                    <Mail className="w-4 h-4 text-white/40 flex-shrink-0" />
+                    <span className="truncate text-xs">{localLead.contact_email}</span>
+                  </a>
+                )}
+
+                {localLead.contact_phone && (
+                  <a
+                    href={`tel:${localLead.contact_phone}`}
+                    className="flex items-center gap-2 p-2.5 bg-white/5 rounded-xl text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                  >
+                    <Phone className="w-4 h-4 text-white/40 flex-shrink-0" />
+                    <span className="truncate text-xs">{localLead.contact_phone}</span>
+                  </a>
+                )}
+
+                {localLead.website && (
+                  <a
+                    href={localLead.website.startsWith("http") ? localLead.website : `https://${localLead.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2.5 bg-white/5 rounded-xl text-sm text-white/70 hover:text-[#375DEE] hover:bg-white/10 transition-colors"
+                  >
+                    <Globe className="w-4 h-4 text-white/40 flex-shrink-0" />
+                    <span className="truncate text-xs">{localLead.website.replace(/^https?:\/\//, '')}</span>
+                  </a>
+                )}
+
+                {instagram && (
+                  <a
+                    href={`https://instagram.com/${instagram.replace(/^@/, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2.5 bg-white/5 rounded-xl text-sm text-white/70 hover:text-[#375DEE] hover:bg-white/10 transition-colors"
+                  >
+                    <Instagram className="w-4 h-4 text-white/40 flex-shrink-0" />
+                    <span className="truncate text-xs">@{instagram.replace(/^@/, '')}</span>
+                  </a>
+                )}
+
+                {localLead.location && (
+                  <div className="flex items-center gap-2 p-2.5 bg-white/5 rounded-xl text-sm text-white/70 col-span-2">
+                    <MapPin className="w-4 h-4 text-white/40 flex-shrink-0" />
+                    <span className="text-xs">{localLead.location}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Last contacted row */}
+              <div className="flex items-center justify-between p-2.5 bg-white/5 rounded-xl">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-white/40" />
+                  <div>
+                    <p className="text-[10px] text-white/40">Last contacted</p>
+                    <p className="text-xs text-white/70">
+                      {localLead.last_contacted_at
+                        ? formatDistanceToNow(new Date(localLead.last_contacted_at), { addSuffix: true })
+                        : "Never"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleMarkContacted}
+                  disabled={markingContacted}
+                  className="p-2 bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 rounded-lg transition-colors"
+                  title="Mark as contacted now"
+                >
+                  {markingContacted ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Desktop: Original vertical list layout */}
+            <div className="hidden md:block space-y-3">
               {/* Contact Info */}
               <div className="flex items-center gap-2.5">
                 <User className="w-4 h-4 text-white/30" />
@@ -368,10 +453,10 @@ export default function LeadDetailModal({
             </div>
           </div>
 
-          {/* Right Side - Notes (Chat Style) */}
-          <div className="flex-1 flex flex-col bg-[#050505]">
+          {/* Right Side - Notes (Chat Style) - Bottom on mobile */}
+          <div className="flex-1 flex flex-col bg-[#050505] min-h-0">
             {/* Chat Messages Area */}
-            <div className="flex-1 overflow-y-auto p-5">
+            <div className="flex-1 overflow-y-auto p-3 md:p-5">
               {loadingNotes ? (
                 <div className="flex items-center justify-center h-full">
                   <Loader2 className="w-6 h-6 animate-spin text-[#375DEE]" />
@@ -406,8 +491,8 @@ export default function LeadDetailModal({
             </div>
 
             {/* Message Input */}
-            <div className="p-4 border-t border-white/10">
-              <div className="flex items-end gap-3">
+            <div className="p-3 md:p-4 border-t border-white/10 flex-shrink-0">
+              <div className="flex items-end gap-2 md:gap-3">
                 <textarea
                   value={newNote}
                   onChange={(e) => {
