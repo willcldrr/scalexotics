@@ -204,8 +204,8 @@ export default function CustomersPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div>
+      <div className="space-y-4 sm:space-y-6">
+        <div className="hidden sm:block">
           <h1 className="text-3xl font-bold dashboard-heading">
             Customers
           </h1>
@@ -219,9 +219,9 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header - Hidden on mobile */}
+      <div className="hidden sm:flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold dashboard-heading">
             Customers

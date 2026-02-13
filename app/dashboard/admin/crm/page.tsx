@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
+import dynamic from "next/dynamic"
 import { createClient } from "@/lib/supabase/client"
 import {
   Users,
@@ -9,18 +10,36 @@ import {
   BarChart3,
   Settings2,
   Loader2,
-  Plus,
-  Upload,
-  Search,
-  Filter,
 } from "lucide-react"
 
-// Tab components
-import LeadsTab from "./components/leads-tab"
-import PipelineTab from "./components/pipeline-tab"
-import CalendarTab from "./components/calendar-tab"
-import AnalyticsTab from "./components/analytics-tab"
-import SettingsTab from "./components/settings-tab"
+// Loading fallback component
+const TabLoading = () => (
+  <div className="flex items-center justify-center h-64">
+    <Loader2 className="w-8 h-8 animate-spin text-[#375DEE]" />
+  </div>
+)
+
+// Lazy load heavy tab components - these include dnd-kit, date-fns, etc.
+const LeadsTab = dynamic(() => import("./components/leads-tab"), {
+  loading: TabLoading,
+  ssr: false,
+})
+const PipelineTab = dynamic(() => import("./components/pipeline-tab"), {
+  loading: TabLoading,
+  ssr: false,
+})
+const CalendarTab = dynamic(() => import("./components/calendar-tab"), {
+  loading: TabLoading,
+  ssr: false,
+})
+const AnalyticsTab = dynamic(() => import("./components/analytics-tab"), {
+  loading: TabLoading,
+  ssr: false,
+})
+const SettingsTab = dynamic(() => import("./components/settings-tab"), {
+  loading: TabLoading,
+  ssr: false,
+})
 
 type TabKey = "leads" | "pipeline" | "calendar" | "analytics" | "settings"
 
@@ -70,8 +89,8 @@ export default function AdminCRMPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div>
+      <div className="space-y-4 sm:space-y-6">
+        <div className="hidden sm:block">
           <h1 className="text-3xl font-bold dashboard-heading">CRM</h1>
           <p className="text-white/50 mt-1">Loading...</p>
         </div>
@@ -84,11 +103,11 @@ export default function AdminCRMPage() {
 
   if (!isAdmin) {
     return (
-      <div className="space-y-6">
-        <div>
+      <div className="space-y-4 sm:space-y-6">
+        <div className="hidden sm:block">
           <h1 className="text-3xl font-bold dashboard-heading">Access Denied</h1>
-          <p className="text-white/50 mt-1">You don&apos;t have permission to access this page.</p>
         </div>
+        <p className="text-white/50">You don&apos;t have permission to access this page.</p>
       </div>
     )
   }

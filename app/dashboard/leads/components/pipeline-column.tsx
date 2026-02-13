@@ -1,5 +1,6 @@
 "use client"
 
+import { memo, useCallback } from "react"
 import { useDroppable } from "@dnd-kit/core"
 import { LeadStatusOption, LeadStatus } from "@/lib/lead-status"
 import PipelineCard from "./pipeline-card"
@@ -23,7 +24,8 @@ interface PipelineColumnProps {
   onLeadClick: (lead: Lead) => void
 }
 
-export default function PipelineColumn({
+// Memoized column to prevent re-renders when other columns update
+const PipelineColumn = memo(function PipelineColumn({
   status,
   leads,
   onLeadClick,
@@ -79,4 +81,6 @@ export default function PipelineColumn({
       </div>
     </div>
   )
-}
+})
+
+export default PipelineColumn

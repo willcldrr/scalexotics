@@ -1,9 +1,8 @@
 import type React from "react"
-import type { Metadata } from "next"
-import { Analytics } from "@vercel/analytics/next"
-import { GoogleAnalytics } from "@next/third-parties/google"
+import type { Metadata, Viewport } from "next"
 import { outfit, inter, jetbrainsMono } from "./fonts"
 import { seoConfig, getAllSchemas } from "@/lib/seo"
+import AnalyticsWrapper from "./components/analytics-wrapper"
 import "./globals.css"
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://scalexotics.com'
@@ -70,6 +69,14 @@ export const metadata: Metadata = {
   category: "technology",
 }
 
+// Viewport configuration for better mobile performance
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#000000",
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -78,15 +85,21 @@ export default function RootLayout({
   const schemas = getAllSchemas()
 
   return (
-    <html lang="en" className={`${outfit.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${outfit.variable} ${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <head>
+        {/* Critical preconnects for fastest resource loading */}
+        <link rel="preconnect" href="https://imagedelivery.net" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://images.unsplash.com" />
-        <link rel="preconnect" href="https://imagedelivery.net" />
+
+        {/* DNS prefetch for secondary resources */}
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
-        <link rel="dns-prefetch" href="https://imagedelivery.net" />
-        {/* JSON-LD Structured Data */}
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+
+        {/* Preload critical assets */}
+        <link rel="preload" href="/scalexoticslogo.png" as="image" />
+
+        {/* JSON-LD Structured Data - moved to end of head for non-blocking */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -96,10 +109,8 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         {children}
-        <Analytics />
-        {process.env.NEXT_PUBLIC_GA_ID && (
-          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
-        )}
+        {/* Analytics loaded after main content */}
+        <AnalyticsWrapper />
       </body>
     </html>
   )

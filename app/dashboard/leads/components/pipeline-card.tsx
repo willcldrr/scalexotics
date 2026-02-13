@@ -1,9 +1,10 @@
 "use client"
 
+import { memo, useMemo } from "react"
 import { useDraggable } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
 import { LeadStatus } from "@/lib/lead-status"
-import { Phone, Car, Globe, Clock } from "lucide-react"
+import { Phone, Car, Clock } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 
 interface Lead {
@@ -34,7 +35,8 @@ const sourceIcons: Record<string, string> = {
   other: "📌",
 }
 
-export default function PipelineCard({
+// Memoized card to prevent re-renders during drag operations on other cards
+const PipelineCard = memo(function PipelineCard({
   lead,
   onClick,
   isDragging = false,
@@ -114,4 +116,6 @@ export default function PipelineCard({
       </div>
     </div>
   )
-}
+})
+
+export default PipelineCard

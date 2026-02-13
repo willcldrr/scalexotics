@@ -174,6 +174,31 @@ export default function DashboardLayout({
     router.refresh()
   }, [supabase, router])
 
+  // Prefetch critical routes on mount for faster navigation
+  useEffect(() => {
+    // Prefetch most common navigation targets
+    const criticalRoutes = [
+      "/dashboard",
+      "/dashboard/leads",
+      "/dashboard/bookings",
+      "/dashboard/settings",
+    ]
+
+    // Use requestIdleCallback for non-blocking prefetch
+    const prefetchRoutes = () => {
+      criticalRoutes.forEach(route => {
+        router.prefetch(route)
+      })
+    }
+
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(prefetchRoutes)
+    } else {
+      // Fallback for Safari
+      setTimeout(prefetchRoutes, 100)
+    }
+  }, [router])
+
   // Session validation - TEMPORARILY DISABLED for debugging
   // TODO: Re-enable once session creation is fixed
   // useEffect(() => {

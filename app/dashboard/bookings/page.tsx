@@ -347,8 +347,8 @@ export default function BookingsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div>
+      <div className="space-y-4 sm:space-y-6">
+        <div className="hidden sm:block">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight dashboard-heading">
             Bookings
           </h1>
@@ -362,9 +362,9 @@ export default function BookingsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header - Hidden on mobile */}
+      <div className="hidden sm:block">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight dashboard-heading">
           Bookings
         </h1>

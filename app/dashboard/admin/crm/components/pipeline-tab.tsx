@@ -1,19 +1,19 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, memo } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCenter } from "@dnd-kit/core"
 import { useDroppable, useDraggable } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
-import { RefreshCw, Building2, User, DollarSign, MapPin, Clock, Loader2 } from "lucide-react"
+import { RefreshCw, Building2, User, MapPin, Clock, Loader2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { type CRMLeadStatus } from "../lib/crm-status"
 import { useCRMStatuses, type CRMStatusOption } from "../hooks/use-crm-statuses"
 import type { CRMLead } from "./leads-tab"
 import LeadDetailModal from "./lead-detail-modal"
 
-// Pipeline Column Component
-function PipelineColumn({
+// Pipeline Column Component - Memoized to prevent re-renders
+const PipelineColumn = memo(function PipelineColumn({
   status,
   leads,
   onLeadClick,
@@ -75,10 +75,10 @@ function PipelineColumn({
       </div>
     </div>
   )
-}
+})
 
-// Pipeline Card Component
-function PipelineCard({
+// Pipeline Card Component - Memoized to prevent re-renders during drag operations
+const PipelineCard = memo(function PipelineCard({
   lead,
   onClick,
   isDragging = false,
@@ -164,7 +164,7 @@ function PipelineCard({
       </div>
     </div>
   )
-}
+})
 
 export default function PipelineTab() {
   const supabase = createClient()

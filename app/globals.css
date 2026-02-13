@@ -123,6 +123,23 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Prevent layout thrashing on scroll */
+    overflow-anchor: auto;
+  }
+  /* GPU acceleration for animated elements */
+  .animate-pulse,
+  .animate-spin,
+  .animate-fade-in,
+  .animate-fade-out {
+    will-change: transform, opacity;
+  }
+  /* Optimize text rendering */
+  h1, h2, h3, h4, h5, h6 {
+    text-rendering: optimizeLegibility;
+  }
+  /* Reduce paint on hover states */
+  button, a {
+    contain: layout style;
   }
 }
 

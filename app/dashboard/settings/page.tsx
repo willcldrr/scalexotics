@@ -17,9 +17,9 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<"account" | "lead-capture" | "widget" | "calendar" | "sidebar" | "branding" | "sessions" | "connections">("account")
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header - Hidden on mobile */}
+      <div className="hidden sm:block">
         <h1 className="text-3xl font-bold dashboard-heading">
           Settings
         </h1>

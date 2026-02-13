@@ -79,18 +79,58 @@ interface DashboardCacheContextType {
 }
 
 const CACHE_DURATION = 30000 // 30 seconds - data is considered fresh for this long
+const LOCAL_CACHE_KEY = 'scale_exotics_dashboard_cache'
+const LOCAL_CACHE_MAX_AGE = 5 * 60 * 1000 // 5 minutes max age for localStorage cache
 
 const DashboardCacheContext = createContext<DashboardCacheContextType | null>(null)
 
+// Load cached data from localStorage for instant first render
+const loadCachedData = (): DashboardData | null => {
+  if (typeof window === 'undefined') return null
+  try {
+    const cached = localStorage.getItem(LOCAL_CACHE_KEY)
+    if (!cached) return null
+    const parsed = JSON.parse(cached)
+    // Only use cache if it's less than 5 minutes old
+    if (parsed.lastFetched && Date.now() - parsed.lastFetched < LOCAL_CACHE_MAX_AGE) {
+      return { ...parsed, isLoading: true } // Still show loading while we revalidate
+    }
+  } catch {
+    // Invalid cache, ignore
+  }
+  return null
+}
+
+// Save data to localStorage for future instant loads
+const saveCachedData = (data: DashboardData) => {
+  if (typeof window === 'undefined') return
+  try {
+    // Only cache essential fields, not the full data to save space
+    const toCache = {
+      leads: data.leads.slice(0, 100), // Only cache first 100 items
+      vehicles: data.vehicles.slice(0, 50),
+      bookings: data.bookings.slice(0, 100),
+      lastFetched: data.lastFetched,
+    }
+    localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(toCache))
+  } catch {
+    // Quota exceeded or other error, ignore
+  }
+}
+
 export function DashboardCacheProvider({ children }: { children: ReactNode }) {
   const supabase = createClient()
-  const [data, setData] = useState<DashboardData>({
-    leads: [],
-    vehicles: [],
-    bookings: [],
-    lastFetched: null,
-    isLoading: true,
-    error: null,
+  // Initialize with cached data if available for instant first render
+  const [data, setData] = useState<DashboardData>(() => {
+    const cached = loadCachedData()
+    return cached || {
+      leads: [],
+      vehicles: [],
+      bookings: [],
+      lastFetched: null,
+      isLoading: true,
+      error: null,
+    }
   })
 
   const fetchAllData = useCallback(async (force = false) => {
@@ -129,14 +169,17 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
           .limit(500),
       ])
 
-      setData({
+      const newData = {
         leads: leadsRes.data || [],
         vehicles: vehiclesRes.data || [],
         bookings: bookingsRes.data || [],
         lastFetched: Date.now(),
         isLoading: false,
         error: null,
-      })
+      }
+      setData(newData)
+      // Persist to localStorage for instant future loads
+      saveCachedData(newData)
     } catch (err) {
       console.error("Error fetching dashboard data:", err)
       setData(prev => ({

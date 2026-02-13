@@ -1,21 +1,45 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import dynamic from "next/dynamic"
 import { createClient } from "@/lib/supabase/client"
 import {
-  RefreshCw,
   LayoutGrid,
   Users,
   Megaphone,
   FileText,
   Settings,
+  Loader2,
 } from "lucide-react"
 
-import OverviewTab from "./components/overview-tab"
-import ContactsTab from "./components/contacts-tab"
-import CampaignsTab from "./components/campaigns-tab"
-import TemplatesTab from "./components/templates-tab"
-import SettingsTab from "./components/settings-tab"
+// Loading fallback for tabs
+const TabLoading = () => (
+  <div className="flex items-center justify-center h-48">
+    <Loader2 className="w-6 h-6 animate-spin text-[#375DEE]" />
+  </div>
+)
+
+// Lazy load tab components
+const OverviewTab = dynamic(() => import("./components/overview-tab"), {
+  loading: TabLoading,
+  ssr: false,
+})
+const ContactsTab = dynamic(() => import("./components/contacts-tab"), {
+  loading: TabLoading,
+  ssr: false,
+})
+const CampaignsTab = dynamic(() => import("./components/campaigns-tab"), {
+  loading: TabLoading,
+  ssr: false,
+})
+const TemplatesTab = dynamic(() => import("./components/templates-tab"), {
+  loading: TabLoading,
+  ssr: false,
+})
+const SettingsTab = dynamic(() => import("./components/settings-tab"), {
+  loading: TabLoading,
+  ssr: false,
+})
 
 type TabId = "overview" | "contacts" | "campaigns" | "templates" | "settings"
 
@@ -73,9 +97,9 @@ export default function ReactivationPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header - Hidden on mobile */}
+      <div className="hidden sm:block">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight dashboard-heading">
           Reactivation
         </h1>

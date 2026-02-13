@@ -1,19 +1,33 @@
 "use client"
 
 import { useState } from "react"
-import { FileText, Receipt } from "lucide-react"
+import dynamic from "next/dynamic"
+import { FileText, Receipt, Loader2 } from "lucide-react"
 
-// Import the content from both pages
-import AgreementsContent from "./agreements-content"
-import InvoicesContent from "./invoices-content"
+// Loading fallback
+const ContentLoading = () => (
+  <div className="flex items-center justify-center h-48">
+    <Loader2 className="w-6 h-6 animate-spin text-[#375DEE]" />
+  </div>
+)
+
+// Lazy load content components
+const AgreementsContent = dynamic(() => import("./agreements-content"), {
+  loading: ContentLoading,
+  ssr: false,
+})
+const InvoicesContent = dynamic(() => import("./invoices-content"), {
+  loading: ContentLoading,
+  ssr: false,
+})
 
 export default function BillingPage() {
   const [activeTab, setActiveTab] = useState<"invoices" | "agreements">("invoices")
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header - Hidden on mobile */}
+      <div className="hidden sm:block">
         <h1 className="text-3xl font-bold dashboard-heading">
           Billing
         </h1>

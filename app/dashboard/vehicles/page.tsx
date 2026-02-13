@@ -274,8 +274,8 @@ export default function VehiclesPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="hidden sm:flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold dashboard-heading">
               Vehicles
@@ -283,7 +283,7 @@ export default function VehiclesPage() {
             <p className="text-white/50 mt-1">Loading your fleet...</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="bg-white/5 rounded-2xl overflow-hidden animate-pulse">
               <div className="h-48 bg-white/10" />
@@ -299,9 +299,9 @@ export default function VehiclesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header - Hidden on mobile */}
+      <div className="hidden sm:flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold dashboard-heading">
             Vehicles
