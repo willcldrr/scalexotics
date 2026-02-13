@@ -99,7 +99,6 @@ export default function AdminCRMPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold dashboard-heading">CRM</h1>
-          <p className="text-white/50 mt-1">Manage your B2B leads and sales pipeline</p>
         </div>
       </div>
 

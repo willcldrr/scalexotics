@@ -65,7 +65,7 @@ export interface CRMLead {
   notes_count?: number
 }
 
-type SortField = "company_name" | "contact_name" | "status" | "estimated_value" | "created_at" | "next_follow_up"
+type SortField = "company_name" | "contact_name" | "status" | "estimated_value" | "last_contacted_at" | "next_follow_up"
 type SortDirection = "asc" | "desc"
 
 export default function LeadsTab() {
@@ -74,7 +74,7 @@ export default function LeadsTab() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [sortField, setSortField] = useState<SortField>("created_at")
+  const [sortField, setSortField] = useState<SortField>("last_contacted_at")
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc")
 
   // Modals
@@ -129,10 +129,12 @@ export default function LeadsTab() {
   }, [])
 
   const fetchLeads = async () => {
-    const { data, error } = await supabase
+    // Fetch all leads (Supabase default limit is 1000, so we need to specify a higher limit)
+    const { data, error, count } = await supabase
       .from("crm_leads")
-      .select("*")
+      .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
+      .limit(10000)
 
     if (error) {
       console.error("Error fetching CRM leads:", error)
@@ -281,7 +283,7 @@ export default function LeadsTab() {
         bVal = bVal || 0
       }
 
-      if (sortField === "created_at" || sortField === "next_follow_up") {
+      if (sortField === "last_contacted_at" || sortField === "next_follow_up") {
         aVal = aVal ? new Date(aVal).getTime() : 0
         bVal = bVal ? new Date(bVal).getTime() : 0
       }
@@ -547,12 +549,12 @@ export default function LeadsTab() {
                     </div>
                   </th>
                   <th
-                    onClick={() => handleSort("created_at")}
-                    className="text-left text-xs text-white/40 font-medium px-6 py-4 cursor-pointer hover:text-white transition-colors"
+                    onClick={() => handleSort("last_contacted_at")}
+                    className="text-left text-xs text-white/40 font-medium px-6 py-4 cursor-pointer hover:text-white transition-colors whitespace-nowrap"
                   >
                     <div className="flex items-center gap-1">
-                      Created
-                      <SortIcon field="created_at" />
+                      Last Contacted
+                      <SortIcon field="last_contacted_at" />
                     </div>
                   </th>
                   <th className="text-left text-xs text-white/40 font-medium px-6 py-4">Actions</th>
@@ -606,7 +608,7 @@ export default function LeadsTab() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${getStatusColor(lead.status)}`}>
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap ${getStatusColor(lead.status)}`}>
                         {getStatusLabel(lead.status)}
                       </span>
                     </td>
@@ -621,7 +623,9 @@ export default function LeadsTab() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-white/60">{formatDate(lead.created_at)}</span>
+                      <span className={`text-sm ${lead.last_contacted_at ? "text-white/60" : "text-white/30"}`}>
+                        {formatDate(lead.last_contacted_at)}
+                      </span>
                     </td>
                     <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <div className="relative" ref={openMenuId === lead.id ? menuRef : null}>

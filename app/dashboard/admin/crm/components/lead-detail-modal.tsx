@@ -406,19 +406,19 @@ export default function LeadDetailModal({
 
                 {/* Add Note Form */}
                 <div className="p-4 border-t border-white/10">
-                  <div className="flex gap-2 mb-2">
+                  <div className="flex flex-wrap gap-1.5 mb-3">
                     {(["note", "call", "email", "meeting"] as CRMNoteType[]).map((type) => (
                       <button
                         key={type}
                         onClick={() => setNoteType(type)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 whitespace-nowrap ${
                           noteType === type
                             ? "bg-[#375DEE] text-white"
-                            : "bg-white/5 text-white/50 hover:text-white"
+                            : "bg-white/5 text-white/50 hover:text-white hover:bg-white/10"
                         }`}
                       >
                         {getNoteIcon(type)}
-                        {noteTypeOptions.find((o) => o.value === type)?.label}
+                        <span className="hidden sm:inline">{noteTypeOptions.find((o) => o.value === type)?.label}</span>
                       </button>
                     ))}
                   </div>
