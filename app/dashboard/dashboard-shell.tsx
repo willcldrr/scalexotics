@@ -248,11 +248,11 @@ export default function DashboardLayout({
 
       {/* Sidebar - Desktop: Icon only with tooltips, Mobile: Full width */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full bg-[#0a0a0a] border-r border-white/10 transform transition-transform duration-200 lg:translate-x-0 w-64 lg:w-[72px] ${
+        className={`fixed top-0 left-0 z-50 h-full bg-[#0a0a0a] border-r border-white/10 transform transition-transform duration-200 lg:translate-x-0 w-64 lg:w-[72px] lg:overflow-visible ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full lg:overflow-visible">
           {/* Logo */}
           <div className="px-6 lg:px-3 py-3 border-b border-white/10 flex justify-center">
             <Link href="/dashboard" className="flex items-center gap-3 lg:gap-0">
@@ -267,7 +267,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 lg:p-2 space-y-1 overflow-y-auto">
+          <nav className="flex-1 p-4 lg:p-2 space-y-1 overflow-y-auto lg:overflow-visible">
             {navItems.map((item) => {
               const isActive = pathname === item.href ||
                 (item.href !== "/dashboard" && pathname.startsWith(item.href))
@@ -286,7 +286,7 @@ export default function DashboardLayout({
                   <span className="font-medium lg:hidden">{item.name}</span>
                   {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
                   {/* Tooltip for desktop */}
-                  <span className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] text-white text-sm font-medium rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-50 shadow-lg border border-white/10">
+                  <span className="absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] text-white text-sm font-medium rounded-lg whitespace-nowrap scale-0 lg:group-hover:scale-100 opacity-0 lg:group-hover:opacity-100 transition-all duration-150 pointer-events-none z-[100] shadow-lg border border-white/10 origin-left">
                     {item.name}
                   </span>
                 </Link>
@@ -320,7 +320,7 @@ export default function DashboardLayout({
                       <span className="font-medium lg:hidden">{item.name}</span>
                       {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
                       {/* Tooltip for desktop */}
-                      <span className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] text-white text-sm font-medium rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-50 shadow-lg border border-white/10">
+                      <span className="absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] text-white text-sm font-medium rounded-lg whitespace-nowrap scale-0 lg:group-hover:scale-100 opacity-0 lg:group-hover:opacity-100 transition-all duration-150 pointer-events-none z-[100] shadow-lg border border-white/10 origin-left">
                         {item.name}
                       </span>
                     </Link>
@@ -331,7 +331,7 @@ export default function DashboardLayout({
           </nav>
 
           {/* User section */}
-          <div className="p-4 lg:p-2 border-t border-white/10">
+          <div className="p-4 lg:p-2 border-t border-white/10 lg:overflow-visible">
             {/* Mobile: Full user info */}
             <div className="flex items-center gap-3 px-4 py-3 mb-2 lg:hidden">
               <div className="w-10 h-10 rounded-full bg-[#375DEE]/20 flex items-center justify-center">
@@ -355,7 +355,7 @@ export default function DashboardLayout({
                   {profile?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || "U"}
                 </span>
                 {/* Tooltip */}
-                <span className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] text-white text-sm font-medium rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-50 shadow-lg border border-white/10">
+                <span className="absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] text-white text-sm font-medium rounded-lg whitespace-nowrap scale-0 lg:group-hover:scale-100 opacity-0 lg:group-hover:opacity-100 transition-all duration-150 pointer-events-none z-[100] shadow-lg border border-white/10 origin-left">
                   {profile?.full_name || "User"}
                 </span>
               </div>
@@ -368,7 +368,7 @@ export default function DashboardLayout({
               <LogOut className="w-5 h-5 flex-shrink-0" />
               <span className="font-medium lg:hidden">Sign Out</span>
               {/* Tooltip for desktop */}
-              <span className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] text-white text-sm font-medium rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-50 shadow-lg border border-white/10">
+              <span className="absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] text-white text-sm font-medium rounded-lg whitespace-nowrap scale-0 lg:group-hover:scale-100 opacity-0 lg:group-hover:opacity-100 transition-all duration-150 pointer-events-none z-[100] shadow-lg border border-white/10 origin-left">
                 Sign Out
               </span>
             </button>
