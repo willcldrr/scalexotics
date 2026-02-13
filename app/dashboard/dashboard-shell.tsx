@@ -28,6 +28,7 @@ import {
   FileText,
   Key,
   RefreshCw,
+  Building2,
 } from "lucide-react"
 
 // Ordered by frequency of use for rental fleet owners
@@ -44,6 +45,7 @@ const allNavItems = [
 ]
 
 const adminNavItems = [
+  { name: "CRM", href: "/dashboard/admin/crm", icon: Building2, key: "admin-crm" },
   { name: "Domains", href: "/dashboard/admin/domains", icon: Globe, key: "admin-domains" },
   { name: "Invoices", href: "/dashboard/admin/invoices", icon: FileText, key: "admin-invoices" },
   { name: "Access Codes", href: "/dashboard/admin/access-codes", icon: Key, key: "admin-access-codes" },

@@ -2,7 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Analytics } from "@vercel/analytics/next"
 import { GoogleAnalytics } from "@next/third-parties/google"
-import { syne, inter, jetbrainsMono } from "./fonts"
+import { outfit, inter, jetbrainsMono } from "./fonts"
 import { seoConfig, getAllSchemas } from "@/lib/seo"
 import "./globals.css"
 
@@ -78,7 +78,7 @@ export default function RootLayout({
   const schemas = getAllSchemas()
 
   return (
-    <html lang="en" className={`${syne.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${outfit.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
