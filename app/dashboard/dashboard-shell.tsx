@@ -254,14 +254,14 @@ export default function DashboardLayout({
       >
         <div className="flex flex-col h-full lg:overflow-visible">
           {/* Logo - aligned with header height */}
-          <div className="px-6 lg:px-3 py-3 lg:py-[14px] border-b border-white/10 flex justify-center items-center">
+          <div className="px-6 lg:px-3 py-3 lg:h-[73px] border-b border-white/10 flex justify-center items-center">
             <Link href="/dashboard" className="flex items-center gap-3 lg:gap-0">
               <Image
                 src="/scalexoticslogo.png"
                 alt="Scale Exotics"
                 width={60}
                 height={60}
-                className="h-[60px] w-[60px] lg:h-[44px] lg:w-[44px] object-contain"
+                className="h-[60px] w-[60px] lg:h-[48px] lg:w-[48px] object-contain"
               />
             </Link>
           </div>
@@ -379,8 +379,8 @@ export default function DashboardLayout({
       {/* Main content */}
       <div className={`lg:pl-[72px] ${pathname.startsWith("/dashboard/admin/crm") ? "" : "pb-16"} lg:pb-0`}>
         {/* Top bar */}
-        <header className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-white/10">
-          <div className="flex items-center justify-between px-4 lg:px-6 py-3 lg:py-4">
+        <header className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-white/10 lg:h-[73px]">
+          <div className="flex items-center justify-between px-4 lg:px-6 py-3 h-full">
             <div className="flex items-center gap-3 lg:hidden">
               <button
                 onClick={() => setSidebarOpen(true)}
@@ -391,11 +391,6 @@ export default function DashboardLayout({
               <h1 className="font-semibold text-lg">{getPageTitle()}</h1>
             </div>
             <div className="flex-1 hidden lg:block" />
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-white/40 hidden sm:block">
-                {profile?.company_name}
-              </span>
-            </div>
           </div>
         </header>
 
