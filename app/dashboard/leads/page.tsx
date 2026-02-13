@@ -560,7 +560,7 @@ export default function LeadsPage() {
     return (
       <div className="space-y-4 sm:space-y-6">
         <div className="hidden sm:block">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight dashboard-heading">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: '#ffffff', background: 'none', WebkitTextFillColor: '#ffffff' }}>
             Leads
           </h1>
           <p className="text-white/50 mt-1">Loading your CRM...</p>
@@ -578,7 +578,7 @@ export default function LeadsPage() {
       <div className="hidden sm:flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight dashboard-heading">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: '#ffffff', background: 'none', WebkitTextFillColor: '#ffffff' }}>
               Leads
             </h1>
             {unreadCount > 0 && (

@@ -371,10 +371,10 @@ export default function InvoicesContent() {
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
-      draft: "bg-gray-500/20 text-gray-400",
-      sent: "bg-blue-500/20 text-blue-400",
-      paid: "bg-green-500/20 text-green-400",
-      overdue: "bg-red-500/20 text-red-400",
+      draft: "bg-white/10 text-white/50",
+      sent: "bg-[#375DEE]/20 text-[#6B8DFF]",
+      paid: "bg-[#375DEE]/30 text-[#375DEE]",
+      overdue: "bg-white/5 text-white/40",
     }
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status]}`}>

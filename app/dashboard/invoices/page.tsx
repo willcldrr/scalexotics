@@ -329,7 +329,7 @@ export default function InvoicesPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold dashboard-heading">Invoices</h1>
+          <h1 className="text-3xl font-bold text-white">Invoices</h1>
           <p className="text-white/50 mt-1">Loading invoices...</p>
         </div>
         <div className="flex items-center justify-center h-64">
@@ -344,7 +344,7 @@ export default function InvoicesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold dashboard-heading">Invoices</h1>
+          <h1 className="text-3xl font-bold text-white">Invoices</h1>
           <p className="text-white/50 mt-1">Generate and manage invoices</p>
         </div>
         <button

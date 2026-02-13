@@ -204,10 +204,10 @@ export default function AgreementsContent() {
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, { bg: string; text: string; icon: any }> = {
-      pending: { bg: "bg-gray-500/20", text: "text-gray-400", icon: Clock },
-      sent: { bg: "bg-blue-500/20", text: "text-blue-400", icon: Send },
-      signed: { bg: "bg-green-500/20", text: "text-green-400", icon: CheckCircle },
-      expired: { bg: "bg-red-500/20", text: "text-red-400", icon: XCircle },
+      pending: { bg: "bg-white/10", text: "text-white/50", icon: Clock },
+      sent: { bg: "bg-[#375DEE]/20", text: "text-[#6B8DFF]", icon: Send },
+      signed: { bg: "bg-[#375DEE]/30", text: "text-[#375DEE]", icon: CheckCircle },
+      expired: { bg: "bg-white/5", text: "text-white/40", icon: XCircle },
     }
     const style = styles[status] || styles.pending
     const Icon = style.icon

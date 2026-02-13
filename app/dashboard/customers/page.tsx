@@ -206,7 +206,7 @@ export default function CustomersPage() {
     return (
       <div className="space-y-4 sm:space-y-6">
         <div className="hidden sm:block">
-          <h1 className="text-3xl font-bold dashboard-heading">
+          <h1 className="text-3xl font-bold" style={{ color: '#ffffff', background: 'none', WebkitTextFillColor: '#ffffff' }}>
             Customers
           </h1>
           <p className="text-white/50 mt-1">Loading customer profiles...</p>
@@ -223,7 +223,7 @@ export default function CustomersPage() {
       {/* Header - Hidden on mobile */}
       <div className="hidden sm:flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold dashboard-heading">
+          <h1 className="text-3xl font-bold" style={{ color: '#ffffff', background: 'none', WebkitTextFillColor: '#ffffff' }}>
             Customers
           </h1>
           <p className="text-white/50 mt-1">{customers.length} customers with rental history</p>

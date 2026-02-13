@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next"
 import { outfit, inter, jetbrainsMono } from "./fonts"
 import { seoConfig, getAllSchemas } from "@/lib/seo"
 import AnalyticsWrapper from "./components/analytics-wrapper"
+import LoadingScreen from "./components/loading-screen"
 import "./globals.css"
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://scalexotics.com'
@@ -108,6 +109,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased">
+        <LoadingScreen />
         {children}
         {/* Analytics loaded after main content */}
         <AnalyticsWrapper />

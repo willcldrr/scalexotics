@@ -277,7 +277,7 @@ export default function VehiclesPage() {
       <div className="space-y-4 sm:space-y-6">
         <div className="hidden sm:flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold dashboard-heading">
+            <h1 className="text-3xl font-bold" style={{ color: '#ffffff', background: 'none', WebkitTextFillColor: '#ffffff' }}>
               Vehicles
             </h1>
             <p className="text-white/50 mt-1">Loading your fleet...</p>
@@ -303,7 +303,7 @@ export default function VehiclesPage() {
       {/* Header - Hidden on mobile */}
       <div className="hidden sm:flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold dashboard-heading">
+          <h1 className="text-3xl font-bold" style={{ color: '#ffffff', background: 'none', WebkitTextFillColor: '#ffffff' }}>
             Vehicles
           </h1>
           <p className="text-white/50 mt-1">

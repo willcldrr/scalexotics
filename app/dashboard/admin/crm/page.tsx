@@ -91,7 +91,7 @@ export default function AdminCRMPage() {
     return (
       <div className="space-y-4 sm:space-y-6">
         <div className="hidden sm:block">
-          <h1 className="text-3xl font-bold dashboard-heading">CRM</h1>
+          <h1 className="text-3xl font-bold text-white">CRM</h1>
           <p className="text-white/50 mt-1">Loading...</p>
         </div>
         <div className="flex items-center justify-center h-64">
@@ -105,7 +105,7 @@ export default function AdminCRMPage() {
     return (
       <div className="space-y-4 sm:space-y-6">
         <div className="hidden sm:block">
-          <h1 className="text-3xl font-bold dashboard-heading">Access Denied</h1>
+          <h1 className="text-3xl font-bold text-white">Access Denied</h1>
         </div>
         <p className="text-white/50">You don&apos;t have permission to access this page.</p>
       </div>
@@ -117,7 +117,7 @@ export default function AdminCRMPage() {
       {/* Header - Hidden on mobile since it's in the top bar */}
       <div className="hidden sm:flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold dashboard-heading">CRM</h1>
+          <h1 className="text-3xl font-bold text-white">CRM</h1>
         </div>
       </div>
 

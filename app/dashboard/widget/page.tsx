@@ -141,7 +141,7 @@ export default function WidgetPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold dashboard-heading">
+          <h1 className="text-3xl font-bold text-white">
             Booking Widget
           </h1>
           <p className="text-white/50 mt-1">Loading widget configuration...</p>
@@ -157,7 +157,7 @@ export default function WidgetPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold dashboard-heading">
+        <h1 className="text-3xl font-bold text-white">
           Booking Widget
         </h1>
         <p className="text-white/50 mt-1">Embed a booking widget on your website</p>

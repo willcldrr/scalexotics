@@ -169,7 +169,7 @@ export default function PipelinePage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1
-            className="text-2xl sm:text-3xl font-bold tracking-tight dashboard-heading"
+            className="text-2xl sm:text-3xl font-bold tracking-tight text-white"
            
           >
             Lead Pipeline

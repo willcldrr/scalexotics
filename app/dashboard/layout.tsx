@@ -1,6 +1,9 @@
 import type { Metadata } from "next"
 import DashboardShell from "./dashboard-shell"
 
+// Force dynamic rendering to prevent SSR cache issues
+export const dynamic = 'force-dynamic'
+
 // Prevent search engines from indexing dashboard pages
 export const metadata: Metadata = {
   title: {

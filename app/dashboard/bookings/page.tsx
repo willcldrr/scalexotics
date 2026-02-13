@@ -350,7 +350,7 @@ export default function BookingsPage() {
     return (
       <div className="space-y-4 sm:space-y-6">
         <div className="hidden sm:block">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight dashboard-heading">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
             Bookings
           </h1>
           <p className="text-white/50 mt-1">Loading bookings...</p>
@@ -366,7 +366,7 @@ export default function BookingsPage() {
     <div className="space-y-4 sm:space-y-6">
       {/* Header - Hidden on mobile */}
       <div className="hidden sm:block">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight dashboard-heading">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
           Bookings
         </h1>
         <p className="text-white/50 text-sm sm:text-base mt-1">

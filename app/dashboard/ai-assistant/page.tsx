@@ -242,7 +242,7 @@ export default function AIAssistantPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold dashboard-heading">
+          <h1 className="text-3xl font-bold" style={{ background: 'linear-gradient(to right, #ffffff 0%, #94a8e8 45%, #375DEE 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
             AI Assistant
           </h1>
           <p className="text-white/50 mt-1">Loading configuration...</p>
@@ -260,7 +260,7 @@ export default function AIAssistantPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold dashboard-heading">
+          <h1 className="text-3xl font-bold" style={{ background: 'linear-gradient(to right, #ffffff 0%, #94a8e8 45%, #375DEE 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
             AI Assistant
           </h1>
           <p className="text-white/50 mt-1">Configure your SMS booking assistant</p>

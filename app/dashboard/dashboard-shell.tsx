@@ -254,18 +254,15 @@ export default function DashboardLayout({
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-white/10">
+          <div className="px-6 py-3 border-b border-white/10">
             <Link href="/dashboard" className="flex items-center gap-3">
               <Image
-                src="https://imagedelivery.net/CVEJyzst_6io-ETn1V_PSw/3bdba65e-fb1a-4a3e-ff6f-1aa89b081f00/public"
+                src="/scalexoticslogo.png"
                 alt="Scale Exotics"
-                width={28}
-                height={28}
-                className="h-7 w-auto"
+                width={60}
+                height={60}
+                className="h-[60px] w-[60px] object-contain"
               />
-              <span className="font-semibold text-xl">
-                Dashboard
-              </span>
             </Link>
           </div>
 

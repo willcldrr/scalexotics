@@ -28,7 +28,7 @@ export default function BillingPage() {
     <div className="space-y-4 sm:space-y-6">
       {/* Header - Hidden on mobile */}
       <div className="hidden sm:block">
-        <h1 className="text-3xl font-bold dashboard-heading">
+        <h1 className="text-3xl font-bold text-white">
           Billing
         </h1>
         <p className="text-white/50 mt-1">Manage invoices and rental agreements</p>

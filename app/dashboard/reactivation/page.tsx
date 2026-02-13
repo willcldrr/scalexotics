@@ -100,7 +100,7 @@ export default function ReactivationPage() {
     <div className="space-y-4 sm:space-y-6">
       {/* Header - Hidden on mobile */}
       <div className="hidden sm:block">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight dashboard-heading">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
           Reactivation
         </h1>
         <p className="text-white/50 text-sm sm:text-base mt-1">

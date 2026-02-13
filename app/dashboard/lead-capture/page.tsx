@@ -303,7 +303,7 @@ export default function LeadCapturePage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold dashboard-heading">
+          <h1 className="text-3xl font-bold text-white">
             Lead Capture
           </h1>
           <p className="text-white/50 mt-1">Loading your surveys...</p>
@@ -325,7 +325,7 @@ export default function LeadCapturePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold dashboard-heading">
+          <h1 className="text-3xl font-bold text-white">
             Lead Capture
           </h1>
           <p className="text-white/50 mt-1">Configure surveys for your ad campaigns</p>
