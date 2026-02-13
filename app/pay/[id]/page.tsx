@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
 import { FileText, CheckCircle, XCircle, Clock, Loader2, CreditCard, AlertCircle } from "lucide-react"
 
 interface Invoice {
@@ -27,7 +26,6 @@ interface Invoice {
 export default function PaymentPage() {
   const params = useParams()
   const invoiceId = params.id as string
-  const supabase = createClient()
 
   const [invoice, setInvoice] = useState<Invoice | null>(null)
   const [loading, setLoading] = useState(true)
@@ -44,16 +42,17 @@ export default function PaymentPage() {
     setLoading(true)
     setError("")
 
-    const { data, error: fetchError } = await supabase
-      .from("client_invoices")
-      .select("*")
-      .eq("id", invoiceId)
-      .single()
+    try {
+      const response = await fetch(`/api/invoices/${invoiceId}`)
+      const data = await response.json()
 
-    if (fetchError || !data) {
+      if (!response.ok || !data.invoice) {
+        setError("Invoice not found")
+      } else {
+        setInvoice(data.invoice)
+      }
+    } catch (err) {
       setError("Invoice not found")
-    } else {
-      setInvoice(data)
     }
     setLoading(false)
   }

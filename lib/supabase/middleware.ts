@@ -66,7 +66,7 @@ export async function updateSession(request: NextRequest) {
     if (pathname.startsWith('/dashboard')) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('access_verified')
+        .select('access_verified, is_admin')
         .eq('id', user.id)
         .single()
 
@@ -74,6 +74,13 @@ export async function updateSession(request: NextRequest) {
       if (!profile?.access_verified) {
         const url = request.nextUrl.clone()
         url.pathname = '/verify-access'
+        return NextResponse.redirect(url)
+      }
+
+      // SECURITY: Protect admin routes - only allow admins
+      if (pathname.startsWith('/dashboard/admin') && !profile?.is_admin) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/dashboard'
         return NextResponse.redirect(url)
       }
     }

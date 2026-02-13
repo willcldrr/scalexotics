@@ -9,6 +9,7 @@ export type CRMLeadStatus =
   | "demo_scheduled"
   | "closed_won"
   | "closed_lost"
+  | "bounced"
 
 export interface CRMStatusOption {
   value: CRMLeadStatus
@@ -70,6 +71,13 @@ export const crmStatusOptions: CRMStatusOption[] = [
     bgColor: "bg-white/10",
     description: "Deal lost",
   },
+  {
+    value: "bounced",
+    label: "Bounced",
+    color: "text-white/40",
+    bgColor: "bg-white/5",
+    description: "Invalid contact info or email bounced",
+  },
 ]
 
 // Pipeline columns (excludes not_interested for pipeline view)
@@ -104,7 +112,7 @@ export const activeStatuses: CRMLeadStatus[] = [
   "demo_scheduled",
 ]
 
-export const closedStatuses: CRMLeadStatus[] = ["closed_won", "closed_lost", "not_interested"]
+export const closedStatuses: CRMLeadStatus[] = ["closed_won", "closed_lost", "not_interested", "bounced"]
 
 export const wonStatuses: CRMLeadStatus[] = ["closed_won"]
 
