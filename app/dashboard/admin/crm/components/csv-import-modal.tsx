@@ -40,13 +40,23 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({})
   const [importing, setImporting] = useState(false)
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0 })
-  const [importResult, setImportResult] = useState<{ success: number; failed: number } | null>(null)
+  const [importResult, setImportResult] = useState<{ success: number; failed: number; error?: string } | null>(null)
 
   const parseCSV = (text: string): { headers: string[]; data: Array<Record<string, string>> } => {
-    const lines = text.split(/\r?\n/).filter((line) => line.trim())
+    // Remove BOM (Byte Order Mark) if present - common in Excel exports
+    let cleanText = text
+    if (cleanText.charCodeAt(0) === 0xFEFF) {
+      cleanText = cleanText.slice(1)
+    }
+    // Also handle UTF-8 BOM
+    if (cleanText.startsWith('\ufeff')) {
+      cleanText = cleanText.slice(1)
+    }
+
+    const lines = cleanText.split(/\r?\n/).filter((line) => line.trim())
     if (lines.length === 0) return { headers: [], data: [] }
 
-    const headers = parseCSVLine(lines[0])
+    const headers = parseCSVLine(lines[0]).map(h => h.trim())
     const data = lines
       .slice(1)
       .map((line) => {
@@ -94,31 +104,46 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
       setCsvData(data)
       setImportResult(null)
 
-      // Auto-map columns
+      // Auto-map columns - try to match headers to fields
       const autoMapping: Record<string, string> = {}
       const mappings: Record<string, string[]> = {
-        company_name: ["company", "company name", "business", "business name", "organization"],
-        contact_name: ["name", "contact", "contact name", "full name", "person"],
-        contact_email: ["email", "e-mail", "mail", "contact email"],
-        contact_phone: ["phone", "telephone", "tel", "mobile", "cell", "contact phone"],
-        contact_title: ["title", "position", "role", "job title"],
-        website: ["website", "url", "web", "site"],
-        location: ["location", "city", "address", "region", "state"],
-        fleet_size: ["fleet", "fleet size", "vehicles", "cars", "size"],
-        source: ["source", "lead source", "channel", "origin"],
-        estimated_value: ["value", "deal value", "estimated value", "amount", "revenue"],
-        notes: ["notes", "note", "comments", "description"],
+        company_name: ["company", "company name", "business", "business name", "organization", "companyname", "company_name", "businessname"],
+        contact_name: ["name", "contact", "contact name", "full name", "person", "contactname", "contact_name", "fullname", "first name", "firstname", "owner"],
+        contact_email: ["email", "e-mail", "mail", "contact email", "contactemail", "contact_email", "e mail"],
+        contact_phone: ["phone", "telephone", "tel", "mobile", "cell", "contact phone", "contactphone", "contact_phone", "phone number", "phonenumber"],
+        contact_title: ["title", "position", "role", "job title", "jobtitle", "job_title", "contact_title"],
+        website: ["website", "url", "web", "site", "webpage", "web site"],
+        location: ["location", "city", "address", "region", "state", "area", "market", "territory"],
+        fleet_size: ["fleet", "fleet size", "vehicles", "cars", "size", "fleetsize", "fleet_size", "car count", "vehicle count"],
+        source: ["source", "lead source", "channel", "origin", "leadsource", "lead_source", "how found", "referral"],
+        estimated_value: ["value", "deal value", "estimated value", "amount", "revenue", "estimatedvalue", "estimated_value", "deal_value"],
+        notes: ["notes", "note", "comments", "description", "comment", "info", "details", "additional"],
       }
 
+      // First pass: exact matches
       headers.forEach((header) => {
-        const lowerHeader = header.toLowerCase().trim()
+        const lowerHeader = header.toLowerCase().trim().replace(/[_\-\s]+/g, " ")
         for (const [field, variants] of Object.entries(mappings)) {
-          if (variants.some((v) => lowerHeader === v || lowerHeader.includes(v))) {
+          if (variants.some((v) => lowerHeader === v)) {
             autoMapping[header] = field
             break
           }
         }
       })
+
+      // Second pass: partial matches for unmapped headers
+      headers.forEach((header) => {
+        if (autoMapping[header]) return // Already mapped
+        const lowerHeader = header.toLowerCase().trim().replace(/[_\-\s]+/g, " ")
+        for (const [field, variants] of Object.entries(mappings)) {
+          if (variants.some((v) => lowerHeader.includes(v) || v.includes(lowerHeader))) {
+            autoMapping[header] = field
+            break
+          }
+        }
+      })
+
+      console.log("Auto-mapped columns:", autoMapping)
 
       setColumnMapping(autoMapping)
     }
@@ -131,6 +156,20 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
+      setImportResult({ success: 0, failed: csvData.length, error: "Not authenticated. Please log in again." })
+      setImporting(false)
+      return
+    }
+
+    // Check if user is admin
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single()
+
+    if (profileError || !profile?.is_admin) {
+      setImportResult({ success: 0, failed: csvData.length, error: "You must be an admin to import leads." })
       setImporting(false)
       return
     }
@@ -164,6 +203,13 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
     // Prepare all lead data for batch insert
     const leadsToInsert: Array<Record<string, any>> = []
     const notesData: Array<{ rowIndex: number; content: string }> = []
+    let skippedRows = 0
+
+    console.log("CSV Import Debug:")
+    console.log("- Total rows:", csvData.length)
+    console.log("- Company column:", companyCol)
+    console.log("- Contact column:", contactCol)
+    console.log("- Sample row:", csvData[0])
 
     for (let i = 0; i < csvData.length; i++) {
       const row = csvData[i]
@@ -171,7 +217,10 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
       const contactName = row[contactCol]?.trim()
 
       if (!companyName || !contactName) {
-        failed++
+        skippedRows++
+        if (skippedRows <= 3) {
+          console.log(`Row ${i} skipped - Company: "${companyName}", Contact: "${contactName}"`)
+        }
         continue
       }
 
@@ -206,10 +255,23 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
       leadsToInsert.push(leadData)
     }
 
-    // Batch insert in chunks of 500 (Supabase limit is ~1000)
-    const BATCH_SIZE = 500
+    console.log("- Leads to insert:", leadsToInsert.length)
+    console.log("- Skipped rows (missing company/contact):", skippedRows)
+
+    if (leadsToInsert.length === 0) {
+      setImportResult({
+        success: 0,
+        failed: csvData.length,
+        error: `No valid leads to import. ${skippedRows} rows were missing Company Name or Contact Name. Check your column mapping.`
+      })
+      setImporting(false)
+      return
+    }
+
+    // Batch insert in chunks of 100 (smaller batches for reliability)
+    const BATCH_SIZE = 100
     const insertedLeads: Array<{ id: string }> = []
-    const totalBatches = Math.ceil(leadsToInsert.length / BATCH_SIZE)
+    let lastError: string | null = null
 
     setImportProgress({ current: 0, total: leadsToInsert.length })
 
@@ -223,10 +285,16 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
 
       if (error) {
         console.error("Batch insert error:", error)
+        lastError = error.message || error.code || "Unknown database error"
         failed += batch.length
       } else if (batchResult) {
         success += batchResult.length
         insertedLeads.push(...batchResult)
+      } else {
+        // No error but no data - likely RLS blocking
+        console.error("Insert returned no data - possible RLS issue")
+        lastError = "Permission denied - you may not have admin access"
+        failed += batch.length
       }
 
       // Update progress
@@ -252,7 +320,17 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
       }
     }
 
-    setImportResult({ success, failed })
+    // Add skipped rows to failed count for final display
+    failed += skippedRows
+
+    let errorMsg = lastError || undefined
+    if (skippedRows > 0 && !lastError) {
+      errorMsg = `${skippedRows} rows skipped due to missing Company Name or Contact Name`
+    } else if (skippedRows > 0 && lastError) {
+      errorMsg = `${lastError}. Also, ${skippedRows} rows skipped due to missing required fields.`
+    }
+
+    setImportResult({ success, failed, error: errorMsg })
     setImporting(false)
 
     if (success > 0) {
@@ -322,21 +400,28 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
             <div className="space-y-6">
               {importResult && (
                 <div
-                  className={`flex items-center gap-3 p-4 rounded-xl ${
+                  className={`p-4 rounded-xl ${
                     importResult.failed === 0
                       ? "bg-[#375DEE]/10 border border-[#375DEE]/30 text-[#375DEE]"
-                      : "bg-yellow-500/10 border border-yellow-500/30 text-yellow-400"
+                      : "bg-red-500/10 border border-red-500/30 text-red-400"
                   }`}
                 >
-                  {importResult.failed === 0 ? (
-                    <Check className="w-5 h-5" />
-                  ) : (
-                    <AlertCircle className="w-5 h-5" />
+                  <div className="flex items-center gap-3">
+                    {importResult.failed === 0 ? (
+                      <Check className="w-5 h-5" />
+                    ) : (
+                      <AlertCircle className="w-5 h-5" />
+                    )}
+                    <span>
+                      Imported {importResult.success} leads
+                      {importResult.failed > 0 && `, ${importResult.failed} failed`}
+                    </span>
+                  </div>
+                  {importResult.error && (
+                    <p className="mt-2 text-sm text-red-300/80">
+                      Error: {importResult.error}
+                    </p>
                   )}
-                  <span>
-                    Imported {importResult.success} leads
-                    {importResult.failed > 0 && `, ${importResult.failed} failed`}
-                  </span>
                 </div>
               )}
 
