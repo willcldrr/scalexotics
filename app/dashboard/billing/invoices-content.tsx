@@ -411,19 +411,19 @@ export default function InvoicesContent() {
           <p className="text-sm text-white/50">Total</p>
         </div>
         <div className="bg-white/5 rounded-xl border border-white/10 p-4 text-center">
-          <p className="text-2xl font-bold text-green-400">
+          <p className="text-2xl font-bold text-[#375DEE]">
             ${invoices.filter(i => i.status === "paid").reduce((sum, i) => sum + i.total, 0).toLocaleString()}
           </p>
           <p className="text-sm text-white/50">Paid</p>
         </div>
         <div className="bg-white/5 rounded-xl border border-white/10 p-4 text-center">
-          <p className="text-2xl font-bold text-yellow-400">
+          <p className="text-2xl font-bold text-[#6B8DFF]">
             ${invoices.filter(i => i.status === "sent").reduce((sum, i) => sum + i.total, 0).toLocaleString()}
           </p>
           <p className="text-sm text-white/50">Pending</p>
         </div>
         <div className="bg-white/5 rounded-xl border border-white/10 p-4 text-center">
-          <p className="text-2xl font-bold text-red-400">
+          <p className="text-2xl font-bold text-white/40">
             {invoices.filter(i => i.status === "overdue").length}
           </p>
           <p className="text-sm text-white/50">Overdue</p>
@@ -507,7 +507,7 @@ export default function InvoicesContent() {
                             title="Copy Payment Link"
                           >
                             {copiedId === invoice.id ? (
-                              <Check className="w-5 h-5 text-green-400" />
+                              <Check className="w-5 h-5 text-[#375DEE]" />
                             ) : (
                               <Link2 className="w-5 h-5" />
                             )}
@@ -526,7 +526,7 @@ export default function InvoicesContent() {
                           </button>
                           <button
                             onClick={() => markAsPaid(invoice)}
-                            className="px-3 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 text-sm font-medium rounded-lg transition-colors"
+                            className="px-3 py-2 bg-[#375DEE]/20 hover:bg-[#375DEE]/30 text-[#375DEE] text-sm font-medium rounded-lg transition-colors"
                           >
                             Mark Paid
                           </button>
@@ -710,7 +710,7 @@ export default function InvoicesContent() {
                     >
                       {copiedId === selectedInvoice.id ? (
                         <>
-                          <Check className="w-4 h-4 text-green-600" />
+                          <Check className="w-4 h-4 text-[#375DEE]" />
                           Copied!
                         </>
                       ) : (
@@ -809,7 +809,7 @@ export default function InvoicesContent() {
               {/* Status */}
               {selectedInvoice.status === "paid" && (
                 <div className="mt-8 text-center">
-                  <span className="inline-block px-6 py-2 bg-green-100 text-green-600 font-bold text-lg rounded-lg">
+                  <span className="inline-block px-6 py-2 bg-[#375DEE]/20 text-[#375DEE] font-bold text-lg rounded-lg">
                     PAID
                   </span>
                 </div>

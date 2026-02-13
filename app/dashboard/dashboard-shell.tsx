@@ -246,28 +246,28 @@ export default function DashboardLayout({
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Desktop: Icon only with tooltips, Mobile: Full width */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-64 bg-[#0a0a0a] border-r border-white/10 transform transition-transform duration-200 lg:translate-x-0 ${
+        className={`fixed top-0 left-0 z-50 h-full bg-[#0a0a0a] border-r border-white/10 transform transition-transform duration-200 lg:translate-x-0 w-64 lg:w-[72px] ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="px-6 py-3 border-b border-white/10">
-            <Link href="/dashboard" className="flex items-center gap-3">
+          <div className="px-6 lg:px-3 py-3 border-b border-white/10 flex justify-center">
+            <Link href="/dashboard" className="flex items-center gap-3 lg:gap-0">
               <Image
                 src="/scalexoticslogo.png"
                 alt="Scale Exotics"
                 width={60}
                 height={60}
-                className="h-[60px] w-[60px] object-contain"
+                className="h-[60px] w-[60px] lg:h-[48px] lg:w-[48px] object-contain"
               />
             </Link>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          <nav className="flex-1 p-4 lg:p-2 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const isActive = pathname === item.href ||
                 (item.href !== "/dashboard" && pathname.startsWith(item.href))
@@ -276,15 +276,19 @@ export default function DashboardLayout({
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                  className={`group relative flex items-center gap-3 px-4 lg:px-0 lg:justify-center py-3 rounded-xl transition-colors ${
                     isActive
                       ? "bg-[#375DEE] text-white"
                       : "text-white/60 hover:text-white hover:bg-white/5"
                   }`}
                 >
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.name}</span>
-                  {isActive && <ChevronRight className="w-4 h-4 ml-auto" />}
+                  <item.icon className="w-5 h-5 flex-shrink-0" />
+                  <span className="font-medium lg:hidden">{item.name}</span>
+                  {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
+                  {/* Tooltip for desktop */}
+                  <span className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] text-white text-sm font-medium rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-50 shadow-lg border border-white/10">
+                    {item.name}
+                  </span>
                 </Link>
               )
             })}
@@ -292,10 +296,10 @@ export default function DashboardLayout({
             {/* Admin Section */}
             {profile?.is_admin && (
               <>
-                <div className="pt-4 pb-2 px-4">
-                  <p className="text-xs font-semibold text-white/30 uppercase tracking-wider flex items-center gap-2">
+                <div className="pt-4 pb-2 px-4 lg:px-2 lg:flex lg:justify-center">
+                  <p className="text-xs font-semibold text-white/30 uppercase tracking-wider flex items-center gap-2 lg:gap-0">
                     <Shield className="w-3 h-3" />
-                    Admin
+                    <span className="lg:hidden">Admin</span>
                   </p>
                 </div>
                 {adminNavItems.map((item) => {
@@ -306,15 +310,19 @@ export default function DashboardLayout({
                       key={item.href}
                       href={item.href}
                       onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                      className={`group relative flex items-center gap-3 px-4 lg:px-0 lg:justify-center py-3 rounded-xl transition-colors ${
                         isActive
                           ? "bg-[#375DEE] text-white"
                           : "text-white/60 hover:text-white hover:bg-white/5"
                       }`}
                     >
-                      <item.icon className="w-5 h-5" />
-                      <span className="font-medium">{item.name}</span>
-                      {isActive && <ChevronRight className="w-4 h-4 ml-auto" />}
+                      <item.icon className="w-5 h-5 flex-shrink-0" />
+                      <span className="font-medium lg:hidden">{item.name}</span>
+                      {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
+                      {/* Tooltip for desktop */}
+                      <span className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] text-white text-sm font-medium rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-50 shadow-lg border border-white/10">
+                        {item.name}
+                      </span>
                     </Link>
                   )
                 })}
@@ -323,8 +331,9 @@ export default function DashboardLayout({
           </nav>
 
           {/* User section */}
-          <div className="p-4 border-t border-white/10">
-            <div className="flex items-center gap-3 px-4 py-3 mb-2">
+          <div className="p-4 lg:p-2 border-t border-white/10">
+            {/* Mobile: Full user info */}
+            <div className="flex items-center gap-3 px-4 py-3 mb-2 lg:hidden">
               <div className="w-10 h-10 rounded-full bg-[#375DEE]/20 flex items-center justify-center">
                 <span className="text-[#375DEE] font-semibold">
                   {profile?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || "U"}
@@ -339,19 +348,36 @@ export default function DashboardLayout({
                 </p>
               </div>
             </div>
+            {/* Desktop: Avatar only with tooltip */}
+            <div className="hidden lg:flex justify-center mb-2">
+              <div className="group relative w-10 h-10 rounded-full bg-[#375DEE]/20 flex items-center justify-center cursor-default">
+                <span className="text-[#375DEE] font-semibold">
+                  {profile?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || "U"}
+                </span>
+                {/* Tooltip */}
+                <span className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] text-white text-sm font-medium rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-50 shadow-lg border border-white/10">
+                  {profile?.full_name || "User"}
+                </span>
+              </div>
+            </div>
+            {/* Sign out button */}
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+              className="group relative flex items-center gap-3 px-4 lg:px-0 lg:justify-center py-3 w-full rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors"
             >
-              <LogOut className="w-5 h-5" />
-              <span className="font-medium">Sign Out</span>
+              <LogOut className="w-5 h-5 flex-shrink-0" />
+              <span className="font-medium lg:hidden">Sign Out</span>
+              {/* Tooltip for desktop */}
+              <span className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] text-white text-sm font-medium rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-50 shadow-lg border border-white/10">
+                Sign Out
+              </span>
             </button>
           </div>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className={`lg:pl-64 ${pathname.startsWith("/dashboard/admin/crm") ? "" : "pb-16"} lg:pb-0`}>
+      <div className={`lg:pl-[72px] ${pathname.startsWith("/dashboard/admin/crm") ? "" : "pb-16"} lg:pb-0`}>
         {/* Top bar */}
         <header className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-white/10">
           <div className="flex items-center justify-between px-4 lg:px-6 py-3 lg:py-4">

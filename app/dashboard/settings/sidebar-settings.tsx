@@ -71,7 +71,7 @@ export default function SidebarSettingsComponent() {
   return (
     <div className="space-y-6">
       {/* Info */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
         <h3 className="text-lg font-bold mb-2">
           Sidebar Navigation
         </h3>
@@ -81,7 +81,7 @@ export default function SidebarSettingsComponent() {
       </div>
 
       {/* Toggleable tabs */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
         <div className="space-y-3">
           {toggleableTabs.map((tab) => (
             <label

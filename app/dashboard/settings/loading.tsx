@@ -8,14 +8,14 @@ export default function SettingsLoading() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-white/10 pb-4">
+      <div className="flex gap-2 border-b border-white/[0.08] pb-4">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="h-9 w-24 bg-white/5 rounded-lg" />
         ))}
       </div>
 
       {/* Settings form skeleton */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6 space-y-6">
+      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6 space-y-6">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="space-y-2">
             <div className="h-4 w-24 bg-white/10 rounded" />

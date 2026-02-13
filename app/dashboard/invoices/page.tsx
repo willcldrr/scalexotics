@@ -358,23 +358,23 @@ export default function InvoicesPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white/5 rounded-xl border border-white/10 p-4 text-center">
+        <div className="bg-black rounded-xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-4 text-center">
           <p className="text-2xl font-bold">{invoices.length}</p>
           <p className="text-sm text-white/50">Total</p>
         </div>
-        <div className="bg-white/5 rounded-xl border border-white/10 p-4 text-center">
+        <div className="bg-black rounded-xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-4 text-center">
           <p className="text-2xl font-bold text-green-400">
             ${invoices.filter(i => i.status === "paid").reduce((sum, i) => sum + i.total, 0).toLocaleString()}
           </p>
           <p className="text-sm text-white/50">Paid</p>
         </div>
-        <div className="bg-white/5 rounded-xl border border-white/10 p-4 text-center">
+        <div className="bg-black rounded-xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-4 text-center">
           <p className="text-2xl font-bold text-yellow-400">
             ${invoices.filter(i => i.status === "sent").reduce((sum, i) => sum + i.total, 0).toLocaleString()}
           </p>
           <p className="text-sm text-white/50">Pending</p>
         </div>
-        <div className="bg-white/5 rounded-xl border border-white/10 p-4 text-center">
+        <div className="bg-black rounded-xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-4 text-center">
           <p className="text-2xl font-bold text-red-400">
             {invoices.filter(i => i.status === "overdue").length}
           </p>
@@ -391,7 +391,7 @@ export default function InvoicesPage() {
             placeholder="Search invoices..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+            className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
           />
         </div>
         <div className="flex gap-2">
@@ -412,7 +412,7 @@ export default function InvoicesPage() {
       </div>
 
       {/* Invoice List */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+      <div className="bg-white/5 rounded-2xl border border-white/[0.08] overflow-hidden">
         {filteredInvoices.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-white/40">
             <FileText className="w-12 h-12 mb-3" />
@@ -470,8 +470,8 @@ export default function InvoicesPage() {
       {/* Create Invoice Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-white/10 flex items-center justify-between">
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
               <h2 className="text-xl font-bold">Create Invoice</h2>
               <button onClick={() => { setShowCreateModal(false); resetForm(); }} className="p-2 rounded-lg hover:bg-white/5">
                 <X className="w-5 h-5" />
@@ -485,7 +485,7 @@ export default function InvoicesPage() {
                 <select
                   value={selectedBooking}
                   onChange={(e) => e.target.value && loadFromBooking(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white"
                 >
                   <option value="">Select a booking...</option>
                   {bookings.map((booking) => (
@@ -504,7 +504,7 @@ export default function InvoicesPage() {
                     type="text"
                     value={newInvoice.customer_name}
                     onChange={(e) => setNewInvoice({ ...newInvoice, customer_name: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white"
                     required
                   />
                 </div>
@@ -514,7 +514,7 @@ export default function InvoicesPage() {
                     type="email"
                     value={newInvoice.customer_email}
                     onChange={(e) => setNewInvoice({ ...newInvoice, customer_email: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white"
                   />
                 </div>
                 <div>
@@ -523,7 +523,7 @@ export default function InvoicesPage() {
                     type="tel"
                     value={newInvoice.customer_phone}
                     onChange={(e) => setNewInvoice({ ...newInvoice, customer_phone: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white"
                   />
                 </div>
                 <div>
@@ -532,7 +532,7 @@ export default function InvoicesPage() {
                     type="date"
                     value={newInvoice.due_date}
                     onChange={(e) => setNewInvoice({ ...newInvoice, due_date: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white"
                   />
                 </div>
               </div>
@@ -548,21 +548,21 @@ export default function InvoicesPage() {
                         placeholder="Description"
                         value={item.description}
                         onChange={(e) => updateItemTotal(index, "description", e.target.value)}
-                        className="flex-1 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+                        className="flex-1 px-4 py-2 rounded-lg bg-white/5 border border-white/[0.08] text-white text-sm"
                       />
                       <input
                         type="number"
                         placeholder="Qty"
                         value={item.quantity}
                         onChange={(e) => updateItemTotal(index, "quantity", parseInt(e.target.value) || 0)}
-                        className="w-20 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+                        className="w-20 px-3 py-2 rounded-lg bg-white/5 border border-white/[0.08] text-white text-sm"
                       />
                       <input
                         type="number"
                         placeholder="Price"
                         value={item.unit_price}
                         onChange={(e) => updateItemTotal(index, "unit_price", parseFloat(e.target.value) || 0)}
-                        className="w-28 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+                        className="w-28 px-3 py-2 rounded-lg bg-white/5 border border-white/[0.08] text-white text-sm"
                       />
                       <span className="w-24 text-right text-sm">${item.total.toLocaleString()}</span>
                       {newInvoice.items.length > 1 && (
@@ -588,7 +588,7 @@ export default function InvoicesPage() {
                   type="number"
                   value={newInvoice.tax_rate}
                   onChange={(e) => setNewInvoice({ ...newInvoice, tax_rate: parseFloat(e.target.value) || 0 })}
-                  className="w-24 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+                  className="w-24 px-3 py-2 rounded-lg bg-white/5 border border-white/[0.08] text-white text-sm"
                 />
               </div>
 
@@ -602,7 +602,7 @@ export default function InvoicesPage() {
                   <span className="text-white/60">Tax ({newInvoice.tax_rate}%)</span>
                   <span>${calculateTotals().taxAmount.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between font-bold text-lg pt-2 border-t border-white/10">
+                <div className="flex justify-between font-bold text-lg pt-2 border-t border-white/[0.08]">
                   <span>Total</span>
                   <span className="text-[#375DEE]">${calculateTotals().total.toLocaleString()}</span>
                 </div>

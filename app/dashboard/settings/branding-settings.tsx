@@ -287,7 +287,7 @@ export default function BrandingSettings() {
       )}
 
       {/* Custom Domain Section */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6 space-y-6">
+      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6 space-y-6">
         <div className="flex items-center gap-2">
           <LinkIcon className="w-5 h-5 text-[#375DEE]" />
           <h3 className="text-lg font-bold">Custom Domain</h3>
@@ -467,7 +467,7 @@ export default function BrandingSettings() {
                   </div>
 
                   {/* Provider-specific help */}
-                  <div className="ml-8 pt-4 border-t border-white/10">
+                  <div className="ml-8 pt-4 border-t border-white/[0.08]">
                     <p className="text-white/40 text-xs mb-2">Quick links to DNS settings:</p>
                     <div className="flex flex-wrap gap-2">
                       {[
@@ -563,7 +563,7 @@ export default function BrandingSettings() {
                   value={newDomain}
                   onChange={(e) => setNewDomain(e.target.value)}
                   placeholder="book.yourdomain.com"
-                  className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] text-lg"
+                  className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] text-lg"
                 />
                 <button
                   onClick={handleAddDomain}
@@ -609,7 +609,7 @@ export default function BrandingSettings() {
         )}
       </div>
 
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6 space-y-6">
+      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6 space-y-6">
         {/* Company Name */}
         <div>
           <label className="flex items-center gap-2 text-sm text-white/60 mb-2">
@@ -620,7 +620,7 @@ export default function BrandingSettings() {
             type="text"
             value={branding.company_name}
             onChange={(e) => setBranding({ ...branding, company_name: e.target.value })}
-            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
             placeholder="Miami Exotic Rentals"
           />
           <p className="text-xs text-white/40 mt-1">This appears on invoices, booking pages, and email communications</p>
@@ -636,7 +636,7 @@ export default function BrandingSettings() {
             type="url"
             value={branding.logo_url || ""}
             onChange={(e) => setBranding({ ...branding, logo_url: e.target.value || null })}
-            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
             placeholder="https://yoursite.com/logo.png"
           />
           <p className="text-xs text-white/40 mt-1">Direct URL to your logo image (PNG, JPG, or SVG recommended)</p>
@@ -675,7 +675,7 @@ export default function BrandingSettings() {
                 type="text"
                 value={branding.primary_color}
                 onChange={(e) => setBranding({ ...branding, primary_color: e.target.value })}
-                className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-mono text-sm"
+                className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white font-mono text-sm"
                 placeholder="#375DEE"
               />
             </div>
@@ -696,7 +696,7 @@ export default function BrandingSettings() {
                 type="text"
                 value={branding.background_color}
                 onChange={(e) => setBranding({ ...branding, background_color: e.target.value })}
-                className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-mono text-sm"
+                className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white font-mono text-sm"
                 placeholder="#000000"
               />
             </div>
@@ -704,7 +704,7 @@ export default function BrandingSettings() {
         </div>
 
         {/* Contact Info */}
-        <div className="pt-4 border-t border-white/10">
+        <div className="pt-4 border-t border-white/[0.08]">
           <h3 className="text-sm font-bold mb-4">Contact Information (shown on customer pages)</h3>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
@@ -716,7 +716,7 @@ export default function BrandingSettings() {
                 type="email"
                 value={branding.support_email || ""}
                 onChange={(e) => setBranding({ ...branding, support_email: e.target.value || null })}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
                 placeholder="rentals@yourcompany.com"
               />
             </div>
@@ -729,7 +729,7 @@ export default function BrandingSettings() {
                 type="tel"
                 value={branding.support_phone || ""}
                 onChange={(e) => setBranding({ ...branding, support_phone: e.target.value || null })}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
                 placeholder="(305) 555-1234"
               />
             </div>
@@ -743,14 +743,14 @@ export default function BrandingSettings() {
               type="url"
               value={branding.website_url || ""}
               onChange={(e) => setBranding({ ...branding, website_url: e.target.value || null })}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
               placeholder="https://miamiexoticrentals.com"
             />
           </div>
         </div>
 
         {/* Preview */}
-        <div className="pt-4 border-t border-white/10">
+        <div className="pt-4 border-t border-white/[0.08]">
           <div className="flex items-center gap-2 mb-4">
             <Eye className="w-4 h-4 text-white/60" />
             <h3 className="text-sm font-bold">Preview</h3>

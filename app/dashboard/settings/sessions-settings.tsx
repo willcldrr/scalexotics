@@ -149,7 +149,7 @@ export default function SessionsSettings() {
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+        <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
           <div className="flex items-center gap-3 text-red-400 mb-4">
             <AlertCircle className="w-5 h-5" />
             <p>Failed to load sessions: {error}</p>
@@ -197,7 +197,7 @@ DELETE FROM user_sessions WHERE session_token IS NULL;`}
         </div>
       )}
 
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <Monitor className="w-5 h-5 text-[#375DEE]" />
@@ -230,7 +230,7 @@ DELETE FROM user_sessions WHERE session_token IS NULL;`}
                 className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${
                   session.is_current
                     ? 'bg-[#375DEE]/10 border-[#375DEE]/30'
-                    : 'bg-white/5 border-white/10 hover:border-white/20'
+                    : 'bg-white/5 border-white/[0.08] hover:border-white/20'
                 }`}
               >
                 <div className="flex items-center gap-4">
@@ -285,7 +285,7 @@ DELETE FROM user_sessions WHERE session_token IS NULL;`}
         )}
       </div>
 
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
         <h3 className="font-bold mb-2">Session Security</h3>
         <p className="text-sm text-white/50">
           Each device you log in from creates a unique session. If you see unfamiliar devices,

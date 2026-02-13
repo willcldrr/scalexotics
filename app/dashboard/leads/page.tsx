@@ -622,12 +622,12 @@ export default function LeadsPage() {
       </div>
 
       {/* Main Content */}
-      <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] overflow-hidden" style={{ height: "calc(100vh - 220px)" }}>
+      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden" style={{ height: "calc(100vh - 220px)" }}>
         <div className="flex h-full">
           {/* Leads List */}
-          <div className={`w-full md:w-[380px] border-r border-white/[0.06] flex flex-col bg-white/[0.01] ${selectedLead ? "hidden md:flex" : "flex"}`}>
+          <div className={`w-full md:w-[380px] border-r border-white/[0.08] flex flex-col bg-black/50 ${selectedLead ? "hidden md:flex" : "flex"}`}>
             {/* Search & Filters */}
-            <div className="p-4 border-b border-white/[0.06] space-y-3">
+            <div className="p-4 border-b border-white/[0.08] space-y-3">
               <div className="relative">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                 <input
@@ -635,7 +635,7 @@ export default function LeadsPage() {
                   placeholder="Search leads..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]/50 focus:bg-white/[0.06] transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]/50 focus:bg-white/[0.06] transition-all"
                 />
               </div>
               <div className="flex gap-2 overflow-x-auto pb-1">
@@ -745,7 +745,7 @@ export default function LeadsPage() {
             {selectedLead ? (
               <>
                 {/* Lead Header */}
-                <div className="p-4 border-b border-white/[0.06] bg-white/[0.02]">
+                <div className="p-4 border-b border-white/[0.08] bg-white/[0.03]">
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => setSelectedLead(null)}
@@ -821,7 +821,7 @@ export default function LeadsPage() {
                 </div>
 
                 {/* Lead Details Panel */}
-                <div className="p-4 border-b border-white/[0.06] bg-white/[0.01]">
+                <div className="p-4 border-b border-white/[0.08] bg-black/50">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div className="flex items-start gap-2.5">
                       <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center flex-shrink-0">
@@ -929,7 +929,7 @@ export default function LeadsPage() {
                 </div>
 
                 {/* Message Input */}
-                <div className="p-4 border-t border-white/[0.06] bg-white/[0.02]">
+                <div className="p-4 border-t border-white/[0.08] bg-white/[0.03]">
                   <div className="flex gap-3">
                     <input
                       type="text"

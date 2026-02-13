@@ -342,7 +342,7 @@ export default function LeadCaptureSettings() {
 
       {/* Surveys List */}
       {surveys.length === 0 ? (
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-12 text-center">
+        <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-12 text-center">
           <FileText className="w-16 h-16 text-white/20 mx-auto mb-4" />
           <h3 className="text-xl font-bold mb-2">
             No surveys yet
@@ -364,7 +364,7 @@ export default function LeadCaptureSettings() {
             <div
               key={survey.id}
               className={`bg-white/5 rounded-2xl border p-6 ${
-                survey.is_active ? "border-white/10" : "border-white/5 opacity-60"
+                survey.is_active ? "border-white/[0.08]" : "border-white/5 opacity-60"
               }`}
             >
               <div className="flex items-start justify-between gap-4">
@@ -463,9 +463,9 @@ export default function LeadCaptureSettings() {
       {/* Create/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Modal Header */}
-            <div className="p-6 border-b border-white/10 flex items-center justify-between">
+            <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
               <h2 className="text-xl font-bold">
                 {editingSurvey ? "Edit Survey" : "Create Survey"}
               </h2>
@@ -478,7 +478,7 @@ export default function LeadCaptureSettings() {
             </div>
 
             {/* Tabs */}
-            <div className="border-b border-white/10 px-6">
+            <div className="border-b border-white/[0.08] px-6">
               <div className="flex gap-1">
                 {[
                   { id: "general", label: "General", icon: Settings },
@@ -517,7 +517,7 @@ export default function LeadCaptureSettings() {
                         value={formData.slug || ""}
                         onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })}
                         disabled={!!editingSurvey}
-                        className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors disabled:opacity-50"
+                        className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors disabled:opacity-50"
                       />
                     </div>
                     <p className="text-xs text-white/40 mt-2">Lowercase letters, numbers, and hyphens only</p>
@@ -530,7 +530,7 @@ export default function LeadCaptureSettings() {
                       placeholder="Miami Exotic Rentals"
                       value={formData.business_name || ""}
                       onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
                     />
                   </div>
 
@@ -542,7 +542,7 @@ export default function LeadCaptureSettings() {
                       max="99"
                       value={formData.minimum_age || 25}
                       onChange={(e) => setFormData({ ...formData, minimum_age: parseInt(e.target.value) || 25 })}
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
                     />
                     <p className="text-xs text-white/40 mt-2">Leads under this age will see a message they don't qualify</p>
                   </div>
@@ -637,7 +637,7 @@ export default function LeadCaptureSettings() {
                       placeholder="https://example.com/logo.png"
                       value={formData.logo_url || ""}
                       onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
                     />
                   </div>
 
@@ -655,7 +655,7 @@ export default function LeadCaptureSettings() {
                           type="text"
                           value={formData.primary_color || "#375DEE"}
                           onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
-                          className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-mono text-sm focus:outline-none focus:border-[#375DEE] transition-colors"
+                          className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white font-mono text-sm focus:outline-none focus:border-[#375DEE] transition-colors"
                         />
                       </div>
                     </div>
@@ -673,7 +673,7 @@ export default function LeadCaptureSettings() {
                           type="text"
                           value={formData.background_color || "#0a0a0a"}
                           onChange={(e) => setFormData({ ...formData, background_color: e.target.value })}
-                          className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-mono text-sm focus:outline-none focus:border-[#375DEE] transition-colors"
+                          className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white font-mono text-sm focus:outline-none focus:border-[#375DEE] transition-colors"
                         />
                       </div>
                     </div>
@@ -683,7 +683,7 @@ export default function LeadCaptureSettings() {
                   <div className="mt-6">
                     <label className="block text-sm text-white/60 mb-2">Preview</label>
                     <div
-                      className="rounded-xl p-6 border border-white/10"
+                      className="rounded-xl p-6 border border-white/[0.08]"
                       style={{ backgroundColor: formData.background_color }}
                     >
                       {formData.logo_url && (
@@ -713,7 +713,7 @@ export default function LeadCaptureSettings() {
                       placeholder="Find Your Dream Ride"
                       value={formData.welcome_title || ""}
                       onChange={(e) => setFormData({ ...formData, welcome_title: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
                     />
                   </div>
 
@@ -724,7 +724,7 @@ export default function LeadCaptureSettings() {
                       placeholder="Answer a few questions to get started"
                       value={formData.welcome_subtitle || ""}
                       onChange={(e) => setFormData({ ...formData, welcome_subtitle: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
                     />
                   </div>
 
@@ -735,7 +735,7 @@ export default function LeadCaptureSettings() {
                       placeholder="Thanks! We'll be in touch soon."
                       value={formData.success_title || ""}
                       onChange={(e) => setFormData({ ...formData, success_title: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
                     />
                   </div>
 
@@ -746,7 +746,7 @@ export default function LeadCaptureSettings() {
                       placeholder="Check your phone for a text from us."
                       value={formData.success_subtitle || ""}
                       onChange={(e) => setFormData({ ...formData, success_subtitle: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
                     />
                   </div>
                 </div>
@@ -754,7 +754,7 @@ export default function LeadCaptureSettings() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 border-t border-white/10 flex gap-3">
+            <div className="p-6 border-t border-white/[0.08] flex gap-3">
               <button
                 onClick={() => setShowModal(false)}
                 className="flex-1 px-5 py-3 rounded-xl border border-white/20 hover:bg-white/5 font-medium transition-colors"

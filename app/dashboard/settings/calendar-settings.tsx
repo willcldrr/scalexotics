@@ -300,7 +300,7 @@ export default function CalendarSettings() {
       )}
 
       {/* Export Section */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 rounded-lg bg-[#375DEE]/20">
             <Calendar className="w-5 h-5 text-[#375DEE]" />
@@ -360,7 +360,7 @@ export default function CalendarSettings() {
       </div>
 
       {/* Import Section */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-green-500/20">
@@ -413,7 +413,7 @@ export default function CalendarSettings() {
             {syncs.map((sync) => (
               <div
                 key={sync.id}
-                className="p-4 rounded-xl bg-white/5 border border-white/10"
+                className="p-4 rounded-xl bg-white/5 border border-white/[0.08]"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
@@ -464,7 +464,7 @@ export default function CalendarSettings() {
       </div>
 
       {/* Instructions */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
         <h3 className="text-lg font-bold mb-4">
           How Calendar Sync Works
         </h3>
@@ -493,8 +493,8 @@ export default function CalendarSettings() {
       {/* Add Calendar Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-lg">
-            <div className="p-6 border-b border-white/10 flex items-center justify-between">
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-lg">
+            <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
               <h2 className="text-xl font-bold">
                 Add External Calendar
               </h2>
@@ -513,7 +513,7 @@ export default function CalendarSettings() {
                 <select
                   value={selectedVehicle}
                   onChange={(e) => setSelectedVehicle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#375DEE] transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white focus:outline-none focus:border-[#375DEE] transition-colors"
                 >
                   <option value="">Select a vehicle...</option>
                   {vehicles.map((vehicle) => (
@@ -553,7 +553,7 @@ export default function CalendarSettings() {
                   value={calendarUrl}
                   onChange={(e) => setCalendarUrl(e.target.value)}
                   placeholder={CALENDAR_SOURCES.find(s => s.id === selectedSource)?.placeholder}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
                 />
                 <p className="text-xs text-white/40 mt-2">
                   Paste the iCal export URL from {CALENDAR_SOURCES.find(s => s.id === selectedSource)?.name}
@@ -561,7 +561,7 @@ export default function CalendarSettings() {
               </div>
             </div>
 
-            <div className="p-6 border-t border-white/10 flex gap-3">
+            <div className="p-6 border-t border-white/[0.08] flex gap-3">
               <button
                 onClick={() => setShowAddModal(false)}
                 className="flex-1 px-5 py-3 rounded-xl border border-white/20 hover:bg-white/5 font-medium transition-colors"

@@ -290,7 +290,7 @@ export default function AIAssistantPage() {
       <div className={`rounded-2xl p-5 flex items-center justify-between ${
         settings.auto_respond
           ? "bg-gradient-to-r from-[#375DEE]/20 via-[#375DEE]/10 to-transparent border border-[#375DEE]/30"
-          : "bg-white/[0.03] border border-white/10"
+          : "bg-white/[0.03] border border-white/[0.08]"
       }`}>
         <div className="flex items-center gap-4">
           <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
@@ -330,7 +330,7 @@ export default function AIAssistantPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-white/10 pb-4">
+      <div className="flex gap-2 border-b border-white/[0.08] pb-4">
         <button
           onClick={() => setActiveTab("config")}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -372,7 +372,7 @@ export default function AIAssistantPage() {
       {activeTab === "config" && (
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Business Information */}
-          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Info className="w-5 h-5 text-[#375DEE]" />
               Business Information
@@ -385,7 +385,7 @@ export default function AIAssistantPage() {
                   placeholder="Exotic Rentals Miami"
                   value={settings.business_name}
                   onChange={(e) => setSettings({ ...settings, business_name: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
                 />
               </div>
               <div>
@@ -395,7 +395,7 @@ export default function AIAssistantPage() {
                   placeholder="(305) 555-0123"
                   value={settings.business_phone}
                   onChange={(e) => setSettings({ ...settings, business_phone: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
                 />
               </div>
               <div>
@@ -405,14 +405,14 @@ export default function AIAssistantPage() {
                   placeholder="9 AM - 6 PM, Monday - Saturday"
                   value={settings.business_hours}
                   onChange={(e) => setSettings({ ...settings, business_hours: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
                 />
               </div>
             </div>
           </div>
 
           {/* Conversation Settings */}
-          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-[#375DEE]" />
               Conversation Style
@@ -427,7 +427,7 @@ export default function AIAssistantPage() {
                       className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
                         settings.tone === tone.value
                           ? "bg-[#375DEE]/10 border-[#375DEE]/50"
-                          : "border-white/10 hover:border-white/20"
+                          : "border-white/[0.08] hover:border-white/20"
                       }`}
                     >
                       <input
@@ -450,7 +450,7 @@ export default function AIAssistantPage() {
           </div>
 
           {/* Messages */}
-          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <FileText className="w-5 h-5 text-[#375DEE]" />
               Message Templates
@@ -463,7 +463,7 @@ export default function AIAssistantPage() {
                   placeholder="Hey! Thanks for reaching out..."
                   value={settings.greeting_message}
                   onChange={(e) => setSettings({ ...settings, greeting_message: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors resize-none"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors resize-none"
                 />
               </div>
               <div>
@@ -473,7 +473,7 @@ export default function AIAssistantPage() {
                   placeholder="To secure your booking..."
                   value={settings.booking_process}
                   onChange={(e) => setSettings({ ...settings, booking_process: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors resize-none"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors resize-none"
                 />
               </div>
               <div>
@@ -483,14 +483,14 @@ export default function AIAssistantPage() {
                   placeholder="Our rates vary by vehicle..."
                   value={settings.pricing_info}
                   onChange={(e) => setSettings({ ...settings, pricing_info: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors resize-none"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors resize-none"
                 />
               </div>
             </div>
           </div>
 
           {/* Automation Settings */}
-          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Zap className="w-5 h-5 text-[#375DEE]" />
               Automation Settings
@@ -523,7 +523,7 @@ export default function AIAssistantPage() {
                   max="300"
                   value={settings.response_delay_seconds}
                   onChange={(e) => setSettings({ ...settings, response_delay_seconds: parseInt(e.target.value) || 0 })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#375DEE] transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white focus:outline-none focus:border-[#375DEE] transition-colors"
                 />
                 <p className="text-xs text-white/40 mt-1">Add a delay to make responses feel more natural</p>
               </div>
@@ -556,7 +556,7 @@ export default function AIAssistantPage() {
                     max="72"
                     value={settings.follow_up_hours}
                     onChange={(e) => setSettings({ ...settings, follow_up_hours: parseInt(e.target.value) || 24 })}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#375DEE] transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white focus:outline-none focus:border-[#375DEE] transition-colors"
                   />
                 </div>
               )}
@@ -589,7 +589,7 @@ export default function AIAssistantPage() {
                     max="100"
                     value={settings.deposit_percentage}
                     onChange={(e) => setSettings({ ...settings, deposit_percentage: parseInt(e.target.value) || 25 })}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#375DEE] transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white focus:outline-none focus:border-[#375DEE] transition-colors"
                   />
                 </div>
               )}
@@ -597,7 +597,7 @@ export default function AIAssistantPage() {
           </div>
 
           {/* Vehicle Context */}
-          <div className="bg-white/5 rounded-2xl border border-white/10 p-6 lg:col-span-2">
+          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6 lg:col-span-2">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Car className="w-5 h-5 text-[#375DEE]" />
               Vehicle Information (AI Context)
@@ -612,7 +612,7 @@ export default function AIAssistantPage() {
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {vehicles.map((vehicle, index) => (
-                  <div key={index} className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <div key={index} className="p-3 rounded-xl bg-white/5 border border-white/[0.08]">
                     <p className="font-medium">{vehicle.make} {vehicle.model}</p>
                     <p className="text-sm text-[#375DEE]">${vehicle.daily_rate}/day</p>
                   </div>
@@ -625,8 +625,8 @@ export default function AIAssistantPage() {
 
       {activeTab === "preview" && (
         <div className="max-w-2xl mx-auto">
-          <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
-            <div className="p-4 border-b border-white/10 flex items-center gap-3">
+          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden">
+            <div className="p-4 border-b border-white/[0.08] flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-[#375DEE]/20 flex items-center justify-center">
                 <Bot className="w-5 h-5 text-[#375DEE]" />
               </div>
@@ -653,7 +653,7 @@ export default function AIAssistantPage() {
                 </div>
               ))}
             </div>
-            <div className="p-4 border-t border-white/10 bg-white/[0.02]">
+            <div className="p-4 border-t border-white/[0.08] bg-white/[0.02]">
               <p className="text-sm text-white/40 text-center">
                 This is a preview based on your current settings
               </p>
@@ -665,7 +665,7 @@ export default function AIAssistantPage() {
       {activeTab === "connection" && (
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Twilio Connection Status */}
-          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Phone className="w-5 h-5 text-[#375DEE]" />
               Twilio Connection
@@ -678,7 +678,7 @@ export default function AIAssistantPage() {
                   ? "bg-green-500/10 border border-green-500/30"
                   : twilioStatus === "error"
                   ? "bg-red-500/10 border border-red-500/30"
-                  : "bg-white/5 border border-white/10"
+                  : "bg-white/5 border border-white/[0.08]"
               }`}>
                 {twilioStatus === "loading" ? (
                   <>
@@ -709,7 +709,7 @@ export default function AIAssistantPage() {
               </div>
 
               {twilioStatus === "connected" && twilioInfo?.phoneNumber && (
-                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                <div className="p-4 rounded-xl bg-white/5 border border-white/[0.08]">
                   <p className="text-sm text-white/60 mb-1">Twilio Phone Number</p>
                   <p className="font-mono text-lg">{twilioInfo.phoneNumber}</p>
                 </div>
@@ -726,7 +726,7 @@ export default function AIAssistantPage() {
           </div>
 
           {/* Webhook Setup */}
-          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Link className="w-5 h-5 text-[#375DEE]" />
               Webhook Setup
@@ -737,7 +737,7 @@ export default function AIAssistantPage() {
                 Configure your Twilio phone number to send incoming SMS to this webhook URL:
               </p>
 
-              <div className="p-4 rounded-xl bg-black/30 border border-white/10">
+              <div className="p-4 rounded-xl bg-black/30 border border-white/[0.08]">
                 <p className="text-xs text-white/50 mb-2">Webhook URL (SMS)</p>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 text-sm font-mono text-[#375DEE] break-all">
@@ -780,7 +780,7 @@ export default function AIAssistantPage() {
           </div>
 
           {/* Send Test Message */}
-          <div className="bg-white/5 rounded-2xl border border-white/10 p-6 lg:col-span-2">
+          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6 lg:col-span-2">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Send className="w-5 h-5 text-[#375DEE]" />
               Send Test Message
@@ -799,7 +799,7 @@ export default function AIAssistantPage() {
                     placeholder="+1234567890"
                     value={testPhone}
                     onChange={(e) => setTestPhone(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
                   />
                   <p className="text-xs text-white/40 mt-1">Include country code (e.g., +1 for US)</p>
                 </div>
@@ -810,7 +810,7 @@ export default function AIAssistantPage() {
                     placeholder="Test message..."
                     value={testMessage}
                     onChange={(e) => setTestMessage(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
                   />
                 </div>
               </div>
@@ -855,7 +855,7 @@ export default function AIAssistantPage() {
       {activeTab === "advanced" && (
         <div className="space-y-6">
           {/* System Prompt Editor */}
-          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Code className="w-5 h-5 text-[#375DEE]" />
@@ -879,7 +879,7 @@ export default function AIAssistantPage() {
               placeholder={DEFAULT_SYSTEM_PROMPT}
               value={settings.custom_system_prompt}
               onChange={(e) => setSettings({ ...settings, custom_system_prompt: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-white placeholder:text-white/20 focus:outline-none focus:border-[#375DEE] transition-colors font-mono text-sm resize-none"
+              className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-[#375DEE] transition-colors font-mono text-sm resize-none"
               style={{ minHeight: "400px" }}
             />
 
@@ -890,7 +890,7 @@ export default function AIAssistantPage() {
           </div>
 
           {/* Available Variables */}
-          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <FileText className="w-5 h-5 text-[#375DEE]" />
               Available Variables
@@ -912,7 +912,7 @@ export default function AIAssistantPage() {
                 { variable: "{{vehicles}}", description: "List of available vehicles", value: vehicles.length > 0 ? `${vehicles.length} vehicles` : "(none)" },
                 { variable: "{{deposit_percentage}}", description: "Deposit percentage", value: `${settings.deposit_percentage}%` },
               ].map((item) => (
-                <div key={item.variable} className="p-3 rounded-xl bg-black/30 border border-white/10">
+                <div key={item.variable} className="p-3 rounded-xl bg-black/30 border border-white/[0.08]">
                   <div className="flex items-center justify-between mb-1">
                     <code className="text-sm font-mono text-[#375DEE]">{item.variable}</code>
                     <button
@@ -931,7 +931,7 @@ export default function AIAssistantPage() {
           </div>
 
           {/* Default Prompt Reference */}
-          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Info className="w-5 h-5 text-[#375DEE]" />
               Default System Prompt Reference
@@ -942,7 +942,7 @@ export default function AIAssistantPage() {
             </p>
 
             <div className="relative">
-              <pre className="p-4 rounded-xl bg-black/30 border border-white/10 text-sm font-mono text-white/70 whitespace-pre-wrap overflow-x-auto">
+              <pre className="p-4 rounded-xl bg-black/30 border border-white/[0.08] text-sm font-mono text-white/70 whitespace-pre-wrap overflow-x-auto">
                 {DEFAULT_SYSTEM_PROMPT}
               </pre>
               <button

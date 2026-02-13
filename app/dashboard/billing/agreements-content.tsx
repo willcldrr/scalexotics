@@ -244,9 +244,9 @@ export default function AgreementsContent() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: "Total", value: agreements.length, color: "text-white" },
-          { label: "Pending", value: agreements.filter(a => a.status === "pending").length, color: "text-gray-400" },
-          { label: "Sent", value: agreements.filter(a => a.status === "sent").length, color: "text-blue-400" },
-          { label: "Signed", value: agreements.filter(a => a.status === "signed").length, color: "text-green-400" },
+          { label: "Pending", value: agreements.filter(a => a.status === "pending").length, color: "text-white/50" },
+          { label: "Sent", value: agreements.filter(a => a.status === "sent").length, color: "text-[#6B8DFF]" },
+          { label: "Signed", value: agreements.filter(a => a.status === "signed").length, color: "text-[#375DEE]" },
         ].map((stat) => (
           <div key={stat.label} className="bg-white/5 rounded-xl border border-white/10 p-4 text-center">
             <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>

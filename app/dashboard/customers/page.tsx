@@ -196,10 +196,10 @@ export default function CustomersPage() {
   )
 
   const getTierBadge = (lifetimeValue: number) => {
-    if (lifetimeValue >= 10000) return { label: "VIP", color: "bg-yellow-500/20 text-yellow-400" }
-    if (lifetimeValue >= 5000) return { label: "Gold", color: "bg-orange-500/20 text-orange-400" }
-    if (lifetimeValue >= 1000) return { label: "Silver", color: "bg-gray-400/20 text-gray-300" }
-    return { label: "Bronze", color: "bg-amber-700/20 text-amber-600" }
+    if (lifetimeValue >= 10000) return { label: "VIP", color: "bg-[#375DEE]/30 text-[#375DEE]" }
+    if (lifetimeValue >= 5000) return { label: "Gold", color: "bg-[#375DEE]/20 text-[#6B8DFF]" }
+    if (lifetimeValue >= 1000) return { label: "Silver", color: "bg-white/10 text-white/70" }
+    return { label: "Bronze", color: "bg-white/5 text-white/50" }
   }
 
   if (loading) {
@@ -232,10 +232,10 @@ export default function CustomersPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-5">
+        <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-green-400" />
+            <div className="w-10 h-10 rounded-xl bg-[#375DEE]/20 flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-[#375DEE]" />
             </div>
             <div>
               <p className="text-sm text-white/50">Total Lifetime Value</p>
@@ -245,7 +245,7 @@ export default function CustomersPage() {
             </div>
           </div>
         </div>
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-5">
+        <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#375DEE]/20 flex items-center justify-center">
               <Users className="w-5 h-5 text-[#375DEE]" />
@@ -256,10 +256,10 @@ export default function CustomersPage() {
             </div>
           </div>
         </div>
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-5">
+        <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center">
-              <Star className="w-5 h-5 text-yellow-400" />
+            <div className="w-10 h-10 rounded-xl bg-[#375DEE]/20 flex items-center justify-center">
+              <Star className="w-5 h-5 text-[#375DEE]" />
             </div>
             <div>
               <p className="text-sm text-white/50">VIP Customers</p>
@@ -279,12 +279,12 @@ export default function CustomersPage() {
           placeholder="Search customers..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+          className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
         />
       </div>
 
       {/* Customer List */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden">
         {filteredCustomers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-white/40">
             <Users className="w-12 h-12 mb-3" />
@@ -326,7 +326,7 @@ export default function CustomersPage() {
                     </div>
                   </div>
                   <div className="text-right hidden sm:block">
-                    <p className="font-semibold text-green-400">${(customer.lifetime_value || 0).toLocaleString()}</p>
+                    <p className="font-semibold text-[#375DEE]">${(customer.lifetime_value || 0).toLocaleString()}</p>
                     <p className="text-sm text-white/50">{customer.total_rentals || 0} rentals</p>
                   </div>
                   <ChevronRight className="w-5 h-5 text-white/30" />
@@ -340,9 +340,9 @@ export default function CustomersPage() {
       {/* Customer Detail Modal */}
       {selectedCustomer && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="p-6 border-b border-white/10 flex items-center justify-between">
+            <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-full bg-[#375DEE]/20 flex items-center justify-center">
                   <span className="text-[#375DEE] font-semibold text-2xl">
@@ -407,8 +407,8 @@ export default function CustomersPage() {
               {/* Stats */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="bg-white/5 rounded-xl p-4 text-center">
-                  <DollarSign className="w-5 h-5 text-green-400 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-green-400">
+                  <DollarSign className="w-5 h-5 text-[#375DEE] mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-[#375DEE]">
                     ${(selectedCustomer.lifetime_value || 0).toLocaleString()}
                   </p>
                   <p className="text-xs text-white/50">Lifetime Value</p>
@@ -419,7 +419,7 @@ export default function CustomersPage() {
                   <p className="text-xs text-white/50">Total Rentals</p>
                 </div>
                 <div className="bg-white/5 rounded-xl p-4 text-center">
-                  <Clock className="w-5 h-5 text-purple-400 mx-auto mb-2" />
+                  <Clock className="w-5 h-5 text-[#375DEE] mx-auto mb-2" />
                   <p className="text-2xl font-bold">
                     {selectedCustomer.bookings?.length
                       ? formatDistanceToNow(new Date(selectedCustomer.bookings[0].created_at), { addSuffix: false })
@@ -482,7 +482,7 @@ export default function CustomersPage() {
                       value={newTag}
                       onChange={(e) => setNewTag(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && addTag()}
-                      className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-sm focus:outline-none focus:border-[#375DEE] w-24"
+                      className="px-3 py-1 bg-white/5 border border-white/[0.08] rounded-full text-sm focus:outline-none focus:border-[#375DEE] w-24"
                     />
                     <button onClick={addTag} className="p-1 hover:bg-white/10 rounded-full">
                       <Plus className="w-4 h-4" />
@@ -499,7 +499,7 @@ export default function CustomersPage() {
                     value={editForm.notes}
                     onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                     rows={3}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-[#375DEE] resize-none"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/[0.08] rounded-xl focus:outline-none focus:border-[#375DEE] resize-none"
                     placeholder="Add notes about this customer..."
                   />
                 ) : (
@@ -535,9 +535,9 @@ export default function CustomersPage() {
                         <div className="text-right">
                           <p className="font-semibold">${booking.total_amount?.toLocaleString()}</p>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            booking.status === "completed" ? "bg-green-500/20 text-green-400" :
-                            booking.status === "confirmed" ? "bg-blue-500/20 text-blue-400" :
-                            "bg-yellow-500/20 text-yellow-400"
+                            booking.status === "completed" ? "bg-[#375DEE]/30 text-[#375DEE]" :
+                            booking.status === "confirmed" ? "bg-[#375DEE]/20 text-[#6B8DFF]" :
+                            "bg-white/10 text-white/60"
                           }`}>
                             {booking.status}
                           </span>

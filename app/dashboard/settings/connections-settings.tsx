@@ -114,7 +114,7 @@ export default function ConnectionsSettings() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
         <h3 className="text-lg font-bold mb-2">
           Connections
         </h3>
@@ -131,7 +131,7 @@ export default function ConnectionsSettings() {
           placeholder="Search integrations..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+          className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
         />
         {searchQuery && (
           <button
@@ -173,7 +173,7 @@ export default function ConnectionsSettings() {
               className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-4 hover:border-white/[0.12] transition-all"
             >
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/[0.08] flex items-center justify-center overflow-hidden flex-shrink-0">
                   {integration.icon ? (
                     <Image
                       src={integration.icon}
@@ -209,7 +209,7 @@ export default function ConnectionsSettings() {
                 className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                   isRequested
                     ? "bg-white/10 text-white/50 cursor-default"
-                    : "bg-white/5 hover:bg-[#375DEE] text-white/70 hover:text-white border border-white/10 hover:border-[#375DEE]"
+                    : "bg-white/5 hover:bg-[#375DEE] text-white/70 hover:text-white border border-white/[0.08] hover:border-[#375DEE]"
                 }`}
               >
                 {isRequested ? (
@@ -239,10 +239,10 @@ export default function ConnectionsSettings() {
       {/* Request Access Modal */}
       {selectedIntegration && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-md overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-md overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-white/[0.08]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
+                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/[0.08] flex items-center justify-center overflow-hidden">
                   {selectedIntegration.icon ? (
                     <Image src={selectedIntegration.icon} alt={selectedIntegration.name} width={24} height={24} className="w-6 h-6 object-contain" />
                   ) : (
@@ -285,7 +285,7 @@ export default function ConnectionsSettings() {
                         placeholder="you@company.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
                       />
                     </div>
                     <button

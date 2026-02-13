@@ -27,7 +27,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-white/10 pb-4 overflow-x-auto">
+      <div className="flex gap-2 border-b border-white/[0.08] pb-4 overflow-x-auto">
         <button
           onClick={() => setActiveTab("account")}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${

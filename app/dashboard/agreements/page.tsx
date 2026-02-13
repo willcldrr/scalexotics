@@ -262,7 +262,7 @@ export default function AgreementsPage() {
           { label: "Sent", value: agreements.filter(a => a.status === "sent").length, color: "text-blue-400" },
           { label: "Signed", value: agreements.filter(a => a.status === "signed").length, color: "text-green-400" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-white/5 rounded-xl border border-white/10 p-4 text-center">
+          <div key={stat.label} className="bg-black rounded-xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-4 text-center">
             <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
             <p className="text-sm text-white/50">{stat.label}</p>
           </div>
@@ -278,7 +278,7 @@ export default function AgreementsPage() {
             placeholder="Search agreements..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+            className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
           />
         </div>
         <div className="flex gap-2">
@@ -299,7 +299,7 @@ export default function AgreementsPage() {
       </div>
 
       {/* Agreements List */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+      <div className="bg-white/5 rounded-2xl border border-white/[0.08] overflow-hidden">
         {filteredAgreements.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-white/40">
             <FileText className="w-12 h-12 mb-3" />
@@ -370,8 +370,8 @@ export default function AgreementsPage() {
       {/* Create Agreement Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-lg">
-            <div className="p-6 border-b border-white/10 flex items-center justify-between">
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-lg">
+            <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
               <h2 className="text-xl font-bold">Create Agreement</h2>
               <button
                 onClick={() => setShowCreateModal(false)}
@@ -386,7 +386,7 @@ export default function AgreementsPage() {
                 <select
                   value={selectedBooking}
                   onChange={(e) => setSelectedBooking(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#375DEE]"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white focus:outline-none focus:border-[#375DEE]"
                 >
                   <option value="">Choose a confirmed booking...</option>
                   {bookings.map((booking) => (
@@ -448,8 +448,8 @@ export default function AgreementsPage() {
       {/* View Agreement Modal */}
       {showViewModal && selectedAgreement && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-white/10 flex items-center justify-between">
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
               <h2 className="text-xl font-bold">Rental Agreement</h2>
               <button
                 onClick={() => setShowViewModal(false)}
@@ -514,7 +514,7 @@ export default function AgreementsPage() {
                     type="text"
                     readOnly
                     value={`${typeof window !== 'undefined' ? window.location.origin : ''}/sign/${selectedAgreement.token}`}
-                    className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white/70"
+                    className="flex-1 px-4 py-2 bg-white/5 border border-white/[0.08] rounded-lg text-sm text-white/70"
                   />
                   <button
                     onClick={() => copyLink(selectedAgreement.token)}

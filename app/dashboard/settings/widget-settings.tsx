@@ -144,7 +144,7 @@ export default function WidgetSettings() {
   return (
     <div className="space-y-6">
       {/* Sub-Tabs */}
-      <div className="flex gap-2 border-b border-white/10 pb-4">
+      <div className="flex gap-2 border-b border-white/[0.08] pb-4">
         {[
           { id: "embed", label: "Embed Code", icon: Code },
           { id: "customize", label: "Customize", icon: Palette },
@@ -168,14 +168,14 @@ export default function WidgetSettings() {
       {activeTab === "embed" && (
         <div className="space-y-6">
           {/* API Key */}
-          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
             <h2 className="text-lg font-bold mb-4">Your Widget API Key</h2>
             <div className="flex items-center gap-3">
               <input
                 type="text"
                 readOnly
                 value={apiKey || "Loading..."}
-                className="flex-1 px-4 py-3 bg-black/30 border border-white/10 rounded-xl text-white/70 font-mono text-sm"
+                className="flex-1 px-4 py-3 bg-black/30 border border-white/[0.08] rounded-xl text-white/70 font-mono text-sm"
               />
               <button
                 onClick={() => apiKey && copyCode(apiKey)}
@@ -190,7 +190,7 @@ export default function WidgetSettings() {
           </div>
 
           {/* JavaScript Embed */}
-          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-lg font-bold">JavaScript Embed (Recommended)</h2>
@@ -210,7 +210,7 @@ export default function WidgetSettings() {
           </div>
 
           {/* iFrame Embed */}
-          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-lg font-bold">iFrame Embed (Simple)</h2>
@@ -245,7 +245,7 @@ export default function WidgetSettings() {
       {activeTab === "customize" && (
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Customization Options */}
-          <div className="bg-white/5 rounded-2xl border border-white/10 p-6 space-y-6">
+          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6 space-y-6">
             <h2 className="text-lg font-bold">Widget Settings</h2>
 
             {/* Theme */}
@@ -259,7 +259,7 @@ export default function WidgetSettings() {
                     className={`flex-1 py-3 rounded-xl border text-sm font-medium transition-colors ${
                       widgetConfig.theme === theme
                         ? "bg-[#375DEE] border-[#375DEE] text-white"
-                        : "bg-white/5 border-white/10 text-white/60 hover:text-white"
+                        : "bg-white/5 border-white/[0.08] text-white/60 hover:text-white"
                     }`}
                   >
                     {theme.charAt(0).toUpperCase() + theme.slice(1)}
@@ -276,13 +276,13 @@ export default function WidgetSettings() {
                   type="color"
                   value={widgetConfig.primaryColor}
                   onChange={(e) => setWidgetConfig({ ...widgetConfig, primaryColor: e.target.value })}
-                  className="w-12 h-12 rounded-lg border border-white/10 cursor-pointer"
+                  className="w-12 h-12 rounded-lg border border-white/[0.08] cursor-pointer"
                 />
                 <input
                   type="text"
                   value={widgetConfig.primaryColor}
                   onChange={(e) => setWidgetConfig({ ...widgetConfig, primaryColor: e.target.value })}
-                  className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-mono"
+                  className="flex-1 px-4 py-3 bg-white/5 border border-white/[0.08] rounded-xl text-white font-mono"
                 />
               </div>
             </div>
@@ -294,7 +294,7 @@ export default function WidgetSettings() {
                 type="text"
                 value={widgetConfig.buttonText}
                 onChange={(e) => setWidgetConfig({ ...widgetConfig, buttonText: e.target.value })}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white"
+                className="w-full px-4 py-3 bg-white/5 border border-white/[0.08] rounded-xl text-white"
               />
             </div>
 
@@ -307,7 +307,7 @@ export default function WidgetSettings() {
                 max="12"
                 value={widgetConfig.maxVehicles}
                 onChange={(e) => setWidgetConfig({ ...widgetConfig, maxVehicles: parseInt(e.target.value) || 6 })}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white"
+                className="w-full px-4 py-3 bg-white/5 border border-white/[0.08] rounded-xl text-white"
               />
             </div>
 
@@ -348,7 +348,7 @@ export default function WidgetSettings() {
           </div>
 
           {/* Live Preview */}
-          <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
             <h2 className="text-lg font-bold mb-4">Live Preview</h2>
             <div
               className={`rounded-xl p-4 ${
@@ -373,7 +373,7 @@ export default function WidgetSettings() {
                     key={i}
                     className={`p-4 rounded-lg flex items-center justify-between ${
                       widgetConfig.theme === "dark"
-                        ? "bg-white/5 border border-white/10"
+                        ? "bg-white/5 border border-white/[0.08]"
                         : "bg-gray-100 border border-gray-200"
                     }`}
                   >
@@ -405,7 +405,7 @@ export default function WidgetSettings() {
       )}
 
       {activeTab === "preview" && (
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+        <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold">Full Widget Preview</h2>
             <a

@@ -274,7 +274,7 @@ export default function DashboardPage() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-2xl bg-[#111111] border border-white/[0.06] p-5 animate-pulse">
+            <div key={i} className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-5 animate-pulse">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-10 h-10 bg-white/10 rounded-xl" />
                 <div className="h-4 w-12 bg-white/10 rounded" />
@@ -284,7 +284,7 @@ export default function DashboardPage() {
             </div>
           ))}
         </div>
-        <div className="h-72 rounded-2xl bg-[#111111] border border-white/[0.06] animate-pulse" />
+        <div className="h-72 rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] animate-pulse" />
       </div>
     )
   }
@@ -336,7 +336,7 @@ export default function DashboardPage() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Revenue */}
-        <div className="group rounded-2xl bg-[#111111] border border-white/[0.06] p-5 hover:border-[#375DEE]/30 hover:shadow-lg hover:shadow-[#375DEE]/5 hover:-translate-y-0.5 transition-all duration-300">
+        <div className="group rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-5 hover:border-[#375DEE]/30 hover:shadow-lg hover:shadow-[#375DEE]/5 hover:-translate-y-0.5 transition-all duration-300">
           <div className="flex items-start justify-between mb-3">
             <div className="w-10 h-10 rounded-xl bg-[#375DEE]/10 flex items-center justify-center group-hover:bg-[#375DEE]/15 transition-colors">
               <DollarSign className="w-5 h-5 text-[#375DEE]" />
@@ -359,7 +359,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Bookings */}
-        <div className="group rounded-2xl bg-[#111111] border border-white/[0.06] p-5 hover:border-[#375DEE]/30 hover:shadow-lg hover:shadow-[#375DEE]/5 hover:-translate-y-0.5 transition-all duration-300">
+        <div className="group rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-5 hover:border-[#375DEE]/30 hover:shadow-lg hover:shadow-[#375DEE]/5 hover:-translate-y-0.5 transition-all duration-300">
           <div className="flex items-start justify-between mb-3">
             <div className="w-10 h-10 rounded-xl bg-[#375DEE]/10 flex items-center justify-center group-hover:bg-[#375DEE]/15 transition-colors">
               <CalendarCheck className="w-5 h-5 text-[#375DEE]" />
@@ -380,7 +380,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Leads */}
-        <div className="group rounded-2xl bg-[#111111] border border-white/[0.06] p-5 hover:border-[#375DEE]/30 hover:shadow-lg hover:shadow-[#375DEE]/5 hover:-translate-y-0.5 transition-all duration-300">
+        <div className="group rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-5 hover:border-[#375DEE]/30 hover:shadow-lg hover:shadow-[#375DEE]/5 hover:-translate-y-0.5 transition-all duration-300">
           <div className="flex items-start justify-between mb-3">
             <div className="w-10 h-10 rounded-xl bg-[#375DEE]/10 flex items-center justify-center group-hover:bg-[#375DEE]/15 transition-colors">
               <Users className="w-5 h-5 text-[#375DEE]" />
@@ -394,7 +394,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Conversion Rate */}
-        <div className="group rounded-2xl bg-[#111111] border border-white/[0.06] p-5 hover:border-[#375DEE]/30 hover:shadow-lg hover:shadow-[#375DEE]/5 hover:-translate-y-0.5 transition-all duration-300">
+        <div className="group rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-5 hover:border-[#375DEE]/30 hover:shadow-lg hover:shadow-[#375DEE]/5 hover:-translate-y-0.5 transition-all duration-300">
           <div className="flex items-start justify-between mb-3">
             <div className="w-10 h-10 rounded-xl bg-[#375DEE]/10 flex items-center justify-center group-hover:bg-[#375DEE]/15 transition-colors">
               <Target className="w-5 h-5 text-[#375DEE]" />
@@ -409,7 +409,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Revenue Trend Chart */}
-      <div className="rounded-2xl bg-[#111111] border border-white/[0.06] overflow-hidden hover:border-white/[0.1] transition-colors">
+      <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden hover:border-white/[0.1] transition-colors">
         <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-[#375DEE]/10 flex items-center justify-center">
             <Activity className="w-4 h-4 text-[#375DEE]" />
@@ -429,7 +429,7 @@ export default function DashboardPage() {
       {/* Conversion Funnel + Lead Sources */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Conversion Funnel */}
-        <div className="rounded-2xl bg-[#111111] border border-white/[0.06] overflow-hidden hover:border-white/[0.1] transition-colors">
+        <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden hover:border-white/[0.1] transition-colors">
           <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#375DEE]/10 flex items-center justify-center">
               <Zap className="w-4 h-4 text-[#375DEE]" />
@@ -464,7 +464,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Lead Sources */}
-        <div className="rounded-2xl bg-[#111111] border border-white/[0.06] overflow-hidden hover:border-white/[0.1] transition-colors">
+        <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden hover:border-white/[0.1] transition-colors">
           <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center">
               <PieChartIcon className="w-4 h-4 text-white/60" />
@@ -506,7 +506,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Vehicle Performance */}
-      <div className="rounded-2xl bg-[#111111] border border-white/[0.06] overflow-hidden hover:border-white/[0.1] transition-colors">
+      <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden hover:border-white/[0.1] transition-colors">
         <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-[#375DEE]/10 flex items-center justify-center">
             <Car className="w-4 h-4 text-[#375DEE]" />
@@ -535,7 +535,7 @@ export default function DashboardPage() {
       {/* Fleet Utilization + Booking Status */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Fleet Utilization */}
-        <div className="rounded-2xl bg-[#111111] border border-white/[0.06] overflow-hidden hover:border-white/[0.1] transition-colors">
+        <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden hover:border-white/[0.1] transition-colors">
           <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center">
               <Clock className="w-4 h-4 text-white/60" />
@@ -583,7 +583,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Booking Status */}
-        <div className="rounded-2xl bg-[#111111] border border-white/[0.06] overflow-hidden hover:border-white/[0.1] transition-colors">
+        <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden hover:border-white/[0.1] transition-colors">
           <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#375DEE]/10 flex items-center justify-center">
               <CalendarCheck className="w-4 h-4 text-[#375DEE]" />
@@ -634,7 +634,7 @@ export default function DashboardPage() {
       {/* Recent Leads + Upcoming Bookings */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Leads */}
-        <div className="rounded-2xl bg-[#111111] border border-white/[0.06] overflow-hidden hover:border-white/[0.1] transition-colors">
+        <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden hover:border-white/[0.1] transition-colors">
           <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-[#375DEE]/10 flex items-center justify-center">
@@ -691,7 +691,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Upcoming Bookings */}
-        <div className="rounded-2xl bg-[#111111] border border-white/[0.06] overflow-hidden hover:border-white/[0.1] transition-colors">
+        <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden hover:border-white/[0.1] transition-colors">
           <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center">
@@ -760,7 +760,7 @@ export default function DashboardPage() {
           <Link
             key={action.label}
             href={action.href}
-            className="group flex items-center gap-3 px-4 py-3 rounded-xl bg-[#111111] border border-white/[0.06] hover:border-[#375DEE]/30 hover:shadow-md hover:shadow-[#375DEE]/5 hover:-translate-y-0.5 transition-all duration-200"
+            className="group flex items-center gap-3 px-4 py-3 rounded-xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] hover:border-[#375DEE]/30 hover:shadow-md hover:shadow-[#375DEE]/5 hover:-translate-y-0.5 transition-all duration-200"
           >
             <action.icon className="w-4 h-4 text-white/40 group-hover:text-[#375DEE] transition-colors" />
             <span className="text-sm text-white/60 group-hover:text-white/80 transition-colors">{action.label}</span>

@@ -242,19 +242,19 @@ export default function InvoicesSettings() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+        <div className="bg-white/5 rounded-xl border border-white/[0.08] p-4">
           <div className="text-white/50 text-sm">Total Invoices</div>
           <div className="text-2xl font-bold mt-1">{stats.total}</div>
         </div>
-        <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+        <div className="bg-white/5 rounded-xl border border-white/[0.08] p-4">
           <div className="text-white/50 text-sm">Pending</div>
           <div className="text-2xl font-bold mt-1 text-yellow-400">{stats.pending}</div>
         </div>
-        <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+        <div className="bg-white/5 rounded-xl border border-white/[0.08] p-4">
           <div className="text-white/50 text-sm">Paid</div>
           <div className="text-2xl font-bold mt-1 text-green-400">{stats.paid}</div>
         </div>
-        <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+        <div className="bg-white/5 rounded-xl border border-white/[0.08] p-4">
           <div className="text-white/50 text-sm">Total Revenue</div>
           <div className="text-2xl font-bold mt-1 text-[#375DEE]">{formatCurrency(stats.revenue)}</div>
         </div>
@@ -282,7 +282,7 @@ export default function InvoicesSettings() {
       )}
 
       {/* Invoices List */}
-      <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+      <div className="bg-white/5 rounded-xl border border-white/[0.08] overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-white/50" />
@@ -297,7 +297,7 @@ export default function InvoicesSettings() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/10">
+                <tr className="border-b border-white/[0.08]">
                   <th className="text-left text-sm font-medium text-white/50 px-4 py-3">Invoice</th>
                   <th className="text-left text-sm font-medium text-white/50 px-4 py-3">Client</th>
                   <th className="text-left text-sm font-medium text-white/50 px-4 py-3">Type</th>
@@ -408,8 +408,8 @@ export default function InvoicesSettings() {
       {/* Create Invoice Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
+          <div className="bg-[#111] border border-white/[0.08] rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-white/[0.08]">
               <h3 className="text-lg font-bold">Create Invoice</h3>
               <button
                 onClick={() => setShowModal(false)}
@@ -430,7 +430,7 @@ export default function InvoicesSettings() {
                     className={`p-4 rounded-xl border transition-colors text-left ${
                       newInvoice.type === "retainer"
                         ? "border-[#375DEE] bg-[#375DEE]/10"
-                        : "border-white/10 hover:border-white/20"
+                        : "border-white/[0.08] hover:border-white/20"
                     }`}
                   >
                     <div className="font-medium">Retainer</div>
@@ -442,7 +442,7 @@ export default function InvoicesSettings() {
                     className={`p-4 rounded-xl border transition-colors text-left ${
                       newInvoice.type === "booking"
                         ? "border-[#375DEE] bg-[#375DEE]/10"
-                        : "border-white/10 hover:border-white/20"
+                        : "border-white/[0.08] hover:border-white/20"
                     }`}
                   >
                     <div className="font-medium">Pay Per Booking</div>
@@ -461,7 +461,7 @@ export default function InvoicesSettings() {
                       value={newInvoice.bookingAmount}
                       onChange={(e) => setNewInvoice({ ...newInvoice, bookingAmount: e.target.value })}
                       placeholder="0.00"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
                     />
                   </div>
                   <div>
@@ -471,7 +471,7 @@ export default function InvoicesSettings() {
                       value={newInvoice.bookingDescription}
                       onChange={(e) => setNewInvoice({ ...newInvoice, bookingDescription: e.target.value })}
                       placeholder="e.g., Lamborghini Huracan - 3 day rental"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
                     />
                   </div>
                 </div>
@@ -489,7 +489,7 @@ export default function InvoicesSettings() {
                       className={`p-3 rounded-xl border transition-colors ${
                         newInvoice.adSpendRate === option.value
                           ? "border-[#375DEE] bg-[#375DEE]/10"
-                          : "border-white/10 hover:border-white/20"
+                          : "border-white/[0.08] hover:border-white/20"
                       }`}
                     >
                       {option.label}
@@ -507,7 +507,7 @@ export default function InvoicesSettings() {
                     value={newInvoice.adSpendDays}
                     onChange={(e) => setNewInvoice({ ...newInvoice, adSpendDays: parseInt(e.target.value) || 0 })}
                     min="1"
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
                   />
                   <div className="text-sm text-white/50 mt-2">
                     Ad spend total: {formatCurrency(newInvoice.adSpendRate * newInvoice.adSpendDays)}
@@ -525,7 +525,7 @@ export default function InvoicesSettings() {
                     value={newInvoice.clientName}
                     onChange={(e) => setNewInvoice({ ...newInvoice, clientName: e.target.value })}
                     placeholder="John Smith"
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -536,7 +536,7 @@ export default function InvoicesSettings() {
                       value={newInvoice.clientEmail}
                       onChange={(e) => setNewInvoice({ ...newInvoice, clientEmail: e.target.value })}
                       placeholder="john@example.com"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
                     />
                   </div>
                   <div>
@@ -546,7 +546,7 @@ export default function InvoicesSettings() {
                       value={newInvoice.clientPhone}
                       onChange={(e) => setNewInvoice({ ...newInvoice, clientPhone: e.target.value })}
                       placeholder="(555) 123-4567"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
                     />
                   </div>
                 </div>
@@ -560,12 +560,12 @@ export default function InvoicesSettings() {
                   onChange={(e) => setNewInvoice({ ...newInvoice, notes: e.target.value })}
                   placeholder="Any additional notes..."
                   rows={3}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] resize-none"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] resize-none"
                 />
               </div>
 
               {/* Total */}
-              <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+              <div className="bg-white/5 rounded-xl p-4 border border-white/[0.08]">
                 <div className="flex justify-between items-center">
                   <span className="text-white/60">Total Amount</span>
                   <span className="text-2xl font-bold">{formatCurrency(calculateTotal())}</span>
@@ -579,10 +579,10 @@ export default function InvoicesSettings() {
               </div>
             </div>
 
-            <div className="flex gap-3 p-6 border-t border-white/10">
+            <div className="flex gap-3 p-6 border-t border-white/[0.08]">
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 px-4 py-3 border border-white/10 hover:bg-white/5 text-white font-medium rounded-xl transition-colors"
+                className="flex-1 px-4 py-3 border border-white/[0.08] hover:bg-white/5 text-white font-medium rounded-xl transition-colors"
               >
                 Cancel
               </button>

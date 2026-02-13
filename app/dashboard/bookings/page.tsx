@@ -552,7 +552,7 @@ export default function BookingsPage() {
               </div>
 
               {/* Calendar Grid */}
-              <div className="flex-1 bg-white/[0.02] rounded-2xl border border-white/[0.06] p-5 flex flex-col">
+              <div className="flex-1 bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-5 flex flex-col">
                 {/* Day Headers */}
                 <div className="grid grid-cols-7 gap-1 mb-1">
                   {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
@@ -653,7 +653,7 @@ export default function BookingsPage() {
                 </div>
 
                 {/* Legend */}
-                <div className="mt-4 pt-4 border-t border-white/[0.06] flex items-center justify-between">
+                <div className="mt-4 pt-4 border-t border-white/[0.08] flex items-center justify-between">
                   <div className="flex flex-wrap gap-5">
                     {statusOptions.filter(s => s.value !== "cancelled").map((status) => (
                       <div key={status.value} className="flex items-center gap-2">
@@ -670,7 +670,7 @@ export default function BookingsPage() {
 
               {/* Booking Details List */}
               {(selectedVehicle.id === "all" ? allActiveBookings : vehicleBookings).filter(b => new Date(b.end_date) >= new Date()).length > 0 && (
-                <div className="mt-4 bg-white/[0.02] rounded-2xl border border-white/[0.06] p-4">
+                <div className="mt-4 bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-4">
                   <h4 className="text-sm font-bold text-white/60 mb-3">Upcoming Bookings</h4>
                   <div className="grid gap-2 max-h-[200px] overflow-y-auto">
                     {(selectedVehicle.id === "all" ? allActiveBookings : vehicleBookings)
@@ -716,7 +716,7 @@ export default function BookingsPage() {
               )}
             </div>
           ) : (
-            <div className="hidden lg:flex flex-1 bg-white/[0.02] rounded-2xl border border-white/[0.06] items-center justify-center">
+            <div className="hidden lg:flex flex-1 bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] items-center justify-center">
               <div className="text-center px-6">
                 <div className="w-16 h-16 rounded-2xl bg-white/[0.03] flex items-center justify-center mx-auto mb-4">
                   <Calendar className="w-8 h-8 text-white/20" />
@@ -767,25 +767,25 @@ export default function BookingsPage() {
 
             {/* Stats */}
             <div className="space-y-2 flex-1 overflow-y-auto">
-              <div className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.06]">
+              <div className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.08]">
                 <p className="text-white/50 text-xs">Pending Deposits</p>
                 <p className="text-xl font-bold mt-0.5 font-mono">
                   {bookings.filter((b) => !b.deposit_paid && b.status === "pending").length}
                 </p>
               </div>
-              <div className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.06]">
+              <div className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.08]">
                 <p className="text-white/50 text-xs">Confirmed</p>
                 <p className="text-xl font-bold mt-0.5 font-mono">
                   {bookings.filter((b) => b.status === "confirmed").length}
                 </p>
               </div>
-              <div className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.06]">
+              <div className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.08]">
                 <p className="text-white/50 text-xs">Active Rentals</p>
                 <p className="text-xl font-bold mt-0.5 font-mono">
                   {bookings.filter((b) => b.status === "active").length}
                 </p>
               </div>
-              <div className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.06]">
+              <div className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.08]">
                 <p className="text-white/50 text-xs">Total Revenue</p>
                 <p className="text-xl font-bold mt-0.5 text-[#375DEE] font-mono">
                   ${bookings
@@ -844,7 +844,7 @@ export default function BookingsPage() {
                     {upcomingBookings.map((booking) => (
                       <div
                         key={booking.id}
-                        className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-4 hover:border-white/[0.12] transition-colors"
+                        className="bg-white/[0.03] rounded-xl border border-white/[0.08] p-4 hover:border-white/[0.12] transition-colors"
                       >
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                           <div className="flex items-start gap-4">
@@ -914,7 +914,7 @@ export default function BookingsPage() {
                   <h2 className="text-sm font-bold text-white/40 mb-3">Past & Cancelled</h2>
                   <div className="space-y-2 opacity-60">
                     {pastBookings.map((booking) => (
-                      <div key={booking.id} className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-3">
+                      <div key={booking.id} className="bg-white/[0.03] rounded-xl border border-white/[0.08] p-3">
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-10 rounded-lg bg-white/[0.04] overflow-hidden flex-shrink-0">

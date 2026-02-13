@@ -132,7 +132,7 @@ export default function AccountSettings() {
       )}
 
       {/* Profile Settings */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
         <div className="flex items-center gap-3 mb-6">
           <User className="w-5 h-5 text-[#375DEE]" />
           <h2 className="text-lg font-bold">Profile Information</h2>
@@ -145,7 +145,7 @@ export default function AccountSettings() {
               type="email"
               value={user?.email || ""}
               disabled
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/50 cursor-not-allowed"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white/50 cursor-not-allowed"
             />
             <p className="text-xs text-white/40 mt-1">Email cannot be changed</p>
           </div>
@@ -157,7 +157,7 @@ export default function AccountSettings() {
               placeholder="Your full name"
               value={profile.full_name}
               onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
             />
           </div>
 
@@ -170,7 +170,7 @@ export default function AccountSettings() {
                 placeholder="Your company name"
                 value={profile.company_name}
                 onChange={(e) => setProfile({ ...profile, company_name: e.target.value })}
-                className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
               />
             </div>
           </div>
@@ -182,7 +182,7 @@ export default function AccountSettings() {
               placeholder="Your phone number"
               value={profile.phone}
               onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
             />
           </div>
 
@@ -202,7 +202,7 @@ export default function AccountSettings() {
       </div>
 
       {/* Password Settings */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
         <div className="flex items-center gap-3 mb-6">
           <Lock className="w-5 h-5 text-[#375DEE]" />
           <h2 className="text-lg font-bold">Change Password</h2>
@@ -216,7 +216,7 @@ export default function AccountSettings() {
               placeholder="Enter new password"
               value={passwordData.new}
               onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
             />
           </div>
 
@@ -227,7 +227,7 @@ export default function AccountSettings() {
               placeholder="Confirm new password"
               value={passwordData.confirm}
               onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
             />
           </div>
 

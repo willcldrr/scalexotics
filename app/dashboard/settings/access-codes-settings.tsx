@@ -222,23 +222,23 @@ export default function AccessCodesSettings() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+        <div className="bg-white/5 rounded-xl p-4 border border-white/[0.08]">
           <p className="text-white/40 text-xs mb-1">Total Codes</p>
           <p className="text-2xl font-bold">{codes.length}</p>
         </div>
-        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+        <div className="bg-white/5 rounded-xl p-4 border border-white/[0.08]">
           <p className="text-white/40 text-xs mb-1">Active</p>
           <p className="text-2xl font-bold text-green-400">
             {codes.filter((c) => c.is_active && !isExpired(c.expires_at) && c.use_count < c.max_uses).length}
           </p>
         </div>
-        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+        <div className="bg-white/5 rounded-xl p-4 border border-white/[0.08]">
           <p className="text-white/40 text-xs mb-1">Used</p>
           <p className="text-2xl font-bold text-blue-400">
             {codes.filter((c) => c.use_count > 0).length}
           </p>
         </div>
-        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+        <div className="bg-white/5 rounded-xl p-4 border border-white/[0.08]">
           <p className="text-white/40 text-xs mb-1">Revoked</p>
           <p className="text-2xl font-bold text-red-400">
             {codes.filter((c) => !c.is_active).length}
@@ -248,7 +248,7 @@ export default function AccessCodesSettings() {
 
       {/* Codes List */}
       {codes.length === 0 ? (
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-12 text-center">
+        <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-12 text-center">
           <Key className="w-16 h-16 text-white/20 mx-auto mb-4" />
           <h3 className="text-xl font-bold mb-2">
             No access codes yet
@@ -265,11 +265,11 @@ export default function AccessCodesSettings() {
           </button>
         </div>
       ) : (
-        <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+        <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/10">
+                <tr className="border-b border-white/[0.08]">
                   <th className="text-left text-xs text-white/40 font-medium px-6 py-4">Code</th>
                   <th className="text-left text-xs text-white/40 font-medium px-6 py-4">Label</th>
                   <th className="text-left text-xs text-white/40 font-medium px-6 py-4">Status</th>
@@ -357,9 +357,9 @@ export default function AccessCodesSettings() {
       {/* Create Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-md overflow-hidden">
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-md overflow-hidden">
             {/* Modal Header */}
-            <div className="p-6 border-b border-white/10 flex items-center justify-between">
+            <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
               <h2 className="text-xl font-bold">
                 Generate Access Code
               </h2>
@@ -380,7 +380,7 @@ export default function AccessCodesSettings() {
                   placeholder="e.g., Miami Exotics, John's Fleet"
                   value={newCode.name}
                   onChange={(e) => setNewCode({ ...newCode, name: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
                 />
                 <p className="text-xs text-white/40 mt-1">Help you identify who this code is for</p>
               </div>
@@ -400,7 +400,7 @@ export default function AccessCodesSettings() {
                       className={`py-2 rounded-lg text-sm font-medium transition-colors ${
                         newCode.expiresIn === option.value
                           ? "bg-[#375DEE] text-white"
-                          : "bg-white/5 text-white/60 hover:text-white border border-white/10"
+                          : "bg-white/5 text-white/60 hover:text-white border border-white/[0.08]"
                       }`}
                     >
                       {option.label}
@@ -419,7 +419,7 @@ export default function AccessCodesSettings() {
                       className={`py-2 rounded-lg text-sm font-medium transition-colors ${
                         newCode.maxUses === num
                           ? "bg-[#375DEE] text-white"
-                          : "bg-white/5 text-white/60 hover:text-white border border-white/10"
+                          : "bg-white/5 text-white/60 hover:text-white border border-white/[0.08]"
                       }`}
                     >
                       {num === 999 ? "Unlimited" : num === 1 ? "Single use" : `${num} uses`}
@@ -430,7 +430,7 @@ export default function AccessCodesSettings() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 border-t border-white/10 flex gap-3">
+            <div className="p-6 border-t border-white/[0.08] flex gap-3">
               <button
                 onClick={() => setShowModal(false)}
                 className="flex-1 px-5 py-3 rounded-xl border border-white/20 hover:bg-white/5 font-medium transition-colors"
