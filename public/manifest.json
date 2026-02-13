@@ -1,0 +1,21 @@
+{
+  "name": "Scale Exotics",
+  "short_name": "Scale Exotics",
+  "description": "AI-powered lead capture and booking platform for exotic car rental fleets",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#375DEE",
+  "icons": [
+    {
+      "src": "/scalexoticslogo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/scalexoticslogo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
