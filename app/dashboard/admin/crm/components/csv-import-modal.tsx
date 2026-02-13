@@ -39,6 +39,7 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
   const [csvHeaders, setCsvHeaders] = useState<string[]>([])
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({})
   const [importing, setImporting] = useState(false)
+  const [importProgress, setImportProgress] = useState({ current: 0, total: 0 })
   const [importResult, setImportResult] = useState<{ success: number; failed: number } | null>(null)
 
   const parseCSV = (text: string): { headers: string[]; data: Array<Record<string, string>> } => {
@@ -160,7 +161,12 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
       return
     }
 
-    for (const row of csvData) {
+    // Prepare all lead data for batch insert
+    const leadsToInsert: Array<Record<string, any>> = []
+    const notesData: Array<{ rowIndex: number; content: string }> = []
+
+    for (let i = 0; i < csvData.length; i++) {
+      const row = csvData[i]
       const companyName = row[companyCol]?.trim()
       const contactName = row[contactCol]?.trim()
 
@@ -191,28 +197,57 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
         if (!isNaN(value)) leadData.estimated_value = value
       }
 
-      // If notes column exists, create a note after creating the lead
+      // Track notes to add after batch insert
       const noteContent = notesCol ? row[notesCol]?.trim() : null
+      if (noteContent) {
+        notesData.push({ rowIndex: leadsToInsert.length, content: noteContent })
+      }
 
-      const { data: newLead, error } = await supabase
+      leadsToInsert.push(leadData)
+    }
+
+    // Batch insert in chunks of 500 (Supabase limit is ~1000)
+    const BATCH_SIZE = 500
+    const insertedLeads: Array<{ id: string }> = []
+    const totalBatches = Math.ceil(leadsToInsert.length / BATCH_SIZE)
+
+    setImportProgress({ current: 0, total: leadsToInsert.length })
+
+    for (let i = 0; i < leadsToInsert.length; i += BATCH_SIZE) {
+      const batch = leadsToInsert.slice(i, i + BATCH_SIZE)
+
+      const { data: batchResult, error } = await supabase
         .from("crm_leads")
-        .insert(leadData)
+        .insert(batch)
         .select("id")
-        .single()
 
       if (error) {
-        failed++
-      } else {
-        success++
+        console.error("Batch insert error:", error)
+        failed += batch.length
+      } else if (batchResult) {
+        success += batchResult.length
+        insertedLeads.push(...batchResult)
+      }
 
-        // Add note if exists
-        if (noteContent && newLead) {
-          await supabase.from("crm_notes").insert({
-            lead_id: newLead.id,
-            user_id: user.id,
-            content: noteContent,
-            note_type: "note",
-          })
+      // Update progress
+      setImportProgress({ current: Math.min(i + BATCH_SIZE, leadsToInsert.length), total: leadsToInsert.length })
+    }
+
+    // Add notes for leads that had notes (in batches)
+    if (notesData.length > 0 && insertedLeads.length > 0) {
+      const notesToInsert = notesData
+        .filter(n => insertedLeads[n.rowIndex])
+        .map(n => ({
+          lead_id: insertedLeads[n.rowIndex].id,
+          user_id: user.id,
+          content: n.content,
+          note_type: "note",
+        }))
+
+      if (notesToInsert.length > 0) {
+        for (let i = 0; i < notesToInsert.length; i += BATCH_SIZE) {
+          const batch = notesToInsert.slice(i, i + BATCH_SIZE)
+          await supabase.from("crm_notes").insert(batch)
         }
       }
     }
@@ -413,7 +448,9 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
               {importing ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Importing...
+                  {importProgress.total > 0
+                    ? `Importing... ${importProgress.current} / ${importProgress.total}`
+                    : "Preparing..."}
                 </>
               ) : (
                 <>

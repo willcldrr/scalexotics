@@ -88,6 +88,11 @@ export default function LeadsTab() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showBulkStatusMenu, setShowBulkStatusMenu] = useState(false)
+  const bulkMenuRef = useRef<HTMLDivElement>(null)
+
   // Message state
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
@@ -114,6 +119,9 @@ export default function LeadsTab() {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setOpenMenuId(null)
+      }
+      if (bulkMenuRef.current && !bulkMenuRef.current.contains(e.target as Node)) {
+        setShowBulkStatusMenu(false)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -160,6 +168,61 @@ export default function LeadsTab() {
       setLeads(leads.filter((l) => l.id !== id))
       setMessage({ type: "success", text: "Lead deleted successfully" })
       setOpenMenuId(null)
+    }
+  }
+
+  // Bulk selection handlers
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredLeads.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filteredLeads.map((l) => l.id)))
+    }
+  }
+
+  const handleSelectOne = (id: string) => {
+    const newSelected = new Set(selectedIds)
+    if (newSelected.has(id)) {
+      newSelected.delete(id)
+    } else {
+      newSelected.add(id)
+    }
+    setSelectedIds(newSelected)
+  }
+
+  const handleBulkStatusChange = async (newStatus: CRMLeadStatus) => {
+    if (selectedIds.size === 0) return
+
+    const { error } = await supabase
+      .from("crm_leads")
+      .update({ status: newStatus })
+      .in("id", Array.from(selectedIds))
+
+    if (error) {
+      setMessage({ type: "error", text: "Failed to update leads" })
+    } else {
+      setLeads(leads.map((l) => (selectedIds.has(l.id) ? { ...l, status: newStatus } : l)))
+      setMessage({ type: "success", text: `Updated ${selectedIds.size} leads to ${getStatusLabel(newStatus)}` })
+      setSelectedIds(new Set())
+    }
+    setShowBulkStatusMenu(false)
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return
+    if (!confirm(`Are you sure you want to delete ${selectedIds.size} leads? This action cannot be undone.`)) return
+
+    const { error } = await supabase
+      .from("crm_leads")
+      .delete()
+      .in("id", Array.from(selectedIds))
+
+    if (error) {
+      setMessage({ type: "error", text: "Failed to delete leads" })
+    } else {
+      setLeads(leads.filter((l) => !selectedIds.has(l.id)))
+      setMessage({ type: "success", text: `Deleted ${selectedIds.size} leads` })
+      setSelectedIds(new Set())
     }
   }
 
@@ -348,6 +411,65 @@ export default function LeadsTab() {
         </div>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-4 p-4 bg-[#375DEE]/10 border border-[#375DEE]/30 rounded-xl">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-[#375DEE] flex items-center justify-center text-sm font-bold">
+              {selectedIds.size}
+            </div>
+            <span className="text-sm text-white/80">
+              {selectedIds.size === 1 ? "lead selected" : "leads selected"}
+            </span>
+          </div>
+
+          <div className="h-6 w-px bg-white/20" />
+
+          {/* Change Status */}
+          <div className="relative" ref={bulkMenuRef}>
+            <button
+              onClick={() => setShowBulkStatusMenu(!showBulkStatusMenu)}
+              className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/15 rounded-lg text-sm font-medium transition-colors"
+            >
+              Change Status
+              <ChevronDown className="w-4 h-4" />
+            </button>
+            {showBulkStatusMenu && (
+              <div className="absolute left-0 top-full mt-1 w-48 bg-[#1a1a1a] rounded-xl border border-white/10 shadow-xl z-20 overflow-hidden">
+                {crmStatusOptions.map((status) => (
+                  <button
+                    key={status.value}
+                    onClick={() => handleBulkStatusChange(status.value)}
+                    className="w-full px-4 py-2.5 text-left text-sm hover:bg-white/5 transition-colors flex items-center gap-2"
+                  >
+                    <div className={`w-2 h-2 rounded-full ${status.bgColor}`} />
+                    {status.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Delete */}
+          <button
+            onClick={handleBulkDelete}
+            className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-red-500/20 hover:text-red-400 rounded-lg text-sm font-medium transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete
+          </button>
+
+          {/* Clear Selection */}
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="ml-auto flex items-center gap-2 px-4 py-2 hover:bg-white/10 rounded-lg text-sm text-white/60 hover:text-white transition-colors"
+          >
+            <X className="w-4 h-4" />
+            Clear Selection
+          </button>
+        </div>
+      )}
+
       {/* Table */}
       {filteredLeads.length === 0 ? (
         <div className="bg-white/5 rounded-2xl border border-white/10 p-12 text-center">
@@ -374,6 +496,16 @@ export default function LeadsTab() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/10">
+                  <th className="w-12 px-4 py-4">
+                    <label className="flex items-center justify-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={filteredLeads.length > 0 && selectedIds.size === filteredLeads.length}
+                        onChange={handleSelectAll}
+                        className="w-4 h-4 rounded border-white/30 bg-white/5 text-[#375DEE] focus:ring-[#375DEE] focus:ring-offset-0 cursor-pointer"
+                      />
+                    </label>
+                  </th>
                   <th
                     onClick={() => handleSort("company_name")}
                     className="text-left text-xs text-white/40 font-medium px-6 py-4 cursor-pointer hover:text-white transition-colors"
@@ -436,8 +568,20 @@ export default function LeadsTab() {
                   <tr
                     key={lead.id}
                     onClick={() => openDetailModal(lead)}
-                    className="border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors"
+                    className={`border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors ${
+                      selectedIds.has(lead.id) ? "bg-[#375DEE]/10" : ""
+                    }`}
                   >
+                    <td className="w-12 px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                      <label className="flex items-center justify-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(lead.id)}
+                          onChange={() => handleSelectOne(lead.id)}
+                          className="w-4 h-4 rounded border-white/30 bg-white/5 text-[#375DEE] focus:ring-[#375DEE] focus:ring-offset-0 cursor-pointer"
+                        />
+                      </label>
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#375DEE]/20 flex items-center justify-center flex-shrink-0">
