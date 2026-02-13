@@ -22,12 +22,8 @@ import {
   Calendar,
 } from "lucide-react"
 import { format } from "date-fns"
-import {
-  crmStatusOptions,
-  getStatusColor,
-  getStatusLabel,
-  type CRMLeadStatus,
-} from "../lib/crm-status"
+import { type CRMLeadStatus } from "../lib/crm-status"
+import { useCRMStatuses } from "../hooks/use-crm-statuses"
 import LeadDetailModal from "./lead-detail-modal"
 import LeadFormModal from "./lead-form-modal"
 import CSVImportModal from "./csv-import-modal"
@@ -62,7 +58,9 @@ type SortDirection = "asc" | "desc"
 
 export default function LeadsTab() {
   const supabase = createClient()
+  const { statusOptions, getStatusColor, getStatusLabel, lostStatuses, wonStatuses } = useCRMStatuses()
   const [leads, setLeads] = useState<CRMLead[]>([])
+  const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -132,7 +130,7 @@ export default function LeadsTab() {
   }, [message])
 
   const fetchLeads = async () => {
-    const { data, error } = await supabase
+    const { data, error, count } = await supabase
       .from("crm_leads")
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
@@ -141,6 +139,7 @@ export default function LeadsTab() {
       setMessage({ type: "error", text: "Failed to load leads" })
     } else {
       setLeads(data || [])
+      setTotalCount(count || data?.length || 0)
     }
     setLoading(false)
   }
@@ -304,11 +303,12 @@ export default function LeadsTab() {
     return sortDirection === "asc" ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />
   }
 
-  // Stats
-  const totalLeads = leads.length
-  const activeLeads = leads.filter((l) => !["closed_won", "closed_lost", "not_interested", "bounced"].includes(l.status)).length
+  // Stats - use totalCount for accurate total (in case of row limits)
+  const totalLeads = totalCount
+  const closedStatuses = [...wonStatuses, ...lostStatuses]
+  const activeLeads = leads.filter((l) => !closedStatuses.includes(l.status)).length
   const totalValue = leads.reduce((sum, l) => sum + (l.estimated_value || 0), 0)
-  const wonDeals = leads.filter((l) => l.status === "closed_won").length
+  const wonDeals = leads.filter((l) => wonStatuses.includes(l.status)).length
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-[#375DEE]" /></div>
@@ -396,7 +396,7 @@ export default function LeadsTab() {
           >
             All
           </button>
-          {crmStatusOptions.map((status) => (
+          {statusOptions.map((status) => (
             <button
               key={status.value}
               onClick={() => setStatusFilter(status.value)}
@@ -430,7 +430,7 @@ export default function LeadsTab() {
             </button>
             {showBulkStatusMenu && (
               <div className="absolute right-0 top-full mt-1 w-40 bg-[#1a1a1a] rounded-lg border border-white/10 shadow-xl overflow-hidden z-40">
-                {crmStatusOptions.map((status) => (
+                {statusOptions.map((status) => (
                   <button
                     key={status.value}
                     onClick={() => handleBulkStatusChange(status.value)}
@@ -545,7 +545,7 @@ export default function LeadsTab() {
                         </button>
                         {inlineStatusId === lead.id && (
                           <div className="absolute left-0 top-full mt-1 w-36 bg-[#1a1a1a] rounded-lg border border-white/10 shadow-xl z-20 overflow-hidden">
-                            {crmStatusOptions.map((status) => (
+                            {statusOptions.map((status) => (
                               <button
                                 key={status.value}
                                 onClick={() => handleStatusChange(lead.id, status.value)}
@@ -685,7 +685,7 @@ export default function LeadsTab() {
                 {/* Mobile Status Dropdown */}
                 {inlineStatusId === lead.id && (
                   <div className="absolute left-12 top-2 w-36 bg-[#1a1a1a] rounded-lg border border-white/10 shadow-xl z-20 overflow-hidden" ref={statusDropdownRef}>
-                    {crmStatusOptions.map((status) => (
+                    {statusOptions.map((status) => (
                       <button
                         key={status.value}
                         onClick={(e) => { e.stopPropagation(); handleStatusChange(lead.id, status.value) }}

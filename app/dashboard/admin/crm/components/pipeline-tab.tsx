@@ -7,7 +7,8 @@ import { useDroppable, useDraggable } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
 import { RefreshCw, Building2, User, DollarSign, MapPin, Clock, Loader2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
-import { pipelineStatuses, crmStatusOptions, getStatusColor, getStatusLabel, type CRMLeadStatus, type CRMStatusOption } from "../lib/crm-status"
+import { type CRMLeadStatus } from "../lib/crm-status"
+import { useCRMStatuses, type CRMStatusOption } from "../hooks/use-crm-statuses"
 import type { CRMLead } from "./leads-tab"
 import LeadDetailModal from "./lead-detail-modal"
 
@@ -167,6 +168,7 @@ function PipelineCard({
 
 export default function PipelineTab() {
   const supabase = createClient()
+  const { statusOptions, pipelineStatuses, getStatusLabel, lostStatuses, wonStatuses } = useCRMStatuses()
   const [leads, setLeads] = useState<CRMLead[]>([])
   const [loading, setLoading] = useState(true)
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -276,13 +278,14 @@ export default function PipelineTab() {
   const leadsByStatus = pipelineStatuses.reduce((acc, statusValue) => {
     acc[statusValue] = leads.filter((lead) => lead.status === statusValue)
     return acc
-  }, {} as Record<CRMLeadStatus, CRMLead[]>)
+  }, {} as Record<string, CRMLead[]>)
 
   const activeLead = activeId ? leads.find((l) => l.id === activeId) : null
 
-  // Stats
+  // Stats - use dynamic status arrays
+  const closedStatuses = [...wonStatuses, ...lostStatuses]
   const totalValue = leads.reduce((sum, l) => sum + (l.estimated_value || 0), 0)
-  const activeLeads = leads.filter((l) => !["closed_won", "closed_lost", "not_interested"].includes(l.status))
+  const activeLeads = leads.filter((l) => !closedStatuses.includes(l.status))
 
   if (loading) {
     return (
@@ -336,12 +339,12 @@ export default function PipelineTab() {
       >
         <div className="flex gap-4 overflow-x-auto pb-4 flex-1 min-h-0">
           {pipelineStatuses.map((statusValue) => {
-            const status = crmStatusOptions.find((s) => s.value === statusValue)
+            const status = statusOptions.find((s) => s.value === statusValue)
             if (!status) return null
             return (
               <PipelineColumn
                 key={status.value}
-                status={status}
+                status={status as CRMStatusOption}
                 leads={leadsByStatus[statusValue] || []}
                 onLeadClick={handleLeadClick}
               />
