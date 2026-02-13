@@ -181,34 +181,34 @@ export default function AnalyticsTab() {
 
         <div className="bg-white/5 rounded-xl p-5 border border-white/10">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-amber-400" />
+            <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-white" />
             </div>
             <span className="text-white/50 text-sm">Pipeline Value</span>
           </div>
-          <p className="text-3xl font-bold text-amber-400">{formatCurrency(totalValue)}</p>
+          <p className="text-3xl font-bold text-white">{formatCurrency(totalValue)}</p>
           <p className="text-xs text-white/40 mt-1">{activeLeads.length} active opportunities</p>
         </div>
 
         <div className="bg-white/5 rounded-xl p-5 border border-white/10">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-              <Target className="w-5 h-5 text-emerald-400" />
+            <div className="w-10 h-10 rounded-lg bg-[#375DEE]/20 flex items-center justify-center">
+              <Target className="w-5 h-5 text-[#375DEE]" />
             </div>
             <span className="text-white/50 text-sm">Conversion Rate</span>
           </div>
-          <p className="text-3xl font-bold text-emerald-400">{conversionRate.toFixed(1)}%</p>
+          <p className="text-3xl font-bold text-[#375DEE]">{conversionRate.toFixed(1)}%</p>
           <p className="text-xs text-white/40 mt-1">{wonDeals.length} won / {closedDeals} closed</p>
         </div>
 
         <div className="bg-white/5 rounded-xl p-5 border border-white/10">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-emerald-400" />
+            <div className="w-10 h-10 rounded-lg bg-[#375DEE]/20 flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-[#375DEE]" />
             </div>
             <span className="text-white/50 text-sm">Revenue Won</span>
           </div>
-          <p className="text-3xl font-bold text-emerald-400">{formatCurrency(wonValue)}</p>
+          <p className="text-3xl font-bold text-[#375DEE]">{formatCurrency(wonValue)}</p>
           <p className="text-xs text-white/40 mt-1">{wonDeals.length} deals closed</p>
         </div>
       </div>
@@ -302,7 +302,7 @@ export default function AnalyticsTab() {
                     <p className="font-medium truncate">{lead.company_name}</p>
                     <p className="text-xs text-white/40">{lead.contact_name}</p>
                   </div>
-                  <span className="text-amber-400 font-bold">{formatCurrency(lead.estimated_value || 0)}</span>
+                  <span className="text-white font-bold">{formatCurrency(lead.estimated_value || 0)}</span>
                 </div>
               ))}
             </div>

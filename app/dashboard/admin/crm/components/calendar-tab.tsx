@@ -9,15 +9,12 @@ import {
   X,
   Clock,
   MapPin,
-  Link as LinkIcon,
   User,
   Building2,
   Loader2,
-  Calendar as CalendarIcon,
   Video,
-  Phone,
-  RefreshCw,
   Trash2,
+  ArrowLeft,
 } from "lucide-react"
 import {
   format,
@@ -32,10 +29,10 @@ import {
   isSameDay,
   isToday,
   parseISO,
-  addWeeks,
-  subWeeks,
-  startOfDay,
-  endOfDay,
+  setHours,
+  setMinutes,
+  getHours,
+  getMinutes,
 } from "date-fns"
 import { eventTypeOptions, getEventTypeColor, type CRMEventType } from "../lib/crm-status"
 import type { CRMLead } from "./leads-tab"
@@ -56,19 +53,16 @@ interface CRMEvent {
   lead?: CRMLead
 }
 
-type ViewMode = "month" | "week"
-
 export default function CalendarTab() {
   const supabase = createClient()
   const [events, setEvents] = useState<CRMEvent[]>([])
   const [leads, setLeads] = useState<CRMLead[]>([])
   const [loading, setLoading] = useState(true)
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [viewMode, setViewMode] = useState<ViewMode>("month")
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [selectedEvent, setSelectedEvent] = useState<CRMEvent | null>(null)
   const [showEventModal, setShowEventModal] = useState(false)
   const [editingEvent, setEditingEvent] = useState<CRMEvent | null>(null)
+  const [selectedHour, setSelectedHour] = useState<number | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -103,19 +97,11 @@ export default function CalendarTab() {
   }
 
   const handlePrevious = () => {
-    if (viewMode === "month") {
-      setCurrentDate(subMonths(currentDate, 1))
-    } else {
-      setCurrentDate(subWeeks(currentDate, 1))
-    }
+    setCurrentDate(subMonths(currentDate, 1))
   }
 
   const handleNext = () => {
-    if (viewMode === "month") {
-      setCurrentDate(addMonths(currentDate, 1))
-    } else {
-      setCurrentDate(addWeeks(currentDate, 1))
-    }
+    setCurrentDate(addMonths(currentDate, 1))
   }
 
   const handleToday = () => {
@@ -124,31 +110,28 @@ export default function CalendarTab() {
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date)
+  }
+
+  const handleBackToMonth = () => {
+    setSelectedDate(null)
+  }
+
+  const handleHourClick = (hour: number) => {
+    setSelectedHour(hour)
     setEditingEvent(null)
     setShowEventModal(true)
   }
 
-  const handleEventClick = (event: CRMEvent, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setSelectedEvent(event)
+  const handleEventClick = (event: CRMEvent) => {
+    setEditingEvent(event)
+    setShowEventModal(true)
   }
 
-  const handleEditEvent = () => {
-    if (selectedEvent) {
-      setEditingEvent(selectedEvent)
-      setSelectedDate(parseISO(selectedEvent.start_time))
-      setShowEventModal(true)
-      setSelectedEvent(null)
-    }
-  }
-
-  const handleDeleteEvent = async () => {
-    if (!selectedEvent) return
+  const handleDeleteEvent = async (eventId: string) => {
     if (!confirm("Are you sure you want to delete this event?")) return
 
-    await supabase.from("crm_events").delete().eq("id", selectedEvent.id)
-    setEvents((prev) => prev.filter((e) => e.id !== selectedEvent.id))
-    setSelectedEvent(null)
+    await supabase.from("crm_events").delete().eq("id", eventId)
+    setEvents((prev) => prev.filter((e) => e.id !== eventId))
   }
 
   // Get events for a specific day
@@ -156,6 +139,15 @@ export default function CalendarTab() {
     return events.filter((event) => {
       const eventDate = parseISO(event.start_time)
       return isSameDay(eventDate, date)
+    })
+  }
+
+  // Get events for a specific hour on selected day
+  const getEventsForHour = (hour: number) => {
+    if (!selectedDate) return []
+    return events.filter((event) => {
+      const eventDate = parseISO(event.start_time)
+      return isSameDay(eventDate, selectedDate) && getHours(eventDate) === hour
     })
   }
 
@@ -177,18 +169,6 @@ export default function CalendarTab() {
     return days
   }
 
-  // Generate days for week view
-  const generateWeekDays = () => {
-    const weekStart = startOfWeek(currentDate)
-    const days: Date[] = []
-
-    for (let i = 0; i < 7; i++) {
-      days.push(addDays(weekStart, i))
-    }
-
-    return days
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -197,16 +177,134 @@ export default function CalendarTab() {
     )
   }
 
-  const days = viewMode === "month" ? generateMonthDays() : generateWeekDays()
+  const days = generateMonthDays()
 
+  // Day Detail View (Hour by Hour)
+  if (selectedDate) {
+    const dayEvents = getEventsForDay(selectedDate)
+    const hours = Array.from({ length: 24 }, (_, i) => i)
+
+    return (
+      <div className="space-y-4">
+        {/* Day View Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleBackToMonth}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors text-white/70 hover:text-white"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+            <div>
+              <h2 className="text-xl font-bold">{format(selectedDate, "EEEE")}</h2>
+              <p className="text-white/50">{format(selectedDate, "MMMM d, yyyy")}</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              setSelectedHour(9)
+              setEditingEvent(null)
+              setShowEventModal(true)
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-[#375DEE] hover:bg-[#4169E1] text-white font-medium rounded-xl transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add Event
+          </button>
+        </div>
+
+        {/* Hour by Hour Grid */}
+        <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+          <div className="divide-y divide-white/5">
+            {hours.map((hour) => {
+              const hourEvents = getEventsForHour(hour)
+              const isCurrentHour = isToday(selectedDate) && new Date().getHours() === hour
+
+              return (
+                <div
+                  key={hour}
+                  onClick={() => handleHourClick(hour)}
+                  className={`flex min-h-[60px] cursor-pointer hover:bg-white/5 transition-colors ${
+                    isCurrentHour ? "bg-[#375DEE]/10" : ""
+                  }`}
+                >
+                  {/* Time Label */}
+                  <div className="w-20 flex-shrink-0 p-3 border-r border-white/5 text-right">
+                    <span className={`text-sm ${isCurrentHour ? "text-[#375DEE] font-medium" : "text-white/40"}`}>
+                      {format(setHours(new Date(), hour), "h a")}
+                    </span>
+                  </div>
+
+                  {/* Events */}
+                  <div className="flex-1 p-2">
+                    {hourEvents.length > 0 ? (
+                      <div className="space-y-1">
+                        {hourEvents.map((event) => (
+                          <div
+                            key={event.id}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleEventClick(event)
+                            }}
+                            className={`px-3 py-2 rounded-lg ${getEventTypeColor(event.event_type)} text-white text-sm cursor-pointer hover:opacity-90 transition-opacity`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{event.title}</span>
+                              <span className="text-white/70 text-xs">
+                                {format(parseISO(event.start_time), "h:mm a")}
+                              </span>
+                            </div>
+                            {event.location && (
+                              <p className="text-white/70 text-xs mt-1 flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
+                                {event.location}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Event Modal */}
+        {showEventModal && (
+          <EventFormModal
+            date={selectedDate}
+            hour={selectedHour}
+            event={editingEvent}
+            leads={leads}
+            onClose={() => {
+              setShowEventModal(false)
+              setEditingEvent(null)
+              setSelectedHour(null)
+            }}
+            onSave={() => {
+              fetchData()
+              setShowEventModal(false)
+              setEditingEvent(null)
+              setSelectedHour(null)
+            }}
+            onDelete={handleDeleteEvent}
+          />
+        )}
+      </div>
+    )
+  }
+
+  // Month View (Square Days)
   return (
     <div className="space-y-4">
       {/* Calendar Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h2 className="text-xl font-bold">
-            {format(currentDate, viewMode === "month" ? "MMMM yyyy" : "'Week of' MMM d, yyyy")}
-          </h2>
+          <h2 className="text-xl font-bold">{format(currentDate, "MMMM yyyy")}</h2>
           <div className="flex items-center gap-1">
             <button
               onClick={handlePrevious}
@@ -229,71 +327,53 @@ export default function CalendarTab() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* View Toggle */}
-          <div className="flex items-center gap-1 p-1 bg-white/5 rounded-lg">
-            <button
-              onClick={() => setViewMode("month")}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                viewMode === "month" ? "bg-[#375DEE] text-white" : "text-white/60 hover:text-white"
-              }`}
-            >
-              Month
-            </button>
-            <button
-              onClick={() => setViewMode("week")}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                viewMode === "week" ? "bg-[#375DEE] text-white" : "text-white/60 hover:text-white"
-              }`}
-            >
-              Week
-            </button>
-          </div>
-
-          <button
-            onClick={() => {
-              setSelectedDate(new Date())
-              setEditingEvent(null)
-              setShowEventModal(true)
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-[#375DEE] hover:bg-[#4169E1] text-white font-medium rounded-xl transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Add Event
-          </button>
-        </div>
+        <button
+          onClick={() => {
+            setSelectedDate(new Date())
+            setSelectedHour(9)
+            setEditingEvent(null)
+            setShowEventModal(true)
+          }}
+          className="flex items-center gap-2 px-4 py-2 bg-[#375DEE] hover:bg-[#4169E1] text-white font-medium rounded-xl transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Add Event
+        </button>
       </div>
 
-      {/* Calendar Grid */}
+      {/* Calendar Grid - Full Width Square Days */}
       <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
         {/* Day Headers */}
         <div className="grid grid-cols-7 border-b border-white/10">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
             <div
               key={day}
-              className="p-3 text-center text-sm font-medium text-white/50"
+              className="p-3 text-center text-sm font-medium text-white/50 border-r border-white/5 last:border-r-0"
             >
               {day}
             </div>
           ))}
         </div>
 
-        {/* Calendar Days */}
-        <div className={`grid grid-cols-7 ${viewMode === "week" ? "min-h-[500px]" : ""}`}>
+        {/* Calendar Days - Square Grid */}
+        <div className="grid grid-cols-7">
           {days.map((day, index) => {
             const dayEvents = getEventsForDay(day)
-            const isCurrentMonth = viewMode === "month" ? isSameMonth(day, currentDate) : true
+            const isCurrentMonth = isSameMonth(day, currentDate)
             const isSelected = selectedDate && isSameDay(day, selectedDate)
 
             return (
               <div
                 key={index}
                 onClick={() => handleDateClick(day)}
-                className={`min-h-[100px] ${viewMode === "week" ? "min-h-[500px]" : ""} p-2 border-b border-r border-white/5 cursor-pointer hover:bg-white/5 transition-colors ${
+                className={`aspect-square p-2 border-b border-r border-white/5 cursor-pointer hover:bg-white/5 transition-colors relative ${
                   !isCurrentMonth ? "bg-white/[0.01]" : ""
-                } ${isSelected ? "bg-[#375DEE]/10" : ""}`}
+                } ${isSelected ? "bg-[#375DEE]/10" : ""} ${
+                  index % 7 === 6 ? "border-r-0" : ""
+                }`}
               >
-                <div className="flex items-center justify-between mb-1">
+                {/* Date Number */}
+                <div className="flex items-center justify-center mb-1">
                   <span
                     className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${
                       isToday(day)
@@ -308,19 +388,19 @@ export default function CalendarTab() {
                 </div>
 
                 {/* Events */}
-                <div className="space-y-1">
-                  {dayEvents.slice(0, viewMode === "week" ? 10 : 3).map((event) => (
+                <div className="space-y-0.5 overflow-hidden">
+                  {dayEvents.slice(0, 3).map((event) => (
                     <div
                       key={event.id}
-                      onClick={(e) => handleEventClick(event, e)}
-                      className={`px-2 py-1 rounded text-xs truncate cursor-pointer hover:opacity-80 transition-opacity ${getEventTypeColor(event.event_type)} text-white`}
+                      className={`px-1.5 py-0.5 rounded text-[10px] sm:text-xs truncate ${getEventTypeColor(event.event_type)} text-white`}
                     >
-                      {format(parseISO(event.start_time), "h:mm a")} - {event.title}
+                      <span className="hidden sm:inline">{format(parseISO(event.start_time), "h:mm")} </span>
+                      {event.title}
                     </div>
                   ))}
-                  {dayEvents.length > (viewMode === "week" ? 10 : 3) && (
-                    <div className="text-xs text-white/40 px-2">
-                      +{dayEvents.length - (viewMode === "week" ? 10 : 3)} more
+                  {dayEvents.length > 3 && (
+                    <div className="text-[10px] text-white/40 px-1.5">
+                      +{dayEvents.length - 3} more
                     </div>
                   )}
                 </div>
@@ -340,100 +420,25 @@ export default function CalendarTab() {
         ))}
       </div>
 
-      {/* Event Detail Popup */}
-      {selectedEvent && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setSelectedEvent(null)}>
-          <div
-            className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-md overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={`p-4 ${getEventTypeColor(selectedEvent.event_type)}`}>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-white/80 capitalize">
-                  {selectedEvent.event_type.replace("_", " ")}
-                </span>
-                <button
-                  onClick={() => setSelectedEvent(null)}
-                  className="p-1 rounded hover:bg-white/20 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <h3 className="text-xl font-bold mt-2">{selectedEvent.title}</h3>
-            </div>
-
-            <div className="p-4 space-y-4">
-              <div className="flex items-center gap-3 text-white/70">
-                <Clock className="w-4 h-4" />
-                <span>
-                  {format(parseISO(selectedEvent.start_time), "EEEE, MMMM d, yyyy")}
-                  <br />
-                  {format(parseISO(selectedEvent.start_time), "h:mm a")} -{" "}
-                  {format(parseISO(selectedEvent.end_time), "h:mm a")}
-                </span>
-              </div>
-
-              {selectedEvent.location && (
-                <div className="flex items-center gap-3 text-white/70">
-                  <MapPin className="w-4 h-4" />
-                  <span>{selectedEvent.location}</span>
-                </div>
-              )}
-
-              {selectedEvent.meeting_link && (
-                <div className="flex items-center gap-3">
-                  <Video className="w-4 h-4 text-white/70" />
-                  <a
-                    href={selectedEvent.meeting_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#375DEE] hover:underline"
-                  >
-                    Join Meeting
-                  </a>
-                </div>
-              )}
-
-              {selectedEvent.description && (
-                <p className="text-white/60 text-sm">{selectedEvent.description}</p>
-              )}
-
-              <div className="flex gap-2 pt-4 border-t border-white/10">
-                <button
-                  onClick={handleEditEvent}
-                  className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg font-medium transition-colors"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={handleDeleteEvent}
-                  className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg font-medium transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add/Edit Event Modal */}
-      {showEventModal && (
+      {/* Quick Event Modal (when adding from month view) */}
+      {showEventModal && selectedDate && (
         <EventFormModal
-          date={selectedDate || new Date()}
+          date={selectedDate}
+          hour={selectedHour}
           event={editingEvent}
           leads={leads}
           onClose={() => {
             setShowEventModal(false)
             setEditingEvent(null)
-            setSelectedDate(null)
+            setSelectedHour(null)
           }}
           onSave={() => {
             fetchData()
             setShowEventModal(false)
             setEditingEvent(null)
-            setSelectedDate(null)
+            setSelectedHour(null)
           }}
+          onDelete={handleDeleteEvent}
         />
       )}
     </div>
@@ -443,19 +448,26 @@ export default function CalendarTab() {
 // Event Form Modal Component
 function EventFormModal({
   date,
+  hour,
   event,
   leads,
   onClose,
   onSave,
+  onDelete,
 }: {
   date: Date
+  hour: number | null
   event: CRMEvent | null
   leads: CRMLead[]
   onClose: () => void
   onSave: () => void
+  onDelete: (id: string) => void
 }) {
   const supabase = createClient()
   const [saving, setSaving] = useState(false)
+
+  const defaultStartTime = hour !== null ? `${hour.toString().padStart(2, "0")}:00` : "09:00"
+  const defaultEndTime = hour !== null ? `${(hour + 1).toString().padStart(2, "0")}:00` : "10:00"
 
   const [formData, setFormData] = useState({
     title: event?.title || "",
@@ -463,8 +475,8 @@ function EventFormModal({
     event_type: event?.event_type || "meeting" as CRMEventType,
     lead_id: event?.lead_id || "",
     start_date: format(event ? parseISO(event.start_time) : date, "yyyy-MM-dd"),
-    start_time: format(event ? parseISO(event.start_time) : new Date(), "HH:mm"),
-    end_time: format(event ? parseISO(event.end_time) : addDays(new Date(), 0), "HH:mm"),
+    start_time: event ? format(parseISO(event.start_time), "HH:mm") : defaultStartTime,
+    end_time: event ? format(parseISO(event.end_time), "HH:mm") : defaultEndTime,
     location: event?.location || "",
     meeting_link: event?.meeting_link || "",
   })
@@ -508,9 +520,22 @@ function EventFormModal({
           <h2 className="text-xl font-bold">
             {event ? "Edit Event" : "New Event"}
           </h2>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/5 transition-colors">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {event && (
+              <button
+                onClick={() => {
+                  onDelete(event.id)
+                  onClose()
+                }}
+                className="p-2 rounded-lg hover:bg-white/5 text-white/50 hover:text-white transition-colors"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            )}
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/5 transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">

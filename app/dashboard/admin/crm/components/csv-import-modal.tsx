@@ -289,7 +289,7 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
                 <div
                   className={`flex items-center gap-3 p-4 rounded-xl ${
                     importResult.failed === 0
-                      ? "bg-green-500/10 border border-green-500/30 text-green-400"
+                      ? "bg-[#375DEE]/10 border border-[#375DEE]/30 text-[#375DEE]"
                       : "bg-yellow-500/10 border border-yellow-500/30 text-yellow-400"
                   }`}
                 >

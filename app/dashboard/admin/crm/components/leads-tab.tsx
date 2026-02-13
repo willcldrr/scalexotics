@@ -264,8 +264,8 @@ export default function LeadsTab() {
         <div
           className={`flex items-center gap-3 p-4 rounded-xl ${
             message.type === "success"
-              ? "bg-green-500/10 border border-green-500/30 text-green-400"
-              : "bg-red-500/10 border border-red-500/30 text-red-400"
+              ? "bg-[#375DEE]/10 border border-[#375DEE]/30 text-[#375DEE]"
+              : "bg-white/5 border border-white/20 text-white/70"
           }`}
         >
           {message.type === "success" ? <Check className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
@@ -288,11 +288,11 @@ export default function LeadsTab() {
         </div>
         <div className="bg-white/5 rounded-xl p-4 border border-white/10">
           <p className="text-white/40 text-xs mb-1">Pipeline Value</p>
-          <p className="text-2xl font-bold text-amber-400">{formatCurrency(totalValue)}</p>
+          <p className="text-2xl font-bold text-white">{formatCurrency(totalValue)}</p>
         </div>
         <div className="bg-white/5 rounded-xl p-4 border border-white/10">
           <p className="text-white/40 text-xs mb-1">Won Deals</p>
-          <p className="text-2xl font-bold text-emerald-400">{wonDeals}</p>
+          <p className="text-2xl font-bold text-[#375DEE]">{wonDeals}</p>
         </div>
       </div>
 
@@ -516,7 +516,7 @@ export default function LeadsTab() {
                             <div className="border-t border-white/10 my-1" />
                             <button
                               onClick={() => handleDelete(lead.id)}
-                              className="w-full px-4 py-2.5 text-left text-sm hover:bg-red-500/10 text-red-400 transition-colors flex items-center gap-2"
+                              className="w-full px-4 py-2.5 text-left text-sm hover:bg-white/10 text-white/50 hover:text-white transition-colors flex items-center gap-2"
                             >
                               <Trash2 className="w-4 h-4" />
                               Delete Lead

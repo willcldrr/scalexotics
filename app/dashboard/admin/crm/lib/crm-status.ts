@@ -19,6 +19,7 @@ export interface CRMStatusOption {
 }
 
 // CRM status progression (in order of sales funnel)
+// Using consistent blue/black/white theme
 export const crmStatusOptions: CRMStatusOption[] = [
   {
     value: "not_contacted",
@@ -37,8 +38,8 @@ export const crmStatusOptions: CRMStatusOption[] = [
   {
     value: "interested",
     label: "Interested",
-    color: "text-amber-400",
-    bgColor: "bg-amber-500/15",
+    color: "text-[#5a7df4]",
+    bgColor: "bg-[#375DEE]/25",
     description: "Showed interest in Scale Exotics",
   },
   {
@@ -51,22 +52,22 @@ export const crmStatusOptions: CRMStatusOption[] = [
   {
     value: "demo_scheduled",
     label: "Demo Scheduled",
-    color: "text-purple-400",
-    bgColor: "bg-purple-500/15",
+    color: "text-[#7b9af7]",
+    bgColor: "bg-[#375DEE]/35",
     description: "Demo or call scheduled",
   },
   {
     value: "closed_won",
     label: "Closed Won",
-    color: "text-emerald-400",
-    bgColor: "bg-emerald-500/15",
+    color: "text-white",
+    bgColor: "bg-[#375DEE]",
     description: "Signed up as customer",
   },
   {
     value: "closed_lost",
     label: "Closed Lost",
-    color: "text-red-400",
-    bgColor: "bg-red-500/15",
+    color: "text-white/50",
+    bgColor: "bg-white/10",
     description: "Deal lost",
   },
 ]
@@ -107,14 +108,14 @@ export const closedStatuses: CRMLeadStatus[] = ["closed_won", "closed_lost", "no
 
 export const wonStatuses: CRMLeadStatus[] = ["closed_won"]
 
-// Event types for calendar
+// Event types for calendar - using blue theme variations
 export type CRMEventType = "meeting" | "demo" | "call" | "follow_up" | "other"
 
 export const eventTypeOptions: { value: CRMEventType; label: string; color: string }[] = [
-  { value: "demo", label: "Demo", color: "bg-purple-500" },
-  { value: "call", label: "Call", color: "bg-[#375DEE]" },
-  { value: "meeting", label: "Meeting", color: "bg-emerald-500" },
-  { value: "follow_up", label: "Follow Up", color: "bg-amber-500" },
+  { value: "demo", label: "Demo", color: "bg-[#375DEE]" },
+  { value: "call", label: "Call", color: "bg-[#5a7df4]" },
+  { value: "meeting", label: "Meeting", color: "bg-[#2a4bc4]" },
+  { value: "follow_up", label: "Follow Up", color: "bg-[#7b9af7]" },
   { value: "other", label: "Other", color: "bg-white/20" },
 ]
 

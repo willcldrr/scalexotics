@@ -108,7 +108,7 @@ export default function LeadFormModal({ lead, onClose, onSave }: LeadFormModalPr
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+            <div className="mb-6 p-4 rounded-xl bg-white/5 border border-white/20 text-white/70 text-sm">
               {error}
             </div>
           )}

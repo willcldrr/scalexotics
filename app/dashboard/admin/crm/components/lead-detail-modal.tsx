@@ -223,7 +223,7 @@ export default function LeadDetailModal({
             </button>
             <button
               onClick={() => onDelete(lead.id)}
-              className="p-2 rounded-lg hover:bg-red-500/10 text-white/50 hover:text-red-400 transition-colors"
+              className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors"
               title="Delete lead"
             >
               <Trash2 className="w-5 h-5" />
@@ -325,7 +325,7 @@ export default function LeadDetailModal({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-white/40">Estimated Value</p>
-                    <p className="text-lg font-bold text-amber-400">{formatCurrency(lead.estimated_value)}</p>
+                    <p className="text-lg font-bold text-white">{formatCurrency(lead.estimated_value)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-white/40">Lead Score</p>
@@ -378,7 +378,7 @@ export default function LeadDetailModal({
                         key={note.id}
                         className={`p-3 rounded-lg ${
                           note.note_type === "status_change"
-                            ? "bg-purple-500/10 border border-purple-500/20"
+                            ? "bg-[#375DEE]/10 border border-[#375DEE]/20"
                             : "bg-white/5"
                         }`}
                       >
@@ -386,7 +386,7 @@ export default function LeadDetailModal({
                           <div
                             className={`p-1.5 rounded-lg ${
                               note.note_type === "status_change"
-                                ? "bg-purple-500/20 text-purple-400"
+                                ? "bg-[#375DEE]/20 text-[#375DEE]"
                                 : "bg-white/10 text-white/50"
                             }`}
                           >

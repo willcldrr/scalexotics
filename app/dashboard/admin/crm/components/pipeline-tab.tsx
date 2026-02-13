@@ -47,7 +47,7 @@ function PipelineColumn({
             <span className="text-white/40 text-sm">{leads.length}</span>
           </div>
           {totalValue > 0 && (
-            <span className="text-xs text-amber-400 font-medium">{formatValue(totalValue)}</span>
+            <span className="text-xs text-white/70 font-medium">{formatValue(totalValue)}</span>
           )}
         </div>
         <p className="text-white/40 text-xs mt-1.5">{status.description}</p>
@@ -134,7 +134,7 @@ function PipelineCard({
           </div>
         </div>
         {lead.estimated_value && (
-          <span className="text-xs font-medium text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
+          <span className="text-xs font-medium text-white bg-white/10 px-2 py-0.5 rounded">
             {formatValue(lead.estimated_value)}
           </span>
         )}
@@ -314,7 +314,7 @@ export default function PipelineTab() {
           </div>
           <div>
             <p className="text-white/40 text-xs">Pipeline Value</p>
-            <p className="text-xl font-bold text-amber-400">
+            <p className="text-xl font-bold text-white">
               ${(totalValue / 1000).toFixed(0)}k
             </p>
           </div>

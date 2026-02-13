@@ -108,7 +108,7 @@ export default function SettingsTab() {
 
             {googleToken ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-emerald-400">
+                <div className="flex items-center gap-2 text-[#375DEE]">
                   <Check className="w-4 h-4" />
                   <span className="text-sm font-medium">Connected</span>
                 </div>
@@ -117,7 +117,7 @@ export default function SettingsTab() {
                 )}
                 <button
                   onClick={() => handleDisconnect("google")}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-sm font-medium transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-lg text-sm font-medium transition-colors"
                 >
                   <Unlink className="w-4 h-4" />
                   Disconnect
@@ -129,10 +129,10 @@ export default function SettingsTab() {
                   <X className="w-4 h-4" />
                   <span className="text-sm">Not connected</span>
                 </div>
-                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                <div className="p-3 bg-white/5 border border-white/10 rounded-lg">
                   <div className="flex items-start gap-2">
-                    <Info className="w-4 h-4 text-amber-400 mt-0.5" />
-                    <p className="text-xs text-amber-400/80">
+                    <Info className="w-4 h-4 text-white/50 mt-0.5" />
+                    <p className="text-xs text-white/50">
                       Google Calendar integration requires OAuth setup. Add GOOGLE_CRM_CLIENT_ID and GOOGLE_CRM_CLIENT_SECRET to your environment variables, then create the OAuth callback route.
                     </p>
                   </div>
@@ -164,7 +164,7 @@ export default function SettingsTab() {
 
             {zoomToken ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-emerald-400">
+                <div className="flex items-center gap-2 text-[#375DEE]">
                   <Check className="w-4 h-4" />
                   <span className="text-sm font-medium">Connected</span>
                 </div>
@@ -173,7 +173,7 @@ export default function SettingsTab() {
                 )}
                 <button
                   onClick={() => handleDisconnect("zoom")}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-sm font-medium transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-lg text-sm font-medium transition-colors"
                 >
                   <Unlink className="w-4 h-4" />
                   Disconnect
@@ -185,10 +185,10 @@ export default function SettingsTab() {
                   <X className="w-4 h-4" />
                   <span className="text-sm">Not connected</span>
                 </div>
-                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                <div className="p-3 bg-white/5 border border-white/10 rounded-lg">
                   <div className="flex items-start gap-2">
-                    <Info className="w-4 h-4 text-amber-400 mt-0.5" />
-                    <p className="text-xs text-amber-400/80">
+                    <Info className="w-4 h-4 text-white/50 mt-0.5" />
+                    <p className="text-xs text-white/50">
                       Zoom integration requires OAuth setup. Add ZOOM_CLIENT_ID and ZOOM_CLIENT_SECRET to your environment variables, then create the OAuth callback route.
                     </p>
                   </div>
