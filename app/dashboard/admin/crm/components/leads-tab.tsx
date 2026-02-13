@@ -88,14 +88,33 @@ export default function LeadsTab() {
   // Message state
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
+  // Debounced search value
+  const [debouncedSearch, setDebouncedSearch] = useState(search)
+
+  // Debounce search input
   useEffect(() => {
-    fetchLeads()
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search)
+      setCurrentPage(1) // Reset to first page on search
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  // Fetch leads when filters/pagination change
+  useEffect(() => {
+    fetchLeads(currentPage, debouncedSearch, statusFilter)
+  }, [currentPage, debouncedSearch, statusFilter, sortField, sortDirection])
+
+  // Real-time updates
+  useEffect(() => {
     const channel = supabase
       .channel("crm-leads-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "crm_leads" }, () => fetchLeads())
+      .on("postgres_changes", { event: "*", schema: "public", table: "crm_leads" }, () => {
+        fetchLeads(currentPage, debouncedSearch, statusFilter)
+      })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [])
+  }, [currentPage, debouncedSearch, statusFilter])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -118,46 +137,38 @@ export default function LeadsTab() {
     }
   }, [message])
 
-  const fetchLeads = async () => {
-    // Supabase has a 1000 row default limit, so we need to fetch in batches
-    const batchSize = 1000
-    const maxLeads = 20000
-    let allLeads: CRMLead[] = []
-    let totalCount = 0
+  // Server-side paginated fetch - only loads current page for fast mobile performance
+  const fetchLeads = async (page = currentPage, searchQuery = search, status = statusFilter) => {
+    setLoading(true)
+    const from = (page - 1) * leadsPerPage
+    const to = from + leadsPerPage - 1
 
-    // First, get the total count
-    const { count } = await supabase
+    // Build query with filters
+    let query = supabase
       .from("crm_leads")
-      .select("*", { count: "exact", head: true })
+      .select("*", { count: "exact" })
 
-    totalCount = count || 0
-
-    // Fetch in batches using range
-    const batches = Math.ceil(Math.min(totalCount, maxLeads) / batchSize)
-
-    for (let i = 0; i < batches; i++) {
-      const from = i * batchSize
-      const to = from + batchSize - 1
-
-      const { data, error } = await supabase
-        .from("crm_leads")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range(from, to)
-
-      if (error) {
-        setMessage({ type: "error", text: "Failed to load leads" })
-        setLoading(false)
-        return
-      }
-
-      if (data) {
-        allLeads = [...allLeads, ...data]
-      }
+    // Apply search filter server-side
+    if (searchQuery.trim()) {
+      query = query.or(`company_name.ilike.%${searchQuery}%,contact_name.ilike.%${searchQuery}%,contact_email.ilike.%${searchQuery}%,location.ilike.%${searchQuery}%`)
     }
 
-    setLeads(allLeads)
-    setTotalCount(totalCount)
+    // Apply status filter
+    if (status !== "all") {
+      query = query.eq("status", status)
+    }
+
+    // Apply sorting and pagination
+    const { data, error, count } = await query
+      .order(sortField, { ascending: sortDirection === "asc" })
+      .range(from, to)
+
+    if (error) {
+      setMessage({ type: "error", text: "Failed to load leads" })
+    } else {
+      setLeads(data || [])
+      setTotalCount(count || 0)
+    }
     setLoading(false)
   }
 
@@ -168,7 +179,7 @@ export default function LeadsTab() {
 
     const { error } = await supabase.from("crm_leads").update({ status: newStatus }).eq("id", leadId)
     if (error) {
-      fetchLeads() // Revert on error
+      fetchLeads(currentPage, debouncedSearch, statusFilter) // Revert on error
       setMessage({ type: "error", text: "Failed to update status" })
     }
   }
@@ -176,16 +187,17 @@ export default function LeadsTab() {
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this lead?")) return
     setLeads(leads.filter((l) => l.id !== id))
+    setTotalCount(prev => prev - 1)
 
     const { error } = await supabase.from("crm_leads").delete().eq("id", id)
     if (error) {
-      fetchLeads()
+      fetchLeads(currentPage, debouncedSearch, statusFilter)
       setMessage({ type: "error", text: "Failed to delete" })
     }
   }
 
   const handleSelectAll = () => {
-    const currentPageIds = paginatedLeads.map((l) => l.id)
+    const currentPageIds = leads.map((l) => l.id)
     const allSelected = currentPageIds.every(id => selectedIds.has(id))
     if (allSelected) {
       // Deselect all on current page
@@ -212,17 +224,22 @@ export default function LeadsTab() {
 
   const handleBulkStatusChange = async (newStatus: CRMLeadStatus) => {
     if (selectedIds.size === 0) return
+    const idsToUpdate = Array.from(selectedIds)
+    const count = idsToUpdate.length
+
+    // Optimistic update
     setLeads(leads.map((l) => (selectedIds.has(l.id) ? { ...l, status: newStatus } : l)))
-    const count = selectedIds.size
     setSelectedIds(new Set())
     setShowBulkStatusMenu(false)
 
-    const { error } = await supabase.from("crm_leads").update({ status: newStatus }).in("id", Array.from(selectedIds))
+    const { error } = await supabase.from("crm_leads").update({ status: newStatus }).in("id", idsToUpdate)
     if (error) {
-      fetchLeads()
+      fetchLeads(currentPage, debouncedSearch, statusFilter)
       setMessage({ type: "error", text: "Failed to update" })
     } else {
       setMessage({ type: "success", text: `${count} leads → ${getStatusLabel(newStatus)}` })
+      // Refetch to get accurate data after bulk update
+      fetchLeads(currentPage, debouncedSearch, statusFilter)
     }
   }
 
@@ -231,16 +248,20 @@ export default function LeadsTab() {
     if (!confirm(`Delete ${selectedIds.size} leads?`)) return
 
     const idsToDelete = Array.from(selectedIds)
+    const count = idsToDelete.length
+
+    // Optimistic update
     setLeads(leads.filter((l) => !selectedIds.has(l.id)))
-    const count = selectedIds.size
     setSelectedIds(new Set())
 
     const { error } = await supabase.from("crm_leads").delete().in("id", idsToDelete)
     if (error) {
-      fetchLeads()
+      fetchLeads(currentPage, debouncedSearch, statusFilter)
       setMessage({ type: "error", text: "Failed to delete" })
     } else {
       setMessage({ type: "success", text: `Deleted ${count} leads` })
+      // Refetch to get accurate pagination
+      fetchLeads(currentPage, debouncedSearch, statusFilter)
     }
   }
 
@@ -258,38 +279,10 @@ export default function LeadsTab() {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(value)
   }
 
-  // Reset to page 1 when search or filter changes
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [search, statusFilter])
-
-  const filteredLeads = leads
-    .filter((lead) => {
-      const matchesSearch =
-        lead.company_name.toLowerCase().includes(search.toLowerCase()) ||
-        lead.contact_name.toLowerCase().includes(search.toLowerCase()) ||
-        lead.contact_email?.toLowerCase().includes(search.toLowerCase()) ||
-        lead.location?.toLowerCase().includes(search.toLowerCase())
-      const matchesStatus = statusFilter === "all" || lead.status === statusFilter
-      return matchesSearch && matchesStatus
-    })
-    .sort((a, b) => {
-      let aVal: any = a[sortField]
-      let bVal: any = b[sortField]
-      if (sortField === "estimated_value") { aVal = aVal || 0; bVal = bVal || 0 }
-      if (sortField === "last_contacted_at" || sortField === "next_follow_up") {
-        aVal = aVal ? new Date(aVal).getTime() : 0
-        bVal = bVal ? new Date(bVal).getTime() : 0
-      }
-      if (typeof aVal === "string") { aVal = aVal.toLowerCase(); bVal = (bVal || "").toLowerCase() }
-      return sortDirection === "asc" ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1)
-    })
-
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredLeads.length / leadsPerPage)
+  // Server-side pagination - totalCount comes from server
+  const totalPages = Math.ceil(totalCount / leadsPerPage)
   const startIndex = (currentPage - 1) * leadsPerPage
-  const endIndex = startIndex + leadsPerPage
-  const paginatedLeads = filteredLeads.slice(startIndex, endIndex)
+  const endIndex = Math.min(startIndex + leadsPerPage, totalCount)
 
   // Generate page numbers to display
   const getPageNumbers = () => {
@@ -313,19 +306,12 @@ export default function LeadsTab() {
     return sortDirection === "asc" ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />
   }
 
-  // Stats - use totalCount for accurate total (in case of row limits)
-  const totalLeads = totalCount
-  const closedStatuses = [...wonStatuses, ...lostStatuses]
-  const activeLeads = leads.filter((l) => !closedStatuses.includes(l.status)).length
-  const totalValue = leads.reduce((sum, l) => sum + (l.estimated_value || 0), 0)
-  const wonDeals = leads.filter((l) => wonStatuses.includes(l.status)).length
-
-  if (loading) {
+  if (loading && leads.length === 0) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-[#375DEE]" /></div>
   }
 
   return (
-    <div className="space-y-4 pb-20 md:pb-0">
+    <div className="space-y-4">
       {/* Toast Message */}
       {message && (
         <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg animate-in slide-in-from-top-2 ${
@@ -336,23 +322,12 @@ export default function LeadsTab() {
         </div>
       )}
 
-      {/* Compact Stats Row */}
-      <div className="flex items-center gap-2 text-sm overflow-x-auto pb-1 scrollbar-hide">
-        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-lg whitespace-nowrap">
-          <span className="text-white/50">Total</span>
-          <span className="font-bold">{totalLeads}</span>
-        </div>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-lg whitespace-nowrap">
-          <span className="text-white/50">Active</span>
-          <span className="font-bold text-[#375DEE]">{activeLeads}</span>
-        </div>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-lg whitespace-nowrap">
-          <span className="text-white/50">Value</span>
-          <span className="font-bold">{formatCurrency(totalValue)}</span>
-        </div>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-lg whitespace-nowrap">
-          <span className="text-white/50">Won</span>
-          <span className="font-bold text-green-400">{wonDeals}</span>
+      {/* Compact Stats - just show result count */}
+      <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-lg">
+          <span className="text-white/50">{search || statusFilter !== "all" ? "Results" : "Total"}</span>
+          <span className="font-bold">{totalCount.toLocaleString()}</span>
+          {loading && <Loader2 className="w-3 h-3 animate-spin text-white/30" />}
         </div>
       </div>
 
@@ -379,19 +354,21 @@ export default function LeadsTab() {
         >
           <Filter className="w-4 h-4" />
         </button>
+        {/* Import button - icon only on mobile */}
         <button
           onClick={() => setShowImportModal(true)}
-          className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm hover:bg-white/10 transition-colors"
+          className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 bg-white/5 border border-white/10 rounded-lg text-sm hover:bg-white/10 transition-colors"
         >
           <Upload className="w-4 h-4" />
-          <span>Import</span>
+          <span className="hidden sm:inline">Import</span>
         </button>
+        {/* Add button - icon only on mobile */}
         <button
           onClick={() => { setEditingLead(null); setShowFormModal(true) }}
-          className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-[#375DEE] rounded-lg text-sm font-medium hover:bg-[#4169E1] transition-colors"
+          className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 bg-[#375DEE] rounded-lg text-sm font-medium hover:bg-[#4169E1] transition-colors"
         >
           <Plus className="w-4 h-4" />
-          <span>Add</span>
+          <span className="hidden sm:inline">Add</span>
         </button>
       </div>
 
@@ -399,7 +376,7 @@ export default function LeadsTab() {
       {showFilters && (
         <div className="flex flex-wrap gap-1.5 animate-in slide-in-from-top-1">
           <button
-            onClick={() => setStatusFilter("all")}
+            onClick={() => { setStatusFilter("all"); setCurrentPage(1) }}
             className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
               statusFilter === "all" ? "bg-[#375DEE] text-white" : "bg-white/5 text-white/60 hover:bg-white/10"
             }`}
@@ -409,7 +386,7 @@ export default function LeadsTab() {
           {statusOptions.map((status) => (
             <button
               key={status.value}
-              onClick={() => setStatusFilter(status.value)}
+              onClick={() => { setStatusFilter(status.value); setCurrentPage(1) }}
               className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
                 statusFilter === status.value ? `${status.bgColor} ${status.color}` : "bg-white/5 text-white/60 hover:bg-white/10"
               }`}
@@ -427,7 +404,7 @@ export default function LeadsTab() {
             onClick={handleSelectAll}
             className="w-6 h-6 rounded border-2 border-white/50 flex items-center justify-center hover:bg-white/10"
           >
-            {paginatedLeads.length > 0 && paginatedLeads.every(l => selectedIds.has(l.id)) && <Check className="w-4 h-4" />}
+            {leads.length > 0 && leads.every(l => selectedIds.has(l.id)) && <Check className="w-4 h-4" />}
           </button>
           <span className="text-sm font-medium">{selectedIds.size} selected</span>
           <div className="flex-1" />
@@ -443,7 +420,7 @@ export default function LeadsTab() {
                 {statusOptions.map((status) => (
                   <button
                     key={status.value}
-                    onClick={() => handleBulkStatusChange(status.value)}
+                    onClick={() => handleBulkStatusChange(status.value as CRMLeadStatus)}
                     className="w-full px-3 py-2 text-left text-sm hover:bg-white/5 flex items-center gap-2"
                   >
                     <div className={`w-2 h-2 rounded-full ${status.bgColor}`} />
@@ -463,10 +440,10 @@ export default function LeadsTab() {
       )}
 
       {/* Table */}
-      {filteredLeads.length === 0 ? (
+      {leads.length === 0 ? (
         <div className="bg-white/5 rounded-xl border border-white/10 p-8 text-center">
           <Building2 className="w-12 h-12 text-white/20 mx-auto mb-3" />
-          <p className="text-white/50 text-sm">{leads.length === 0 ? "No leads yet" : "No matches"}</p>
+          <p className="text-white/50 text-sm">{totalCount === 0 && !search && statusFilter === "all" ? "No leads yet" : "No matches"}</p>
         </div>
       ) : (
         <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] overflow-hidden">
@@ -477,11 +454,11 @@ export default function LeadsTab() {
                 <tr className="border-b border-white/[0.08]">
                   <th className="w-12 px-4 py-3">
                     <button onClick={handleSelectAll} className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
-                      paginatedLeads.length > 0 && paginatedLeads.every(l => selectedIds.has(l.id))
+                      leads.length > 0 && leads.every(l => selectedIds.has(l.id))
                         ? "bg-[#375DEE] border-[#375DEE]"
                         : "border-white/20 hover:border-white/40"
                     }`}>
-                      {paginatedLeads.length > 0 && paginatedLeads.every(l => selectedIds.has(l.id)) && <Check className="w-3 h-3" />}
+                      {leads.length > 0 && leads.every(l => selectedIds.has(l.id)) && <Check className="w-3 h-3" />}
                     </button>
                   </th>
                   <th onClick={() => handleSort("company_name")} className="text-left text-[11px] uppercase tracking-wider text-white/40 font-semibold px-4 py-3 cursor-pointer hover:text-white/70 transition-colors">
@@ -497,7 +474,7 @@ export default function LeadsTab() {
                 </tr>
               </thead>
               <tbody>
-                {paginatedLeads.map((lead, index) => (
+                {leads.map((lead, index) => (
                   <tr
                     key={lead.id}
                     className={`group border-b border-white/[0.04] last:border-0 hover:bg-white/[0.03] transition-colors cursor-pointer ${
@@ -559,7 +536,7 @@ export default function LeadsTab() {
                             {statusOptions.map((status) => (
                               <button
                                 key={status.value}
-                                onClick={() => handleStatusChange(lead.id, status.value)}
+                                onClick={() => handleStatusChange(lead.id, status.value as CRMLeadStatus)}
                                 className={`w-full px-3 py-2 text-left text-xs hover:bg-white/5 flex items-center gap-2.5 transition-colors ${
                                   lead.status === status.value ? "bg-white/5" : ""
                                 }`}
@@ -598,7 +575,7 @@ export default function LeadsTab() {
 
           {/* Mobile List */}
           <div className="md:hidden divide-y divide-white/[0.04]">
-            {paginatedLeads.map((lead) => (
+            {leads.map((lead) => (
               <div
                 key={lead.id}
                 className={`flex items-center gap-3 px-4 py-3 ${selectedIds.has(lead.id) ? "bg-[#375DEE]/10" : ""}`}
@@ -639,10 +616,10 @@ export default function LeadsTab() {
       )}
 
       {/* Pagination */}
-      {filteredLeads.length > leadsPerPage && (
+      {totalCount > leadsPerPage && (
         <div className="flex items-center justify-between px-2 py-3">
           <p className="text-sm text-white/40">
-            Showing {startIndex + 1}-{Math.min(endIndex, filteredLeads.length)} of {filteredLeads.length}
+            Showing {startIndex + 1}-{endIndex} of {totalCount}
           </p>
           <div className="flex items-center gap-1">
             <button
@@ -684,22 +661,6 @@ export default function LeadsTab() {
         </div>
       )}
 
-      {/* Mobile FAB */}
-      <div className="fixed bottom-6 right-6 md:hidden flex flex-col gap-2 z-40">
-        <button
-          onClick={() => setShowImportModal(true)}
-          className="w-12 h-12 rounded-full bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center shadow-lg"
-        >
-          <Upload className="w-5 h-5" />
-        </button>
-        <button
-          onClick={() => { setEditingLead(null); setShowFormModal(true) }}
-          className="w-14 h-14 rounded-full bg-[#375DEE] flex items-center justify-center shadow-lg hover:bg-[#4169E1] transition-colors"
-        >
-          <Plus className="w-6 h-6" />
-        </button>
-      </div>
-
       {/* Modals */}
       {showDetailModal && selectedLead && (
         <LeadDetailModal
@@ -708,7 +669,7 @@ export default function LeadsTab() {
           onEdit={(lead) => { setShowDetailModal(false); setEditingLead(lead); setShowFormModal(true) }}
           onStatusChange={(leadId, status) => handleStatusChange(leadId, status)}
           onDelete={(id) => { handleDelete(id); setShowDetailModal(false); setSelectedLead(null) }}
-          onUpdate={fetchLeads}
+          onUpdate={() => fetchLeads(currentPage, debouncedSearch, statusFilter)}
         />
       )}
 
@@ -716,14 +677,14 @@ export default function LeadsTab() {
         <LeadFormModal
           lead={editingLead}
           onClose={() => { setShowFormModal(false); setEditingLead(null) }}
-          onSave={() => { fetchLeads(); setShowFormModal(false); setEditingLead(null); setMessage({ type: "success", text: editingLead ? "Updated" : "Created" }) }}
+          onSave={() => { fetchLeads(currentPage, debouncedSearch, statusFilter); setShowFormModal(false); setEditingLead(null); setMessage({ type: "success", text: editingLead ? "Updated" : "Created" }) }}
         />
       )}
 
       {showImportModal && (
         <CSVImportModal
           onClose={() => setShowImportModal(false)}
-          onImport={(count) => { fetchLeads(); setMessage({ type: "success", text: `Imported ${count} leads` }) }}
+          onImport={(count) => { fetchLeads(1, "", "all"); setCurrentPage(1); setSearch(""); setStatusFilter("all"); setMessage({ type: "success", text: `Imported ${count} leads` }) }}
         />
       )}
     </div>

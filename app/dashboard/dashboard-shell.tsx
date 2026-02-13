@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
@@ -29,6 +29,7 @@ import {
   Key,
   RefreshCw,
   Building2,
+  Home,
 } from "lucide-react"
 
 // Ordered by frequency of use for rental fleet owners
@@ -98,6 +99,73 @@ export default function DashboardLayout({
   const navItems = allNavItems.filter(item =>
     item.alwaysVisible || sidebarSettings[item.key] === true
   )
+
+  // Get current page title for mobile header
+  const getPageTitle = () => {
+    const allItems = [...allNavItems, ...adminNavItems]
+    const current = allItems.find(item =>
+      pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))
+    )
+    return current?.name || "Dashboard"
+  }
+
+  // Swipe to open menu
+  const touchStartX = useRef<number | null>(null)
+  const touchStartY = useRef<number | null>(null)
+  const sidebarRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX.current = e.touches[0].clientX
+      touchStartY.current = e.touches[0].clientY
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (touchStartX.current === null || touchStartY.current === null) return
+
+      const touchEndX = e.touches[0].clientX
+      const touchEndY = e.touches[0].clientY
+      const deltaX = touchEndX - touchStartX.current
+      const deltaY = touchEndY - touchStartY.current
+
+      // Only trigger if horizontal swipe is dominant
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+        // Swipe right from left edge to open
+        if (deltaX > 0 && touchStartX.current < 30 && !sidebarOpen) {
+          setSidebarOpen(true)
+          touchStartX.current = null
+        }
+        // Swipe left to close
+        if (deltaX < 0 && sidebarOpen) {
+          setSidebarOpen(false)
+          touchStartX.current = null
+        }
+      }
+    }
+
+    const handleTouchEnd = () => {
+      touchStartX.current = null
+      touchStartY.current = null
+    }
+
+    document.addEventListener("touchstart", handleTouchStart, { passive: true })
+    document.addEventListener("touchmove", handleTouchMove, { passive: true })
+    document.addEventListener("touchend", handleTouchEnd, { passive: true })
+
+    return () => {
+      document.removeEventListener("touchstart", handleTouchStart)
+      document.removeEventListener("touchmove", handleTouchMove)
+      document.removeEventListener("touchend", handleTouchEnd)
+    }
+  }, [sidebarOpen])
+
+  // Bottom nav items for mobile (most important ones)
+  const bottomNavItems = [
+    { name: "Home", href: "/dashboard", icon: Home },
+    { name: "Leads", href: "/dashboard/leads", icon: Users },
+    { name: "Bookings", href: "/dashboard/bookings", icon: CalendarCheck },
+    { name: "Settings", href: "/dashboard/settings", icon: Settings },
+  ]
 
   const handleSignOut = useCallback(async () => {
     localStorage.removeItem(SESSION_TOKEN_KEY)
@@ -261,17 +329,20 @@ export default function DashboardLayout({
       </aside>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="lg:pl-64 pb-16 lg:pb-0">
         {/* Top bar */}
         <header className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-white/10">
-          <div className="flex items-center justify-between px-6 py-4">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg hover:bg-white/5 transition-colors"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-            <div className="flex-1" />
+          <div className="flex items-center justify-between px-4 lg:px-6 py-3 lg:py-4">
+            <div className="flex items-center gap-3 lg:hidden">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="p-2 -ml-2 rounded-lg hover:bg-white/5 transition-colors"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <h1 className="font-semibold text-lg">{getPageTitle()}</h1>
+            </div>
+            <div className="flex-1 hidden lg:block" />
             <div className="flex items-center gap-4">
               <span className="text-sm text-white/40 hidden sm:block">
                 {profile?.company_name}
@@ -281,12 +352,36 @@ export default function DashboardLayout({
         </header>
 
         {/* Page content */}
-        <main className="p-6">
+        <main className="p-4 lg:p-6">
           <DashboardCacheProvider>
             {children}
           </DashboardCacheProvider>
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#0a0a0a]/95 backdrop-blur-xl border-t border-white/10 lg:hidden">
+        <div className="flex items-center justify-around px-2 py-2">
+          {bottomNavItems.map((item) => {
+            const isActive = pathname === item.href ||
+              (item.href !== "/dashboard" && pathname.startsWith(item.href))
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors ${
+                  isActive
+                    ? "text-[#375DEE]"
+                    : "text-white/50 active:text-white"
+                }`}
+              >
+                <item.icon className="w-5 h-5" />
+                <span className="text-[10px] font-medium">{item.name}</span>
+              </Link>
+            )
+          })}
+        </div>
+      </nav>
     </div>
   )
 }
