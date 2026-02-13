@@ -497,14 +497,18 @@ export default function LeadsTab() {
               <thead>
                 <tr className="border-b border-white/10">
                   <th className="w-12 px-4 py-4">
-                    <label className="flex items-center justify-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={filteredLeads.length > 0 && selectedIds.size === filteredLeads.length}
-                        onChange={handleSelectAll}
-                        className="w-4 h-4 rounded border-white/30 bg-white/5 text-[#375DEE] focus:ring-[#375DEE] focus:ring-offset-0 cursor-pointer"
-                      />
-                    </label>
+                    <button
+                      onClick={handleSelectAll}
+                      className={`w-5 h-5 rounded border-2 transition-all flex items-center justify-center ${
+                        filteredLeads.length > 0 && selectedIds.size === filteredLeads.length
+                          ? "bg-[#375DEE] border-[#375DEE]"
+                          : "border-white/30 hover:border-white/50"
+                      }`}
+                    >
+                      {filteredLeads.length > 0 && selectedIds.size === filteredLeads.length && (
+                        <Check className="w-3 h-3 text-white" />
+                      )}
+                    </button>
                   </th>
                   <th
                     onClick={() => handleSort("company_name")}
@@ -573,14 +577,18 @@ export default function LeadsTab() {
                     }`}
                   >
                     <td className="w-12 px-4 py-4" onClick={(e) => e.stopPropagation()}>
-                      <label className="flex items-center justify-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(lead.id)}
-                          onChange={() => handleSelectOne(lead.id)}
-                          className="w-4 h-4 rounded border-white/30 bg-white/5 text-[#375DEE] focus:ring-[#375DEE] focus:ring-offset-0 cursor-pointer"
-                        />
-                      </label>
+                      <button
+                        onClick={() => handleSelectOne(lead.id)}
+                        className={`w-5 h-5 rounded border-2 transition-all flex items-center justify-center ${
+                          selectedIds.has(lead.id)
+                            ? "bg-[#375DEE] border-[#375DEE]"
+                            : "border-white/30 hover:border-white/50"
+                        }`}
+                      >
+                        {selectedIds.has(lead.id) && (
+                          <Check className="w-3 h-3 text-white" />
+                        )}
+                      </button>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
