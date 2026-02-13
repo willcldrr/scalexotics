@@ -16,17 +16,11 @@ import {
   Pencil,
   Trash2,
   ChevronDown,
-  Plus,
-  FileText,
-  PhoneCall,
-  Send as SendIcon,
-  Users,
-  RefreshCw,
   Loader2,
   Instagram,
   Clock,
   Tag,
-  ExternalLink,
+  Send,
 } from "lucide-react"
 import { format, formatDistanceToNow } from "date-fns"
 import { type CRMLeadStatus, type CRMNoteType } from "../lib/crm-status"
@@ -67,14 +61,11 @@ export default function LeadDetailModal({
   const [loadingNotes, setLoadingNotes] = useState(true)
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const statusDropdownRef = useRef<HTMLDivElement>(null)
+  const notesEndRef = useRef<HTMLDivElement>(null)
 
   // New note form
   const [newNote, setNewNote] = useState("")
   const [addingNote, setAddingNote] = useState(false)
-
-  // Schedule modal
-  const [showScheduleMenu, setShowScheduleMenu] = useState(false)
-  const scheduleRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchNotes()
@@ -85,13 +76,17 @@ export default function LeadDetailModal({
       if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target as Node)) {
         setShowStatusDropdown(false)
       }
-      if (scheduleRef.current && !scheduleRef.current.contains(e.target as Node)) {
-        setShowScheduleMenu(false)
-      }
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
+
+  // Scroll to bottom when notes load or new note added
+  useEffect(() => {
+    if (notesEndRef.current) {
+      notesEndRef.current.scrollIntoView({ behavior: "smooth" })
+    }
+  }, [notes])
 
   const fetchNotes = async () => {
     setLoadingNotes(true)
@@ -99,7 +94,7 @@ export default function LeadDetailModal({
       .from("crm_notes")
       .select("*")
       .eq("lead_id", lead.id)
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: true }) // Oldest first for chat style
 
     if (!error) {
       setNotes(data || [])
@@ -129,20 +124,6 @@ export default function LeadDetailModal({
     setAddingNote(false)
   }
 
-  const handleAddActivityNote = async (type: CRMNoteType, content: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
-
-    await supabase.from("crm_notes").insert({
-      lead_id: lead.id,
-      user_id: user?.id,
-      content,
-      note_type: type,
-    })
-
-    fetchNotes()
-    setShowScheduleMenu(false)
-  }
-
   const handleStatusChangeWithNote = async (newStatus: CRMLeadStatus) => {
     if (newStatus === lead.status) {
       setShowStatusDropdown(false)
@@ -151,11 +132,10 @@ export default function LeadDetailModal({
 
     const { data: { user } } = await supabase.auth.getUser()
 
-    // Add status change note
     await supabase.from("crm_notes").insert({
       lead_id: lead.id,
       user_id: user?.id,
-      content: `Status changed from ${getStatusLabel(lead.status)} to ${getStatusLabel(newStatus)}`,
+      content: `Status changed to ${getStatusLabel(newStatus)}`,
       note_type: "status_change",
       old_status: lead.status,
       new_status: newStatus,
@@ -176,31 +156,16 @@ export default function LeadDetailModal({
     }).format(value)
   }
 
-  const getNoteIcon = (type: CRMNoteType) => {
-    switch (type) {
-      case "call":
-        return <PhoneCall className="w-3.5 h-3.5" />
-      case "email":
-        return <SendIcon className="w-3.5 h-3.5" />
-      case "meeting":
-        return <Users className="w-3.5 h-3.5" />
-      case "status_change":
-        return <RefreshCw className="w-3.5 h-3.5" />
-      default:
-        return <FileText className="w-3.5 h-3.5" />
-    }
-  }
-
   // Get Instagram from custom_fields
   const instagram = lead.custom_fields?.instagram || lead.custom_fields?.Instagram || null
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-4xl h-[85vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-white/10">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-[#375DEE]/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-[#375DEE]/20 flex items-center justify-center">
               <Building2 className="w-5 h-5 text-[#375DEE]" />
             </div>
             <div>
@@ -210,7 +175,6 @@ export default function LeadDetailModal({
           </div>
 
           <div className="flex items-center gap-1.5">
-            {/* Status Dropdown */}
             <div className="relative" ref={statusDropdownRef}>
               <button
                 onClick={() => setShowStatusDropdown(!showStatusDropdown)}
@@ -240,14 +204,12 @@ export default function LeadDetailModal({
             <button
               onClick={() => onEdit(lead)}
               className="p-1.5 rounded-lg hover:bg-white/5 transition-colors text-white/50 hover:text-white"
-              title="Edit"
             >
               <Pencil className="w-4 h-4" />
             </button>
             <button
               onClick={() => onDelete(lead.id)}
               className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/50 hover:text-red-400 transition-colors"
-              title="Delete"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -260,66 +222,65 @@ export default function LeadDetailModal({
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto">
-          {/* Lead Information Card - All info consolidated */}
-          <div className="p-5 border-b border-white/10">
-            <div className="bg-white/[0.03] rounded-xl border border-white/[0.06] overflow-hidden">
-              {/* Contact & Company Info */}
-              <div className="p-4 space-y-3">
-                {/* Contact Row */}
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
-                    <User className="w-4 h-4 text-white/40" />
+        {/* Two Column Layout */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Left Side - Lead Info Card */}
+          <div className="w-80 flex-shrink-0 border-r border-white/10 overflow-y-auto p-5">
+            <div className="space-y-4">
+              {/* Contact Section */}
+              <div>
+                <h3 className="text-[10px] uppercase tracking-wider text-white/40 mb-3">Contact</h3>
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <User className="w-4 h-4 text-white/30" />
+                    <div>
+                      <p className="text-sm font-medium">{lead.contact_name}</p>
+                      {lead.contact_title && (
+                        <p className="text-xs text-white/40">{lead.contact_title}</p>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{lead.contact_name}</p>
-                    {lead.contact_title && (
-                      <p className="text-xs text-white/40">{lead.contact_title}</p>
-                    )}
-                  </div>
-                </div>
 
-                {/* Quick Actions Row */}
-                <div className="flex flex-wrap gap-2">
                   {lead.contact_email && (
                     <a
                       href={`mailto:${lead.contact_email}`}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-white/70 hover:text-white transition-colors"
+                      className="flex items-center gap-2.5 text-sm text-white/70 hover:text-[#375DEE] transition-colors"
                     >
-                      <Mail className="w-3.5 h-3.5" />
-                      <span className="truncate max-w-[150px]">{lead.contact_email}</span>
+                      <Mail className="w-4 h-4 text-white/30" />
+                      <span className="truncate">{lead.contact_email}</span>
                     </a>
                   )}
+
                   {lead.contact_phone && (
                     <a
                       href={`tel:${lead.contact_phone}`}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-white/70 hover:text-white transition-colors"
+                      className="flex items-center gap-2.5 text-sm text-white/70 hover:text-white transition-colors"
                     >
-                      <Phone className="w-3.5 h-3.5" />
+                      <Phone className="w-4 h-4 text-white/30" />
                       <span>{lead.contact_phone}</span>
                     </a>
                   )}
+
                   {lead.website && (
                     <a
                       href={lead.website.startsWith("http") ? lead.website : `https://${lead.website}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-white/70 hover:text-white transition-colors"
+                      className="flex items-center gap-2.5 text-sm text-white/70 hover:text-[#375DEE] transition-colors"
                     >
-                      <Globe className="w-3.5 h-3.5" />
-                      <span className="truncate max-w-[120px]">{lead.website.replace(/^https?:\/\//, '')}</span>
-                      <ExternalLink className="w-3 h-3 opacity-50" />
+                      <Globe className="w-4 h-4 text-white/30" />
+                      <span className="truncate">{lead.website.replace(/^https?:\/\//, '')}</span>
                     </a>
                   )}
+
                   {instagram && (
                     <a
                       href={`https://instagram.com/${instagram.replace(/^@/, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-white/70 hover:text-white transition-colors"
+                      className="flex items-center gap-2.5 text-sm text-white/70 hover:text-[#375DEE] transition-colors"
                     >
-                      <Instagram className="w-3.5 h-3.5" />
+                      <Instagram className="w-4 h-4 text-white/30" />
                       <span>@{instagram.replace(/^@/, '')}</span>
                     </a>
                   )}
@@ -329,200 +290,153 @@ export default function LeadDetailModal({
               {/* Divider */}
               <div className="border-t border-white/[0.06]" />
 
-              {/* Details Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/[0.03]">
-                {/* Location */}
-                <div className="bg-[#0a0a0a] p-3">
-                  <div className="flex items-center gap-1.5 text-white/40 mb-1">
-                    <MapPin className="w-3 h-3" />
-                    <span className="text-[10px] uppercase tracking-wide">Location</span>
-                  </div>
-                  <p className="text-sm font-medium truncate">{lead.location || "-"}</p>
-                </div>
-
-                {/* Fleet Size */}
-                <div className="bg-[#0a0a0a] p-3">
-                  <div className="flex items-center gap-1.5 text-white/40 mb-1">
-                    <Car className="w-3 h-3" />
-                    <span className="text-[10px] uppercase tracking-wide">Fleet</span>
-                  </div>
-                  <p className="text-sm font-medium">{lead.fleet_size ? `${lead.fleet_size} vehicles` : "-"}</p>
-                </div>
-
-                {/* Value */}
-                <div className="bg-[#0a0a0a] p-3">
-                  <div className="flex items-center gap-1.5 text-white/40 mb-1">
-                    <DollarSign className="w-3 h-3" />
-                    <span className="text-[10px] uppercase tracking-wide">Value</span>
-                  </div>
-                  <p className="text-sm font-medium text-[#375DEE]">{formatCurrency(lead.estimated_value)}</p>
-                </div>
-
-                {/* Source */}
-                <div className="bg-[#0a0a0a] p-3">
-                  <div className="flex items-center gap-1.5 text-white/40 mb-1">
-                    <Tag className="w-3 h-3" />
-                    <span className="text-[10px] uppercase tracking-wide">Source</span>
-                  </div>
-                  <p className="text-sm font-medium truncate">{lead.source || "-"}</p>
-                </div>
-
-                {/* Last Contacted */}
-                <div className="bg-[#0a0a0a] p-3 col-span-2">
-                  <div className="flex items-center gap-1.5 text-white/40 mb-1">
-                    <Clock className="w-3 h-3" />
-                    <span className="text-[10px] uppercase tracking-wide">Last Contacted</span>
-                  </div>
-                  <p className="text-sm font-medium">
-                    {lead.last_contacted_at
-                      ? format(new Date(lead.last_contacted_at), "MMM d, yyyy")
-                      : "-"}
-                  </p>
-                </div>
-
-                {/* Next Follow-up */}
-                <div className="bg-[#0a0a0a] p-3 col-span-2">
-                  <div className="flex items-center gap-1.5 text-white/40 mb-1">
-                    <Calendar className="w-3 h-3" />
-                    <span className="text-[10px] uppercase tracking-wide">Follow Up</span>
-                  </div>
-                  <p className="text-sm font-medium">
-                    {lead.next_follow_up
-                      ? format(new Date(lead.next_follow_up), "MMM d, yyyy")
-                      : "-"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Notes Section */}
-          <div className="p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-white/60 flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Activity
-              </h3>
-
-              {/* Schedule Button */}
-              <div className="relative" ref={scheduleRef}>
-                <button
-                  onClick={() => setShowScheduleMenu(!showScheduleMenu)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-medium text-white/60 hover:text-white transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Log Activity</span>
-                </button>
-                {showScheduleMenu && (
-                  <div className="absolute right-0 top-full mt-1 w-44 bg-[#1a1a1a] rounded-xl border border-white/10 shadow-xl z-10 overflow-hidden">
-                    <button
-                      onClick={() => handleAddActivityNote("call", "Logged a call")}
-                      className="w-full px-3 py-2.5 text-left text-sm hover:bg-white/5 transition-colors flex items-center gap-2"
-                    >
-                      <PhoneCall className="w-4 h-4 text-white/40" />
-                      Log Call
-                    </button>
-                    <button
-                      onClick={() => handleAddActivityNote("email", "Sent an email")}
-                      className="w-full px-3 py-2.5 text-left text-sm hover:bg-white/5 transition-colors flex items-center gap-2"
-                    >
-                      <SendIcon className="w-4 h-4 text-white/40" />
-                      Log Email
-                    </button>
-                    <button
-                      onClick={() => handleAddActivityNote("meeting", "Scheduled a meeting")}
-                      className="w-full px-3 py-2.5 text-left text-sm hover:bg-white/5 transition-colors flex items-center gap-2"
-                    >
-                      <Users className="w-4 h-4 text-white/40" />
-                      Log Meeting
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Notes List */}
-            <div className="space-y-2 mb-4 max-h-[200px] overflow-y-auto">
-              {loadingNotes ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-5 h-5 animate-spin text-[#375DEE]" />
-                </div>
-              ) : notes.length === 0 ? (
-                <div className="text-center py-6">
-                  <FileText className="w-8 h-8 text-white/10 mx-auto mb-2" />
-                  <p className="text-white/30 text-sm">No activity yet</p>
-                </div>
-              ) : (
-                notes.map((note) => (
-                  <div
-                    key={note.id}
-                    className={`flex items-start gap-2.5 p-3 rounded-lg ${
-                      note.note_type === "status_change"
-                        ? "bg-[#375DEE]/10 border border-[#375DEE]/20"
-                        : "bg-white/[0.03]"
-                    }`}
-                  >
-                    <div
-                      className={`p-1.5 rounded-lg flex-shrink-0 ${
-                        note.note_type === "status_change"
-                          ? "bg-[#375DEE]/20 text-[#375DEE]"
-                          : "bg-white/10 text-white/40"
-                      }`}
-                    >
-                      {getNoteIcon(note.note_type)}
+              {/* Company Section */}
+              <div>
+                <h3 className="text-[10px] uppercase tracking-wider text-white/40 mb-3">Company</h3>
+                <div className="space-y-2.5">
+                  {lead.location && (
+                    <div className="flex items-center gap-2.5">
+                      <MapPin className="w-4 h-4 text-white/30" />
+                      <span className="text-sm text-white/70">{lead.location}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white/80 whitespace-pre-wrap break-words">{note.content}</p>
-                      <p className="text-[10px] text-white/30 mt-1.5 flex items-center gap-1">
-                        <Clock className="w-2.5 h-2.5" />
-                        {format(new Date(note.created_at), "MMM d, yyyy 'at' h:mm a")}
-                        <span className="text-white/20 mx-1">•</span>
-                        {formatDistanceToNow(new Date(note.created_at), { addSuffix: true })}
+                  )}
+
+                  {lead.fleet_size && (
+                    <div className="flex items-center gap-2.5">
+                      <Car className="w-4 h-4 text-white/30" />
+                      <span className="text-sm text-white/70">{lead.fleet_size} vehicles</span>
+                    </div>
+                  )}
+
+                  {lead.source && (
+                    <div className="flex items-center gap-2.5">
+                      <Tag className="w-4 h-4 text-white/30" />
+                      <span className="text-sm text-white/70">{lead.source}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-white/[0.06]" />
+
+              {/* Deal Section */}
+              <div>
+                <h3 className="text-[10px] uppercase tracking-wider text-white/40 mb-3">Deal</h3>
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <DollarSign className="w-4 h-4 text-white/30" />
+                    <span className="text-sm font-medium text-[#375DEE]">{formatCurrency(lead.estimated_value)}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2.5">
+                    <Clock className="w-4 h-4 text-white/30" />
+                    <div>
+                      <p className="text-xs text-white/40">Last contacted</p>
+                      <p className="text-sm text-white/70">
+                        {lead.last_contacted_at
+                          ? format(new Date(lead.last_contacted_at), "MMM d, yyyy")
+                          : "Never"}
                       </p>
                     </div>
                   </div>
-                ))
+
+                  <div className="flex items-center gap-2.5">
+                    <Calendar className="w-4 h-4 text-white/30" />
+                    <div>
+                      <p className="text-xs text-white/40">Follow up</p>
+                      <p className="text-sm text-white/70">
+                        {lead.next_follow_up
+                          ? format(new Date(lead.next_follow_up), "MMM d, yyyy")
+                          : "Not set"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer info */}
+              <div className="pt-2 border-t border-white/[0.06]">
+                <p className="text-[10px] text-white/30">
+                  Created {format(new Date(lead.created_at), "MMM d, yyyy")}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Side - Notes (Chat Style) */}
+          <div className="flex-1 flex flex-col bg-[#050505]">
+            {/* Chat Messages Area */}
+            <div className="flex-1 overflow-y-auto p-5">
+              {loadingNotes ? (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#375DEE]" />
+                </div>
+              ) : notes.length === 0 ? (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-white/30 text-sm">No notes yet. Start the conversation below.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {notes.map((note) => (
+                    <div key={note.id} className="flex justify-end">
+                      <div
+                        className={`max-w-[85%] ${
+                          note.note_type === "status_change"
+                            ? "bg-[#375DEE]/10 border border-[#375DEE]/20"
+                            : "bg-[#375DEE]"
+                        } rounded-2xl rounded-br-md px-4 py-2.5`}
+                      >
+                        <p className={`text-sm ${note.note_type === "status_change" ? "text-white/70 italic" : "text-white"}`}>
+                          {note.content}
+                        </p>
+                        <p className={`text-[10px] mt-1 ${note.note_type === "status_change" ? "text-white/30" : "text-white/50"}`}>
+                          {format(new Date(note.created_at), "MMM d, h:mm a")}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={notesEndRef} />
+                </div>
               )}
             </div>
 
-            {/* Note Input - Chat style */}
-            <div className="flex items-end gap-2 bg-white/[0.03] rounded-xl border border-white/[0.06] p-2">
-              <textarea
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault()
-                    handleAddNote()
-                  }
-                }}
-                placeholder="Add a note..."
-                rows={1}
-                className="flex-1 px-3 py-2 bg-transparent text-white text-sm placeholder:text-white/30 focus:outline-none resize-none min-h-[40px] max-h-[100px]"
-              />
-              <button
-                onClick={handleAddNote}
-                disabled={!newNote.trim() || addingNote}
-                className="p-2.5 bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 disabled:hover:bg-[#375DEE] text-white rounded-lg transition-colors flex-shrink-0"
-              >
-                {addingNote ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <SendIcon className="w-4 h-4" />
-                )}
-              </button>
+            {/* Message Input */}
+            <div className="p-4 border-t border-white/10">
+              <div className="flex items-end gap-3">
+                <textarea
+                  value={newNote}
+                  onChange={(e) => {
+                    setNewNote(e.target.value)
+                    // Auto-resize
+                    e.target.style.height = "auto"
+                    e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px"
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault()
+                      handleAddNote()
+                    }
+                  }}
+                  placeholder="Type a note..."
+                  rows={1}
+                  className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]/50 resize-none"
+                  style={{ minHeight: "48px", maxHeight: "120px" }}
+                />
+                <button
+                  onClick={handleAddNote}
+                  disabled={!newNote.trim() || addingNote}
+                  className="w-12 h-12 bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 disabled:hover:bg-[#375DEE] text-white rounded-full transition-colors flex items-center justify-center flex-shrink-0"
+                >
+                  {addingNote ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Send className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="px-5 py-3 border-t border-white/10 bg-white/[0.02]">
-          <p className="text-[10px] text-white/30 text-center">
-            Created {format(new Date(lead.created_at), "MMM d, yyyy")}
-            {lead.updated_at !== lead.created_at && (
-              <span className="text-white/20"> • Updated {formatDistanceToNow(new Date(lead.updated_at), { addSuffix: true })}</span>
-            )}
-          </p>
         </div>
       </div>
     </div>
