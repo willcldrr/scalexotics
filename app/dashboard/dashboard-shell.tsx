@@ -329,7 +329,7 @@ export default function DashboardLayout({
       </aside>
 
       {/* Main content */}
-      <div className="lg:pl-64 pb-16 lg:pb-0">
+      <div className={`lg:pl-64 ${pathname.startsWith("/dashboard/admin/crm") ? "" : "pb-16"} lg:pb-0`}>
         {/* Top bar */}
         <header className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-white/10">
           <div className="flex items-center justify-between px-4 lg:px-6 py-3 lg:py-4">
@@ -359,29 +359,31 @@ export default function DashboardLayout({
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#0a0a0a]/95 backdrop-blur-xl border-t border-white/10 lg:hidden">
-        <div className="flex items-center justify-around px-2 py-2">
-          {bottomNavItems.map((item) => {
-            const isActive = pathname === item.href ||
-              (item.href !== "/dashboard" && pathname.startsWith(item.href))
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors ${
-                  isActive
-                    ? "text-[#375DEE]"
-                    : "text-white/50 active:text-white"
-                }`}
-              >
-                <item.icon className="w-5 h-5" />
-                <span className="text-[10px] font-medium">{item.name}</span>
-              </Link>
-            )
-          })}
-        </div>
-      </nav>
+      {/* Mobile Bottom Navigation - Hidden on CRM pages (they have their own nav) */}
+      {!pathname.startsWith("/dashboard/admin/crm") && (
+        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#0a0a0a]/95 backdrop-blur-xl border-t border-white/10 lg:hidden">
+          <div className="flex items-center justify-around px-2 py-2">
+            {bottomNavItems.map((item) => {
+              const isActive = pathname === item.href ||
+                (item.href !== "/dashboard" && pathname.startsWith(item.href))
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors ${
+                    isActive
+                      ? "text-[#375DEE]"
+                      : "text-white/50 active:text-white"
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">{item.name}</span>
+                </Link>
+              )
+            })}
+          </div>
+        </nav>
+      )}
     </div>
   )
 }

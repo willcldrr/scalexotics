@@ -94,16 +94,16 @@ export default function AdminCRMPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6 pb-20 lg:pb-0">
+      {/* Header - Hidden on mobile since it's in the top bar */}
+      <div className="hidden sm:flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold dashboard-heading">CRM</h1>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/10 w-fit">
+      {/* Desktop Tabs - Hidden on mobile */}
+      <div className="hidden sm:flex items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/10 w-fit">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -115,7 +115,7 @@ export default function AdminCRMPage() {
             }`}
           >
             <tab.icon className="w-4 h-4" />
-            <span className="hidden sm:inline">{tab.label}</span>
+            <span>{tab.label}</span>
           </button>
         ))}
       </div>
@@ -128,6 +128,26 @@ export default function AdminCRMPage() {
         {activeTab === "analytics" && <AnalyticsTab />}
         {activeTab === "settings" && <SettingsTab />}
       </div>
+
+      {/* Mobile Bottom Nav - CRM specific */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-xl border-t border-white/10 sm:hidden">
+        <div className="flex items-center justify-around px-1 py-1.5">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all flex-1 ${
+                activeTab === tab.key
+                  ? "text-[#375DEE] bg-[#375DEE]/10"
+                  : "text-white/50 active:text-white active:bg-white/5"
+              }`}
+            >
+              <tab.icon className={`w-5 h-5 ${activeTab === tab.key ? "text-[#375DEE]" : ""}`} />
+              <span className="text-[10px] font-medium">{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
     </div>
   )
 }
