@@ -19,16 +19,16 @@ interface CSVImportModalProps {
 const fieldOptions = [
   { value: "", label: "Skip" },
   { value: "company_name", label: "Company Name *" },
-  { value: "contact_name", label: "Contact Name *" },
+  { value: "contact_name", label: "Contact Name" },
   { value: "contact_email", label: "Contact Email" },
   { value: "contact_phone", label: "Contact Phone" },
   { value: "contact_title", label: "Contact Title" },
   { value: "website", label: "Website" },
-  { value: "location", label: "Location" },
+  { value: "location", label: "Location (City)" },
   { value: "fleet_size", label: "Fleet Size" },
-  { value: "source", label: "Lead Source" },
+  { value: "source", label: "Lead Source / Campaign" },
   { value: "estimated_value", label: "Estimated Value" },
-  { value: "notes", label: "Notes" },
+  { value: "notes", label: "Notes / Social Media" },
 ]
 
 export default function CSVImportModal({ onClose, onImport }: CSVImportModalProps) {
@@ -105,26 +105,61 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
       setImportResult(null)
 
       // Auto-map columns - try to match headers to fields
+      // Optimized for common CRM export formats
       const autoMapping: Record<string, string> = {}
       const mappings: Record<string, string[]> = {
-        company_name: ["company", "company name", "business", "business name", "organization", "companyname", "company_name", "businessname"],
-        contact_name: ["name", "contact", "contact name", "full name", "person", "contactname", "contact_name", "fullname", "first name", "firstname", "owner"],
-        contact_email: ["email", "e-mail", "mail", "contact email", "contactemail", "contact_email", "e mail"],
-        contact_phone: ["phone", "telephone", "tel", "mobile", "cell", "contact phone", "contactphone", "contact_phone", "phone number", "phonenumber"],
-        contact_title: ["title", "position", "role", "job title", "jobtitle", "job_title", "contact_title"],
-        website: ["website", "url", "web", "site", "webpage", "web site"],
-        location: ["location", "city", "address", "region", "state", "area", "market", "territory"],
-        fleet_size: ["fleet", "fleet size", "vehicles", "cars", "size", "fleetsize", "fleet_size", "car count", "vehicle count"],
-        source: ["source", "lead source", "channel", "origin", "leadsource", "lead_source", "how found", "referral"],
-        estimated_value: ["value", "deal value", "estimated value", "amount", "revenue", "estimatedvalue", "estimated_value", "deal_value"],
-        notes: ["notes", "note", "comments", "description", "comment", "info", "details", "additional"],
+        company_name: [
+          "companyname", "company_name", "company name", "company",
+          "business", "business name", "businessname", "organization", "org"
+        ],
+        contact_name: [
+          "contact name", "contactname", "contact_name", "name", "full name",
+          "fullname", "person", "owner", "owner name", "first name", "firstname",
+          "contact", "poc", "point of contact"
+        ],
+        contact_email: [
+          "email", "e-mail", "mail", "contact email", "contactemail",
+          "contact_email", "e mail", "email address", "emailaddress"
+        ],
+        contact_phone: [
+          "phone", "telephone", "tel", "mobile", "cell", "contact phone",
+          "contactphone", "contact_phone", "phone number", "phonenumber"
+        ],
+        contact_title: [
+          "title", "position", "role", "job title", "jobtitle", "job_title",
+          "contact_title"
+        ],
+        website: [
+          "website", "url", "web", "site", "webpage", "web site", "domain"
+        ],
+        location: [
+          "city", "location", "address", "region", "state", "area",
+          "market", "territory", "city state", "city/state"
+        ],
+        fleet_size: [
+          "fleet", "fleet size", "vehicles", "cars", "size", "fleetsize",
+          "fleet_size", "car count", "vehicle count", "fleet count"
+        ],
+        source: [
+          "source", "lead source", "channel", "origin", "leadsource",
+          "lead_source", "how found", "referral", "campaign", "campaign name",
+          "campaignname", "campaign_name"
+        ],
+        estimated_value: [
+          "value", "deal value", "estimated value", "amount", "revenue",
+          "estimatedvalue", "estimated_value", "deal_value"
+        ],
+        notes: [
+          "notes", "note", "comments", "description", "comment", "info",
+          "details", "additional", "instagram", "social", "social media"
+        ],
       }
 
-      // First pass: exact matches
+      // First pass: exact matches (case-insensitive)
       headers.forEach((header) => {
         const lowerHeader = header.toLowerCase().trim().replace(/[_\-\s]+/g, " ")
         for (const [field, variants] of Object.entries(mappings)) {
-          if (variants.some((v) => lowerHeader === v)) {
+          if (variants.some((v) => lowerHeader === v || lowerHeader.replace(/\s+/g, "") === v.replace(/\s+/g, ""))) {
             autoMapping[header] = field
             break
           }
@@ -194,11 +229,14 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
     const valueCol = getColumn("estimated_value")
     const notesCol = getColumn("notes")
 
-    if (!companyCol || !contactCol) {
-      alert("Please map at least Company Name and Contact Name columns")
+    if (!companyCol) {
+      alert("Please map the Company Name column")
       setImporting(false)
       return
     }
+
+    // Contact name is optional - we'll use company name as fallback
+    const useCompanyAsContact = !contactCol
 
     // Prepare all lead data for batch insert
     const leadsToInsert: Array<Record<string, any>> = []
@@ -214,12 +252,15 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
     for (let i = 0; i < csvData.length; i++) {
       const row = csvData[i]
       const companyName = row[companyCol]?.trim()
-      const contactName = row[contactCol]?.trim()
+      // Use company name as contact name if no contact column is mapped
+      const contactName = useCompanyAsContact
+        ? (companyName || "Unknown")
+        : (row[contactCol]?.trim() || companyName || "Unknown")
 
-      if (!companyName || !contactName) {
+      if (!companyName) {
         skippedRows++
         if (skippedRows <= 3) {
-          console.log(`Row ${i} skipped - Company: "${companyName}", Contact: "${contactName}"`)
+          console.log(`Row ${i} skipped - Company: "${companyName}"`)
         }
         continue
       }
@@ -455,7 +496,7 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-white/40 mt-2">* Required fields</p>
+                <p className="text-xs text-white/40 mt-2">* Required field. If Contact Name is not mapped, Company Name will be used.</p>
               </div>
 
               <div>
@@ -525,8 +566,7 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
               onClick={handleImport}
               disabled={
                 importing ||
-                !Object.values(columnMapping).includes("company_name") ||
-                !Object.values(columnMapping).includes("contact_name")
+                !Object.values(columnMapping).includes("company_name")
               }
               className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 font-semibold transition-colors"
             >

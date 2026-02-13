@@ -458,15 +458,6 @@ export default function LeadsTab() {
             <Trash2 className="w-4 h-4" />
             Delete
           </button>
-
-          {/* Clear Selection */}
-          <button
-            onClick={() => setSelectedIds(new Set())}
-            className="ml-auto flex items-center gap-2 px-4 py-2 hover:bg-white/10 rounded-lg text-sm text-white/60 hover:text-white transition-colors"
-          >
-            <X className="w-4 h-4" />
-            Clear Selection
-          </button>
         </div>
       )}
 
