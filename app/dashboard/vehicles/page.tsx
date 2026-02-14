@@ -275,14 +275,6 @@ export default function VehiclesPage() {
   if (loading) {
     return (
       <div className="space-y-4 sm:space-y-6">
-        <div className="hidden sm:flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold" style={{ color: '#ffffff', background: 'none', WebkitTextFillColor: '#ffffff' }}>
-              Vehicles
-            </h1>
-            <p className="text-white/50 mt-1">Loading your fleet...</p>
-          </div>
-        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="bg-white/5 rounded-2xl overflow-hidden animate-pulse">
@@ -300,26 +292,7 @@ export default function VehiclesPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header - Hidden on mobile */}
-      <div className="hidden sm:flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold" style={{ color: '#ffffff', background: 'none', WebkitTextFillColor: '#ffffff' }}>
-            Vehicles
-          </h1>
-          <p className="text-white/50 mt-1">
-            {vehicles.length} vehicle{vehicles.length !== 1 ? "s" : ""} in your fleet
-          </p>
-        </div>
-        <button
-          onClick={openAddModal}
-          className="flex items-center gap-2 px-5 py-3 bg-[#375DEE] hover:bg-[#4169E1] text-white font-semibold rounded-xl transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          Add Vehicle
-        </button>
-      </div>
-
-      {/* Filters */}
+      {/* Filters and Action button */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
@@ -343,6 +316,13 @@ export default function VehiclesPage() {
             </option>
           ))}
         </select>
+        <button
+          onClick={openAddModal}
+          className="hidden sm:flex items-center gap-2 px-5 py-3 bg-[#375DEE] hover:bg-[#4169E1] text-white font-semibold rounded-xl transition-colors ml-auto"
+        >
+          <Plus className="w-5 h-5" />
+          Add Vehicle
+        </button>
       </div>
 
       {/* Vehicle Grid */}

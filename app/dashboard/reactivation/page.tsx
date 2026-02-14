@@ -70,11 +70,7 @@ export default function ReactivationPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div>
-          <div className="h-9 w-40 bg-white/5 rounded-lg animate-pulse" />
-          <div className="h-5 w-64 bg-white/5 rounded mt-2 animate-pulse" />
-        </div>
+      <div className="space-y-4 sm:space-y-6">
         <div className="flex gap-2">
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="h-9 w-24 bg-white/[0.03] rounded-lg animate-pulse" />
@@ -98,16 +94,6 @@ export default function ReactivationPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header - Hidden on mobile */}
-      <div className="hidden sm:block">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-          Reactivation
-        </h1>
-        <p className="text-white/50 text-sm sm:text-base mt-1">
-          Re-engage past customers with AI-powered campaigns
-        </p>
-      </div>
-
       {/* Tabs */}
       <div className="flex gap-1.5 overflow-x-auto pb-1">
         {tabs.map((tab) => (

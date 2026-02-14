@@ -241,12 +241,6 @@ export default function AIAssistantPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold" style={{ background: 'linear-gradient(to right, #ffffff 0%, #94a8e8 45%, #375DEE 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-            AI Assistant
-          </h1>
-          <p className="text-white/50 mt-1">Loading configuration...</p>
-        </div>
         <div className="animate-pulse space-y-4">
           <div className="h-64 bg-white/5 rounded-xl" />
           <div className="h-64 bg-white/5 rounded-xl" />
@@ -257,37 +251,33 @@ export default function AIAssistantPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold" style={{ background: 'linear-gradient(to right, #ffffff 0%, #94a8e8 45%, #375DEE 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-            AI Assistant
-          </h1>
-          <p className="text-white/50 mt-1">Configure your SMS booking assistant</p>
+      {/* Main On/Off Toggle with Save button */}
+      <div className="space-y-4">
+        {/* Save button */}
+        <div className="hidden sm:flex justify-end">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-5 py-3 bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 text-white font-semibold rounded-xl transition-colors"
+          >
+            {saved ? (
+              <>
+                <CheckCircle className="w-5 h-5" />
+                Saved!
+              </>
+            ) : saving ? (
+              "Saving..."
+            ) : (
+              <>
+                <Save className="w-5 h-5" />
+                Save Changes
+              </>
+            )}
+          </button>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-5 py-3 bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 text-white font-semibold rounded-xl transition-colors"
-        >
-          {saved ? (
-            <>
-              <CheckCircle className="w-5 h-5" />
-              Saved!
-            </>
-          ) : saving ? (
-            "Saving..."
-          ) : (
-            <>
-              <Save className="w-5 h-5" />
-              Save Changes
-            </>
-          )}
-        </button>
-      </div>
 
-      {/* Main On/Off Toggle */}
-      <div className={`rounded-2xl p-5 flex items-center justify-between ${
+        {/* Toggle Card */}
+        <div className={`rounded-2xl p-5 flex items-center justify-between ${
         settings.auto_respond
           ? "bg-gradient-to-r from-[#375DEE]/20 via-[#375DEE]/10 to-transparent border border-[#375DEE]/30"
           : "bg-white/[0.03] border border-white/[0.08]"
@@ -328,6 +318,7 @@ export default function AIAssistantPage() {
           />
         </button>
       </div>
+    </div>
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-white/[0.08] pb-4">

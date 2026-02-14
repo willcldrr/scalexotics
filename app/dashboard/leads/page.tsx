@@ -24,6 +24,7 @@ import {
   StickyNote,
   ChevronDown,
   LayoutGrid,
+  AlertTriangle,
 } from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns"
@@ -115,6 +116,35 @@ export default function LeadsPage() {
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<{ success: number; failed: number } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Do Not Rent list for flagging suspicious leads
+  const [doNotRentList, setDoNotRentList] = useState<{ full_name: string; phone?: string; email?: string }[]>([])
+
+  // Check if a lead is on the do not rent list
+  const isOnDoNotRentList = (lead: Lead): boolean => {
+    const leadNameLower = lead.name.toLowerCase().trim()
+    const leadPhone = lead.phone?.replace(/\D/g, "") // Remove non-digits
+    const leadEmail = lead.email?.toLowerCase().trim()
+
+    return doNotRentList.some(entry => {
+      const entryNameLower = entry.full_name.toLowerCase().trim()
+      const entryPhone = entry.phone?.replace(/\D/g, "")
+      const entryEmail = entry.email?.toLowerCase().trim()
+
+      // Check for name match (exact or partial)
+      const nameMatch = leadNameLower === entryNameLower ||
+        leadNameLower.includes(entryNameLower) ||
+        entryNameLower.includes(leadNameLower)
+
+      // Check for phone match
+      const phoneMatch = leadPhone && entryPhone && leadPhone === entryPhone
+
+      // Check for email match
+      const emailMatch = leadEmail && entryEmail && leadEmail === entryEmail
+
+      return nameMatch || phoneMatch || emailMatch
+    })
+  }
 
   useEffect(() => {
     fetchData()
@@ -211,10 +241,16 @@ export default function LeadsPage() {
 
     setUserId(user.id)
 
-    const [leadsRes, vehiclesRes] = await Promise.all([
+    const [leadsRes, vehiclesRes, doNotRentRes] = await Promise.all([
       supabase.from("leads").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("vehicles").select("id, name, make, model").eq("user_id", user.id),
+      supabase.from("do_not_rent_list").select("full_name, phone, email"),
     ])
+
+    // Set do not rent list for flagging
+    if (doNotRentRes.data) {
+      setDoNotRentList(doNotRentRes.data)
+    }
 
     if (leadsRes.data) {
       const storedRead = localStorage.getItem("readConversations")
@@ -574,71 +610,48 @@ export default function LeadsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4 sm:space-y-6">
-        <div className="hidden sm:block">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: '#ffffff', background: 'none', WebkitTextFillColor: '#ffffff' }}>
-            Leads
-          </h1>
-          <p className="text-white/50 mt-1">Loading your CRM...</p>
-        </div>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-[#375DEE]" />
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-[#375DEE]" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header - Hidden on mobile */}
-      <div className="hidden sm:flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: '#ffffff', background: 'none', WebkitTextFillColor: '#ffffff' }}>
-              Leads
-            </h1>
-            {unreadCount > 0 && (
-              <span className="px-2.5 py-0.5 bg-[#375DEE] text-white text-xs font-semibold rounded-full">
-                {unreadCount} new
-              </span>
-            )}
-          </div>
-          <p className="text-white/50 mt-1">{leads.length} lead{leads.length !== 1 ? "s" : ""} from your campaigns</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard/leads/pipeline"
-            className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white font-medium rounded-xl transition-colors"
-          >
-            <LayoutGrid className="w-4 h-4" />
-            <span className="hidden sm:inline">Pipeline</span>
-          </Link>
-          <button
-            onClick={() => {
-              resetImportModal()
-              setShowImportModal(true)
-            }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white font-medium rounded-xl transition-colors"
-          >
-            <Upload className="w-4 h-4" />
-            <span className="hidden sm:inline">Import</span>
-          </button>
-          <button
-            onClick={() => {
-              resetForm()
-              setEditingLead(null)
-              setShowAddModal(true)
-            }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#375DEE] hover:bg-[#4169E1] text-white font-semibold rounded-xl transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Add Lead
-          </button>
-        </div>
+    <div>
+      {/* Action buttons - positioned above content */}
+      <div className="hidden sm:flex justify-end gap-3 mb-4">
+        <Link
+          href="/dashboard/leads/pipeline"
+          className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white font-medium rounded-xl transition-colors"
+        >
+          <LayoutGrid className="w-4 h-4" />
+          Pipeline
+        </Link>
+        <button
+          onClick={() => {
+            resetImportModal()
+            setShowImportModal(true)
+          }}
+          className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white font-medium rounded-xl transition-colors"
+        >
+          <Upload className="w-4 h-4" />
+          Import
+        </button>
+        <button
+          onClick={() => {
+            resetForm()
+            setEditingLead(null)
+            setShowAddModal(true)
+          }}
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#375DEE] hover:bg-[#4169E1] text-white font-semibold rounded-xl transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Add Lead
+        </button>
       </div>
 
       {/* Main Content */}
-      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden" style={{ height: "calc(100vh - 220px)" }}>
+      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden" style={{ height: "calc(100vh - 180px)" }}>
         <div className="flex h-full">
           {/* Leads List */}
           <div className={`w-full md:w-[380px] border-r border-white/[0.08] flex flex-col bg-black/50 ${selectedLead ? "hidden md:flex" : "flex"}`}>
@@ -708,15 +721,25 @@ export default function LeadsPage() {
                         {/* Avatar */}
                         <div className="relative">
                           <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-                            lead.unread
+                            isOnDoNotRentList(lead)
+                              ? "bg-red-500/20 ring-2 ring-red-500/50"
+                              : lead.unread
                               ? "bg-[#375DEE]/20 ring-2 ring-[#375DEE]/30"
                               : "bg-white/[0.06]"
                           }`}>
-                            <span className={`font-semibold ${lead.unread ? "text-[#375DEE]" : "text-white/60"}`}>
+                            <span className={`font-semibold ${
+                              isOnDoNotRentList(lead)
+                                ? "text-red-400"
+                                : lead.unread ? "text-[#375DEE]" : "text-white/60"
+                            }`}>
                               {lead.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
-                          {lead.unread && (
+                          {isOnDoNotRentList(lead) ? (
+                            <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full border-2 border-[#0a0a0a] flex items-center justify-center">
+                              <AlertTriangle className="w-2.5 h-2.5 text-white" />
+                            </div>
+                          ) : lead.unread && (
                             <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#375DEE] rounded-full border-2 border-[#0a0a0a]" />
                           )}
                         </div>
@@ -724,8 +747,17 @@ export default function LeadsPage() {
                         {/* Content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2 mb-0.5">
-                            <span className={`font-medium truncate ${lead.unread ? "text-white" : "text-white/80"}`}>
+                            <span className={`font-medium truncate flex items-center gap-1.5 ${
+                              isOnDoNotRentList(lead)
+                                ? "text-red-400"
+                                : lead.unread ? "text-white" : "text-white/80"
+                            }`}>
                               {lead.name}
+                              {isOnDoNotRentList(lead) && (
+                                <span className="px-1.5 py-0.5 bg-red-500/20 text-red-400 text-[9px] font-bold rounded uppercase">
+                                  DNR
+                                </span>
+                              )}
                             </span>
                             <span className={`text-xs flex-shrink-0 ${lead.unread ? "text-[#375DEE] font-medium" : "text-white/30"}`}>
                               {lead.last_message_time ? formatMessageTime(lead.last_message_time) : formatMessageTime(lead.created_at)}
@@ -770,14 +802,28 @@ export default function LeadsPage() {
                       <ChevronLeft className="w-5 h-5" />
                     </button>
 
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#375DEE]/30 to-[#375DEE]/10 flex items-center justify-center ring-1 ring-white/10">
-                      <span className="text-[#375DEE] font-semibold">
+                    <div className={`w-11 h-11 rounded-full flex items-center justify-center ring-1 ${
+                      isOnDoNotRentList(selectedLead)
+                        ? "bg-gradient-to-br from-red-500/30 to-red-500/10 ring-red-500/30"
+                        : "bg-gradient-to-br from-[#375DEE]/30 to-[#375DEE]/10 ring-white/10"
+                    }`}>
+                      <span className={`font-semibold ${isOnDoNotRentList(selectedLead) ? "text-red-400" : "text-[#375DEE]"}`}>
                         {selectedLead.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-white truncate">{selectedLead.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className={`font-bold truncate ${isOnDoNotRentList(selectedLead) ? "text-red-400" : "text-white"}`}>
+                          {selectedLead.name}
+                        </h3>
+                        {isOnDoNotRentList(selectedLead) && (
+                          <span className="flex items-center gap-1 px-2 py-0.5 bg-red-500/20 text-red-400 text-[10px] font-bold rounded">
+                            <AlertTriangle className="w-3 h-3" />
+                            DO NOT RENT
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-3 text-sm">
                         <span className="text-white/40 flex items-center gap-1.5">
                           <Phone className="w-3.5 h-3.5" />

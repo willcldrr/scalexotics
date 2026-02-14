@@ -6,7 +6,7 @@ import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { DashboardCacheProvider } from "@/lib/dashboard-cache"
-import { getSidebarSettings, getDefaultSidebarSettings, SidebarSettings } from "./settings/sidebar-settings"
+import { getSidebarSettings, getDefaultSidebarSettings, SidebarSettings, SidebarDisplayMode } from "./settings/sidebar-settings"
 
 const SESSION_TOKEN_KEY = 'scale_exotics_session_token'
 import {
@@ -50,6 +50,7 @@ const adminNavItems = [
   { name: "Domains", href: "/dashboard/admin/domains", icon: Globe, key: "admin-domains" },
   { name: "Invoices", href: "/dashboard/admin/invoices", icon: FileText, key: "admin-invoices" },
   { name: "Access Codes", href: "/dashboard/admin/access-codes", icon: Key, key: "admin-access-codes" },
+  { name: "Do Not Rent", href: "/dashboard/admin/do-not-rent", icon: Shield, key: "admin-do-not-rent" },
 ]
 
 export default function DashboardLayout({
@@ -61,9 +62,14 @@ export default function DashboardLayout({
   const router = useRouter()
   const supabase = createClient()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarHovered, setSidebarHovered] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
   const [sidebarSettings, setSidebarSettings] = useState<SidebarSettings>(getDefaultSidebarSettings())
+
+  // Compute sidebar expansion state based on display mode
+  const displayMode = (sidebarSettings.displayMode as SidebarDisplayMode) || "hover"
+  const isExpanded = displayMode === "full" || (displayMode === "hover" && sidebarHovered)
 
   useEffect(() => {
     const getUser = async () => {
@@ -246,16 +252,20 @@ export default function DashboardLayout({
         />
       )}
 
-      {/* Sidebar - Desktop: Icon only with tooltips, Mobile: Full width */}
+      {/* Sidebar - Display mode controlled by settings */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full bg-black border-r border-white/10 transform transition-transform duration-200 lg:translate-x-0 w-64 lg:w-[72px] lg:overflow-visible ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        onMouseEnter={() => displayMode === "hover" && setSidebarHovered(true)}
+        onMouseLeave={() => displayMode === "hover" && setSidebarHovered(false)}
+        className={`fixed top-0 left-0 z-50 h-full bg-black border-r border-white/10 transform transition-all duration-200 ease-out lg:translate-x-0 w-64 ${
+          displayMode === "full" ? "lg:w-64" : isExpanded ? "lg:w-64" : "lg:w-[72px]"
+        } ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="flex flex-col h-full lg:overflow-visible">
+        <div className="flex flex-col h-full overflow-hidden">
           {/* Logo - aligned with header height */}
-          <div className="px-6 lg:px-3 py-3 lg:h-[73px] border-b border-white/10 flex justify-center items-center">
-            <Link href="/dashboard" className="flex items-center gap-3 lg:gap-0">
+          <div className={`py-3 lg:h-[73px] flex items-center transition-all duration-200 ${
+            isExpanded ? "px-6 justify-start" : "px-6 lg:px-3 justify-center lg:justify-center"
+          }`}>
+            <Link href="/dashboard" className="flex items-center gap-3">
               <Image
                 src="/scalexoticslogo.png"
                 alt="Scale Exotics"
@@ -267,7 +277,9 @@ export default function DashboardLayout({
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 lg:p-2 space-y-1 overflow-y-auto lg:overflow-visible">
+          <nav className={`flex-1 space-y-1 overflow-y-auto transition-all duration-200 ${
+            isExpanded ? "p-4" : "p-4 lg:p-2"
+          }`}>
             {navItems.map((item) => {
               const isActive = pathname === item.href ||
                 (item.href !== "/dashboard" && pathname.startsWith(item.href))
@@ -276,19 +288,19 @@ export default function DashboardLayout({
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`group relative flex items-center gap-3 px-4 lg:px-0 lg:justify-center py-3 rounded-xl transition-colors ${
+                  className={`group relative flex items-center gap-3 py-3 rounded-xl transition-colors ${
+                    isExpanded ? "px-4" : "px-4 lg:px-0 lg:justify-center"
+                  } ${
                     isActive
                       ? "bg-[#375DEE] text-white"
                       : "text-white/60 hover:text-white hover:bg-white/5"
                   }`}
                 >
                   <item.icon className="w-5 h-5 flex-shrink-0" />
-                  <span className="font-medium lg:hidden">{item.name}</span>
-                  {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
-                  {/* Tooltip for desktop */}
-                  <span className="absolute left-full ml-3 px-3 py-2 bg-black text-white text-sm font-medium rounded-lg whitespace-nowrap scale-0 lg:group-hover:scale-100 opacity-0 lg:group-hover:opacity-100 transition-all duration-150 pointer-events-none z-[100] shadow-lg border border-white/10 origin-left">
-                    {item.name}
-                  </span>
+                  {isExpanded && <span className="font-medium whitespace-nowrap">{item.name}</span>}
+                  {!isExpanded && <span className="font-medium lg:hidden">{item.name}</span>}
+                  {isActive && isExpanded && <ChevronRight className="w-4 h-4 ml-auto" />}
+                  {isActive && !isExpanded && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
                 </Link>
               )
             })}
@@ -296,10 +308,11 @@ export default function DashboardLayout({
             {/* Admin Section */}
             {profile?.is_admin && (
               <>
-                <div className="pt-4 pb-2 px-4 lg:px-2 lg:flex lg:justify-center">
-                  <p className="text-xs font-semibold text-white/30 uppercase tracking-wider flex items-center gap-2 lg:gap-0">
+                <div className={`pt-4 pb-2 ${isExpanded ? "px-4" : "px-4 lg:px-2 lg:flex lg:justify-center"}`}>
+                  <p className="text-xs font-semibold text-white/30 uppercase tracking-wider flex items-center gap-2">
                     <Shield className="w-3 h-3" />
-                    <span className="lg:hidden">Admin</span>
+                    {isExpanded && <span>Admin</span>}
+                    {!isExpanded && <span className="lg:hidden">Admin</span>}
                   </p>
                 </div>
                 {adminNavItems.map((item) => {
@@ -310,19 +323,19 @@ export default function DashboardLayout({
                       key={item.href}
                       href={item.href}
                       onClick={() => setSidebarOpen(false)}
-                      className={`group relative flex items-center gap-3 px-4 lg:px-0 lg:justify-center py-3 rounded-xl transition-colors ${
+                      className={`group relative flex items-center gap-3 py-3 rounded-xl transition-colors ${
+                        isExpanded ? "px-4" : "px-4 lg:px-0 lg:justify-center"
+                      } ${
                         isActive
                           ? "bg-[#375DEE] text-white"
                           : "text-white/60 hover:text-white hover:bg-white/5"
                       }`}
                     >
                       <item.icon className="w-5 h-5 flex-shrink-0" />
-                      <span className="font-medium lg:hidden">{item.name}</span>
-                      {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
-                      {/* Tooltip for desktop */}
-                      <span className="absolute left-full ml-3 px-3 py-2 bg-black text-white text-sm font-medium rounded-lg whitespace-nowrap scale-0 lg:group-hover:scale-100 opacity-0 lg:group-hover:opacity-100 transition-all duration-150 pointer-events-none z-[100] shadow-lg border border-white/10 origin-left">
-                        {item.name}
-                      </span>
+                      {sidebarHovered && <span className="font-medium whitespace-nowrap">{item.name}</span>}
+                      {!sidebarHovered && <span className="font-medium lg:hidden">{item.name}</span>}
+                      {isActive && sidebarHovered && <ChevronRight className="w-4 h-4 ml-auto" />}
+                      {isActive && !sidebarHovered && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
                     </Link>
                   )
                 })}
@@ -331,56 +344,60 @@ export default function DashboardLayout({
           </nav>
 
           {/* User section */}
-          <div className="p-4 lg:p-2 border-t border-white/10 lg:overflow-visible">
-            {/* Mobile: Full user info */}
-            <div className="flex items-center gap-3 px-4 py-3 mb-2 lg:hidden">
-              <div className="w-10 h-10 rounded-full bg-[#375DEE]/20 flex items-center justify-center">
+          <div className={`border-t border-white/10 transition-all duration-200 ${
+            isExpanded ? "p-4" : "p-4 lg:p-2"
+          }`}>
+            {/* User info - shows on mobile always, on desktop when hovered */}
+            <div className={`flex items-center gap-3 py-3 mb-2 ${
+              isExpanded ? "px-4" : "px-4 lg:px-0 lg:justify-center"
+            }`}>
+              <div className="w-10 h-10 rounded-full bg-[#375DEE]/20 flex items-center justify-center flex-shrink-0">
                 <span className="text-[#375DEE] font-semibold">
                   {profile?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || "U"}
                 </span>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">
-                  {profile?.full_name || "User"}
-                </p>
-                <p className="text-xs text-white/40 truncate">
-                  {profile?.company_name || user?.email}
-                </p>
-              </div>
-            </div>
-            {/* Desktop: Avatar only with tooltip */}
-            <div className="hidden lg:flex justify-center mb-2">
-              <div className="group relative w-10 h-10 rounded-full bg-[#375DEE]/20 flex items-center justify-center cursor-default">
-                <span className="text-[#375DEE] font-semibold">
-                  {profile?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || "U"}
-                </span>
-                {/* Tooltip */}
-                <span className="absolute left-full ml-3 px-3 py-2 bg-black text-white text-sm font-medium rounded-lg whitespace-nowrap scale-0 lg:group-hover:scale-100 opacity-0 lg:group-hover:opacity-100 transition-all duration-150 pointer-events-none z-[100] shadow-lg border border-white/10 origin-left">
-                  {profile?.full_name || "User"}
-                </span>
-              </div>
+              {isExpanded && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {profile?.full_name || "User"}
+                  </p>
+                  <p className="text-xs text-white/40 truncate">
+                    {profile?.company_name || user?.email}
+                  </p>
+                </div>
+              )}
+              {!isExpanded && (
+                <div className="flex-1 min-w-0 lg:hidden">
+                  <p className="text-sm font-medium truncate">
+                    {profile?.full_name || "User"}
+                  </p>
+                  <p className="text-xs text-white/40 truncate">
+                    {profile?.company_name || user?.email}
+                  </p>
+                </div>
+              )}
             </div>
             {/* Sign out button */}
             <button
               onClick={handleSignOut}
-              className="group relative flex items-center gap-3 px-4 lg:px-0 lg:justify-center py-3 w-full rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+              className={`flex items-center gap-3 py-3 w-full rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors ${
+                isExpanded ? "px-4" : "px-4 lg:px-0 lg:justify-center"
+              }`}
             >
               <LogOut className="w-5 h-5 flex-shrink-0" />
-              <span className="font-medium lg:hidden">Sign Out</span>
-              {/* Tooltip for desktop */}
-              <span className="absolute left-full ml-3 px-3 py-2 bg-black text-white text-sm font-medium rounded-lg whitespace-nowrap scale-0 lg:group-hover:scale-100 opacity-0 lg:group-hover:opacity-100 transition-all duration-150 pointer-events-none z-[100] shadow-lg border border-white/10 origin-left">
-                Sign Out
-              </span>
+              {isExpanded && <span className="font-medium whitespace-nowrap">Sign Out</span>}
+              {!isExpanded && <span className="font-medium lg:hidden">Sign Out</span>}
             </button>
           </div>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className={`lg:pl-[72px] ${pathname.startsWith("/dashboard/admin/crm") ? "" : "pb-16"} lg:pb-0`}>
+      <div className={`${displayMode === "full" ? "lg:pl-64" : "lg:pl-[72px]"} ${pathname.startsWith("/dashboard/admin/crm") ? "" : "pb-16"} lg:pb-0 transition-all duration-200`}>
         {/* Top bar */}
         <header className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-white/10 lg:h-[73px]">
           <div className="flex items-center justify-between px-4 lg:px-6 py-3 h-full">
+            {/* Mobile: hamburger + title */}
             <div className="flex items-center gap-3 lg:hidden">
               <button
                 onClick={() => setSidebarOpen(true)}
@@ -390,7 +407,17 @@ export default function DashboardLayout({
               </button>
               <h1 className="font-semibold text-lg">{getPageTitle()}</h1>
             </div>
-            <div className="flex-1 hidden lg:block" />
+            {/* Desktop: page title */}
+            <h1 className="hidden lg:block text-xl font-bold">
+              {getPageTitle() === "AI Assistant" ? (
+                <span className="bg-gradient-to-r from-[#375DEE] via-[#6B8AFF] to-[#A78BFA] text-transparent bg-clip-text">
+                  AI Assistant
+                </span>
+              ) : (
+                getPageTitle()
+              )}
+            </h1>
+            <div className="flex-1" />
           </div>
         </header>
 

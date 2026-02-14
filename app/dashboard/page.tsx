@@ -347,10 +347,6 @@ export default function DashboardPage() {
   if (isLoading && leads.length === 0) {
     return (
       <div className="space-y-6">
-        <div>
-          <div className="h-9 w-40 bg-white/5 rounded-lg animate-pulse" />
-          <div className="h-5 w-64 bg-white/5 rounded mt-2 animate-pulse" />
-        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-5 animate-pulse">
@@ -370,17 +366,10 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header - Hidden on mobile (shown in top bar) */}
-      <div className="hidden sm:flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            Dashboard
-          </h1>
-          <p className="text-white/50 text-sm sm:text-base mt-1">
-            Welcome back. Here&apos;s your business overview.
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
+      {/* KPI Cards with Controls */}
+      <div className="space-y-4">
+        {/* Controls - Time range selector and refresh */}
+        <div className="hidden sm:flex justify-end gap-4">
           {/* Time Range Selector */}
           <div className="flex p-1 bg-white/[0.03] rounded-xl border border-white/[0.06]">
             {[
@@ -410,10 +399,9 @@ export default function DashboardPage() {
             <span className="hidden sm:inline">Updated {getLastUpdatedText()}</span>
           </button>
         </div>
-      </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* KPI Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Revenue */}
         <div className="group rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-5 hover:border-[#375DEE]/30 hover:shadow-lg hover:shadow-[#375DEE]/5 hover:-translate-y-0.5 transition-all duration-300">
           <div className="flex items-start justify-between mb-3">
@@ -486,6 +474,7 @@ export default function DashboardPage() {
           </p>
         </div>
       </div>
+    </div>
 
       {/* Revenue Trend Chart - Hidden on mobile for performance */}
       <div ref={revenueSection.ref} className="hidden sm:block rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden hover:border-white/[0.1] transition-colors">

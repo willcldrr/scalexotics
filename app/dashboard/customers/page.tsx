@@ -221,12 +221,6 @@ export default function CustomersPage() {
   if (loading) {
     return (
       <div className="space-y-4 sm:space-y-6">
-        <div className="hidden sm:block">
-          <h1 className="text-3xl font-bold" style={{ color: '#ffffff', background: 'none', WebkitTextFillColor: '#ffffff' }}>
-            Customers
-          </h1>
-          <p className="text-white/50 mt-1">Loading customer profiles...</p>
-        </div>
         <div className="flex items-center justify-center h-64">
           <Loader2 className="w-8 h-8 animate-spin text-[#375DEE]" />
         </div>
@@ -236,16 +230,6 @@ export default function CustomersPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header - Hidden on mobile */}
-      <div className="hidden sm:flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold" style={{ color: '#ffffff', background: 'none', WebkitTextFillColor: '#ffffff' }}>
-            Customers
-          </h1>
-          <p className="text-white/50 mt-1">{customers.length} customers with rental history</p>
-        </div>
-      </div>
-
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-5">

@@ -18,14 +18,6 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header - Hidden on mobile */}
-      <div className="hidden sm:block">
-        <h1 className="text-3xl font-bold text-white">
-          Settings
-        </h1>
-        <p className="text-white/50 mt-1">Manage your account and integrations</p>
-      </div>
-
       {/* Tabs */}
       <div className="flex gap-2 border-b border-white/[0.08] pb-4 overflow-x-auto">
         <button

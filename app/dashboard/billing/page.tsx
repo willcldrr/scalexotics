@@ -26,14 +26,6 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header - Hidden on mobile */}
-      <div className="hidden sm:block">
-        <h1 className="text-3xl font-bold text-white">
-          Billing
-        </h1>
-        <p className="text-white/50 mt-1">Manage invoices and rental agreements</p>
-      </div>
-
       {/* Tabs */}
       <div className="flex gap-2 border-b border-white/10 pb-4">
         <button

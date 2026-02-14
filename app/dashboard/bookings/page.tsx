@@ -349,12 +349,6 @@ export default function BookingsPage() {
   if (loading) {
     return (
       <div className="space-y-4 sm:space-y-6">
-        <div className="hidden sm:block">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-            Bookings
-          </h1>
-          <p className="text-white/50 mt-1">Loading bookings...</p>
-        </div>
         <div className="flex items-center justify-center h-64">
           <Loader2 className="w-8 h-8 animate-spin text-[#375DEE]" />
         </div>
@@ -364,16 +358,6 @@ export default function BookingsPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header - Hidden on mobile */}
-      <div className="hidden sm:block">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-          Bookings
-        </h1>
-        <p className="text-white/50 text-sm sm:text-base mt-1">
-          {bookings.filter((b) => b.status !== "cancelled").length} active booking{bookings.filter((b) => b.status !== "cancelled").length !== 1 ? "s" : ""}
-        </p>
-      </div>
-
       {/* By Vehicle Tab */}
       {activeTab === "by-vehicle" && (
         <div className="flex gap-4 h-[calc(100vh-180px)]">
