@@ -39,6 +39,9 @@ interface CSVRow {
   date_of_birth?: string
   expiration_date?: string
   issuing_state?: string
+  phone?: string
+  email?: string
+  reason?: string
   [key: string]: string | undefined
 }
 
@@ -102,25 +105,99 @@ export default function DoNotRentPage() {
   }
 
   const parseCSV = (text: string) => {
-    const lines = text.split("\n").filter(line => line.trim())
-    if (lines.length < 2) return
+    const lines = text.split(/\r?\n/).filter(line => line.trim())
+    if (lines.length < 2) {
+      alert("CSV file appears to be empty or has no data rows")
+      return
+    }
 
-    // Parse headers
-    const headers = lines[0].split("\t").map(h => h.trim().toLowerCase().replace(/\s+/g, "_"))
+    // Auto-detect delimiter: try tab, comma, semicolon, pipe
+    const firstLine = lines[0]
+    let delimiter = ","
+    if (firstLine.includes("\t")) {
+      delimiter = "\t"
+    } else if (firstLine.split(";").length > firstLine.split(",").length) {
+      delimiter = ";"
+    } else if (firstLine.split("|").length > firstLine.split(",").length) {
+      delimiter = "|"
+    }
+
+    // Parse headers - normalize them
+    const rawHeaders = lines[0].split(delimiter).map(h => h.trim())
+    const headers = rawHeaders.map(h =>
+      h.toLowerCase()
+        .replace(/['"]/g, "") // Remove quotes
+        .replace(/\s+/g, "_")
+        .replace(/[^a-z0-9_]/g, "")
+    )
     setCsvHeaders(headers)
+
+    // Map common column name variations to our expected fields
+    const findColumn = (variations: string[]): number => {
+      for (const v of variations) {
+        const idx = headers.findIndex(h => h.includes(v) || v.includes(h))
+        if (idx !== -1) return idx
+      }
+      return -1
+    }
+
+    const nameIdx = findColumn(["full_name", "fullname", "name", "customer_name", "customer", "renter", "renter_name", "driver", "driver_name", "person"])
+    const dobIdx = findColumn(["date_of_birth", "dob", "birth", "birthdate", "birth_date", "birthday"])
+    const expIdx = findColumn(["expiration", "expiration_date", "exp", "exp_date", "expires", "id_expiration", "license_expiration"])
+    const stateIdx = findColumn(["state", "issuing_state", "issue_state", "dl_state", "license_state", "st"])
+    const idIdx = findColumn(["id", "id_number", "license", "license_number", "dl", "dl_number", "drivers_license", "id_num"])
+    const phoneIdx = findColumn(["phone", "phone_number", "tel", "telephone", "mobile", "cell"])
+    const emailIdx = findColumn(["email", "email_address", "e_mail"])
+    const reasonIdx = findColumn(["reason", "notes", "note", "comments", "comment", "description", "why", "ban_reason"])
 
     // Parse rows
     const rows: CSVRow[] = []
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split("\t")
-      const row: CSVRow = {}
-      headers.forEach((header, index) => {
-        row[header] = values[index]?.trim() || ""
-      })
-      if (row.full_name) {
-        rows.push(row)
+      const line = lines[i].trim()
+      if (!line) continue
+
+      // Handle quoted values properly
+      const values: string[] = []
+      let current = ""
+      let inQuotes = false
+
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j]
+        if (char === '"' && (j === 0 || line[j-1] !== '\\')) {
+          inQuotes = !inQuotes
+        } else if (char === delimiter && !inQuotes) {
+          values.push(current.trim().replace(/^["']|["']$/g, ""))
+          current = ""
+        } else {
+          current += char
+        }
       }
+      values.push(current.trim().replace(/^["']|["']$/g, ""))
+
+      // Build row object using detected column indices
+      const row: CSVRow = {}
+
+      // Try to get name from detected column, or fall back to first column
+      const name = nameIdx !== -1 ? values[nameIdx]?.trim() : values[0]?.trim()
+      if (!name) continue // Skip rows without a name
+
+      row.full_name = name
+      if (dobIdx !== -1) row.date_of_birth = values[dobIdx]?.trim() || ""
+      if (expIdx !== -1) row.expiration_date = values[expIdx]?.trim() || ""
+      if (stateIdx !== -1) row.issuing_state = values[stateIdx]?.trim() || ""
+      if (idIdx !== -1) row.id = values[idIdx]?.trim() || ""
+      if (phoneIdx !== -1) row.phone = values[phoneIdx]?.trim() || ""
+      if (emailIdx !== -1) row.email = values[emailIdx]?.trim() || ""
+      if (reasonIdx !== -1) row.reason = values[reasonIdx]?.trim() || ""
+
+      rows.push(row)
     }
+
+    if (rows.length === 0) {
+      alert(`No valid entries found. Detected columns: ${rawHeaders.join(", ")}\n\nMake sure your CSV has a column for names (e.g., "Name", "Full Name", "Customer")`)
+      return
+    }
+
     setCsvData(rows)
     setShowImportModal(true)
     setImportResult(null)
@@ -158,6 +235,9 @@ export default function DoNotRentPage() {
         expiration_date: expDate,
         issuing_state: row.issuing_state || null,
         id_number: row.id || null,
+        phone: row.phone || null,
+        email: row.email || null,
+        reason: row.reason || null,
         added_by: user?.id,
       })
 
@@ -482,6 +562,8 @@ export default function DoNotRentPage() {
                             <th className="text-left px-4 py-3 text-white/50">DOB</th>
                             <th className="text-left px-4 py-3 text-white/50">State</th>
                             <th className="text-left px-4 py-3 text-white/50">ID</th>
+                            <th className="text-left px-4 py-3 text-white/50">Phone</th>
+                            <th className="text-left px-4 py-3 text-white/50">Reason</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/[0.04]">
@@ -491,6 +573,8 @@ export default function DoNotRentPage() {
                               <td className="px-4 py-3 text-white/60">{row.date_of_birth || "—"}</td>
                               <td className="px-4 py-3 text-white/60">{row.issuing_state || "—"}</td>
                               <td className="px-4 py-3 text-white/60 font-mono">{row.id || "—"}</td>
+                              <td className="px-4 py-3 text-white/60">{row.phone || "—"}</td>
+                              <td className="px-4 py-3 text-white/60 max-w-[150px] truncate">{row.reason || "—"}</td>
                             </tr>
                           ))}
                         </tbody>
