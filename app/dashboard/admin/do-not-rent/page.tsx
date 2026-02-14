@@ -207,45 +207,95 @@ export default function DoNotRentPage() {
     setImporting(true)
     let success = 0
     let errors = 0
+    let lastError = ""
 
     const { data: { user } } = await supabase.auth.getUser()
 
-    for (const row of csvData) {
+    if (!user) {
+      alert("You must be logged in to import entries")
+      setImporting(false)
+      return
+    }
+
+    // Batch insert for better performance
+    const batchSize = 50
+    const entries = csvData.map(row => {
       // Parse dates - handle various formats
       let dob = null
       let expDate = null
 
       if (row.date_of_birth) {
-        const parsed = new Date(row.date_of_birth)
+        // Try parsing various date formats
+        const dobStr = row.date_of_birth.trim()
+        // Handle MM/DD/YYYY, DD/MM/YYYY, YYYY-MM-DD formats
+        let parsed = new Date(dobStr)
+
+        // If that didn't work, try manual parsing for MM/DD/YYYY
+        if (isNaN(parsed.getTime()) && dobStr.includes("/")) {
+          const parts = dobStr.split("/")
+          if (parts.length === 3) {
+            // Assume MM/DD/YYYY format
+            const [month, day, year] = parts
+            parsed = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+          }
+        }
+
         if (!isNaN(parsed.getTime())) {
           dob = parsed.toISOString().split("T")[0]
         }
       }
 
       if (row.expiration_date) {
-        const parsed = new Date(row.expiration_date)
+        const expStr = row.expiration_date.trim()
+        let parsed = new Date(expStr)
+
+        if (isNaN(parsed.getTime()) && expStr.includes("/")) {
+          const parts = expStr.split("/")
+          if (parts.length === 3) {
+            const [month, day, year] = parts
+            parsed = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+          }
+        }
+
         if (!isNaN(parsed.getTime())) {
           expDate = parsed.toISOString().split("T")[0]
         }
       }
 
-      const { error } = await supabase.from("do_not_rent_list").insert({
-        full_name: row.full_name,
+      return {
+        full_name: row.full_name?.trim() || "",
         date_of_birth: dob,
         expiration_date: expDate,
-        issuing_state: row.issuing_state || null,
-        id_number: row.id || null,
-        phone: row.phone || null,
-        email: row.email || null,
-        reason: row.reason || null,
-        added_by: user?.id,
-      })
+        issuing_state: row.issuing_state?.trim() || null,
+        id_number: row.id?.trim() || null,
+        phone: row.phone?.trim() || null,
+        email: row.email?.trim() || null,
+        reason: row.reason?.trim() || null,
+        added_by: user.id,
+      }
+    }).filter(e => e.full_name) // Filter out any entries without names
+
+    // Insert in batches
+    for (let i = 0; i < entries.length; i += batchSize) {
+      const batch = entries.slice(i, i + batchSize)
+
+      const { error, data } = await supabase
+        .from("do_not_rent_list")
+        .insert(batch)
+        .select()
 
       if (error) {
-        errors++
+        console.error("Import batch error:", error)
+        lastError = error.message
+        errors += batch.length
       } else {
-        success++
+        success += batch.length
       }
+    }
+
+    if (errors > 0 && success === 0) {
+      // All failed - show the error
+      alert(`Import failed: ${lastError}\n\nThis might be a permissions issue. Make sure you have admin access and the table exists in your database.`)
     }
 
     setImportResult({ success, errors })
