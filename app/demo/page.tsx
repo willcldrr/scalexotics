@@ -468,7 +468,7 @@ export default function Demo() {
 
               {/* Subtitle */}
               <p className="text-2xl md:text-3xl font-medium fade-up delay-2" style={{ fontFamily: 'var(--font-display)' }}>
-                <span className="bg-gradient-to-r from-[#375DEE] to-[#6B8DFF] bg-clip-text text-transparent">{content.subtitle}</span>
+                <span className="bg-gradient-to-r from-[#375DEE] to-[#375DEE] bg-clip-text text-transparent">{content.subtitle}</span>
               </p>
             </div>
           </div>
@@ -496,7 +496,7 @@ export default function Demo() {
                       {/* Top accent line */}
                       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#375DEE] to-transparent" />
                       <div className="relative">
-                        <div className="text-5xl lg:text-6xl font-bold bg-gradient-to-r from-[#375DEE] to-[#6B8DFF] bg-clip-text text-transparent mb-3" style={{ fontFamily: 'var(--font-display)' }}>{stat.value}</div>
+                        <div className="text-5xl lg:text-6xl font-bold bg-gradient-to-r from-[#375DEE] to-[#375DEE] bg-clip-text text-transparent mb-3" style={{ fontFamily: 'var(--font-display)' }}>{stat.value}</div>
                         <div className="text-lg font-semibold text-white mb-1">{stat.label}</div>
                         <div className="text-sm text-white/40">{stat.detail}</div>
                       </div>
@@ -635,7 +635,7 @@ export default function Demo() {
                             isCompleted
                               ? 'bg-gradient-to-br from-green-500 to-green-600 shadow-lg shadow-green-500/30'
                               : isCurrent
-                                ? 'bg-gradient-to-br from-[#375DEE] to-[#5B7FFF] shadow-lg shadow-[#375DEE]/40 ring-4 ring-[#375DEE]/20'
+                                ? 'bg-gradient-to-br from-[#375DEE] to-[#375DEE] shadow-lg shadow-[#375DEE]/40 ring-4 ring-[#375DEE]/20'
                                 : 'bg-white/5 border-2 border-white/10'
                           }`}>
                             {isCompleted ? (
@@ -939,7 +939,7 @@ export default function Demo() {
                     <div className="relative bg-gradient-to-br from-white/[0.05] to-white/[0.02] border border-white/10 rounded-2xl p-6 h-full hover:border-[#375DEE]/30 transition-all group">
                       <div className="absolute inset-0 bg-gradient-to-br from-[#375DEE]/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                       <div className="relative">
-                        <div className="text-4xl font-bold bg-gradient-to-r from-[#375DEE] to-[#6B8DFF] bg-clip-text text-transparent mb-2" style={{ fontFamily: 'var(--font-display)' }}>{item.metric}</div>
+                        <div className="text-4xl font-bold bg-gradient-to-r from-[#375DEE] to-[#375DEE] bg-clip-text text-transparent mb-2" style={{ fontFamily: 'var(--font-display)' }}>{item.metric}</div>
                         <div className="text-lg font-semibold text-white mb-2">{item.label}</div>
                         <p className="text-white/40 text-sm leading-relaxed">{item.desc}</p>
                       </div>
@@ -1181,7 +1181,7 @@ export default function Demo() {
                           </div>
                         )}
                         {placeholder.type === 'google-review' && (
-                          <div className="w-10 h-10 mx-auto mb-3 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                          <div className="w-10 h-10 mx-auto mb-3 rounded-xl bg-[#375DEE]/20 flex items-center justify-center">
                             <svg className="w-5 h-5 text-white/40" viewBox="0 0 24 24" fill="currentColor"><path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
                           </div>
                         )}
@@ -1411,7 +1411,7 @@ export default function Demo() {
               <div className="relative fade-up delay-3">
                 <div className="absolute inset-0 bg-[#375DEE] blur-xl opacity-20 rounded-2xl" />
                 <div className="relative bg-gradient-to-r from-[#375DEE]/20 to-[#375DEE]/10 border border-[#375DEE]/30 rounded-2xl px-10 py-6">
-                  <p className="text-2xl bg-gradient-to-r from-[#375DEE] to-[#6B8DFF] bg-clip-text text-transparent font-semibold" style={{ fontFamily: 'var(--font-display)' }}>{content.highlight}</p>
+                  <p className="text-2xl bg-gradient-to-r from-[#375DEE] to-[#375DEE] bg-clip-text text-transparent font-semibold" style={{ fontFamily: 'var(--font-display)' }}>{content.highlight}</p>
                 </div>
               </div>
             </div>
@@ -1505,7 +1505,7 @@ export default function Demo() {
               <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[400px] h-[400px] bg-[#375DEE]/20 rounded-full blur-[120px]" />
               <div className="relative fade-up delay-1">
                 <h2 className="text-3xl lg:text-4xl font-bold mb-8" style={{ fontFamily: 'var(--font-display)' }}>
-                  <span className="bg-gradient-to-r from-[#375DEE] to-[#6B8DFF] bg-clip-text text-transparent">{content.comparison.right.title}</span>
+                  <span className="bg-gradient-to-r from-[#375DEE] to-[#375DEE] bg-clip-text text-transparent">{content.comparison.right.title}</span>
                 </h2>
                 <div className="space-y-4">
                   {content.comparison.right.items.map((item: any, i: number) => (
@@ -1626,7 +1626,7 @@ export default function Demo() {
             <div className="relative z-10 max-w-4xl mx-auto w-full">
               {/* Badge */}
               <div className="flex justify-center mb-6 fade-up">
-                <span className="px-4 py-2 bg-gradient-to-r from-[#375DEE] to-[#5B7FFF] rounded-full text-sm font-bold text-white tracking-wider">{content.badge}</span>
+                <span className="px-4 py-2 bg-gradient-to-r from-[#375DEE] to-[#375DEE] rounded-full text-sm font-bold text-white tracking-wider">{content.badge}</span>
               </div>
 
               {/* Title */}
@@ -1963,7 +1963,7 @@ export default function Demo() {
                     }`}>
                       {/* Recommended badge */}
                       {tier.recommended && (
-                        <div className="bg-gradient-to-r from-[#375DEE] to-[#5B7FFF] text-center py-2">
+                        <div className="bg-gradient-to-r from-[#375DEE] to-[#375DEE] text-center py-2">
                           <span className="text-xs font-bold text-white tracking-wider">RECOMMENDED</span>
                         </div>
                       )}
@@ -2031,7 +2031,7 @@ export default function Demo() {
                     }`}>
                       {/* Badge */}
                       {option.badge && (
-                        <div className="absolute top-4 right-4 px-3 py-1 bg-gradient-to-r from-[#375DEE] to-[#5B7FFF] rounded-full">
+                        <div className="absolute top-4 right-4 px-3 py-1 bg-gradient-to-r from-[#375DEE] to-[#375DEE] rounded-full">
                           <span className="text-xs font-bold text-white tracking-wider">{option.badge}</span>
                         </div>
                       )}
@@ -2187,7 +2187,7 @@ export default function Demo() {
             <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
               className={`w-full px-5 py-4 rounded-xl bg-white/5 border ${error ? 'border-red-500' : 'border-white/20'} text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors`} />
             {error && <p className="text-red-400">{error}</p>}
-            <button type="submit" className="w-full py-4 bg-[#375DEE] hover:bg-[#4169E1] text-white text-lg font-semibold rounded-xl transition-colors" style={{ fontFamily: 'var(--font-display)' }}>Enter</button>
+            <button type="submit" className="w-full py-4 bg-[#375DEE] hover:opacity-90 text-white text-lg font-semibold rounded-xl transition-colors" style={{ fontFamily: 'var(--font-display)' }}>Enter</button>
           </form>
         </div>
       </div>

@@ -256,7 +256,7 @@ export default function PaymentPage() {
                 <button
                   onClick={handlePayment}
                   disabled={processing}
-                  className="w-full py-4 bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-[#375DEE] hover:opacity-90 disabled:opacity-50 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
                   {processing ? (
                     <>

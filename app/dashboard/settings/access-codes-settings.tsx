@@ -175,7 +175,7 @@ export default function AccessCodesSettings() {
       return <span className="px-2 py-0.5 text-xs rounded bg-orange-500/20 text-orange-400">Expired</span>
     }
     if (code.use_count >= code.max_uses) {
-      return <span className="px-2 py-0.5 text-xs rounded bg-blue-500/20 text-blue-400">Used</span>
+      return <span className="px-2 py-0.5 text-xs rounded bg-[#375DEE]/20 text-[#375DEE]">Used</span>
     }
     return <span className="px-2 py-0.5 text-xs rounded bg-green-500/20 text-green-400">Active</span>
   }
@@ -195,7 +195,7 @@ export default function AccessCodesSettings() {
         <p className="text-white/50">Generate and manage access codes for new clients</p>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-5 py-3 bg-[#375DEE] hover:bg-[#4169E1] text-white font-semibold rounded-xl transition-colors"
+          className="flex items-center gap-2 px-5 py-3 bg-[#375DEE] hover:opacity-90 text-white font-semibold rounded-xl transition-colors"
         >
           <Plus className="w-5 h-5" />
           Generate Code
@@ -234,7 +234,7 @@ export default function AccessCodesSettings() {
         </div>
         <div className="bg-white/5 rounded-xl p-4 border border-white/[0.08]">
           <p className="text-white/40 text-xs mb-1">Used</p>
-          <p className="text-2xl font-bold text-blue-400">
+          <p className="text-2xl font-bold text-[#375DEE]">
             {codes.filter((c) => c.use_count > 0).length}
           </p>
         </div>
@@ -258,7 +258,7 @@ export default function AccessCodesSettings() {
           </p>
           <button
             onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#375DEE] hover:bg-[#4169E1] text-white font-semibold rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#375DEE] hover:opacity-90 text-white font-semibold rounded-xl transition-colors"
           >
             <Plus className="w-5 h-5" />
             Generate Code
@@ -440,7 +440,7 @@ export default function AccessCodesSettings() {
               <button
                 onClick={handleCreateCode}
                 disabled={generating}
-                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 font-semibold transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#375DEE] hover:opacity-90 disabled:opacity-50 font-semibold transition-colors"
               >
                 {generating ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

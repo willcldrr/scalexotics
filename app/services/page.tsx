@@ -55,7 +55,7 @@ export default function Services() {
                 <div className="flex items-center gap-1 p-1 bg-white/[0.03] rounded-full border border-white/[0.06]">
                   <a href="/" className="px-5 py-2 text-sm text-white/60 hover:text-white hover:bg-white/[0.06] rounded-full transition-all duration-300">Home</a>
                   <a href="/about" className="px-5 py-2 text-sm text-white/60 hover:text-white hover:bg-white/[0.06] rounded-full transition-all duration-300">About</a>
-                  <a href="/survey" className="px-6 py-2 text-sm text-white bg-[#375DEE] hover:bg-[#4169E1] rounded-full transition-all duration-300 ml-1">Get Started</a>
+                  <a href="/survey" className="px-6 py-2 text-sm text-white bg-[#375DEE] hover:opacity-90 rounded-full transition-all duration-300 ml-1">Get Started</a>
                 </div>
               </nav>
               <button
@@ -274,7 +274,7 @@ export default function Services() {
             </p>
             <a
               href="/survey"
-              className="inline-flex items-center gap-2 md:gap-3 px-8 md:px-10 py-4 md:py-5 bg-[#375DEE] hover:bg-[#4169E1] text-white text-base md:text-lg rounded-full transition-all duration-300 hover:shadow-[0_0_40px_rgba(55,93,238,0.4)]"
+              className="inline-flex items-center gap-2 md:gap-3 px-8 md:px-10 py-4 md:py-5 bg-[#375DEE] hover:opacity-90 text-white text-base md:text-lg rounded-full transition-all duration-300 hover:shadow-[0_0_40px_rgba(var(--brand-accent-rgb),0.4)]"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               Get Started

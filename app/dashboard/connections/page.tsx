@@ -637,7 +637,7 @@ export default function ConnectionsPage() {
                     <button
                       onClick={handleRequestAccess}
                       disabled={!email || submitting}
-                      className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors"
+                      className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-[#375DEE] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors"
                     >
                       {submitting ? (
                         <>

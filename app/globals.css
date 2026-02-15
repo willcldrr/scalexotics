@@ -4,6 +4,9 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* Brand accent color - can be overridden by JavaScript for custom branding */
+  --brand-accent: #375DEE;
+
   /* Dark modern theme with white foreground and black background */
   --background: oklch(0.08 0 0);
   --foreground: oklch(0.98 0 0);

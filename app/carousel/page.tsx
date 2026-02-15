@@ -428,7 +428,7 @@ export default function CarouselPage() {
           <button
             onClick={downloadCard}
             disabled={isDownloading}
-            className="flex items-center gap-2 px-4 py-2 bg-[#375DEE] hover:bg-[#4169E1] text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(55,93,238,0.4)]"
+            className="flex items-center gap-2 px-4 py-2 bg-[#375DEE] hover:opacity-90 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(var(--brand-accent-rgb),0.4)]"
           >
             {icons.download}
             {isDownloading && downloadProgress.includes(`/${carouselCards.length}`)

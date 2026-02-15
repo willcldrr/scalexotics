@@ -6,6 +6,7 @@ import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { DashboardCacheProvider } from "@/lib/dashboard-cache"
+import { useBranding } from "@/lib/branding-context"
 import { getSidebarSettings, getDefaultSidebarSettings, SidebarSettings, SidebarDisplayMode } from "./settings/sidebar-settings"
 
 const SESSION_TOKEN_KEY = 'scale_exotics_session_token'
@@ -61,6 +62,7 @@ export default function DashboardLayout({
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const branding = useBranding()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarHovered, setSidebarHovered] = useState(false)
   const [user, setUser] = useState<any>(null)
@@ -265,13 +267,14 @@ export default function DashboardLayout({
           <div className={`py-3 lg:h-[73px] flex items-center transition-all duration-200 ${
             isExpanded ? "px-6 justify-start" : "px-6 lg:px-3 justify-center lg:justify-center"
           }`}>
-            <Link href="/dashboard" className="flex items-center gap-3">
+            <Link href="/dashboard" className="flex items-center">
               <Image
-                src="/scalexoticslogo.png"
-                alt="Scale Exotics"
-                width={60}
-                height={60}
-                className="h-[60px] w-[60px] lg:h-[48px] lg:w-[48px] object-contain"
+                src={branding.logoUrl || "/scalexoticslogo.png"}
+                alt={branding.companyName || "Scale Exotics"}
+                width={48}
+                height={48}
+                className="h-[48px] w-[48px] object-contain"
+                unoptimized={branding.logoUrl ? true : false}
               />
             </Link>
           </div>
@@ -288,13 +291,14 @@ export default function DashboardLayout({
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`group relative flex items-center gap-3 py-3 rounded-xl transition-colors ${
-                    isExpanded ? "px-4" : "px-4 lg:px-0 lg:justify-center"
+                  className={`group relative flex items-center py-3 rounded-xl transition-colors ${
+                    isExpanded ? "gap-3 px-4" : "gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center"
                   } ${
                     isActive
-                      ? "bg-[#375DEE] text-white"
+                      ? "text-white"
                       : "text-white/60 hover:text-white hover:bg-white/5"
                   }`}
+                  style={isActive ? { backgroundColor: "#375DEE" } : undefined}
                 >
                   <item.icon className="w-5 h-5 flex-shrink-0" />
                   {isExpanded && <span className="font-medium whitespace-nowrap">{item.name}</span>}
@@ -309,7 +313,7 @@ export default function DashboardLayout({
             {profile?.is_admin && (
               <>
                 <div className={`pt-4 pb-2 ${isExpanded ? "px-4" : "px-4 lg:px-2 lg:flex lg:justify-center"}`}>
-                  <p className="text-xs font-semibold text-white/30 uppercase tracking-wider flex items-center gap-2">
+                  <p className={`text-xs font-semibold text-white/30 uppercase tracking-wider flex items-center ${isExpanded ? "gap-2" : "gap-2 lg:gap-0"}`}>
                     <Shield className="w-3 h-3" />
                     {isExpanded && <span>Admin</span>}
                     {!isExpanded && <span className="lg:hidden">Admin</span>}
@@ -323,19 +327,20 @@ export default function DashboardLayout({
                       key={item.href}
                       href={item.href}
                       onClick={() => setSidebarOpen(false)}
-                      className={`group relative flex items-center gap-3 py-3 rounded-xl transition-colors ${
-                        isExpanded ? "px-4" : "px-4 lg:px-0 lg:justify-center"
+                      className={`group relative flex items-center py-3 rounded-xl transition-colors ${
+                        isExpanded ? "gap-3 px-4" : "gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center"
                       } ${
                         isActive
-                          ? "bg-[#375DEE] text-white"
+                          ? "text-white"
                           : "text-white/60 hover:text-white hover:bg-white/5"
                       }`}
+                      style={isActive ? { backgroundColor: "#375DEE" } : undefined}
                     >
                       <item.icon className="w-5 h-5 flex-shrink-0" />
-                      {sidebarHovered && <span className="font-medium whitespace-nowrap">{item.name}</span>}
-                      {!sidebarHovered && <span className="font-medium lg:hidden">{item.name}</span>}
-                      {isActive && sidebarHovered && <ChevronRight className="w-4 h-4 ml-auto" />}
-                      {isActive && !sidebarHovered && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
+                      {isExpanded && <span className="font-medium whitespace-nowrap">{item.name}</span>}
+                      {!isExpanded && <span className="font-medium lg:hidden">{item.name}</span>}
+                      {isActive && isExpanded && <ChevronRight className="w-4 h-4 ml-auto" />}
+                      {isActive && !isExpanded && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
                     </Link>
                   )
                 })}
@@ -348,11 +353,14 @@ export default function DashboardLayout({
             isExpanded ? "p-4" : "p-4 lg:p-2"
           }`}>
             {/* User info - shows on mobile always, on desktop when hovered */}
-            <div className={`flex items-center gap-3 py-3 mb-2 ${
-              isExpanded ? "px-4" : "px-4 lg:px-0 lg:justify-center"
+            <div className={`flex items-center py-3 mb-2 ${
+              isExpanded ? "gap-3 px-4" : "gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center"
             }`}>
-              <div className="w-10 h-10 rounded-full bg-[#375DEE]/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-[#375DEE] font-semibold">
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: "#375DEE33" }}
+              >
+                <span className="font-semibold" style={{ color: "#375DEE" }}>
                   {profile?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || "U"}
                 </span>
               </div>
@@ -380,8 +388,8 @@ export default function DashboardLayout({
             {/* Sign out button */}
             <button
               onClick={handleSignOut}
-              className={`flex items-center gap-3 py-3 w-full rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors ${
-                isExpanded ? "px-4" : "px-4 lg:px-0 lg:justify-center"
+              className={`flex items-center py-3 w-full rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors ${
+                isExpanded ? "gap-3 px-4" : "gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center"
               }`}
             >
               <LogOut className="w-5 h-5 flex-shrink-0" />
@@ -410,7 +418,12 @@ export default function DashboardLayout({
             {/* Desktop: page title */}
             <h1 className="hidden lg:block text-xl font-bold">
               {getPageTitle() === "AI Assistant" ? (
-                <span className="bg-gradient-to-r from-[#375DEE] via-[#6B8AFF] to-[#A78BFA] text-transparent bg-clip-text">
+                <span
+                  className="text-transparent bg-clip-text"
+                  style={{
+                    backgroundImage: "linear-gradient(to right, #375DEE, #6B8AFF, #A78BFA)"
+                  }}
+                >
                   AI Assistant
                 </span>
               ) : (
@@ -442,9 +455,10 @@ export default function DashboardLayout({
                   href={item.href}
                   className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors ${
                     isActive
-                      ? "text-[#375DEE]"
+                      ? ""
                       : "text-white/50 active:text-white"
                   }`}
+                  style={isActive ? { color: "#375DEE" } : undefined}
                 >
                   <item.icon className="w-5 h-5" />
                   <span className="text-[10px] font-medium">{item.name}</span>

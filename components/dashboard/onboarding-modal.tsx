@@ -188,7 +188,7 @@ export default function OnboardingModal() {
     return (
       <button
         onClick={() => setIsMinimized(false)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-[#375DEE] hover:bg-[#4169E1] text-white rounded-full shadow-lg transition-all hover:scale-105"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-[#375DEE] hover:opacity-90 text-white rounded-full shadow-lg transition-all hover:scale-105"
       >
         <Rocket className="w-5 h-5" />
         <span className="font-medium">Setup Guide</span>

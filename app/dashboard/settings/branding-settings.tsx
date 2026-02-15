@@ -1,10 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import {
-  Palette,
   Image as ImageIcon,
   Building,
   Mail,
@@ -21,6 +20,11 @@ import {
   CheckCircle,
   XCircle,
   Trash2,
+  Upload,
+  LayoutDashboard,
+  Users,
+  CalendarCheck,
+  Settings,
 } from "lucide-react"
 
 interface BrandingSettings {
@@ -55,6 +59,7 @@ const defaultBranding: BrandingSettings = {
 
 export default function BrandingSettings() {
   const supabase = createClient()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [branding, setBranding] = useState<BrandingSettings>(defaultBranding)
   const [customDomain, setCustomDomain] = useState<CustomDomain | null>(null)
   const [newDomain, setNewDomain] = useState("")
@@ -66,6 +71,9 @@ export default function BrandingSettings() {
   const [domainError, setDomainError] = useState<string | null>(null)
   const [domainVerifying, setDomainVerifying] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [logoInputMode, setLogoInputMode] = useState<'url' | 'upload'>('upload')
+  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchBranding()
@@ -78,6 +86,8 @@ export default function BrandingSettings() {
       setLoading(false)
       return
     }
+
+    setUserId(user.id)
 
     // Fetch existing branding
     const { data } = await supabase
@@ -164,9 +174,72 @@ export default function BrandingSettings() {
     } else {
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
+      // Notify branding context to refresh
+      window.dispatchEvent(new CustomEvent("brandingChanged"))
     }
 
     setSaving(false)
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !userId) return
+
+    setUploading(true)
+    setError(null)
+
+    try {
+      const fileExt = file.name.split('.').pop()?.toLowerCase()
+      if (!['png', 'jpg', 'jpeg', 'svg', 'webp'].includes(fileExt || '')) {
+        setError('Please upload a PNG, JPG, SVG, or WebP image')
+        setUploading(false)
+        return
+      }
+
+      if (file.size > 2 * 1024 * 1024) {
+        setError('File size must be less than 2MB')
+        setUploading(false)
+        return
+      }
+
+      const fileName = `${userId}/${Date.now()}.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('brand-logos')
+        .upload(fileName, file)
+
+      if (uploadError) {
+        // Try vehicle-images bucket as fallback
+        const { error: fallbackError } = await supabase.storage
+          .from('vehicle-images')
+          .upload(`logos/${fileName}`, file)
+
+        if (fallbackError) {
+          setError('Failed to upload logo. Please try entering a URL instead.')
+          setUploading(false)
+          return
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('vehicle-images')
+          .getPublicUrl(`logos/${fileName}`)
+
+        setBranding({ ...branding, logo_url: publicUrl })
+      } else {
+        const { data: { publicUrl } } = supabase.storage
+          .from('brand-logos')
+          .getPublicUrl(fileName)
+
+        setBranding({ ...branding, logo_url: publicUrl })
+      }
+    } catch (err) {
+      setError('Failed to upload logo. Please try entering a URL instead.')
+    }
+
+    setUploading(false)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   const handleAddDomain = async () => {
@@ -273,9 +346,9 @@ export default function BrandingSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold mb-1">Business Branding</h2>
+        <h2 className="text-xl font-bold mb-1">Dashboard Branding</h2>
         <p className="text-white/50 text-sm">
-          Customize how your business appears on customer-facing pages like invoices, booking confirmations, and agreements.
+          Customize your dashboard with your own logo and accent color. These settings apply to your sidebar navigation and dashboard elements.
         </p>
       </div>
 
@@ -449,7 +522,7 @@ export default function BrandingSettings() {
                       <button
                         onClick={handleVerifyDomain}
                         disabled={domainVerifying}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors"
+                        className="flex items-center gap-2 px-4 py-2.5 bg-[#375DEE] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors"
                       >
                         {domainVerifying ? (
                           <>
@@ -568,7 +641,7 @@ export default function BrandingSettings() {
                 <button
                   onClick={handleAddDomain}
                   disabled={domainSaving || !newDomain.trim()}
-                  className="px-6 py-3 bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 text-white font-semibold rounded-xl transition-colors flex items-center gap-2"
+                  className="px-6 py-3 bg-[#375DEE] hover:opacity-90 disabled:opacity-50 text-white font-semibold rounded-xl transition-colors flex items-center gap-2"
                 >
                   {domainSaving ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -626,86 +699,111 @@ export default function BrandingSettings() {
           <p className="text-xs text-white/40 mt-1">This appears on invoices, booking pages, and email communications</p>
         </div>
 
-        {/* Logo URL */}
+        {/* Logo Upload/URL */}
         <div>
           <label className="flex items-center gap-2 text-sm text-white/60 mb-2">
             <ImageIcon className="w-4 h-4" />
-            Logo URL
+            Company Logo
           </label>
-          <input
-            type="url"
-            value={branding.logo_url || ""}
-            onChange={(e) => setBranding({ ...branding, logo_url: e.target.value || null })}
-            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
-            placeholder="https://yoursite.com/logo.png"
-          />
-          <p className="text-xs text-white/40 mt-1">Direct URL to your logo image (PNG, JPG, or SVG recommended)</p>
-          {branding.logo_url && (
-            <div className="mt-3 p-4 bg-white/5 rounded-xl">
-              <p className="text-xs text-white/40 mb-2">Preview:</p>
-              <Image
-                src={branding.logo_url}
-                alt="Logo preview"
-                width={150}
-                height={48}
-                className="h-12 w-auto object-contain"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none'
-                }}
+          <p className="text-xs text-white/40 mb-3">This logo appears in your dashboard sidebar and on customer-facing pages</p>
+
+          {/* Toggle between upload and URL */}
+          <div className="flex gap-2 mb-3">
+            <button
+              type="button"
+              onClick={() => setLogoInputMode('upload')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                logoInputMode === 'upload'
+                  ? 'bg-white/10 text-white'
+                  : 'text-white/50 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Upload className="w-4 h-4" />
+              Upload
+            </button>
+            <button
+              type="button"
+              onClick={() => setLogoInputMode('url')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                logoInputMode === 'url'
+                  ? 'bg-white/10 text-white'
+                  : 'text-white/50 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <LinkIcon className="w-4 h-4" />
+              URL
+            </button>
+          </div>
+
+          {logoInputMode === 'upload' ? (
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                onChange={handleFileUpload}
+                className="hidden"
               />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl bg-white/5 border border-white/[0.08] border-dashed text-white/60 hover:text-white hover:bg-white/[0.08] transition-colors"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5" />
+                    Click to upload logo (PNG, JPG, SVG, max 2MB)
+                  </>
+                )}
+              </button>
+            </div>
+          ) : (
+            <input
+              type="url"
+              value={branding.logo_url || ""}
+              onChange={(e) => setBranding({ ...branding, logo_url: e.target.value || null })}
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]"
+              placeholder="https://yoursite.com/logo.png"
+            />
+          )}
+
+          {branding.logo_url && (
+            <div className="mt-3 p-4 bg-white/5 rounded-xl flex items-center justify-between">
+              <div>
+                <p className="text-xs text-white/40 mb-2">Current Logo:</p>
+                <Image
+                  src={branding.logo_url}
+                  alt="Logo preview"
+                  width={150}
+                  height={48}
+                  className="h-12 w-auto object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none'
+                  }}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setBranding({ ...branding, logo_url: null })}
+                className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                title="Remove logo"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
           )}
         </div>
 
-        {/* Colors */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className="flex items-center gap-2 text-sm text-white/60 mb-2">
-              <Palette className="w-4 h-4" />
-              Primary Color
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                type="color"
-                value={branding.primary_color}
-                onChange={(e) => setBranding({ ...branding, primary_color: e.target.value })}
-                className="w-12 h-12 rounded-lg cursor-pointer border-0"
-              />
-              <input
-                type="text"
-                value={branding.primary_color}
-                onChange={(e) => setBranding({ ...branding, primary_color: e.target.value })}
-                className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white font-mono text-sm"
-                placeholder="#375DEE"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="flex items-center gap-2 text-sm text-white/60 mb-2">
-              <Palette className="w-4 h-4" />
-              Background Color
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                type="color"
-                value={branding.background_color}
-                onChange={(e) => setBranding({ ...branding, background_color: e.target.value })}
-                className="w-12 h-12 rounded-lg cursor-pointer border-0"
-              />
-              <input
-                type="text"
-                value={branding.background_color}
-                onChange={(e) => setBranding({ ...branding, background_color: e.target.value })}
-                className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white font-mono text-sm"
-                placeholder="#000000"
-              />
-            </div>
-          </div>
-        </div>
-
         {/* Contact Info */}
         <div className="pt-4 border-t border-white/[0.08]">
-          <h3 className="text-sm font-bold mb-4">Contact Information (shown on customer pages)</h3>
+          <h3 className="text-sm font-bold mb-2">Contact Information</h3>
+          <p className="text-xs text-white/40 mb-4">Displayed on invoices, booking confirmations, and other customer communications</p>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className="flex items-center gap-2 text-sm text-white/60 mb-2">
@@ -753,36 +851,50 @@ export default function BrandingSettings() {
         <div className="pt-4 border-t border-white/[0.08]">
           <div className="flex items-center gap-2 mb-4">
             <Eye className="w-4 h-4 text-white/60" />
-            <h3 className="text-sm font-bold">Preview</h3>
+            <h3 className="text-sm font-bold">Dashboard Preview</h3>
           </div>
-          <div
-            className="rounded-xl p-6 border"
-            style={{
-              backgroundColor: branding.background_color,
-              borderColor: `${branding.primary_color}30`,
-            }}
-          >
-            <div className="flex items-center gap-3 mb-4">
-              {branding.logo_url ? (
-                <Image src={branding.logo_url} alt="" width={120} height={32} className="h-8 w-auto object-contain" />
-              ) : (
+
+          <div className="space-y-2">
+            <p className="text-xs text-white/50 font-medium">Sidebar Navigation</p>
+            <div className="bg-black rounded-xl border border-white/10 p-4 w-full max-w-[200px]">
+              {/* Logo */}
+              <div className="flex items-center gap-3 pb-4 border-b border-white/10">
+                {branding.logo_url ? (
+                  <Image
+                    src={branding.logo_url}
+                    alt=""
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 object-contain"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                    <Building className="w-5 h-5 text-white/40" />
+                  </div>
+                )}
+              </div>
+              {/* Nav Items */}
+              <div className="pt-3 space-y-1">
                 <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: `${branding.primary_color}20` }}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-white text-sm bg-[#375DEE]"
                 >
-                  <Building className="w-5 h-5" style={{ color: branding.primary_color }} />
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span className="font-medium">Overview</span>
                 </div>
-              )}
-              <span className="font-semibold text-white">
-                {branding.company_name || "Your Company Name"}
-              </span>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-white/60 text-sm">
+                  <Users className="w-4 h-4" />
+                  <span>Leads</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-white/60 text-sm">
+                  <CalendarCheck className="w-4 h-4" />
+                  <span>Bookings</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-white/60 text-sm">
+                  <Settings className="w-4 h-4" />
+                  <span>Settings</span>
+                </div>
+              </div>
             </div>
-            <button
-              className="px-4 py-2 rounded-lg text-white text-sm font-medium"
-              style={{ backgroundColor: branding.primary_color }}
-            >
-              Sample Button
-            </button>
           </div>
         </div>
       </div>
@@ -791,7 +903,7 @@ export default function BrandingSettings() {
       <button
         onClick={handleSave}
         disabled={saving || !branding.company_name}
-        className="flex items-center gap-2 px-6 py-3 bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 text-white font-semibold rounded-xl transition-colors"
+        className="flex items-center gap-2 px-6 py-3 bg-[#375DEE] hover:opacity-90 disabled:opacity-50 text-white font-semibold rounded-xl transition-colors"
       >
         {saving ? (
           <>
@@ -815,14 +927,15 @@ export default function BrandingSettings() {
       <div className="bg-[#375DEE]/10 border border-[#375DEE]/30 rounded-xl p-4">
         <h4 className="font-bold text-[#375DEE] mb-2">Where is this branding used?</h4>
         <ul className="text-sm text-white/60 space-y-1">
-          <li>• Lead capture surveys (/lead/...)</li>
-          <li>• Online booking portal (/book/...)</li>
-          <li>• Invoice payment pages (/invoice/...)</li>
-          <li>• Rental agreement signing pages (/sign/...)</li>
-          <li>• Vehicle inspection confirmations (/inspection/...)</li>
-          <li>• Booking widget embed (/embed)</li>
-          <li>• Payment success/confirmation pages</li>
+          <li>• <strong className="text-white/80">Sidebar navigation</strong> - Your logo appears at the top</li>
+          <li>• <strong className="text-white/80">Contact information</strong> - Shown on invoices and customer pages</li>
         </ul>
+        <div className="mt-3 pt-3 border-t border-white/10">
+          <p className="text-xs text-white/50">
+            <strong className="text-white/70">Note:</strong> Customer-facing survey pages have their own branding settings.
+            Configure survey appearance in <strong className="text-white/70">Lead Capture → Edit Survey → Branding</strong>.
+          </p>
+        </div>
       </div>
     </div>
   )

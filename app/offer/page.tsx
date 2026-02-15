@@ -135,7 +135,7 @@ export default function OfferPage() {
     const optionStyles = (isSelected: boolean) => `
       w-full px-5 py-4 rounded-xl border transition-all duration-200 text-left text-base
       ${isSelected
-        ? "bg-[#375DEE] border-[#375DEE] text-white shadow-[0_0_30px_rgba(55,93,238,0.3)]"
+        ? "bg-[#375DEE] border-[#375DEE] text-white shadow-[0_0_30px_rgba(var(--brand-accent-rgb),0.3)]"
         : "bg-white/5 border-white/20 text-white active:bg-[#375DEE]/20 active:border-[#375DEE]/50"
       }
     `
@@ -259,7 +259,7 @@ export default function OfferPage() {
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className={`${syne.className} w-full py-4 text-white text-lg font-semibold rounded-xl transition-all duration-300 mt-2 disabled:opacity-50 disabled:cursor-not-allowed bg-[#375DEE] active:bg-[#4169E1] shadow-[0_0_30px_rgba(55,93,238,0.3)]`}
+                className={`${syne.className} w-full py-4 text-white text-lg font-semibold rounded-xl transition-all duration-300 mt-2 disabled:opacity-50 disabled:cursor-not-allowed bg-[#375DEE] active:opacity-90 shadow-[0_0_30px_rgba(var(--brand-accent-rgb),0.3)]`}
               >
                 {isSubmitting ? "Submitting..." : "Submit"}
               </button>
@@ -302,7 +302,7 @@ export default function OfferPage() {
         <h2
           className={`${syne.className} text-4xl sm:text-5xl font-bold mb-6 leading-[1.1]`}
           style={{
-            background: 'linear-gradient(135deg, #375DEE 0%, #6B8CFF 100%)',
+            background: 'linear-gradient(135deg, #375DEE 0%, #375DEE 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             filter: 'drop-shadow(0 4px 20px rgba(55, 93, 238, 0.4))'
@@ -317,7 +317,7 @@ export default function OfferPage() {
         {/* CTA Button */}
         <button
           onClick={() => setFunnelStep('survey')}
-          className={`${syne.className} relative px-10 py-4 text-lg font-semibold text-white bg-[#375DEE] rounded-full transition-all duration-300 active:scale-95 border border-white/10 shadow-[0_0_40px_rgba(55,93,238,0.4)]`}
+          className={`${syne.className} relative px-10 py-4 text-lg font-semibold text-white bg-[#375DEE] rounded-full transition-all duration-300 active:scale-95 border border-white/10 shadow-[0_0_40px_rgba(var(--brand-accent-rgb),0.4)]`}
         >
           See If You Qualify →
         </button>
@@ -402,7 +402,7 @@ export default function OfferPage() {
 
       <div className="relative z-10 text-center max-w-md mx-auto animate-fade-in">
         {/* Success Icon */}
-        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#375DEE]/20 border border-[#375DEE]/40 flex items-center justify-center shadow-[0_0_40px_rgba(55,93,238,0.3)]">
+        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#375DEE]/20 border border-[#375DEE]/40 flex items-center justify-center shadow-[0_0_40px_rgba(var(--brand-accent-rgb),0.3)]">
           <svg className="w-10 h-10 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
@@ -456,7 +456,7 @@ export default function OfferPage() {
       {funnelStep === 'survey' && (
         <div className="absolute top-0 left-0 right-0 h-1 bg-white/10 z-50">
           <div
-            className="h-full bg-[#375DEE] transition-all duration-500 ease-out shadow-[0_0_10px_rgba(55,93,238,0.5)]"
+            className="h-full bg-[#375DEE] transition-all duration-500 ease-out shadow-[0_0_10px_rgba(var(--brand-accent-rgb),0.5)]"
             style={{ width: `${progress}%` }}
           />
         </div>

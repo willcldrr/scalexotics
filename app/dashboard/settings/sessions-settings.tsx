@@ -169,7 +169,7 @@ DELETE FROM user_sessions WHERE session_token IS NULL;`}
           </pre>
           <button
             onClick={initializeSessions}
-            className="mt-4 px-4 py-2 bg-[#375DEE] hover:bg-[#4169E1] text-white rounded-lg text-sm font-medium transition-colors"
+            className="mt-4 px-4 py-2 bg-[#375DEE] hover:opacity-90 text-white rounded-lg text-sm font-medium transition-colors"
           >
             Retry
           </button>

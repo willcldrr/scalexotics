@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import DashboardShell from "./dashboard-shell"
+import { BrandingProvider } from "@/lib/branding-context"
 
 // Force dynamic rendering to prevent SSR cache issues
 export const dynamic = 'force-dynamic'
@@ -25,5 +26,9 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <DashboardShell>{children}</DashboardShell>
+  return (
+    <BrandingProvider>
+      <DashboardShell>{children}</DashboardShell>
+    </BrandingProvider>
+  )
 }

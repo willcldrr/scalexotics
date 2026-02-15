@@ -140,7 +140,7 @@ export default function DemoNotificationsPage() {
   const getIconColor = (type: string) => {
     switch (type) {
       case "lead":
-        return "bg-blue-500/20 text-blue-400"
+        return "bg-[#375DEE]/20 text-[#375DEE]"
       case "booking":
         return "bg-green-500/20 text-green-400"
       case "message":
@@ -180,7 +180,7 @@ export default function DemoNotificationsPage() {
         {!isPlaying && !isComplete && (
           <button
             onClick={playNotifications}
-            className="flex items-center gap-2 px-6 py-3 bg-[#375DEE] hover:bg-[#4169E1] text-white font-semibold rounded-xl transition-all hover:scale-105 shadow-lg shadow-[#375DEE]/25"
+            className="flex items-center gap-2 px-6 py-3 bg-[#375DEE] hover:bg-[#375DEE] text-white font-semibold rounded-xl transition-all hover:scale-105 shadow-lg shadow-[#375DEE]/25"
           >
             <Play className="w-5 h-5" />
             Play Demo
@@ -251,7 +251,7 @@ export default function DemoNotificationsPage() {
       {(isPlaying || isComplete) && (
         <div className="mt-8 flex gap-6">
           <div className="text-center">
-            <div className="text-3xl font-bold text-blue-400">
+            <div className="text-3xl font-bold text-[#375DEE]">
               {notifications.filter(n => n.type === "lead").length}
             </div>
             <div className="text-sm text-white/50">New Leads</div>

@@ -388,7 +388,7 @@ export default function CalendarSettings() {
             )}
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#375DEE] hover:bg-[#4169E1] transition-colors text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#375DEE] hover:opacity-90 transition-colors text-sm font-medium"
             >
               <Plus className="w-4 h-4" />
               Add Calendar
@@ -402,7 +402,7 @@ export default function CalendarSettings() {
             <p className="text-white/50 mb-4">No external calendars connected</p>
             <button
               onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#375DEE] hover:bg-[#4169E1] transition-colors text-sm font-medium"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#375DEE] hover:opacity-90 transition-colors text-sm font-medium"
             >
               <Plus className="w-4 h-4" />
               Connect Your First Calendar
@@ -571,7 +571,7 @@ export default function CalendarSettings() {
               <button
                 onClick={handleAddSync}
                 disabled={adding || !selectedVehicle || !calendarUrl}
-                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 font-semibold transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#375DEE] hover:opacity-90 disabled:opacity-50 font-semibold transition-colors"
               >
                 {adding ? (
                   <>

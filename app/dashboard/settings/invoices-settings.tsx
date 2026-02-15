@@ -233,7 +233,7 @@ export default function InvoicesSettings() {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#375DEE] hover:bg-[#4169E1] text-white font-medium rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[#375DEE] hover:opacity-90 text-white font-medium rounded-lg transition-colors"
         >
           <Plus className="w-4 h-4" />
           Create Invoice
@@ -324,7 +324,7 @@ export default function InvoicesSettings() {
                         className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                           invoice.type === "retainer"
                             ? "bg-purple-500/20 text-purple-400"
-                            : "bg-blue-500/20 text-blue-400"
+                            : "bg-[#375DEE]/20 text-[#375DEE]"
                         }`}
                       >
                         {invoice.type === "retainer" ? "Retainer" : "Booking"}
@@ -589,7 +589,7 @@ export default function InvoicesSettings() {
               <button
                 onClick={handleCreateInvoice}
                 disabled={creating}
-                className="flex-1 px-4 py-3 bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-3 bg-[#375DEE] hover:opacity-90 disabled:opacity-50 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
               >
                 {creating ? (
                   <>

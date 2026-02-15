@@ -255,7 +255,7 @@ export default function InspectionSignPage() {
   const getConditionBadge = (condition: string) => {
     const styles: Record<string, string> = {
       excellent: "bg-green-500/20 text-green-400",
-      good: "bg-blue-500/20 text-blue-400",
+      good: "bg-[#375DEE]/20 text-[#375DEE]",
       fair: "bg-yellow-500/20 text-yellow-400",
       poor: "bg-red-500/20 text-red-400",
     }

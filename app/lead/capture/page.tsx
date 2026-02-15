@@ -229,7 +229,7 @@ export default function LeadCapturePage() {
                 By checking this box, you agree to our{" "}
                 <Link
                   href="/lead/privacy-policy"
-                  className="text-blue-400 underline hover:text-blue-300"
+                  className="text-[#375DEE] underline hover:opacity-80"
                   target="_blank"
                 >
                   Privacy Policy
@@ -237,7 +237,7 @@ export default function LeadCapturePage() {
                 and{" "}
                 <Link
                   href="/lead/tos"
-                  className="text-blue-400 underline hover:text-blue-300"
+                  className="text-[#375DEE] underline hover:opacity-80"
                   target="_blank"
                 >
                   SMS Terms

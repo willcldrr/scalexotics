@@ -152,7 +152,7 @@ export default function VerifyAccessPage() {
             <button
               type="submit"
               disabled={!code.trim() || loading || success}
-              className="w-full mt-6 py-4 bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+              className="w-full mt-6 py-4 bg-[#375DEE] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

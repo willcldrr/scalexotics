@@ -315,7 +315,7 @@ export default function LeadCaptureSettings() {
         <p className="text-white/50">Configure surveys for your ad campaigns</p>
         <button
           onClick={openCreateModal}
-          className="flex items-center gap-2 px-5 py-3 bg-[#375DEE] hover:bg-[#4169E1] text-white font-semibold rounded-xl transition-colors"
+          className="flex items-center gap-2 px-5 py-3 bg-[#375DEE] hover:opacity-90 text-white font-semibold rounded-xl transition-colors"
         >
           <Plus className="w-5 h-5" />
           New Survey
@@ -352,7 +352,7 @@ export default function LeadCaptureSettings() {
           </p>
           <button
             onClick={openCreateModal}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#375DEE] hover:bg-[#4169E1] text-white font-semibold rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#375DEE] hover:opacity-90 text-white font-semibold rounded-xl transition-colors"
           >
             <Plus className="w-5 h-5" />
             Create Survey
@@ -764,7 +764,7 @@ export default function LeadCaptureSettings() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 font-semibold transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#375DEE] hover:opacity-90 disabled:opacity-50 font-semibold transition-colors"
               >
                 <Save className="w-4 h-4" />
                 {saving ? "Saving..." : editingSurvey ? "Update Survey" : "Create Survey"}

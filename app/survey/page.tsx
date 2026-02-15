@@ -235,7 +235,7 @@ export default function Survey() {
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="w-full py-4 md:py-5 text-white text-lg md:text-xl rounded-xl transition-all duration-300 hover:shadow-[0_0_40px_rgba(55,93,238,0.4)] mt-2 md:mt-4 disabled:opacity-50 disabled:cursor-not-allowed bg-[#375DEE] hover:bg-[#4169E1]"
+                className="w-full py-4 md:py-5 text-white text-lg md:text-xl rounded-xl transition-all duration-300 hover:shadow-[0_0_40px_rgba(var(--brand-accent-rgb),0.4)] mt-2 md:mt-4 disabled:opacity-50 disabled:cursor-not-allowed bg-[#375DEE] hover:opacity-90"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 {isSubmitting ? "Submitting..." : "Submit"}

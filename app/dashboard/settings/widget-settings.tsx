@@ -198,7 +198,7 @@ export default function WidgetSettings() {
               </div>
               <button
                 onClick={() => copyCode(embedCode)}
-                className="flex items-center gap-2 px-4 py-2 bg-[#375DEE] hover:bg-[#4169E1] rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-[#375DEE] hover:opacity-90 rounded-lg text-sm font-medium transition-colors"
               >
                 <Copy className="w-4 h-4" />
                 Copy Code
