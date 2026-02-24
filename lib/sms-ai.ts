@@ -55,7 +55,8 @@ export async function generateAIResponse(
   userId: string,
   leadId: string,
   incomingMessage: string,
-  leadName: string
+  leadName: string,
+  channel: "sms" | "instagram" = "sms"
 ): Promise<string> {
   const supabase = getSupabase()
 
@@ -113,7 +114,7 @@ export async function generateAIResponse(
   const leadInfo: LeadInfo = lead || { id: leadId, name: leadName, phone: "" }
 
   // Build the system prompt with enhanced capabilities
-  const systemPrompt = buildEnhancedSystemPrompt(aiSettings, vehicleList, bookingList, leadInfo)
+  const systemPrompt = buildEnhancedSystemPrompt(aiSettings, vehicleList, bookingList, leadInfo, channel)
 
   // Build conversation messages for context
   const conversationMessages = buildConversationMessages(conversationHistory, incomingMessage, leadName)
@@ -212,7 +213,8 @@ function buildEnhancedSystemPrompt(
   settings: AISettings,
   vehicles: Vehicle[],
   bookings: BookingConflict[],
-  leadInfo: LeadInfo
+  leadInfo: LeadInfo,
+  channel: "sms" | "instagram" = "sms"
 ): string {
   const toneInstructions = {
     friendly: "Be warm, casual, and use occasional emojis. Feel like texting a friend.",
@@ -287,12 +289,16 @@ PRICING CALCULATION:
 - Deposit is ${settings.deposit_percentage}% of total
 
 RESPONSE GUIDELINES:
-1. Keep responses SHORT - this is SMS, max 2-3 sentences
-2. Be conversational and natural
-3. Ask ONE question at a time to collect info
-4. When you have vehicle + dates, summarize and ask if they're ready to pay the deposit
-5. The customer's name is ${leadInfo.name} - use it occasionally
-6. Never make up prices - use the rates listed above
+${channel === "sms"
+    ? `1. Keep responses SHORT - this is SMS, max 2-3 sentences
+2. Be conversational and natural`
+    : `1. Keep responses conversational - this is Instagram DM, can be slightly longer than SMS but still concise
+2. You can use line breaks for readability
+3. Be friendly and engaging`}
+${channel === "sms" ? "3" : "4"}. Ask ONE question at a time to collect info
+${channel === "sms" ? "4" : "5"}. When you have vehicle + dates, summarize and ask if they're ready to pay the deposit
+${channel === "sms" ? "5" : "6"}. The customer's name is ${leadInfo.name} - use it occasionally
+${channel === "sms" ? "6" : "7"}. Never make up prices - use the rates listed above
 
 Example flow:
 - "Which car catches your eye?" → They pick Lamborghini
@@ -300,7 +306,7 @@ Example flow:
 - "Perfect! The Lamborghini Huracan for March 15-17 is 3 days × $1,500 = $4,500 total. Deposit is $1,125 (25%). Ready to lock it in? I can send you a secure payment link!"
 - If they say yes → Include [SEND_PAYMENT_LINK] and say you're sending the link
 
-Remember: You're texting, keep it brief and guide them toward booking!`
+Remember: ${channel === "sms" ? "You're texting, keep it brief" : "You're on Instagram DM, be personable"} and guide them toward booking!`
 }
 
 function buildConversationMessages(

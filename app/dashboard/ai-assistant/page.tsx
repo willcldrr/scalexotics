@@ -26,6 +26,7 @@ import {
   RotateCcw,
   Sparkles,
   MessageCircle,
+  Instagram,
 } from "lucide-react"
 
 interface AISettings {
@@ -44,6 +45,8 @@ interface AISettings {
   follow_up_enabled: boolean
   follow_up_hours: number
   custom_system_prompt: string
+  instagram_enabled: boolean
+  instagram_greeting: string
 }
 
 const DEFAULT_SYSTEM_PROMPT = `You are an AI assistant for {{business_name}}, an exotic car rental business. Your role is to help potential customers book luxury vehicles via SMS.
@@ -96,6 +99,8 @@ const defaultSettings: AISettings = {
   follow_up_enabled: true,
   follow_up_hours: 24,
   custom_system_prompt: "",
+  instagram_enabled: false,
+  instagram_greeting: "Hey! Thanks for reaching out on Instagram. Looking to rent an exotic car? I can help you find the perfect ride. What kind of car are you interested in?",
 }
 
 const toneOptions = [
@@ -120,6 +125,8 @@ export default function AIAssistantPage() {
   const [testMessage, setTestMessage] = useState("Hey! This is a test message from your AI assistant.")
   const [sendingTest, setSendingTest] = useState(false)
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [instagramStatus, setInstagramStatus] = useState<"loading" | "connected" | "not_configured" | "error">("loading")
+  const [instagramInfo, setInstagramInfo] = useState<any>(null)
 
   useEffect(() => {
     fetchData()
@@ -156,7 +163,28 @@ export default function AIAssistantPage() {
     // Check Twilio connection
     checkTwilioConnection()
 
+    // Check Instagram connection
+    checkInstagramConnection()
+
     setLoading(false)
+  }
+
+  const checkInstagramConnection = async () => {
+    setInstagramStatus("loading")
+    try {
+      const res = await fetch("/api/instagram/status")
+      const data = await res.json()
+      if (data.configured) {
+        setInstagramStatus("connected")
+        setInstagramInfo(data)
+      } else {
+        setInstagramStatus("not_configured")
+        setInstagramInfo(data)
+      }
+    } catch (error) {
+      setInstagramStatus("not_configured")
+      setInstagramInfo({ error: "Instagram not configured" })
+    }
   }
 
   const checkTwilioConnection = async () => {
@@ -655,6 +683,166 @@ export default function AIAssistantPage() {
 
       {activeTab === "connection" && (
         <div className="grid lg:grid-cols-2 gap-6">
+          {/* Instagram Connection Status */}
+          <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <Instagram className="w-4 h-4 text-white" />
+              </div>
+              <h3 className="font-bold">Instagram DMs</h3>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className={`p-4 rounded-xl flex items-center gap-3 ${
+                instagramStatus === "connected"
+                  ? "bg-emerald-500/10 border border-emerald-500/20"
+                  : instagramStatus === "error"
+                  ? "bg-red-500/10 border border-red-500/20"
+                  : "bg-white/[0.03] border border-white/[0.06]"
+              }`}>
+                {instagramStatus === "loading" ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin text-white/50" />
+                    <span className="text-white/50 text-sm">Checking connection...</span>
+                  </>
+                ) : instagramStatus === "connected" ? (
+                  <>
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                      <CheckCircle className="w-4 h-4 text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-emerald-400 text-sm">Connected</p>
+                      <p className="text-xs text-white/50">
+                        Instagram API configured
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                      <AlertCircle className="w-4 h-4 text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-amber-400 text-sm">Not Configured</p>
+                      <p className="text-xs text-white/50">
+                        Set up Instagram API credentials
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Instagram AI Toggle */}
+              <div className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                <div>
+                  <p className="text-sm font-medium">Auto-respond to DMs</p>
+                  <p className="text-xs text-white/50">AI will respond to Instagram messages</p>
+                </div>
+                <button
+                  onClick={() => setSettings({ ...settings, instagram_enabled: !settings.instagram_enabled })}
+                  disabled={instagramStatus !== "connected"}
+                  className={`relative w-10 h-5 rounded-full transition-all ${
+                    settings.instagram_enabled && instagramStatus === "connected"
+                      ? "bg-gradient-to-r from-purple-500 to-pink-500"
+                      : "bg-white/15"
+                  } disabled:opacity-50`}
+                >
+                  <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                    settings.instagram_enabled && instagramStatus === "connected" ? "translate-x-[22px]" : "translate-x-0.5"
+                  }`} />
+                </button>
+              </div>
+
+              {/* Instagram Greeting */}
+              {settings.instagram_enabled && (
+                <div>
+                  <label className="block text-xs text-white/50 mb-2 font-medium">Instagram Greeting</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Custom greeting for Instagram DMs..."
+                    value={settings.instagram_greeting}
+                    onChange={(e) => setSettings({ ...settings, instagram_greeting: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-purple-500/50 transition-all resize-none"
+                  />
+                </div>
+              )}
+
+              <button
+                onClick={checkInstagramConnection}
+                disabled={instagramStatus === "loading"}
+                className="w-full px-4 py-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] text-white font-medium transition-all disabled:opacity-50 border border-white/[0.06]"
+              >
+                {instagramStatus === "loading" ? "Checking..." : "Refresh Status"}
+              </button>
+            </div>
+          </div>
+
+          {/* Instagram Webhook Setup */}
+          <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                <Link className="w-4 h-4 text-purple-400" />
+              </div>
+              <h3 className="font-bold">Instagram Webhook Setup</h3>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <p className="text-sm text-white/50">
+                Configure your Meta Developer App to send Instagram DMs to this webhook:
+              </p>
+
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                <p className="text-[10px] text-white/40 mb-2 font-medium uppercase tracking-wider">Webhook URL (Instagram)</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-sm font-mono text-purple-400 break-all">
+                    https://your-domain.com/api/instagram/webhook
+                  </code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/api/instagram/webhook`)
+                    }}
+                    className="p-2 rounded-lg hover:bg-white/[0.08] transition-colors"
+                    title="Copy URL"
+                  >
+                    <Copy className="w-4 h-4 text-white/40" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-purple-500/5 border border-purple-500/20">
+                <p className="text-sm font-medium text-purple-400 mb-2">Setup Instructions</p>
+                <ol className="text-xs text-white/60 space-y-1.5 list-decimal list-inside">
+                  <li>Go to Meta Developer Console</li>
+                  <li>Create or select your Business App</li>
+                  <li>Add "Instagram Graph API" product</li>
+                  <li>Configure Webhooks → Subscribe to "messages"</li>
+                  <li>Set callback URL to the webhook above</li>
+                  <li>Add environment variables for credentials</li>
+                </ol>
+              </div>
+
+              <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.06]">
+                <p className="text-[10px] text-white/40 mb-1.5 font-medium uppercase tracking-wider">Required Environment Variables</p>
+                <div className="space-y-1 font-mono text-xs">
+                  <p className="text-white/60">INSTAGRAM_ACCESS_TOKEN</p>
+                  <p className="text-white/60">INSTAGRAM_ACCOUNT_ID</p>
+                  <p className="text-white/60">INSTAGRAM_VERIFY_TOKEN</p>
+                  <p className="text-white/60">INSTAGRAM_APP_SECRET</p>
+                </div>
+              </div>
+
+              <a
+                href="https://developers.facebook.com/apps"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20 text-white font-medium transition-all border border-purple-500/20"
+              >
+                Open Meta Developer Console
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
+
           {/* Twilio Connection Status */}
           <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden">
             <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
