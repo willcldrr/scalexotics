@@ -301,9 +301,11 @@ Remember: ${channel === "sms" ? "You're texting, keep it brief" : "You're on Ins
         }),
       })
 
-      if (!response.ok) throw new Error("Failed to get response")
-
       const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.details || data.error || "Failed to get response")
+      }
 
       // Use server-side extracted data if available, otherwise fall back to client parsing
       if (data.extractedData) {
@@ -366,11 +368,12 @@ Remember: ${channel === "sms" ? "You're texting, keep it brief" : "You're on Ins
           setTotalSavings(prev => prev + data.cost.cacheSavings)
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error:", error)
+      const errorText = error?.message || "Unknown error occurred"
       const errorMessage: Message = {
         role: "assistant",
-        content: "Sorry, I encountered an error. Please check that ANTHROPIC_API_KEY is set in your environment variables.",
+        content: `Error: ${errorText}`,
         timestamp: new Date(),
       }
       setMessages(prev => [...prev, errorMessage])
