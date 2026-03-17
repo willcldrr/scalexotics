@@ -1,9 +1,19 @@
 import Anthropic from "@anthropic-ai/sdk"
 
-// Initialize Anthropic client
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
+// Lazy-initialized Anthropic client (initialized on first use, not at build time)
+let anthropicClient: Anthropic | null = null
+
+function getAnthropicClient(): Anthropic {
+  if (!anthropicClient) {
+    if (!process.env.ANTHROPIC_API_KEY) {
+      throw new Error("ANTHROPIC_API_KEY environment variable is not set")
+    }
+    anthropicClient = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    })
+  }
+  return anthropicClient
+}
 
 // Model configurations with pricing (updated March 2026)
 export const MODELS = {
@@ -211,7 +221,8 @@ export async function generateResponse(
     : systemPrompt
 
   try {
-    const response = await anthropic.messages.create({
+    const client = getAnthropicClient()
+    const response = await client.messages.create({
       model: finalModel,
       max_tokens: maxTokens,
       temperature,
@@ -277,4 +288,4 @@ export function listModels() {
   }))
 }
 
-export default anthropic
+export default getAnthropicClient

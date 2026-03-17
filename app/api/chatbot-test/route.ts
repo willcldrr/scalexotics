@@ -93,6 +93,22 @@ export async function POST(request: NextRequest) {
     console.error("Chatbot test error:", error)
     console.error("Error message:", error?.message)
     console.error("Error stack:", error?.stack)
+
+    // Check for specific error types
+    if (error?.message?.includes("ANTHROPIC_API_KEY")) {
+      return NextResponse.json(
+        { error: "ANTHROPIC_API_KEY not configured", details: error?.message },
+        { status: 500 }
+      )
+    }
+
+    if (error?.status === 401) {
+      return NextResponse.json(
+        { error: "Invalid API key", details: "The Anthropic API key is invalid or expired" },
+        { status: 401 }
+      )
+    }
+
     return NextResponse.json(
       { error: "Internal server error", details: error?.message },
       { status: 500 }
