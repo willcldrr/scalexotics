@@ -163,15 +163,7 @@ export default function ChatbotTestPanel({ initialSettings, initialVehicles }: C
     ready_for_payment: false,
   })
 
-  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    // Scroll within the messages container only, not the whole page
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
-    }
-  }, [messages])
 
   const buildSystemPrompt = () => {
     const toneInstructions = {
@@ -382,7 +374,7 @@ Remember: ${channel === "sms" ? "You're texting, keep it brief" : "You're on Ins
       setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
-      inputRef.current?.focus()
+      inputRef.current?.focus({ preventScroll: true })
     }
   }
 
@@ -875,7 +867,7 @@ Remember: ${channel === "sms" ? "You're texting, keep it brief" : "You're on Ins
             </div>
 
             {/* Messages */}
-            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center text-center">
                   <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mb-4">
