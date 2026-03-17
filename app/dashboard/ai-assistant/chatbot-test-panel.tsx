@@ -163,11 +163,14 @@ export default function ChatbotTestPanel({ initialSettings, initialVehicles }: C
     ready_for_payment: false,
   })
 
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    // Scroll within the messages container only, not the whole page
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+    }
   }, [messages])
 
   const buildSystemPrompt = () => {
@@ -872,7 +875,7 @@ Remember: ${channel === "sms" ? "You're texting, keep it brief" : "You're on Ins
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center text-center">
                   <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mb-4">
@@ -966,7 +969,6 @@ Remember: ${channel === "sms" ? "You're texting, keep it brief" : "You're on Ins
                 </div>
               )}
 
-              <div ref={messagesEndRef} />
             </div>
 
             {/* Input */}
