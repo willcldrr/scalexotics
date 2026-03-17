@@ -15,30 +15,30 @@ function getAnthropicClient(): Anthropic {
   return anthropicClient
 }
 
-// Model configurations with pricing
+// Model configurations with pricing (March 2026)
 export const MODELS = {
-  "claude-3-haiku-20240307": {
-    name: "Claude 3 Haiku",
-    description: "Fast and cost-effective for routine conversations",
-    inputCost: 0.25, // per 1M tokens
-    outputCost: 1.25,
-    maxTokens: 4096,
+  "claude-haiku-4-5-20251001": {
+    name: "Claude Haiku 4.5",
+    description: "Fastest, most cost-effective for routine conversations",
+    inputCost: 1.0, // per 1M tokens
+    outputCost: 5.0,
+    maxTokens: 64000,
     recommended: true,
   },
-  "claude-3-sonnet-20240229": {
-    name: "Claude 3 Sonnet",
-    description: "Balanced performance and capability",
+  "claude-sonnet-4-6": {
+    name: "Claude Sonnet 4.6",
+    description: "Best combination of speed and intelligence",
     inputCost: 3.0,
     outputCost: 15.0,
-    maxTokens: 4096,
+    maxTokens: 64000,
     recommended: false,
   },
-  "claude-3-opus-20240229": {
-    name: "Claude 3 Opus",
-    description: "Most capable, best for complex situations",
-    inputCost: 15.0,
-    outputCost: 75.0,
-    maxTokens: 4096,
+  "claude-opus-4-6": {
+    name: "Claude Opus 4.6",
+    description: "Most intelligent, best for complex situations",
+    inputCost: 5.0,
+    outputCost: 25.0,
+    maxTokens: 128000,
     recommended: false,
   },
 } as const
@@ -180,7 +180,7 @@ export async function generateResponse(
   options: GenerateOptions = {}
 ): Promise<GenerateResult> {
   const {
-    model: requestedModel = "claude-3-haiku-20240307",
+    model: requestedModel = "claude-haiku-4-5-20251001",
     maxTokens = 500,
     temperature = 0.7,
     usePromptCaching = true,
@@ -192,12 +192,12 @@ export async function generateResponse(
   let escalated = false
   let escalationReason: string | undefined
 
-  if (!forceModel && requestedModel === "claude-3-haiku-20240307") {
+  if (!forceModel && requestedModel === "claude-haiku-4-5-20251001") {
     const lastUserMessage = messages.filter(m => m.role === "user").pop()?.content || ""
     const escalationCheck = shouldEscalate(lastUserMessage, messages)
 
     if (escalationCheck.shouldEscalate) {
-      finalModel = "claude-3-sonnet-20240229"
+      finalModel = "claude-sonnet-4-6"
       escalated = true
       escalationReason = escalationCheck.reason
     }

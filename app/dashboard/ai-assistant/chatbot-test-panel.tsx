@@ -64,28 +64,28 @@ interface LeadData {
   ready_for_payment: boolean
 }
 
-type ModelId = "claude-3-haiku-20240307" | "claude-3-sonnet-20240229" | "claude-3-opus-20240229"
+type ModelId = "claude-haiku-4-5-20251001" | "claude-sonnet-4-6" | "claude-opus-4-6"
 
 const MODELS: Record<ModelId, { name: string; description: string; inputCost: number; outputCost: number; recommended: boolean }> = {
-  "claude-3-haiku-20240307": {
-    name: "Claude 3 Haiku",
-    description: "Fast and cost-effective for routine conversations",
-    inputCost: 0.25,
-    outputCost: 1.25,
+  "claude-haiku-4-5-20251001": {
+    name: "Claude Haiku 4.5",
+    description: "Fastest, most cost-effective for routine conversations",
+    inputCost: 1.0,
+    outputCost: 5.0,
     recommended: true,
   },
-  "claude-3-sonnet-20240229": {
-    name: "Claude 3 Sonnet",
-    description: "Balanced performance and capability",
+  "claude-sonnet-4-6": {
+    name: "Claude Sonnet 4.6",
+    description: "Best combination of speed and intelligence",
     inputCost: 3.0,
     outputCost: 15.0,
     recommended: false,
   },
-  "claude-3-opus-20240229": {
-    name: "Claude 3 Opus",
-    description: "Most capable, best for complex situations",
-    inputCost: 15.0,
-    outputCost: 75.0,
+  "claude-opus-4-6": {
+    name: "Claude Opus 4.6",
+    description: "Most intelligent, best for complex situations",
+    inputCost: 5.0,
+    outputCost: 25.0,
     recommended: false,
   },
 }
@@ -143,7 +143,7 @@ export default function ChatbotTestPanel({ initialSettings, initialVehicles }: C
     status: v.status || "available",
   })) : defaultVehicles)
   const [channel, setChannel] = useState<"sms" | "instagram">("sms")
-  const [selectedModel, setSelectedModel] = useState<ModelId>("claude-3-haiku-20240307")
+  const [selectedModel, setSelectedModel] = useState<ModelId>("claude-haiku-4-5-20251001")
   const [forceModel, setForceModel] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showDebug, setShowDebug] = useState(false)
