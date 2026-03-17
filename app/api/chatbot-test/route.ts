@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     }))
 
     // Determine model to use
-    const requestedModel: ModelId = model || "claude-3-5-haiku-20241022"
+    const requestedModel: ModelId = model || "claude-3-haiku-20240307"
 
     // Generate response using Anthropic Direct API with prompt caching
     const result = await generateResponse(

@@ -17,25 +17,25 @@ function getAnthropicClient(): Anthropic {
 
 // Model configurations with pricing
 export const MODELS = {
-  "claude-3-5-haiku-20241022": {
-    name: "Claude 3.5 Haiku",
+  "claude-3-haiku-20240307": {
+    name: "Claude 3 Haiku",
     description: "Fast and cost-effective for routine conversations",
-    inputCost: 0.80, // per 1M tokens
-    outputCost: 4.00,
-    maxTokens: 8192,
+    inputCost: 0.25, // per 1M tokens
+    outputCost: 1.25,
+    maxTokens: 4096,
     recommended: true,
   },
-  "claude-3-5-sonnet-20241022": {
-    name: "Claude 3.5 Sonnet",
-    description: "Most capable, best for complex situations",
+  "claude-3-sonnet-20240229": {
+    name: "Claude 3 Sonnet",
+    description: "Balanced performance and capability",
     inputCost: 3.0,
     outputCost: 15.0,
-    maxTokens: 8192,
+    maxTokens: 4096,
     recommended: false,
   },
   "claude-3-opus-20240229": {
     name: "Claude 3 Opus",
-    description: "Previous gen flagship, very capable",
+    description: "Most capable, best for complex situations",
     inputCost: 15.0,
     outputCost: 75.0,
     maxTokens: 4096,
@@ -180,7 +180,7 @@ export async function generateResponse(
   options: GenerateOptions = {}
 ): Promise<GenerateResult> {
   const {
-    model: requestedModel = "claude-3-5-haiku-20241022",
+    model: requestedModel = "claude-3-haiku-20240307",
     maxTokens = 500,
     temperature = 0.7,
     usePromptCaching = true,
@@ -192,12 +192,12 @@ export async function generateResponse(
   let escalated = false
   let escalationReason: string | undefined
 
-  if (!forceModel && requestedModel === "claude-3-5-haiku-20241022") {
+  if (!forceModel && requestedModel === "claude-3-haiku-20240307") {
     const lastUserMessage = messages.filter(m => m.role === "user").pop()?.content || ""
     const escalationCheck = shouldEscalate(lastUserMessage, messages)
 
     if (escalationCheck.shouldEscalate) {
-      finalModel = "claude-3-5-sonnet-20241022"
+      finalModel = "claude-3-sonnet-20240229"
       escalated = true
       escalationReason = escalationCheck.reason
     }
