@@ -724,7 +724,7 @@ export default function LeadsPage() {
               return (
                 <div
                   key={column.id}
-                  className={`w-80 flex-shrink-0 rounded-2xl bg-white/[0.02] border transition-all ${
+                  className={`w-64 flex-shrink-0 rounded-2xl bg-white/[0.02] border transition-all ${
                     dragOverColumn === column.id
                       ? "border-white/30 bg-white/[0.05] shadow-[0_0_30px_rgba(255,255,255,0.1)]"
                       : "border-white/[0.06]"
