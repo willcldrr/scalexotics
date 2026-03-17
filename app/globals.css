@@ -211,6 +211,32 @@
   filter: drop-shadow(0 0 24px rgba(55, 93, 238, 0.3));
 }
 
+/* Grid Background Layers */
+.page-background {
+  position: fixed;
+  inset: 0;
+  background: #050505;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.page-grid-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.page-overlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse 100% 60% at 50% -10%, rgba(55, 93, 238, 0.08) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 2;
+}
+
 /* Custom Scrollbar Styles */
 * {
   scrollbar-width: thin;

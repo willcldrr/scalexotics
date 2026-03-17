@@ -1,4 +1,4 @@
-import { Outfit, Inter, JetBrains_Mono } from "next/font/google"
+import { Outfit, Inter, JetBrains_Mono, Playfair_Display } from "next/font/google"
 
 // Optimized font loading - only essential weights
 export const outfit = Outfit({
@@ -8,6 +8,17 @@ export const outfit = Outfit({
   display: "swap",
   preload: true,
   fallback: ["system-ui", "sans-serif"],
+})
+
+// Elegant serif font for luxury headlines
+export const playfairDisplay = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "700", "900"],
+  style: ["normal", "italic"],
+  variable: "--font-playfair",
+  display: "swap",
+  preload: true,
+  fallback: ["Georgia", "serif"],
 })
 
 export const inter = Inter({

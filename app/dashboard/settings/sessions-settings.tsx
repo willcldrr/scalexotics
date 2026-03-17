@@ -141,7 +141,7 @@ export default function SessionsSettings() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-[#375DEE]" />
+        <Loader2 className="w-8 h-8 animate-spin text-white" />
       </div>
     )
   }
@@ -169,7 +169,7 @@ DELETE FROM user_sessions WHERE session_token IS NULL;`}
           </pre>
           <button
             onClick={initializeSessions}
-            className="mt-4 px-4 py-2 bg-[#375DEE] hover:opacity-90 text-white rounded-lg text-sm font-medium transition-colors"
+            className="mt-4 px-4 py-2 bg-white text-black hover:bg-white/90 shadow-[0_0_20px_rgba(255,255,255,0.3)] text-white rounded-lg text-sm font-medium transition-colors"
           >
             Retry
           </button>
@@ -200,7 +200,7 @@ DELETE FROM user_sessions WHERE session_token IS NULL;`}
       <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <Monitor className="w-5 h-5 text-[#375DEE]" />
+            <Monitor className="w-5 h-5 text-white" />
             <div>
               <h2 className="text-lg font-bold">Active Sessions</h2>
               <p className="text-sm text-white/50">{sessions.length} device{sessions.length !== 1 ? 's' : ''} logged in</p>
@@ -229,12 +229,12 @@ DELETE FROM user_sessions WHERE session_token IS NULL;`}
                 key={session.id}
                 className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${
                   session.is_current
-                    ? 'bg-[#375DEE]/10 border-[#375DEE]/30'
+                    ? 'bg-white/10 border-white/30'
                     : 'bg-white/5 border-white/[0.08] hover:border-white/20'
                 }`}
               >
                 <div className="flex items-center gap-4">
-                  <div className={`p-2.5 rounded-xl ${session.is_current ? 'bg-[#375DEE]/20 text-[#375DEE]' : 'bg-white/10 text-white/60'}`}>
+                  <div className={`p-2.5 rounded-xl ${session.is_current ? 'bg-[#375DEE]/20 text-white' : 'bg-white/10 text-white/60'}`}>
                     {getDeviceIcon(session.device_info)}
                   </div>
                   <div>
@@ -243,7 +243,7 @@ DELETE FROM user_sessions WHERE session_token IS NULL;`}
                         {session.browser} on {session.os}
                       </span>
                       {session.is_current && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-[#375DEE] text-white">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-white text-black shadow-[0_0_10px_rgba(255,255,255,0.3)]">
                           This device
                         </span>
                       )}

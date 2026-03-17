@@ -47,19 +47,19 @@ export async function POST(request: NextRequest) {
     await saveMessage(userId, lead.id, body, "inbound")
 
     // Generate AI response
-    const aiResponse = await generateAIResponse(userId, lead.id, body, lead.name)
+    const aiResult = await generateAIResponse(userId, lead.id, body, lead.name)
 
     // Save the outgoing message
-    await saveMessage(userId, lead.id, aiResponse, "outbound")
+    await saveMessage(userId, lead.id, aiResult.response, "outbound")
 
     // Send the SMS response via Twilio
     await twilioClient.messages.create({
-      body: aiResponse,
+      body: aiResult.response,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: from,
     })
 
-    console.log(`Sent response to ${from}: ${aiResponse}`)
+    console.log(`Sent response to ${from}: ${aiResult.response} [Model: ${aiResult.model}, Cost: $${aiResult.cost.totalCost.toFixed(4)}]`)
 
     // Return TwiML response (Twilio expects this)
     const twiml = `<?xml version="1.0" encoding="UTF-8"?><Response></Response>`

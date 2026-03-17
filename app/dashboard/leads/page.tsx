@@ -23,10 +23,11 @@ import {
   Car,
   StickyNote,
   ChevronDown,
-  LayoutGrid,
+  LayoutList,
   AlertTriangle,
+  GripVertical,
+  Clock,
 } from "lucide-react"
-import Link from "next/link"
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns"
 import { leadStatusOptions, getStatusColor, getStatusLabel, defaultLeadStatus } from "@/lib/lead-status"
 
@@ -61,8 +62,6 @@ interface Vehicle {
   model: string
 }
 
-// Using centralized lead status config from @/lib/lead-status
-
 const sourceOptions = [
   { value: "instagram", label: "Instagram" },
   { value: "facebook", label: "Facebook" },
@@ -76,6 +75,16 @@ const sourceOptions = [
   { value: "other", label: "Other" },
 ]
 
+// Pipeline column configuration with white glow styling
+const pipelineColumns = [
+  { id: "new", label: "New", color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
+  { id: "contacted", label: "Contacted", color: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
+  { id: "qualified", label: "Qualified", color: "bg-amber-500/20 text-amber-400 border-amber-500/30" },
+  { id: "negotiating", label: "Negotiating", color: "bg-orange-500/20 text-orange-400 border-orange-500/30" },
+  { id: "booked", label: "Booked", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
+  { id: "lost", label: "Lost", color: "bg-red-500/20 text-red-400 border-red-500/30" },
+]
+
 export default function LeadsPage() {
   const supabase = createClient()
   const [leads, setLeads] = useState<Lead[]>([])
@@ -84,7 +93,6 @@ export default function LeadsPage() {
   const [loading, setLoading] = useState(true)
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [search, setSearch] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingLead, setEditingLead] = useState<Lead | null>(null)
@@ -94,7 +102,9 @@ export default function LeadsPage() {
   const [sending, setSending] = useState(false)
   const [readConversations, setReadConversations] = useState<Set<string>>(new Set())
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
-  const [showDetailsPanel, setShowDetailsPanel] = useState(true)
+  const [viewMode, setViewMode] = useState<"pipeline" | "list">("pipeline")
+  const [draggedLead, setDraggedLead] = useState<Lead | null>(null)
+  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const statusDropdownRef = useRef<HTMLDivElement>(null)
 
@@ -123,7 +133,7 @@ export default function LeadsPage() {
   // Check if a lead is on the do not rent list
   const isOnDoNotRentList = (lead: Lead): boolean => {
     const leadNameLower = lead.name.toLowerCase().trim()
-    const leadPhone = lead.phone?.replace(/\D/g, "") // Remove non-digits
+    const leadPhone = lead.phone?.replace(/\D/g, "")
     const leadEmail = lead.email?.toLowerCase().trim()
 
     return doNotRentList.some(entry => {
@@ -131,15 +141,11 @@ export default function LeadsPage() {
       const entryPhone = entry.phone?.replace(/\D/g, "")
       const entryEmail = entry.email?.toLowerCase().trim()
 
-      // Check for name match (exact or partial)
       const nameMatch = leadNameLower === entryNameLower ||
         leadNameLower.includes(entryNameLower) ||
         entryNameLower.includes(leadNameLower)
 
-      // Check for phone match
       const phoneMatch = leadPhone && entryPhone && leadPhone === entryPhone
-
-      // Check for email match
       const emailMatch = leadEmail && entryEmail && leadEmail === entryEmail
 
       return nameMatch || phoneMatch || emailMatch
@@ -148,7 +154,6 @@ export default function LeadsPage() {
 
   useEffect(() => {
     fetchData()
-    // Load read conversations from localStorage
     const stored = localStorage.getItem("readConversations")
     if (stored) {
       setReadConversations(new Set(JSON.parse(stored)))
@@ -207,7 +212,6 @@ export default function LeadsPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  // Close status dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target as Node)) {
@@ -247,7 +251,6 @@ export default function LeadsPage() {
       supabase.from("do_not_rent_list").select("full_name, phone, email"),
     ])
 
-    // Set do not rent list for flagging
     if (doNotRentRes.data) {
       setDoNotRentList(doNotRentRes.data)
     }
@@ -256,18 +259,14 @@ export default function LeadsPage() {
       const storedRead = localStorage.getItem("readConversations")
       const readSet = storedRead ? new Set(JSON.parse(storedRead)) : new Set()
 
-      // Get all lead IDs for batch query
       const leadIds = leadsRes.data.map(lead => lead.id)
 
-      // OPTIMIZED: Fetch all recent messages in ONE query instead of N queries
-      // We fetch the most recent messages and group by lead_id client-side
       const { data: allMessages } = await supabase
         .from("messages")
         .select("lead_id, content, created_at, direction")
         .in("lead_id", leadIds)
         .order("created_at", { ascending: false })
 
-      // Build a map of lead_id -> last message (first occurrence is most recent due to ordering)
       const lastMessageMap = new Map<string, { content: string; created_at: string; direction: string }>()
       if (allMessages) {
         for (const msg of allMessages) {
@@ -281,7 +280,6 @@ export default function LeadsPage() {
         }
       }
 
-      // Enrich leads with last message data
       const leadsWithMessages = leadsRes.data.map(lead => {
         const lastMsg = lastMessageMap.get(lead.id)
         const isUnread = lastMsg?.direction === "inbound" && !readSet.has(lead.id)
@@ -295,7 +293,6 @@ export default function LeadsPage() {
         }
       })
 
-      // Sort by last message time (most recent first)
       leadsWithMessages.sort((a, b) => {
         const timeA = a.last_message_time ? new Date(a.last_message_time).getTime() : new Date(a.created_at).getTime()
         const timeB = b.last_message_time ? new Date(b.last_message_time).getTime() : new Date(b.created_at).getTime()
@@ -420,6 +417,32 @@ export default function LeadsPage() {
       setSelectedLead({ ...selectedLead, status: newStatus })
     }
     setShowStatusDropdown(false)
+  }
+
+  // Drag and drop handlers for pipeline
+  const handleDragStart = (e: React.DragEvent, lead: Lead) => {
+    setDraggedLead(lead)
+    e.dataTransfer.effectAllowed = "move"
+  }
+
+  const handleDragOver = (e: React.DragEvent, columnId: string) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+    setDragOverColumn(columnId)
+  }
+
+  const handleDragLeave = () => {
+    setDragOverColumn(null)
+  }
+
+  const handleDrop = async (e: React.DragEvent, newStatus: string) => {
+    e.preventDefault()
+    setDragOverColumn(null)
+
+    if (draggedLead && draggedLead.status !== newStatus) {
+      await handleStatusChange(draggedLead.id, newStatus)
+    }
+    setDraggedLead(null)
   }
 
   const resetForm = () => {
@@ -586,9 +609,13 @@ export default function LeadsPage() {
       lead.name.toLowerCase().includes(search.toLowerCase()) ||
       lead.phone.includes(search) ||
       lead.email?.toLowerCase().includes(search.toLowerCase())
-    const matchesStatus = statusFilter === "all" || lead.status === statusFilter
-    return matchesSearch && matchesStatus
+    return matchesSearch
   })
+
+  // Get leads by status for pipeline view
+  const getLeadsByStatus = (status: string) => {
+    return filteredLeads.filter(lead => lead.status === status)
+  }
 
   const formatMessageTime = (dateStr: string) => {
     const date = new Date(dateStr)
@@ -606,437 +633,561 @@ export default function LeadsPage() {
     return format(date, "MMM d, yyyy")
   }
 
+  const getVehicleName = (vehicleId: string | null) => {
+    if (!vehicleId) return null
+    const vehicle = vehicles.find(v => v.id === vehicleId)
+    return vehicle ? `${vehicle.make} ${vehicle.model}` : null
+  }
+
   const unreadCount = leads.filter(l => l.unread).length
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-[#375DEE]" />
+        <Loader2 className="w-8 h-8 animate-spin text-white/50" />
       </div>
     )
   }
 
   return (
     <div>
-      {/* Action buttons - positioned above content */}
-      <div className="hidden sm:flex justify-end gap-3 mb-4">
-        <Link
-          href="/dashboard/leads/pipeline"
-          className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white font-medium rounded-xl transition-colors"
-        >
-          <LayoutGrid className="w-4 h-4" />
-          Pipeline
-        </Link>
-        <button
-          onClick={() => {
-            resetImportModal()
-            setShowImportModal(true)
-          }}
-          className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white font-medium rounded-xl transition-colors"
-        >
-          <Upload className="w-4 h-4" />
-          Import
-        </button>
-        <button
-          onClick={() => {
-            resetForm()
-            setEditingLead(null)
-            setShowAddModal(true)
-          }}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#375DEE] hover:bg-[#4169E1] text-white font-semibold rounded-xl transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add Lead
-        </button>
+      {/* Header with search and actions */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        {/* Search */}
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+          <input
+            type="text"
+            placeholder="Search leads..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/20 focus:bg-white/[0.06] transition-all shadow-[0_0_15px_rgba(255,255,255,0.03)]"
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          {/* View toggle */}
+          <div className="flex items-center bg-white/[0.04] rounded-xl border border-white/[0.08] p-1">
+            <button
+              onClick={() => setViewMode("pipeline")}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                viewMode === "pipeline"
+                  ? "bg-white/10 text-white shadow-[0_0_10px_rgba(255,255,255,0.1)]"
+                  : "text-white/50 hover:text-white"
+              }`}
+            >
+              Pipeline
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                viewMode === "list"
+                  ? "bg-white/10 text-white shadow-[0_0_10px_rgba(255,255,255,0.1)]"
+                  : "text-white/50 hover:text-white"
+              }`}
+            >
+              <LayoutList className="w-4 h-4" />
+            </button>
+          </div>
+
+          <button
+            onClick={() => {
+              resetImportModal()
+              setShowImportModal(true)
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white font-medium rounded-xl transition-all hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+          >
+            <Upload className="w-4 h-4" />
+            <span className="hidden sm:inline">Import</span>
+          </button>
+          <button
+            onClick={() => {
+              resetForm()
+              setEditingLead(null)
+              setShowAddModal(true)
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white text-black font-semibold rounded-xl transition-all hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Add Lead</span>
+          </button>
+        </div>
       </div>
 
-      {/* Main Content */}
-      <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden" style={{ height: "calc(100vh - 180px)" }}>
-        <div className="flex h-full">
-          {/* Leads List */}
-          <div className={`w-full md:w-[380px] border-r border-white/[0.08] flex flex-col bg-black/50 ${selectedLead ? "hidden md:flex" : "flex"}`}>
-            {/* Search & Filters */}
-            <div className="p-4 border-b border-white/[0.08] space-y-3">
-              <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                <input
-                  type="text"
-                  placeholder="Search leads..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]/50 focus:bg-white/[0.06] transition-all"
-                />
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                <button
-                  onClick={() => setStatusFilter("all")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                    statusFilter === "all" ? "bg-white/10 text-white" : "text-white/50 hover:text-white hover:bg-white/5"
+      {/* Pipeline View */}
+      {viewMode === "pipeline" && (
+        <div className="overflow-x-auto pb-4">
+          <div className="flex gap-4 min-w-max">
+            {pipelineColumns.map((column) => {
+              const columnLeads = getLeadsByStatus(column.id)
+              return (
+                <div
+                  key={column.id}
+                  className={`w-80 flex-shrink-0 rounded-2xl bg-white/[0.02] border transition-all ${
+                    dragOverColumn === column.id
+                      ? "border-white/30 bg-white/[0.05] shadow-[0_0_30px_rgba(255,255,255,0.1)]"
+                      : "border-white/[0.06]"
                   }`}
+                  onDragOver={(e) => handleDragOver(e, column.id)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, column.id)}
                 >
-                  All
-                </button>
-                {leadStatusOptions.map((status) => (
-                  <button
-                    key={status.value}
-                    onClick={() => setStatusFilter(status.value)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                      statusFilter === status.value ? status.color : "text-white/50 hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    {status.label}
-                  </button>
-                ))}
+                  {/* Column Header */}
+                  <div className="p-4 border-b border-white/[0.06]">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${column.color}`}>
+                          {column.label}
+                        </span>
+                        <span className="text-white/40 text-sm">{columnLeads.length}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Cards */}
+                  <div className="p-3 space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+                    {columnLeads.length === 0 ? (
+                      <div className="py-8 text-center text-white/30 text-sm">
+                        No leads
+                      </div>
+                    ) : (
+                      columnLeads.map((lead) => (
+                        <div
+                          key={lead.id}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, lead)}
+                          onClick={() => setSelectedLead(lead)}
+                          className={`p-4 rounded-xl bg-white/[0.03] border cursor-pointer group transition-all hover:bg-white/[0.06] hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] ${
+                            isOnDoNotRentList(lead)
+                              ? "border-red-500/30 hover:border-red-500/50"
+                              : lead.unread
+                              ? "border-white/20"
+                              : "border-white/[0.06] hover:border-white/20"
+                          } ${draggedLead?.id === lead.id ? "opacity-50" : ""}`}
+                        >
+                          {/* Card Header */}
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <GripVertical className="w-4 h-4 text-white/20 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab" />
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className={`font-medium ${isOnDoNotRentList(lead) ? "text-red-400" : "text-white"}`}>
+                                    {lead.name}
+                                  </span>
+                                  {isOnDoNotRentList(lead) && (
+                                    <span className="px-1.5 py-0.5 bg-red-500/20 text-red-400 text-[9px] font-bold rounded">
+                                      DNR
+                                    </span>
+                                  )}
+                                  {lead.unread && (
+                                    <span className="w-2 h-2 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+                                  )}
+                                </div>
+                                <span className="text-xs text-white/40">{lead.phone}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Lead Info */}
+                          <div className="space-y-2">
+                            {/* Vehicle Interest */}
+                            {getVehicleName(lead.vehicle_interest) && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <Car className="w-3.5 h-3.5 text-white/40" />
+                                <span className="text-white/60">{getVehicleName(lead.vehicle_interest)}</span>
+                              </div>
+                            )}
+
+                            {/* Notes (rental dates or other info from chatbot) */}
+                            {lead.notes && (
+                              <div className="flex items-start gap-2 text-sm">
+                                <StickyNote className="w-3.5 h-3.5 text-white/40 mt-0.5" />
+                                <span className="text-white/60 line-clamp-2">{lead.notes}</span>
+                              </div>
+                            )}
+
+                            {/* Source */}
+                            <div className="flex items-center gap-2 text-xs text-white/30">
+                              <span className="capitalize">{lead.source || "Unknown"}</span>
+                              <span className="w-1 h-1 rounded-full bg-white/20" />
+                              <span>{formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}</span>
+                            </div>
+                          </div>
+
+                          {/* Last Message Preview */}
+                          {lead.last_message && (
+                            <div className="mt-3 pt-3 border-t border-white/[0.06]">
+                              <div className="flex items-center gap-1.5 text-xs">
+                                {lead.last_message_direction === "outbound" && (
+                                  <CheckCheck className="w-3 h-3 text-white/30" />
+                                )}
+                                <span className={`truncate ${lead.unread ? "text-white/70 font-medium" : "text-white/40"}`}>
+                                  {lead.last_message}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* List View */}
+      {viewMode === "list" && (
+        <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_30px_rgba(255,255,255,0.03)] overflow-hidden" style={{ height: "calc(100vh - 220px)" }}>
+          <div className="flex h-full">
+            {/* Leads List */}
+            <div className={`w-full md:w-[380px] border-r border-white/[0.08] flex flex-col bg-black/50 ${selectedLead ? "hidden md:flex" : "flex"}`}>
+              <div className="flex-1 overflow-y-auto">
+                {filteredLeads.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                    <div className="w-16 h-16 rounded-2xl bg-white/[0.03] flex items-center justify-center mb-4">
+                      <MessageSquare className="w-8 h-8 text-white/20" />
+                    </div>
+                    <p className="text-white/50 font-medium">No leads found</p>
+                    <p className="text-white/30 text-sm mt-1">
+                      {leads.length === 0 ? "Add your first lead to get started" : "Try adjusting your search"}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-white/[0.04]">
+                    {filteredLeads.map((lead) => (
+                      <button
+                        key={lead.id}
+                        onClick={() => setSelectedLead(lead)}
+                        className={`w-full p-4 hover:bg-white/[0.03] transition-all text-left group relative ${
+                          selectedLead?.id === lead.id ? "bg-white/[0.05]" : ""
+                        }`}
+                      >
+                        {lead.unread && (
+                          <div className="absolute left-0 top-4 bottom-4 w-[3px] bg-white rounded-r-full shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                        )}
+
+                        <div className="flex items-start gap-3">
+                          <div className="relative">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
+                              isOnDoNotRentList(lead)
+                                ? "bg-red-500/20 ring-2 ring-red-500/50"
+                                : lead.unread
+                                ? "bg-white/10 ring-2 ring-white/30"
+                                : "bg-white/[0.06]"
+                            }`}>
+                              <span className={`font-semibold ${
+                                isOnDoNotRentList(lead)
+                                  ? "text-red-400"
+                                  : lead.unread ? "text-white" : "text-white/60"
+                              }`}>
+                                {lead.name.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            {isOnDoNotRentList(lead) ? (
+                              <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full border-2 border-[#0a0a0a] flex items-center justify-center">
+                                <AlertTriangle className="w-2.5 h-2.5 text-white" />
+                              </div>
+                            ) : lead.unread && (
+                              <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-white rounded-full border-2 border-[#0a0a0a] shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+                            )}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 mb-0.5">
+                              <span className={`font-medium truncate flex items-center gap-1.5 ${
+                                isOnDoNotRentList(lead)
+                                  ? "text-red-400"
+                                  : lead.unread ? "text-white" : "text-white/80"
+                              }`}>
+                                {lead.name}
+                                {isOnDoNotRentList(lead) && (
+                                  <span className="px-1.5 py-0.5 bg-red-500/20 text-red-400 text-[9px] font-bold rounded uppercase">
+                                    DNR
+                                  </span>
+                                )}
+                              </span>
+                              <span className={`text-xs flex-shrink-0 ${lead.unread ? "text-white font-medium" : "text-white/30"}`}>
+                                {lead.last_message_time ? formatMessageTime(lead.last_message_time) : formatMessageTime(lead.created_at)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <p className="text-sm text-white/40 truncate">{lead.phone}</p>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${getStatusColor(lead.status)}`}>
+                                {getStatusLabel(lead.status)}
+                              </span>
+                            </div>
+                            {lead.last_message && (
+                              <div className="flex items-center gap-1.5">
+                                {lead.last_message_direction === "outbound" && (
+                                  <CheckCheck className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
+                                )}
+                                <p className={`text-sm truncate ${lead.unread ? "text-white/70 font-medium" : "text-white/40"}`}>
+                                  {lead.last_message}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Leads */}
-            <div className="flex-1 overflow-y-auto">
-              {filteredLeads.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                  <div className="w-16 h-16 rounded-2xl bg-white/[0.03] flex items-center justify-center mb-4">
-                    <MessageSquare className="w-8 h-8 text-white/20" />
-                  </div>
-                  <p className="text-white/50 font-medium">No leads found</p>
-                  <p className="text-white/30 text-sm mt-1">
-                    {leads.length === 0 ? "Add your first lead to get started" : "Try adjusting your filters"}
-                  </p>
-                </div>
-              ) : (
-                <div className="divide-y divide-white/[0.04]">
-                  {filteredLeads.map((lead) => (
-                    <button
-                      key={lead.id}
-                      onClick={() => setSelectedLead(lead)}
-                      className={`w-full p-4 hover:bg-white/[0.03] transition-all text-left group relative ${
-                        selectedLead?.id === lead.id ? "bg-white/[0.05]" : ""
-                      }`}
-                    >
-                      {/* Unread indicator bar */}
-                      {lead.unread && (
-                        <div className="absolute left-0 top-4 bottom-4 w-[3px] bg-[#375DEE] rounded-r-full" />
-                      )}
+            {/* Detail Panel */}
+            <div className={`flex-1 flex flex-col bg-black/20 ${selectedLead ? "flex" : "hidden md:flex"}`}>
+              {selectedLead ? (
+                <>
+                  {/* Lead Header */}
+                  <div className="p-4 border-b border-white/[0.08] bg-white/[0.03]">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setSelectedLead(null)}
+                        className="md:hidden p-2 -ml-2 rounded-lg hover:bg-white/5 transition-colors"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
 
-                      <div className="flex items-start gap-3">
-                        {/* Avatar */}
-                        <div className="relative">
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-                            isOnDoNotRentList(lead)
-                              ? "bg-red-500/20 ring-2 ring-red-500/50"
-                              : lead.unread
-                              ? "bg-[#375DEE]/20 ring-2 ring-[#375DEE]/30"
-                              : "bg-white/[0.06]"
-                          }`}>
-                            <span className={`font-semibold ${
-                              isOnDoNotRentList(lead)
-                                ? "text-red-400"
-                                : lead.unread ? "text-[#375DEE]" : "text-white/60"
-                            }`}>
-                              {lead.name.charAt(0).toUpperCase()}
+                      <div className={`w-11 h-11 rounded-full flex items-center justify-center ring-1 ${
+                        isOnDoNotRentList(selectedLead)
+                          ? "bg-gradient-to-br from-red-500/30 to-red-500/10 ring-red-500/30"
+                          : "bg-gradient-to-br from-white/20 to-white/5 ring-white/10"
+                      }`}>
+                        <span className={`font-semibold ${isOnDoNotRentList(selectedLead) ? "text-red-400" : "text-white"}`}>
+                          {selectedLead.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className={`font-bold truncate ${isOnDoNotRentList(selectedLead) ? "text-red-400" : "text-white"}`}>
+                            {selectedLead.name}
+                          </h3>
+                          {isOnDoNotRentList(selectedLead) && (
+                            <span className="flex items-center gap-1 px-2 py-0.5 bg-red-500/20 text-red-400 text-[10px] font-bold rounded">
+                              <AlertTriangle className="w-3 h-3" />
+                              DO NOT RENT
                             </span>
-                          </div>
-                          {isOnDoNotRentList(lead) ? (
-                            <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full border-2 border-[#0a0a0a] flex items-center justify-center">
-                              <AlertTriangle className="w-2.5 h-2.5 text-white" />
-                            </div>
-                          ) : lead.unread && (
-                            <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#375DEE] rounded-full border-2 border-[#0a0a0a]" />
                           )}
                         </div>
-
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-0.5">
-                            <span className={`font-medium truncate flex items-center gap-1.5 ${
-                              isOnDoNotRentList(lead)
-                                ? "text-red-400"
-                                : lead.unread ? "text-white" : "text-white/80"
-                            }`}>
-                              {lead.name}
-                              {isOnDoNotRentList(lead) && (
-                                <span className="px-1.5 py-0.5 bg-red-500/20 text-red-400 text-[9px] font-bold rounded uppercase">
-                                  DNR
-                                </span>
-                              )}
+                        <div className="flex items-center gap-3 text-sm">
+                          <span className="text-white/40 flex items-center gap-1.5">
+                            <Phone className="w-3.5 h-3.5" />
+                            {selectedLead.phone}
+                          </span>
+                          {selectedLead.email && (
+                            <span className="text-white/40 flex items-center gap-1.5 hidden sm:flex">
+                              <Mail className="w-3.5 h-3.5" />
+                              {selectedLead.email}
                             </span>
-                            <span className={`text-xs flex-shrink-0 ${lead.unread ? "text-[#375DEE] font-medium" : "text-white/30"}`}>
-                              {lead.last_message_time ? formatMessageTime(lead.last_message_time) : formatMessageTime(lead.created_at)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <p className="text-sm text-white/40 truncate">{lead.phone}</p>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${getStatusColor(lead.status)}`}>
-                              {getStatusLabel(lead.status)}
-                            </span>
-                          </div>
-                          {lead.last_message && (
-                            <div className="flex items-center gap-1.5">
-                              {lead.last_message_direction === "outbound" && (
-                                <CheckCheck className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
-                              )}
-                              <p className={`text-sm truncate ${lead.unread ? "text-white/70 font-medium" : "text-white/40"}`}>
-                                {lead.last_message}
-                              </p>
-                            </div>
                           )}
                         </div>
                       </div>
-                    </button>
-                  ))}
+
+                      <div className="flex items-center gap-2">
+                        {/* Status Dropdown */}
+                        <div className="relative" ref={statusDropdownRef}>
+                          <button
+                            onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${getStatusColor(selectedLead.status)}`}
+                          >
+                            {getStatusLabel(selectedLead.status)}
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          </button>
+                          {showStatusDropdown && (
+                            <div className="absolute right-0 top-full mt-1 w-36 bg-[#1a1a1a] rounded-xl border border-white/10 shadow-xl z-10 overflow-hidden">
+                              {leadStatusOptions.map((status) => (
+                                <button
+                                  key={status.value}
+                                  onClick={() => handleStatusChange(selectedLead.id, status.value)}
+                                  className={`w-full px-3 py-2 text-left text-sm hover:bg-white/5 transition-colors flex items-center gap-2 ${
+                                    selectedLead.status === status.value ? "bg-white/5" : ""
+                                  }`}
+                                >
+                                  <div className={`w-2 h-2 rounded-full ${status.color.split(" ")[0].replace("/15", "")}`} />
+                                  {status.label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => openEditModal(selectedLead)}
+                          className="p-2 rounded-lg hover:bg-white/5 transition-colors text-white/40 hover:text-white"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(selectedLead.id)}
+                          className="p-2 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Lead Details Panel */}
+                  <div className="p-4 border-b border-white/[0.08] bg-black/50">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center flex-shrink-0">
+                          <MessageSquare className="w-4 h-4 text-white/40" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[11px] text-white/40 uppercase tracking-wider mb-0.5">Source</p>
+                          <p className="text-sm font-medium capitalize truncate">{selectedLead.source || "Unknown"}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center flex-shrink-0">
+                          <Calendar className="w-4 h-4 text-white/40" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[11px] text-white/40 uppercase tracking-wider mb-0.5">Added</p>
+                          <p className="text-sm font-medium truncate">{formatDate(selectedLead.created_at)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center flex-shrink-0">
+                          <Car className="w-4 h-4 text-white/40" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[11px] text-white/40 uppercase tracking-wider mb-0.5">Interest</p>
+                          <p className="text-sm font-medium truncate">
+                            {getVehicleName(selectedLead.vehicle_interest) || "Not specified"}
+                          </p>
+                        </div>
+                      </div>
+                      {selectedLead.notes && (
+                        <div className="flex items-start gap-2.5 col-span-2 sm:col-span-1">
+                          <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center flex-shrink-0">
+                            <StickyNote className="w-4 h-4 text-white/40" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[11px] text-white/40 uppercase tracking-wider mb-0.5">Notes</p>
+                            <p className="text-sm font-medium truncate">{selectedLead.notes}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Messages */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                    {messagesLoading ? (
+                      <div className="flex items-center justify-center h-full">
+                        <Loader2 className="w-6 h-6 animate-spin text-white/50" />
+                      </div>
+                    ) : messages.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-full text-center">
+                        <div className="w-20 h-20 rounded-2xl bg-white/[0.03] flex items-center justify-center mb-4">
+                          <MessageSquare className="w-10 h-10 text-white/15" />
+                        </div>
+                        <p className="text-white/50 font-medium">No messages yet</p>
+                        <p className="text-white/30 text-sm mt-1 max-w-[240px]">
+                          Send a message to start the conversation with {selectedLead.name}
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-center mb-4">
+                          <span className="px-3 py-1 bg-white/[0.04] rounded-full text-xs text-white/40">
+                            {format(new Date(messages[0]?.created_at || new Date()), "MMMM d, yyyy")}
+                          </span>
+                        </div>
+
+                        {messages.map((message, index) => {
+                          const isOutbound = message.direction === "outbound"
+                          const showTimestamp = index === messages.length - 1 ||
+                            new Date(messages[index + 1]?.created_at).getTime() - new Date(message.created_at).getTime() > 300000
+
+                          return (
+                            <div
+                              key={message.id}
+                              className={`flex ${isOutbound ? "justify-end" : "justify-start"}`}
+                            >
+                              <div className={`max-w-[75%] ${isOutbound ? "items-end" : "items-start"}`}>
+                                <div
+                                  className={`rounded-2xl px-4 py-2.5 ${
+                                    isOutbound
+                                      ? "bg-white text-black rounded-br-md"
+                                      : "bg-white/[0.08] text-white rounded-bl-md"
+                                  }`}
+                                >
+                                  <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                                </div>
+                                {showTimestamp && (
+                                  <div className={`flex items-center gap-1.5 mt-1.5 ${isOutbound ? "justify-end" : "justify-start"}`}>
+                                    {isOutbound && <CheckCheck className="w-3.5 h-3.5 text-white/30" />}
+                                    <p className="text-[11px] text-white/30">
+                                      {format(new Date(message.created_at), "h:mm a")}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </>
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
+
+                  {/* Message Input */}
+                  <div className="p-4 border-t border-white/[0.08] bg-white/[0.03]">
+                    <div className="flex gap-3">
+                      <input
+                        type="text"
+                        placeholder="Type your message..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+                        className="flex-1 px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/20 focus:bg-white/[0.06] transition-all"
+                      />
+                      <button
+                        onClick={sendMessage}
+                        disabled={!newMessage.trim() || sending}
+                        className="px-5 py-3 bg-white hover:bg-white/90 disabled:opacity-50 disabled:hover:bg-white text-black rounded-xl transition-all flex items-center gap-2 font-medium shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                      >
+                        {sending ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <>
+                            <span className="hidden sm:inline">Send</span>
+                            <Send className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
+                  <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center mb-6 ring-1 ring-white/[0.06] shadow-[0_0_40px_rgba(255,255,255,0.05)]">
+                    <MessageSquare className="w-12 h-12 text-white/30" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">Select a lead</h3>
+                  <p className="text-white/40 max-w-[280px]">
+                    Choose a lead from the list to view details and manage their conversation
+                  </p>
                 </div>
               )}
             </div>
           </div>
-
-          {/* Detail Panel */}
-          <div className={`flex-1 flex flex-col bg-black/20 ${selectedLead ? "flex" : "hidden md:flex"}`}>
-            {selectedLead ? (
-              <>
-                {/* Lead Header */}
-                <div className="p-4 border-b border-white/[0.08] bg-white/[0.03]">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setSelectedLead(null)}
-                      className="md:hidden p-2 -ml-2 rounded-lg hover:bg-white/5 transition-colors"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-
-                    <div className={`w-11 h-11 rounded-full flex items-center justify-center ring-1 ${
-                      isOnDoNotRentList(selectedLead)
-                        ? "bg-gradient-to-br from-red-500/30 to-red-500/10 ring-red-500/30"
-                        : "bg-gradient-to-br from-[#375DEE]/30 to-[#375DEE]/10 ring-white/10"
-                    }`}>
-                      <span className={`font-semibold ${isOnDoNotRentList(selectedLead) ? "text-red-400" : "text-[#375DEE]"}`}>
-                        {selectedLead.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className={`font-bold truncate ${isOnDoNotRentList(selectedLead) ? "text-red-400" : "text-white"}`}>
-                          {selectedLead.name}
-                        </h3>
-                        {isOnDoNotRentList(selectedLead) && (
-                          <span className="flex items-center gap-1 px-2 py-0.5 bg-red-500/20 text-red-400 text-[10px] font-bold rounded">
-                            <AlertTriangle className="w-3 h-3" />
-                            DO NOT RENT
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 text-sm">
-                        <span className="text-white/40 flex items-center gap-1.5">
-                          <Phone className="w-3.5 h-3.5" />
-                          {selectedLead.phone}
-                        </span>
-                        {selectedLead.email && (
-                          <span className="text-white/40 flex items-center gap-1.5 hidden sm:flex">
-                            <Mail className="w-3.5 h-3.5" />
-                            {selectedLead.email}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {/* Status Dropdown */}
-                      <div className="relative" ref={statusDropdownRef}>
-                        <button
-                          onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${getStatusColor(selectedLead.status)}`}
-                        >
-                          {getStatusLabel(selectedLead.status)}
-                          <ChevronDown className="w-3.5 h-3.5" />
-                        </button>
-                        {showStatusDropdown && (
-                          <div className="absolute right-0 top-full mt-1 w-36 bg-[#1a1a1a] rounded-xl border border-white/10 shadow-xl z-10 overflow-hidden">
-                            {leadStatusOptions.map((status) => (
-                              <button
-                                key={status.value}
-                                onClick={() => handleStatusChange(selectedLead.id, status.value)}
-                                className={`w-full px-3 py-2 text-left text-sm hover:bg-white/5 transition-colors flex items-center gap-2 ${
-                                  selectedLead.status === status.value ? "bg-white/5" : ""
-                                }`}
-                              >
-                                <div className={`w-2 h-2 rounded-full ${status.color.split(" ")[0].replace("/15", "")}`} />
-                                {status.label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={() => openEditModal(selectedLead)}
-                        className="p-2 rounded-lg hover:bg-white/5 transition-colors text-white/40 hover:text-white"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(selectedLead.id)}
-                        className="p-2 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Lead Details Panel */}
-                <div className="p-4 border-b border-white/[0.08] bg-black/50">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center flex-shrink-0">
-                        <MessageSquare className="w-4 h-4 text-white/40" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[11px] text-white/40 uppercase tracking-wider mb-0.5">Source</p>
-                        <p className="text-sm font-medium capitalize truncate">{selectedLead.source || "Unknown"}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center flex-shrink-0">
-                        <Calendar className="w-4 h-4 text-white/40" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[11px] text-white/40 uppercase tracking-wider mb-0.5">Added</p>
-                        <p className="text-sm font-medium truncate">{formatDate(selectedLead.created_at)}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center flex-shrink-0">
-                        <Car className="w-4 h-4 text-white/40" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[11px] text-white/40 uppercase tracking-wider mb-0.5">Interest</p>
-                        <p className="text-sm font-medium truncate">
-                          {vehicles.find((v) => v.id === selectedLead.vehicle_interest)?.name || "Not specified"}
-                        </p>
-                      </div>
-                    </div>
-                    {selectedLead.notes && (
-                      <div className="flex items-start gap-2.5 col-span-2 sm:col-span-1">
-                        <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center flex-shrink-0">
-                          <StickyNote className="w-4 h-4 text-white/40" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[11px] text-white/40 uppercase tracking-wider mb-0.5">Notes</p>
-                          <p className="text-sm font-medium truncate">{selectedLead.notes}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                  {messagesLoading ? (
-                    <div className="flex items-center justify-center h-full">
-                      <Loader2 className="w-6 h-6 animate-spin text-[#375DEE]" />
-                    </div>
-                  ) : messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-center">
-                      <div className="w-20 h-20 rounded-2xl bg-white/[0.03] flex items-center justify-center mb-4">
-                        <MessageSquare className="w-10 h-10 text-white/15" />
-                      </div>
-                      <p className="text-white/50 font-medium">No messages yet</p>
-                      <p className="text-white/30 text-sm mt-1 max-w-[240px]">
-                        Send a message to start the conversation with {selectedLead.name}
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Date separator */}
-                      <div className="flex items-center justify-center mb-4">
-                        <span className="px-3 py-1 bg-white/[0.04] rounded-full text-xs text-white/40">
-                          {format(new Date(messages[0]?.created_at || new Date()), "MMMM d, yyyy")}
-                        </span>
-                      </div>
-
-                      {messages.map((message, index) => {
-                        const isOutbound = message.direction === "outbound"
-                        const showTimestamp = index === messages.length - 1 ||
-                          new Date(messages[index + 1]?.created_at).getTime() - new Date(message.created_at).getTime() > 300000
-
-                        return (
-                          <div
-                            key={message.id}
-                            className={`flex ${isOutbound ? "justify-end" : "justify-start"}`}
-                          >
-                            <div className={`max-w-[75%] ${isOutbound ? "items-end" : "items-start"}`}>
-                              <div
-                                className={`rounded-2xl px-4 py-2.5 ${
-                                  isOutbound
-                                    ? "bg-[#375DEE] text-white rounded-br-md"
-                                    : "bg-white/[0.08] text-white rounded-bl-md"
-                                }`}
-                              >
-                                <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{message.content}</p>
-                              </div>
-                              {showTimestamp && (
-                                <div className={`flex items-center gap-1.5 mt-1.5 ${isOutbound ? "justify-end" : "justify-start"}`}>
-                                  {isOutbound && <CheckCheck className="w-3.5 h-3.5 text-white/30" />}
-                                  <p className="text-[11px] text-white/30">
-                                    {format(new Date(message.created_at), "h:mm a")}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </>
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-
-                {/* Message Input */}
-                <div className="p-4 border-t border-white/[0.08] bg-white/[0.03]">
-                  <div className="flex gap-3">
-                    <input
-                      type="text"
-                      placeholder="Type your message..."
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-                      className="flex-1 px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE]/50 focus:bg-white/[0.06] transition-all"
-                    />
-                    <button
-                      onClick={sendMessage}
-                      disabled={!newMessage.trim() || sending}
-                      className="px-5 py-3 bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 disabled:hover:bg-[#375DEE] text-white rounded-xl transition-all flex items-center gap-2 font-medium"
-                    >
-                      {sending ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <>
-                          <span className="hidden sm:inline">Send</span>
-                          <Send className="w-4 h-4" />
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
-                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#375DEE]/20 to-[#375DEE]/5 flex items-center justify-center mb-6 ring-1 ring-white/[0.06]">
-                  <MessageSquare className="w-12 h-12 text-[#375DEE]/60" />
-                </div>
-                <h3 className="text-xl font-bold text-white mb-2">Select a lead</h3>
-                <p className="text-white/40 max-w-[280px]">
-                  Choose a lead from the list to view details and manage their conversation
-                </p>
-              </div>
-            )}
-          </div>
         </div>
-      </div>
+      )}
 
       {/* Add/Edit Lead Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-[0_0_60px_rgba(255,255,255,0.1)]">
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <h2 className="text-xl font-bold">
                 {editingLead ? "Edit Lead" : "Add Lead"}
@@ -1058,7 +1209,7 @@ export default function LeadsPage() {
                   placeholder="John Smith"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
                 />
               </div>
 
@@ -1070,7 +1221,7 @@ export default function LeadsPage() {
                   placeholder="(555) 123-4567"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
                 />
               </div>
 
@@ -1081,7 +1232,7 @@ export default function LeadsPage() {
                   placeholder="john@example.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
                 />
               </div>
 
@@ -1091,7 +1242,7 @@ export default function LeadsPage() {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#375DEE] transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-white/30 transition-colors"
                   >
                     {leadStatusOptions.map((status) => (
                       <option key={status.value} value={status.value}>
@@ -1105,7 +1256,7 @@ export default function LeadsPage() {
                   <select
                     value={formData.source}
                     onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#375DEE] transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-white/30 transition-colors"
                   >
                     {sourceOptions.map((source) => (
                       <option key={source.value} value={source.value}>
@@ -1121,7 +1272,7 @@ export default function LeadsPage() {
                 <select
                   value={formData.vehicle_interest}
                   onChange={(e) => setFormData({ ...formData, vehicle_interest: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-[#375DEE] transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-white/30 transition-colors"
                 >
                   <option value="">Not specified</option>
                   {vehicles.map((vehicle) => (
@@ -1135,11 +1286,11 @@ export default function LeadsPage() {
               <div>
                 <label className="block text-sm text-white/60 mb-2">Notes</label>
                 <textarea
-                  placeholder="Additional notes..."
+                  placeholder="Rental dates, preferences, etc..."
                   rows={3}
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors resize-none"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors resize-none"
                 />
               </div>
 
@@ -1154,7 +1305,7 @@ export default function LeadsPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 px-5 py-3 rounded-xl bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 font-semibold transition-colors"
+                  className="flex-1 px-5 py-3 rounded-xl bg-white text-black hover:bg-white/90 disabled:opacity-50 font-semibold transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]"
                 >
                   {saving ? "Saving..." : editingLead ? "Save Changes" : "Add Lead"}
                 </button>
@@ -1167,10 +1318,10 @@ export default function LeadsPage() {
       {/* Import CSV Modal */}
       {showImportModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-[0_0_60px_rgba(255,255,255,0.1)]">
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <div className="flex items-center gap-3">
-                <FileSpreadsheet className="w-6 h-6 text-[#375DEE]" />
+                <FileSpreadsheet className="w-6 h-6 text-white" />
                 <h2 className="text-xl font-bold">
                   Import Leads from CSV
                 </h2>
@@ -1188,7 +1339,7 @@ export default function LeadsPage() {
                 <div className="space-y-4">
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-white/20 rounded-xl p-12 text-center cursor-pointer hover:border-[#375DEE]/50 transition-colors"
+                    className="border-2 border-dashed border-white/20 rounded-xl p-12 text-center cursor-pointer hover:border-white/40 transition-colors"
                   >
                     <Upload className="w-12 h-12 text-white/30 mx-auto mb-4" />
                     <p className="text-lg font-medium mb-2">Drop your CSV file here</p>
@@ -1205,7 +1356,7 @@ export default function LeadsPage() {
                     <p className="text-sm text-white/60 mb-2">Expected CSV format:</p>
                     <code className="text-xs text-white/40 block">
                       Name, Phone, Email, Notes<br />
-                      John Smith, (555) 123-4567, john@email.com, Interested in Lamborghini
+                      John Smith, (555) 123-4567, john@email.com, Looking for Lamborghini Mar 15-20
                     </code>
                   </div>
                 </div>
@@ -1214,8 +1365,8 @@ export default function LeadsPage() {
                   {importResult && (
                     <div className={`flex items-center gap-3 p-4 rounded-xl ${
                       importResult.failed === 0
-                        ? "bg-green-500/10 border border-green-500/30 text-green-400"
-                        : "bg-yellow-500/10 border border-yellow-500/30 text-yellow-400"
+                        ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
+                        : "bg-amber-500/10 border border-amber-500/30 text-amber-400"
                     }`}>
                       {importResult.failed === 0 ? (
                         <Check className="w-5 h-5" />
@@ -1243,7 +1394,7 @@ export default function LeadsPage() {
                               ...columnMapping,
                               [header]: e.target.value
                             })}
-                            className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-[#375DEE]"
+                            className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-white/30"
                           >
                             <option value="">Skip</option>
                             <option value="name">Name *</option>
@@ -1316,11 +1467,11 @@ export default function LeadsPage() {
                 <button
                   onClick={handleImport}
                   disabled={importing || !Object.values(columnMapping).includes("name") || !Object.values(columnMapping).includes("phone")}
-                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 font-semibold transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-black hover:bg-white/90 disabled:opacity-50 font-semibold transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]"
                 >
                   {importing ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
                       Importing...
                     </>
                   ) : (
@@ -1331,6 +1482,170 @@ export default function LeadsPage() {
                   )}
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lead Details Modal (for Pipeline View) */}
+      {viewMode === "pipeline" && selectedLead && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setSelectedLead(null)}>
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-[0_0_60px_rgba(255,255,255,0.1)]" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="p-6 border-b border-white/10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center ring-1 ${
+                    isOnDoNotRentList(selectedLead)
+                      ? "bg-gradient-to-br from-red-500/30 to-red-500/10 ring-red-500/30"
+                      : "bg-gradient-to-br from-white/20 to-white/5 ring-white/10"
+                  }`}>
+                    <span className={`text-xl font-semibold ${isOnDoNotRentList(selectedLead) ? "text-red-400" : "text-white"}`}>
+                      {selectedLead.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className={`text-xl font-bold ${isOnDoNotRentList(selectedLead) ? "text-red-400" : "text-white"}`}>
+                        {selectedLead.name}
+                      </h3>
+                      {isOnDoNotRentList(selectedLead) && (
+                        <span className="flex items-center gap-1 px-2 py-0.5 bg-red-500/20 text-red-400 text-[10px] font-bold rounded">
+                          <AlertTriangle className="w-3 h-3" />
+                          DO NOT RENT
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 mt-1 text-sm text-white/50">
+                      <span className="flex items-center gap-1.5">
+                        <Phone className="w-4 h-4" />
+                        {selectedLead.phone}
+                      </span>
+                      {selectedLead.email && (
+                        <span className="flex items-center gap-1.5">
+                          <Mail className="w-4 h-4" />
+                          {selectedLead.email}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedLead(null)}
+                  className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Details & Actions */}
+            <div className="p-6 space-y-6 overflow-y-auto">
+              {/* Status */}
+              <div>
+                <label className="block text-sm text-white/50 mb-2">Status</label>
+                <div className="flex flex-wrap gap-2">
+                  {pipelineColumns.map((col) => (
+                    <button
+                      key={col.id}
+                      onClick={() => handleStatusChange(selectedLead.id, col.id)}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                        selectedLead.status === col.id
+                          ? col.color + " shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+                          : "border-white/10 text-white/40 hover:border-white/20 hover:text-white/60"
+                      }`}
+                    >
+                      {col.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Lead Info Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Car className="w-4 h-4 text-white/40" />
+                    <span className="text-xs text-white/40 uppercase tracking-wider">Vehicle Interest</span>
+                  </div>
+                  <p className="font-medium">{getVehicleName(selectedLead.vehicle_interest) || "Not specified"}</p>
+                </div>
+                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MessageSquare className="w-4 h-4 text-white/40" />
+                    <span className="text-xs text-white/40 uppercase tracking-wider">Source</span>
+                  </div>
+                  <p className="font-medium capitalize">{selectedLead.source || "Unknown"}</p>
+                </div>
+                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar className="w-4 h-4 text-white/40" />
+                    <span className="text-xs text-white/40 uppercase tracking-wider">Created</span>
+                  </div>
+                  <p className="font-medium">{formatDate(selectedLead.created_at)}</p>
+                </div>
+                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="w-4 h-4 text-white/40" />
+                    <span className="text-xs text-white/40 uppercase tracking-wider">Last Activity</span>
+                  </div>
+                  <p className="font-medium">
+                    {selectedLead.last_message_time
+                      ? formatDistanceToNow(new Date(selectedLead.last_message_time), { addSuffix: true })
+                      : "No messages"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {selectedLead.notes && (
+                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <StickyNote className="w-4 h-4 text-white/40" />
+                    <span className="text-xs text-white/40 uppercase tracking-wider">Notes</span>
+                  </div>
+                  <p className="text-white/80">{selectedLead.notes}</p>
+                </div>
+              )}
+
+              {/* Quick Message */}
+              <div>
+                <label className="block text-sm text-white/50 mb-2">Send Message</label>
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    placeholder="Type a quick message..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+                    className="flex-1 px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/20 transition-all"
+                  />
+                  <button
+                    onClick={sendMessage}
+                    disabled={!newMessage.trim() || sending}
+                    className="px-5 py-3 bg-white hover:bg-white/90 disabled:opacity-50 text-black rounded-xl transition-all font-medium shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                  >
+                    {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="p-6 border-t border-white/10 flex gap-3">
+              <button
+                onClick={() => openEditModal(selectedLead)}
+                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-white/20 hover:bg-white/5 font-medium transition-colors"
+              >
+                <Pencil className="w-4 h-4" />
+                Edit Lead
+              </button>
+              <button
+                onClick={() => handleDelete(selectedLead.id)}
+                className="px-5 py-3 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 font-medium transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>

@@ -64,8 +64,8 @@ export default function Home() {
             <div className="flex items-center justify-between h-20">
               {/* Logo */}
               <a href="/" className="relative group">
-                <Image src="/scalexoticslong.png" alt="Scale Exotics" width={140} height={28} className="h-7 w-auto" priority />
-                <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-[#375DEE] group-hover:w-full transition-all duration-300" />
+                <Image src="/velocitylong.png" alt="Velocity" width={200} height={40} className="h-10 w-auto" priority />
+                <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-white group-hover:w-full transition-all duration-300 shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
               </a>
 
               {/* Desktop Nav - Minimal */}
@@ -85,14 +85,14 @@ export default function Home() {
                   ))}
                   <a
                     href="/survey"
-                    className="px-6 py-2 text-sm text-white bg-[#375DEE] hover:bg-[#4169E1] rounded-full transition-all duration-300 ml-1 shadow-[0_0_20px_rgba(55,93,238,0.3)] hover:shadow-[0_0_25px_rgba(55,93,238,0.5)] hover:scale-[1.02] active:scale-[0.98]"
+                    className="px-6 py-2 text-sm text-black bg-white hover:bg-white/90 rounded-full transition-all duration-300 ml-1 shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] hover:scale-[1.02] active:scale-[0.98]"
                   >
                     Get Started
                   </a>
                 </div>
                 <a
                   href="/login"
-                  className="px-5 py-2 text-sm text-white/60 hover:text-white border border-white/10 hover:border-[#375DEE]/50 hover:shadow-[0_0_15px_rgba(55,93,238,0.2)] rounded-full transition-all duration-300"
+                  className="px-5 py-2 text-sm text-white/60 hover:text-white border border-white/10 hover:border-white/50 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)] rounded-full transition-all duration-300"
                 >
                   Login
                 </a>
@@ -125,7 +125,7 @@ export default function Home() {
               key={item}
               href={item === "Home" ? "/" : `/${item.toLowerCase()}`}
               onClick={() => setMobileMenuOpen(false)}
-              className="text-4xl font-light text-white/80 hover:text-[#375DEE] transition-colors duration-300"
+              className="text-4xl font-light text-white/80 hover:text-white hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all duration-300"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               {item}
@@ -134,7 +134,7 @@ export default function Home() {
           <a
             href="/survey"
             onClick={() => setMobileMenuOpen(false)}
-            className="mt-6 px-10 py-4 text-lg bg-[#375DEE] rounded-full transition-all duration-300 shadow-[0_0_30px_rgba(55,93,238,0.4)] hover:shadow-[0_0_40px_rgba(55,93,238,0.6)] hover:scale-[1.02] active:scale-[0.98]"
+            className="mt-6 px-10 py-4 text-lg text-black bg-white rounded-full transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.4)] hover:shadow-[0_0_40px_rgba(255,255,255,0.6)] hover:scale-[1.02] active:scale-[0.98]"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             Get Started
@@ -142,7 +142,7 @@ export default function Home() {
           <a
             href="/login"
             onClick={() => setMobileMenuOpen(false)}
-            className="px-8 py-3 text-base text-white/60 border border-white/20 hover:border-[#375DEE]/50 hover:shadow-[0_0_20px_rgba(55,93,238,0.2)] rounded-full transition-all duration-300"
+            className="px-8 py-3 text-base text-white/60 border border-white/20 hover:border-white/50 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] rounded-full transition-all duration-300"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             Client Login
@@ -169,24 +169,24 @@ export default function Home() {
           {/* Gradient overlays */}
           <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/50" />
-          {/* Blue accent overlay */}
-          <div className="absolute inset-0 bg-[#375DEE]/10 mix-blend-overlay" />
+          {/* White accent overlay */}
+          <div className="absolute inset-0 bg-white/5 mix-blend-overlay" />
         </div>
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-32 pb-20 w-full">
           <div className="max-w-3xl">
-            {/* Blue accent line */}
-            <div className="w-20 h-1 bg-[#375DEE] mb-8 animate-fade-in shadow-[0_0_20px_rgba(55,93,238,0.5)] rounded-full" />
+            {/* White accent line */}
+            <div className="w-20 h-1 bg-white mb-8 animate-fade-in shadow-[0_0_20px_rgba(255,255,255,0.5)] rounded-full" />
 
             {/* Headline */}
             <h1
-              className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[0.95] tracking-tight mb-8 animate-fade-in"
-              style={{ animationDelay: "0.1s", fontFamily: 'var(--font-display)' }}
+              className="text-5xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight mb-8 animate-fade-in"
+              style={{ animationDelay: "0.1s", fontFamily: 'var(--font-playfair)' }}
             >
-              Scale Your
+              <span className="font-normal">Scale Your</span>
               <br />
-              <span className="text-[#375DEE]">Rental Empire</span>
+              <span className="font-black italic text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]">Rental Empire</span>
             </h1>
 
             {/* Subheadline */}
@@ -201,7 +201,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
               <a
                 href="/survey"
-                className="group inline-flex items-center gap-3 px-8 py-4 bg-[#375DEE] hover:bg-[#4169E1] text-white rounded-full transition-all duration-300 shadow-[0_0_30px_rgba(55,93,238,0.4)] hover:shadow-[0_0_40px_rgba(55,93,238,0.6)] hover:scale-[1.02] active:scale-[0.98] btn-glow"
+                className="group inline-flex items-center gap-3 px-8 py-4 bg-white hover:bg-white/90 text-black rounded-full transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.4)] hover:shadow-[0_0_40px_rgba(255,255,255,0.6)] hover:scale-[1.02] active:scale-[0.98] btn-glow"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 Start Scaling
@@ -211,7 +211,7 @@ export default function Home() {
               </a>
               <a
                 href="/about"
-                className="group inline-flex items-center gap-2 px-8 py-4 text-white/80 hover:text-white border border-white/20 hover:border-[#375DEE]/50 hover:shadow-[0_0_20px_rgba(55,93,238,0.25)] rounded-full transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                className="group inline-flex items-center gap-2 px-8 py-4 text-white/80 hover:text-white border border-white/20 hover:border-white/50 hover:shadow-[0_0_20px_rgba(255,255,255,0.25)] rounded-full transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
               >
                 Learn More
                 <svg className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,12 +225,12 @@ export default function Home() {
 
         {/* Scroll indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 animate-bounce-subtle">
-          <div className="w-[2px] h-16 bg-gradient-to-b from-[#375DEE] to-transparent shadow-[0_0_10px_rgba(55,93,238,0.5)] rounded-full" />
+          <div className="w-[2px] h-16 bg-gradient-to-b from-white to-transparent shadow-[0_0_10px_rgba(255,255,255,0.5)] rounded-full" />
         </div>
       </section>
 
       {/* Stats Bar */}
-      <section className="relative py-6 md:py-8 bg-[#375DEE]/5 border-y border-[#375DEE]/20 shadow-[0_0_40px_rgba(55,93,238,0.1)]">
+      <section className="relative py-6 md:py-8 bg-white/5 border-y border-white/20 shadow-[0_0_40px_rgba(255,255,255,0.1)]">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:flex md:flex-row items-center justify-between gap-4 md:gap-8">
             {[
@@ -240,7 +240,7 @@ export default function Home() {
               { value: "90", label: "Days to Results" }
             ].map((stat, i) => (
               <div key={stat.label} className="flex flex-col md:flex-row items-center md:items-center gap-1 md:gap-4 text-center md:text-left">
-                <span className="text-2xl md:text-4xl font-bold text-[#375DEE]" style={{ fontFamily: 'var(--font-display)' }}>{stat.value}</span>
+                <span className="text-2xl md:text-4xl font-bold text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" style={{ fontFamily: 'var(--font-display)' }}>{stat.value}</span>
                 <span className="text-xs md:text-sm text-white/40">{stat.label}</span>
                 {i < 3 && <div className="hidden md:block w-[1px] h-8 bg-white/10 ml-8" />}
               </div>
@@ -258,9 +258,9 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           {/* Section Header */}
           <div className={`text-center mb-10 md:mb-20 transition-all duration-1000 overflow-visible ${isVisible("transformation") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
-            <span className="text-[#375DEE] text-xs md:text-sm tracking-widest uppercase mb-3 md:mb-4 block">The Transformation</span>
+            <span className="text-white/70 text-xs md:text-sm tracking-widest uppercase mb-3 md:mb-4 block drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">The Transformation</span>
             <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-normal" style={{ fontFamily: 'var(--font-display)' }}>
-              Stop Leaving Money <span className="text-[#375DEE]">On The Table</span>
+              Stop Leaving Money <span className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">On The Table</span>
             </h2>
             <p className="text-white/50 max-w-2xl mx-auto text-base md:text-lg">
               Most fleet owners are stuck doing everything manually. We change that.
@@ -296,9 +296,9 @@ export default function Home() {
             </div>
 
             {/* After */}
-            <div className="relative p-6 md:p-10 rounded-2xl border border-[#375DEE]/30 bg-[#375DEE]/5 shadow-[0_0_40px_rgba(55,93,238,0.15)] hover:shadow-[0_0_50px_rgba(55,93,238,0.25)] transition-shadow duration-500">
-              <div className="absolute top-0 left-6 md:left-8 -translate-y-1/2 px-3 md:px-4 py-1 bg-[#375DEE] rounded-full">
-                <span className="text-[10px] md:text-xs text-white tracking-widest uppercase">With Scale Exotics</span>
+            <div className="relative p-6 md:p-10 rounded-2xl border border-white/30 bg-white/5 shadow-[0_0_40px_rgba(255,255,255,0.1)] hover:shadow-[0_0_50px_rgba(255,255,255,0.15)] transition-shadow duration-500">
+              <div className="absolute top-0 left-6 md:left-8 -translate-y-1/2 px-3 md:px-4 py-1 bg-white text-black rounded-full">
+                <span className="text-[10px] md:text-xs tracking-widest uppercase font-medium">With Scale Exotics</span>
               </div>
               <div className="space-y-4 md:space-y-5 mt-4">
                 {[
@@ -310,8 +310,8 @@ export default function Home() {
                   "Full fleet utilization, weekdays included"
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3 md:gap-4">
-                    <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-[#375DEE]/20 border border-[#375DEE]/50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg className="w-3 h-3 md:w-3.5 md:h-3.5 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-white/20 border border-white/50 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+                      <svg className="w-3 h-3 md:w-3.5 md:h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
@@ -326,7 +326,7 @@ export default function Home() {
           <div className={`text-center mt-12 transition-all duration-1000 ${isVisible("transformation") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`} style={{ transitionDelay: "400ms" }}>
             <a
               href="/survey"
-              className="group inline-flex items-center gap-3 px-8 py-4 bg-[#375DEE] hover:bg-[#4169E1] text-white rounded-full transition-all duration-300 shadow-[0_0_25px_rgba(55,93,238,0.35)] hover:shadow-[0_0_40px_rgba(55,93,238,0.5)] hover:scale-[1.02] active:scale-[0.98]"
+              className="group inline-flex items-center gap-3 px-8 py-4 bg-white hover:bg-white/90 text-black rounded-full transition-all duration-300 shadow-[0_0_25px_rgba(255,255,255,0.35)] hover:shadow-[0_0_40px_rgba(255,255,255,0.5)] hover:scale-[1.02] active:scale-[0.98]"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               See How It Works For You
@@ -342,14 +342,14 @@ export default function Home() {
       <section
         id="dashboard"
         ref={setRef("dashboard")}
-        className="relative py-16 md:py-32 bg-gradient-to-b from-transparent via-[#375DEE]/5 to-transparent"
+        className="relative py-16 md:py-32 bg-gradient-to-b from-transparent via-white/5 to-transparent"
       >
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           {/* Section Header */}
           <div className={`text-center mb-10 md:mb-16 transition-all duration-1000 ${isVisible("dashboard") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
-            <span className="text-[#375DEE] text-xs md:text-sm tracking-widest uppercase mb-3 md:mb-4 block">Your Command Center</span>
+            <span className="text-white/70 text-xs md:text-sm tracking-widest uppercase mb-3 md:mb-4 block drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">Your Command Center</span>
             <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6" style={{ fontFamily: 'var(--font-display)' }}>
-              One Dashboard to <span className="text-[#375DEE]">Rule It All</span>
+              One Dashboard to <span className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">Rule It All</span>
             </h2>
             <p className="text-white/50 max-w-2xl mx-auto text-base md:text-lg">
               Everything you need to manage leads, bookings, customers, and revenue in one powerful platform.
@@ -359,7 +359,7 @@ export default function Home() {
           {/* Dashboard Preview */}
           <div className={`relative transition-all duration-1000 ${isVisible("dashboard") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`} style={{ transitionDelay: "200ms" }}>
             {/* Browser Frame */}
-            <div className="bg-[#0a0a0a] rounded-2xl border border-[#375DEE]/20 overflow-hidden shadow-2xl shadow-[#375DEE]/20 hover:shadow-[0_0_60px_rgba(55,93,238,0.2)] transition-shadow duration-500">
+            <div className="bg-[#0a0a0a] rounded-2xl border border-white/20 overflow-hidden shadow-2xl shadow-white/10 hover:shadow-[0_0_60px_rgba(255,255,255,0.15)] transition-shadow duration-500">
               {/* Browser Bar */}
               <div className="flex items-center gap-2 px-4 py-3 bg-white/5 border-b border-white/10">
                 <div className="flex gap-1.5">
@@ -401,7 +401,7 @@ export default function Home() {
                       {[40, 65, 55, 80, 70, 90, 85, 95, 75, 100, 90, 110].map((h, i) => (
                         <div
                           key={i}
-                          className="flex-1 bg-[#375DEE]/60 rounded-t transition-all hover:bg-[#375DEE]"
+                          className="flex-1 bg-white/40 rounded-t transition-all hover:bg-white/60"
                           style={{ height: `${h}%` }}
                         />
                       ))}
@@ -414,7 +414,7 @@ export default function Home() {
                         { source: "Instagram", pct: 45, color: "#E1306C" },
                         { source: "Google Ads", pct: 30, color: "#4285F4" },
                         { source: "Referrals", pct: 15, color: "#34A853" },
-                        { source: "Website", pct: 10, color: "#375DEE" },
+                        { source: "Website", pct: 10, color: "#ffffff" },
                       ].map((item) => (
                         <div key={item.source}>
                           <div className="flex justify-between text-xs mb-1">
@@ -436,7 +436,7 @@ export default function Home() {
             </div>
 
             {/* Glow effect */}
-            <div className="absolute -inset-4 bg-[#375DEE]/10 blur-3xl -z-10 rounded-3xl" />
+            <div className="absolute -inset-4 bg-white/5 blur-3xl -z-10 rounded-3xl" />
           </div>
 
           {/* Features Grid */}
@@ -473,18 +473,13 @@ export default function Home() {
                 desc: "Digital contracts & e-sign"
               },
               {
-                icon: <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
-                title: "Invoices",
-                desc: "Billing & payments"
-              },
-              {
                 icon: <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
                 title: "AI Assistant",
                 desc: "Smart automation"
               },
             ].map((feature) => (
-              <div key={feature.title} className="group bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 md:p-5 hover:border-[#375DEE]/40 hover:shadow-[0_0_25px_rgba(55,93,238,0.15)] transition-all duration-300 hover:bg-white/[0.04]">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-[#375DEE]/10 border border-[#375DEE]/30 flex items-center justify-center text-[#375DEE] mb-3 md:mb-4 group-hover:shadow-[0_0_15px_rgba(55,93,238,0.3)] group-hover:border-[#375DEE]/50 transition-all duration-300">
+              <div key={feature.title} className="group bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 md:p-5 hover:border-white/40 hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] transition-all duration-300 hover:bg-white/[0.04]">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/10 border border-white/30 flex items-center justify-center text-white mb-3 md:mb-4 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] group-hover:border-white/50 transition-all duration-300">
                   {feature.icon}
                 </div>
                 <h4 className="text-white font-medium text-sm md:text-base mb-1">{feature.title}</h4>
@@ -498,7 +493,7 @@ export default function Home() {
             <p className="text-white/50 mb-4">Already a client?</p>
             <a
               href="/login"
-              className="group inline-flex items-center gap-2 px-8 py-4 bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-[#375DEE]/50 hover:shadow-[0_0_25px_rgba(55,93,238,0.2)] rounded-full transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+              className="group inline-flex items-center gap-2 px-8 py-4 bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-white/50 hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] rounded-full transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               Access Your Dashboard
@@ -514,14 +509,14 @@ export default function Home() {
       <section
         id="process"
         ref={setRef("process")}
-        className="relative py-16 md:py-32 bg-gradient-to-b from-[#375DEE]/5 to-transparent"
+        className="relative py-16 md:py-32 bg-gradient-to-b from-white/5 to-transparent"
       >
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           {/* Section Header */}
           <div className={`text-center mb-12 md:mb-20 transition-all duration-1000 ${isVisible("process") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
-            <span className="text-[#375DEE] text-xs md:text-sm tracking-widest uppercase mb-3 md:mb-4 block">Our Process</span>
+            <span className="text-white/70 text-xs md:text-sm tracking-widest uppercase mb-3 md:mb-4 block drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">Our Process</span>
             <h2 className="text-3xl md:text-6xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-              How We <span className="text-[#375DEE]">Scale</span> Your Fleet
+              How We <span className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">Scale</span> Your Fleet
             </h2>
           </div>
 
@@ -561,16 +556,16 @@ export default function Home() {
             ].map((step, i) => (
               <div
                 key={step.num}
-                className={`group relative p-6 md:p-8 rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:border-[#375DEE]/40 hover:shadow-[0_0_30px_rgba(55,93,238,0.15)] hover:bg-white/[0.03] transition-all duration-500 ${isVisible("process") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}
+                className={`group relative p-6 md:p-8 rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:border-white/40 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:bg-white/[0.03] transition-all duration-500 ${isVisible("process") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}
                 style={{ transitionDelay: `${(i + 1) * 150}ms` }}
               >
                 {/* Number - Large and visible */}
-                <div className="absolute top-4 right-4 md:top-6 md:right-6 text-5xl md:text-7xl font-bold text-[#375DEE]/20 group-hover:text-[#375DEE]/30 transition-colors duration-500" style={{ fontFamily: 'var(--font-display)' }}>
+                <div className="absolute top-4 right-4 md:top-6 md:right-6 text-5xl md:text-7xl font-bold text-white/10 group-hover:text-white/20 transition-colors duration-500" style={{ fontFamily: 'var(--font-display)' }}>
                   {step.num}
                 </div>
 
                 {/* Icon */}
-                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-[#375DEE]/10 border border-[#375DEE]/30 flex items-center justify-center text-[#375DEE] mb-4 md:mb-6 group-hover:bg-[#375DEE]/20 group-hover:shadow-[0_0_20px_rgba(55,93,238,0.3)] group-hover:border-[#375DEE]/50 transition-all duration-300">
+                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-white/10 border border-white/30 flex items-center justify-center text-white mb-4 md:mb-6 group-hover:bg-white/20 group-hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] group-hover:border-white/50 transition-all duration-300">
                   {step.icon}
                 </div>
 
@@ -605,20 +600,20 @@ export default function Home() {
                 />
                 <div className="absolute inset-0 bg-black/40" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                <div className="absolute inset-0 bg-[#375DEE]/10" />
+                <div className="absolute inset-0 bg-white/5" />
               </div>
               {/* Floating card */}
-              <div className="absolute -bottom-4 right-4 md:-bottom-8 md:-right-8 bg-[#375DEE] rounded-xl md:rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(55,93,238,0.4)] hover:shadow-[0_0_50px_rgba(55,93,238,0.5)] transition-shadow duration-300">
-                <div className="text-2xl md:text-3xl font-bold text-white mb-1" style={{ fontFamily: 'var(--font-display)' }}>20+</div>
-                <div className="text-xs md:text-sm text-white/70">Fleet Partners</div>
+              <div className="absolute -bottom-4 right-4 md:-bottom-8 md:-right-8 bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:shadow-[0_0_50px_rgba(255,255,255,0.4)] transition-shadow duration-300">
+                <div className="text-2xl md:text-3xl font-bold text-black mb-1" style={{ fontFamily: 'var(--font-display)' }}>20+</div>
+                <div className="text-xs md:text-sm text-black/70">Fleet Partners</div>
               </div>
             </div>
 
             {/* Right - Content */}
             <div className={`transition-all duration-1000 ${isVisible("services") ? "opacity-100 translate-x-0" : "opacity-0 translate-x-12"}`} style={{ transitionDelay: "200ms" }}>
-              <div className="w-10 md:w-12 h-1 bg-[#375DEE] mb-4 md:mb-6" />
+              <div className="w-10 md:w-12 h-1 bg-white mb-4 md:mb-6 shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
               <h2 className="text-3xl md:text-5xl font-bold mb-4 md:mb-6" style={{ fontFamily: 'var(--font-display)' }}>
-                Complete Growth <span className="text-[#375DEE]">Systems</span>
+                Complete Growth <span className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">Systems</span>
               </h2>
               <p className="text-white/50 text-base md:text-lg mb-8 md:mb-10 leading-relaxed">
                 Everything you need to dominate your market and scale with confidence.
@@ -633,8 +628,8 @@ export default function Home() {
                   { title: "Fleet Operations", desc: "Streamlined booking management and customer CRM" }
                 ].map((service, i) => (
                   <div key={service.title} className="group flex gap-3 md:gap-4 items-start">
-                    <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-[#375DEE]/10 border border-[#375DEE]/30 flex items-center justify-center flex-shrink-0 group-hover:bg-[#375DEE]/20 group-hover:shadow-[0_0_15px_rgba(55,93,238,0.3)] group-hover:border-[#375DEE]/50 transition-all duration-300">
-                      <svg className="w-4 h-4 md:w-5 md:h-5 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-white/10 border border-white/30 flex items-center justify-center flex-shrink-0 group-hover:bg-white/20 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] group-hover:border-white/50 transition-all duration-300">
+                      <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
@@ -654,14 +649,14 @@ export default function Home() {
       <section
         id="testimonials"
         ref={setRef("testimonials")}
-        className="relative py-16 md:py-32 bg-gradient-to-b from-transparent via-[#375DEE]/5 to-transparent"
+        className="relative py-16 md:py-32 bg-gradient-to-b from-transparent via-white/5 to-transparent"
       >
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           {/* Section Header */}
           <div className={`text-center mb-10 md:mb-16 transition-all duration-1000 ${isVisible("testimonials") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
-            <span className="text-[#375DEE] text-xs md:text-sm tracking-widest uppercase mb-3 md:mb-4 block">Testimonials</span>
+            <span className="text-white/70 text-xs md:text-sm tracking-widest uppercase mb-3 md:mb-4 block drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">Testimonials</span>
             <h2 className="text-3xl md:text-5xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-              What Fleet <span className="text-[#375DEE]">Owners</span> Say
+              What Fleet <span className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">Owners</span> Say
             </h2>
           </div>
 
@@ -689,13 +684,13 @@ export default function Home() {
             ].map((testimonial, i) => (
               <div
                 key={testimonial.name}
-                className={`group p-6 md:p-8 bg-white/[0.02] border border-white/[0.06] rounded-2xl hover:border-[#375DEE]/40 hover:shadow-[0_0_30px_rgba(55,93,238,0.12)] hover:bg-white/[0.03] transition-all duration-500 ${
+                className={`group p-6 md:p-8 bg-white/[0.02] border border-white/[0.06] rounded-2xl hover:border-white/40 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:bg-white/[0.03] transition-all duration-500 ${
                   isVisible("testimonials") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
                 }`}
                 style={{ transitionDelay: `${(i + 1) * 150}ms` }}
               >
                 {/* Quote */}
-                <div className="text-[#375DEE] text-3xl md:text-4xl mb-3 md:mb-4 drop-shadow-[0_0_8px_rgba(55,93,238,0.5)]">&ldquo;</div>
+                <div className="text-white text-3xl md:text-4xl mb-3 md:mb-4 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">&ldquo;</div>
                 <p className="text-white/70 leading-relaxed mb-6 md:mb-8 text-sm md:text-base">{testimonial.quote}</p>
 
                 {/* Author */}
@@ -705,7 +700,7 @@ export default function Home() {
                     alt={testimonial.name}
                     width={48}
                     height={48}
-                    className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-[#375DEE]/30 group-hover:border-[#375DEE]/60 group-hover:shadow-[0_0_15px_rgba(55,93,238,0.3)] transition-all duration-300"
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-white/30 group-hover:border-white/60 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all duration-300"
                     loading="lazy"
                   />
                   <div>
@@ -735,14 +730,14 @@ export default function Home() {
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-black/80" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#375DEE]/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent" />
         </div>
 
         {/* Content */}
         <div className={`relative z-10 max-w-4xl mx-auto px-4 md:px-6 lg:px-8 text-center transition-all duration-1000 ${isVisible("cta") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
-          <div className="w-16 md:w-20 h-1 bg-[#375DEE] mx-auto mb-6 md:mb-8 shadow-[0_0_20px_rgba(55,93,238,0.5)] rounded-full" />
+          <div className="w-16 md:w-20 h-1 bg-white mx-auto mb-6 md:mb-8 shadow-[0_0_20px_rgba(255,255,255,0.5)] rounded-full" />
           <h2 className="text-3xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6" style={{ fontFamily: 'var(--font-display)' }}>
-            Ready to <span className="text-[#375DEE]">Dominate</span>
+            Ready to <span className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">Dominate</span>
             <br />Your Market?
           </h2>
           <p className="text-white/50 text-base md:text-xl max-w-xl mx-auto mb-8 md:mb-10">
@@ -750,7 +745,7 @@ export default function Home() {
           </p>
           <a
             href="/survey"
-            className="group inline-flex items-center gap-2 md:gap-3 px-8 md:px-10 py-4 md:py-5 bg-[#375DEE] hover:bg-[#4169E1] text-white text-base md:text-lg rounded-full transition-all duration-300 shadow-[0_0_35px_rgba(55,93,238,0.45)] hover:shadow-[0_0_50px_rgba(55,93,238,0.6)] hover:scale-[1.03] active:scale-[0.98] btn-glow"
+            className="group inline-flex items-center gap-2 md:gap-3 px-8 md:px-10 py-4 md:py-5 bg-white hover:bg-white/90 text-black text-base md:text-lg rounded-full transition-all duration-300 shadow-[0_0_35px_rgba(255,255,255,0.45)] hover:shadow-[0_0_50px_rgba(255,255,255,0.6)] hover:scale-[1.03] active:scale-[0.98] btn-glow"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             Get Your Growth Plan
@@ -767,21 +762,21 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-8 mb-10 md:mb-12">
             {/* Brand */}
             <div className="col-span-2">
-              <Image src="/scalexoticslong.png" alt="Scale Exotics" width={140} height={28} className="h-6 md:h-7 w-auto mb-3 md:mb-4" />
+              <Image src="/velocitylogo.png" alt="Scale Exotics" width={140} height={28} className="h-6 md:h-7 w-auto mb-3 md:mb-4" />
               <p className="text-white/40 text-xs md:text-sm max-w-sm leading-relaxed">
                 AI-powered lead capture and booking platform built for exotic car rental fleets.
               </p>
-              {/* Blue accent */}
-              <div className="w-12 md:w-16 h-1 bg-[#375DEE] mt-4 md:mt-6 shadow-[0_0_15px_rgba(55,93,238,0.4)] rounded-full" />
+              {/* White accent */}
+              <div className="w-12 md:w-16 h-1 bg-white mt-4 md:mt-6 shadow-[0_0_15px_rgba(255,255,255,0.4)] rounded-full" />
             </div>
 
             {/* Quick Links */}
             <div>
               <h4 className="text-white text-xs md:text-sm font-medium mb-3 md:mb-4">Quick Links</h4>
               <div className="flex flex-col gap-2 md:gap-3">
-                <a href="/about" className="text-white/40 text-xs md:text-sm hover:text-[#375DEE] transition-colors">About</a>
-                <a href="/services" className="text-white/40 text-xs md:text-sm hover:text-[#375DEE] transition-colors">Services</a>
-                <a href="/survey" className="text-white/40 text-xs md:text-sm hover:text-[#375DEE] transition-colors">Get Started</a>
+                <a href="/about" className="text-white/40 text-xs md:text-sm hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">About</a>
+                <a href="/services" className="text-white/40 text-xs md:text-sm hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Services</a>
+                <a href="/survey" className="text-white/40 text-xs md:text-sm hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Get Started</a>
               </div>
             </div>
 
@@ -789,8 +784,8 @@ export default function Home() {
             <div>
               <h4 className="text-white text-xs md:text-sm font-medium mb-3 md:mb-4">Legal</h4>
               <div className="flex flex-col gap-2 md:gap-3">
-                <a href="/privacy-policy" className="text-white/40 text-xs md:text-sm hover:text-[#375DEE] transition-colors">Privacy Policy</a>
-                <a href="/tos" className="text-white/40 text-xs md:text-sm hover:text-[#375DEE] transition-colors">Terms of Service</a>
+                <a href="/privacy-policy" className="text-white/40 text-xs md:text-sm hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Privacy Policy</a>
+                <a href="/tos" className="text-white/40 text-xs md:text-sm hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Terms of Service</a>
               </div>
             </div>
           </div>
@@ -818,8 +813,8 @@ export default function Home() {
           opacity: 0;
         }
         @keyframes glow-pulse {
-          0%, 100% { box-shadow: 0 0 30px rgba(55, 93, 238, 0.4); }
-          50% { box-shadow: 0 0 45px rgba(55, 93, 238, 0.6); }
+          0%, 100% { box-shadow: 0 0 30px rgba(255, 255, 255, 0.4); }
+          50% { box-shadow: 0 0 45px rgba(255, 255, 255, 0.6); }
         }
         .btn-glow {
           animation: glow-pulse 3s ease-in-out infinite;

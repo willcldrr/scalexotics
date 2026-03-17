@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { outfit, inter, jetbrainsMono } from "./fonts"
+import { outfit, inter, jetbrainsMono, playfairDisplay } from "./fonts"
 import { seoConfig, getAllSchemas } from "@/lib/seo"
 import AnalyticsWrapper from "./components/analytics-wrapper"
 import LoadingScreen from "./components/loading-screen"
@@ -23,9 +23,9 @@ export const metadata: Metadata = {
     canonical: SITE_URL,
   },
   icons: {
-    icon: "/scalexoticslogo.png",
-    apple: "/scalexoticslogo.png",
-    shortcut: "/scalexoticslogo.png",
+    icon: "/velocitynobg.png",
+    apple: "/velocitynobg.png",
+    shortcut: "/velocitynobg.png",
   },
   manifest: "/manifest.json",
   openGraph: {
@@ -86,7 +86,7 @@ export default function RootLayout({
   const schemas = getAllSchemas()
 
   return (
-    <html lang="en" className={`${outfit.variable} ${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${outfit.variable} ${inter.variable} ${jetbrainsMono.variable} ${playfairDisplay.variable}`} suppressHydrationWarning>
       <head>
         {/* Critical preconnects for fastest resource loading */}
         <link rel="preconnect" href="https://imagedelivery.net" />
@@ -98,7 +98,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
 
         {/* Preload critical assets */}
-        <link rel="preload" href="/scalexoticslogo.png" as="image" />
+        <link rel="preload" href="/velocitylogo.png" as="image" />
 
         {/* JSON-LD Structured Data - moved to end of head for non-blocking */}
         <script

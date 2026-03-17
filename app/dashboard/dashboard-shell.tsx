@@ -9,26 +9,21 @@ import { DashboardCacheProvider } from "@/lib/dashboard-cache"
 import { useBranding } from "@/lib/branding-context"
 import { getSidebarSettings, getDefaultSidebarSettings, SidebarSettings, SidebarDisplayMode } from "./settings/sidebar-settings"
 
-const SESSION_TOKEN_KEY = 'scale_exotics_session_token'
+const SESSION_TOKEN_KEY = 'velocity_labs_session_token'
 import {
   LayoutDashboard,
   Users,
   Car,
-  CalendarCheck,
   Settings,
   LogOut,
   Menu,
   X,
   ChevronRight,
   Bot,
-  MessageSquare,
-  UserCircle,
-  Receipt,
   Globe,
   Shield,
   FileText,
   Key,
-  RefreshCw,
   Building2,
   Home,
 } from "lucide-react"
@@ -37,11 +32,7 @@ import {
 const allNavItems = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard, key: "overview", alwaysVisible: true },
   { name: "Leads", href: "/dashboard/leads", icon: Users, key: "leads" },
-  { name: "Bookings", href: "/dashboard/bookings", icon: CalendarCheck, key: "bookings" },
-  { name: "Customers", href: "/dashboard/customers", icon: UserCircle, key: "customers" },
   { name: "Vehicles", href: "/dashboard/vehicles", icon: Car, key: "vehicles" },
-  { name: "Billing", href: "/dashboard/billing", icon: Receipt, key: "billing" },
-  { name: "Reactivation", href: "/dashboard/reactivation", icon: RefreshCw, key: "reactivation" },
   { name: "AI Assistant", href: "/dashboard/ai-assistant", icon: Bot, key: "ai-assistant" },
   { name: "Settings", href: "/dashboard/settings", icon: Settings, key: "settings", alwaysVisible: true },
 ]
@@ -171,7 +162,7 @@ export default function DashboardLayout({
   const bottomNavItems = [
     { name: "Home", href: "/dashboard", icon: Home },
     { name: "Leads", href: "/dashboard/leads", icon: Users },
-    { name: "Bookings", href: "/dashboard/bookings", icon: CalendarCheck },
+    { name: "Vehicles", href: "/dashboard/vehicles", icon: Car },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
   ]
 
@@ -188,7 +179,7 @@ export default function DashboardLayout({
     const criticalRoutes = [
       "/dashboard",
       "/dashboard/leads",
-      "/dashboard/bookings",
+      "/dashboard/vehicles",
       "/dashboard/settings",
     ]
 
@@ -269,7 +260,7 @@ export default function DashboardLayout({
           }`}>
             <Link href="/dashboard" className="flex items-center">
               <Image
-                src={branding.logoUrl || "/scalexoticslogo.png"}
+                src={branding.logoUrl || "/velocitylogo.png"}
                 alt={branding.companyName || "Scale Exotics"}
                 width={48}
                 height={48}
@@ -298,7 +289,7 @@ export default function DashboardLayout({
                       ? "text-white"
                       : "text-white/60 hover:text-white hover:bg-white/5"
                   }`}
-                  style={isActive ? { backgroundColor: "#375DEE" } : undefined}
+                  style={isActive ? { backgroundColor: "rgba(255,255,255,0.15)" } : undefined}
                 >
                   <item.icon className="w-5 h-5 flex-shrink-0" />
                   {isExpanded && <span className="font-medium whitespace-nowrap">{item.name}</span>}
@@ -334,7 +325,7 @@ export default function DashboardLayout({
                           ? "text-white"
                           : "text-white/60 hover:text-white hover:bg-white/5"
                       }`}
-                      style={isActive ? { backgroundColor: "#375DEE" } : undefined}
+                      style={isActive ? { backgroundColor: "rgba(255,255,255,0.15)" } : undefined}
                     >
                       <item.icon className="w-5 h-5 flex-shrink-0" />
                       {isExpanded && <span className="font-medium whitespace-nowrap">{item.name}</span>}
@@ -357,10 +348,9 @@ export default function DashboardLayout({
               isExpanded ? "gap-3 px-4" : "gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center"
             }`}>
               <div
-                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: "#375DEE33" }}
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-white/10"
               >
-                <span className="font-semibold" style={{ color: "#375DEE" }}>
+                <span className="font-semibold text-white">
                   {profile?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || "U"}
                 </span>
               </div>
@@ -418,12 +408,7 @@ export default function DashboardLayout({
             {/* Desktop: page title */}
             <h1 className="hidden lg:block text-xl font-bold">
               {getPageTitle() === "AI Assistant" ? (
-                <span
-                  className="text-transparent bg-clip-text"
-                  style={{
-                    backgroundImage: "linear-gradient(to right, #375DEE, #6B8AFF, #A78BFA)"
-                  }}
-                >
+                <span className="text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
                   AI Assistant
                 </span>
               ) : (
@@ -458,7 +443,7 @@ export default function DashboardLayout({
                       ? ""
                       : "text-white/50 active:text-white"
                   }`}
-                  style={isActive ? { color: "#375DEE" } : undefined}
+                  style={isActive ? { color: "white", textShadow: "0 0 10px rgba(255,255,255,0.5)" } : undefined}
                 >
                   <item.icon className="w-5 h-5" />
                   <span className="text-[10px] font-medium">{item.name}</span>

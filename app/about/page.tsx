@@ -104,14 +104,14 @@ export default function About() {
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="flex items-center justify-between h-20">
               <a href="/" className="relative group">
-                <Image src="/scalexoticslong.png" alt="Scale Exotics" width={140} height={28} className="h-7 w-auto" priority />
-                <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-[#375DEE] group-hover:w-full transition-all duration-300" />
+                <Image src="/velocitylongnobg.png" alt="Velocity Labs" width={200} height={40} className="h-10 w-auto" priority />
+                <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)] group-hover:w-full transition-all duration-300" />
               </a>
               <nav className="hidden md:flex items-center">
                 <div className="flex items-center gap-1 p-1 bg-white/[0.03] rounded-full border border-white/[0.06]">
                   <a href="/" className="px-5 py-2 text-sm text-white/60 hover:text-white hover:bg-white/[0.06] rounded-full transition-all duration-300">Home</a>
                   <a href="/services" className="px-5 py-2 text-sm text-white/60 hover:text-white hover:bg-white/[0.06] rounded-full transition-all duration-300">Services</a>
-                  <a href="/survey" className="px-6 py-2 text-sm text-white bg-[#375DEE] hover:bg-[#4169E1] rounded-full transition-all duration-300 ml-1">Get Started</a>
+                  <a href="/survey" className="px-6 py-2 text-sm text-black bg-white hover:bg-white/90 rounded-full transition-all duration-300 ml-1 shadow-[0_0_20px_rgba(255,255,255,0.3)]">Get Started</a>
                 </div>
               </nav>
               <button
@@ -139,7 +139,7 @@ export default function About() {
               key={item}
               href={item === "Home" ? "/" : `/${item.toLowerCase()}`}
               onClick={() => setMobileMenuOpen(false)}
-              className={`text-4xl font-light text-white/80 hover:text-[#375DEE] transition-all duration-500 ${mobileMenuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}
+              className={`text-4xl font-light text-white/80 hover:text-white hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.5)] transition-all duration-500 ${mobileMenuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}
               style={{ transitionDelay: mobileMenuOpen ? `${i * 100}ms` : "0ms", fontFamily: 'var(--font-display)' }}
             >
               {item}
@@ -148,7 +148,7 @@ export default function About() {
           <a
             href="/survey"
             onClick={() => setMobileMenuOpen(false)}
-            className={`mt-6 px-10 py-4 text-lg bg-[#375DEE] rounded-full transition-all duration-500 ${mobileMenuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}
+            className={`mt-6 px-10 py-4 text-lg text-black bg-white rounded-full transition-all duration-500 shadow-[0_0_30px_rgba(255,255,255,0.4)] ${mobileMenuOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}
             style={{ transitionDelay: mobileMenuOpen ? "300ms" : "0ms", fontFamily: 'var(--font-display)' }}
           >
             Get Started
@@ -174,16 +174,16 @@ export default function About() {
             className="absolute inset-0 w-full h-full block md:hidden"
           />
           <div className="absolute inset-0 bg-black/60" />
-          <div className="absolute inset-0 bg-[#375DEE]/10 mix-blend-overlay" />
+          <div className="absolute inset-0 bg-white/5 mix-blend-overlay" />
         </div>
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-32 pb-20 w-full">
           {!showForm ? (
             <div className="max-w-3xl mx-auto text-center">
-              <div className="w-20 h-1 bg-[#375DEE] mx-auto mb-8 animate-fade-in" />
+              <div className="w-20 h-1 bg-white mx-auto mb-8 animate-fade-in shadow-[0_0_20px_rgba(255,255,255,0.5)] rounded-full" />
               <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[0.95] tracking-tight mb-8 animate-fade-in" style={{ animationDelay: "0.1s", fontFamily: 'var(--font-display)' }}>
-                About <span className="text-[#375DEE]">Scale Exotics</span>
+                About <span className="text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]">Velocity Labs</span>
               </h1>
               <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto leading-relaxed mb-12 animate-fade-in font-light" style={{ animationDelay: "0.2s" }}>
                 We help exotic car rental fleet owners build automated systems that generate consistent $50k+ months on autopilot.
@@ -197,7 +197,7 @@ export default function About() {
                   { value: "3X", label: "Avg. Growth" }
                 ].map((stat, i) => (
                   <div key={stat.label} className="flex flex-col items-center px-4 md:px-12">
-                    <span className="text-2xl md:text-5xl font-bold text-[#375DEE]" style={{ fontFamily: 'var(--font-display)' }}>{stat.value}</span>
+                    <span className="text-2xl md:text-5xl font-bold text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]" style={{ fontFamily: 'var(--font-display)' }}>{stat.value}</span>
                     <span className="text-[10px] md:text-sm text-white/50 mt-1">{stat.label}</span>
                     {i < 2 && <div className="hidden" />}
                   </div>
@@ -206,7 +206,7 @@ export default function About() {
 
               <button
                 onClick={() => setShowForm(true)}
-                className="inline-flex items-center gap-3 px-10 py-5 bg-[#375DEE] hover:bg-[#4169E1] text-white text-lg rounded-full transition-all duration-300 hover:shadow-[0_0_40px_rgba(55,93,238,0.4)] animate-fade-in"
+                className="inline-flex items-center gap-3 px-10 py-5 bg-white hover:bg-white/90 text-black text-lg rounded-full transition-all duration-300 shadow-[0_0_40px_rgba(255,255,255,0.4)] hover:shadow-[0_0_50px_rgba(255,255,255,0.6)] animate-fade-in"
                 style={{ animationDelay: "0.4s", fontFamily: 'var(--font-display)' }}
               >
                 Work With Us
@@ -217,8 +217,8 @@ export default function About() {
             </div>
           ) : isSubmitted ? (
             <div className="max-w-md mx-auto text-center animate-fade-in">
-              <div className="w-24 h-24 rounded-full bg-[#375DEE]/20 flex items-center justify-center mx-auto mb-6">
-                <svg className="w-12 h-12 text-[#375DEE]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(255,255,255,0.3)]">
+                <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
@@ -227,7 +227,7 @@ export default function About() {
             </div>
           ) : (
             <div className="max-w-md mx-auto animate-fade-in">
-              <div className="w-12 h-1 bg-[#375DEE] mx-auto mb-6" />
+              <div className="w-12 h-1 bg-white mx-auto mb-6 shadow-[0_0_15px_rgba(255,255,255,0.5)] rounded-full" />
               <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-8" style={{ fontFamily: 'var(--font-display)' }}>Get Started</h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 {[
@@ -242,7 +242,7 @@ export default function About() {
                       placeholder={placeholder}
                       value={formData[field as keyof typeof formData]}
                       onChange={(e) => handleInputChange(field, e.target.value)}
-                      className={`w-full px-5 py-4 rounded-xl bg-white/5 backdrop-blur-md border ${errors[field] ? "border-red-500" : "border-white/20"} text-white placeholder:text-white/50 focus:outline-none focus:border-[#375DEE] transition text-base`}
+                      className={`w-full px-5 py-4 rounded-xl bg-white/5 backdrop-blur-md border ${errors[field] ? "border-red-500" : "border-white/20"} text-white placeholder:text-white/50 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.2)] transition text-base`}
                     />
                     {errors[field] && <p className="text-red-400 text-xs mt-1 ml-1">{errors[field]}</p>}
                   </div>
@@ -250,7 +250,7 @@ export default function About() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-5 text-white text-lg rounded-xl transition-all duration-300 hover:shadow-[0_0_40px_rgba(55,93,238,0.4)] disabled:opacity-50 disabled:cursor-not-allowed bg-[#375DEE] hover:bg-[#4169E1] mt-4"
+                  className="w-full py-5 text-black text-lg rounded-xl transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.4)] hover:shadow-[0_0_40px_rgba(255,255,255,0.6)] disabled:opacity-50 disabled:cursor-not-allowed bg-white hover:bg-white/90 mt-4"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
                   {isSubmitting ? "Submitting..." : "Submit"}
@@ -273,9 +273,9 @@ export default function About() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-10 md:gap-16 items-center">
             <div className={`transition-all duration-1000 ${isVisible("mission") ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-12"}`}>
-              <div className="w-10 md:w-12 h-1 bg-[#375DEE] mb-4 md:mb-6" />
+              <div className="w-10 md:w-12 h-1 bg-white mb-4 md:mb-6 shadow-[0_0_15px_rgba(255,255,255,0.5)] rounded-full" />
               <h2 className="text-3xl md:text-5xl font-bold mb-4 md:mb-6" style={{ fontFamily: 'var(--font-display)' }}>
-                Our <span className="text-[#375DEE]">Mission</span>
+                Our <span className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">Mission</span>
               </h2>
               <p className="text-white/50 text-base md:text-lg leading-relaxed mb-4 md:mb-6">
                 We believe exotic car rental businesses deserve better than manual lead chasing and inconsistent revenue. Our mission is to give every fleet owner the automated systems they need to scale predictably.
@@ -295,11 +295,11 @@ export default function About() {
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                <div className="absolute inset-0 bg-[#375DEE]/10" />
+                <div className="absolute inset-0 bg-white/5" />
               </div>
-              <div className="absolute -bottom-4 left-4 md:-bottom-6 md:-left-6 bg-[#375DEE] rounded-xl md:rounded-2xl p-4 md:p-6 shadow-2xl shadow-[#375DEE]/20">
-                <div className="text-2xl md:text-3xl font-bold text-white mb-1" style={{ fontFamily: 'var(--font-display)' }}>90 Days</div>
-                <div className="text-xs md:text-sm text-white/70">To Results</div>
+              <div className="absolute -bottom-4 left-4 md:-bottom-6 md:-left-6 bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(255,255,255,0.3)]">
+                <div className="text-2xl md:text-3xl font-bold text-black mb-1" style={{ fontFamily: 'var(--font-display)' }}>90 Days</div>
+                <div className="text-xs md:text-sm text-black/70">To Results</div>
               </div>
             </div>
           </div>
@@ -310,13 +310,13 @@ export default function About() {
       <section
         id="services"
         ref={setRef("services")}
-        className="relative py-16 md:py-32 bg-gradient-to-b from-[#375DEE]/5 to-transparent"
+        className="relative py-16 md:py-32 bg-gradient-to-b from-white/5 to-transparent"
       >
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           <div className={`text-center mb-10 md:mb-16 transition-all duration-1000 ${isVisible("services") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
-            <span className="text-[#375DEE] text-xs md:text-sm tracking-widest uppercase mb-3 md:mb-4 block">What We Offer</span>
+            <span className="text-white/60 text-xs md:text-sm tracking-widest uppercase mb-3 md:mb-4 block drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">What We Offer</span>
             <h2 className="text-3xl md:text-5xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-              Our <span className="text-[#375DEE]">Services</span>
+              Our <span className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">Services</span>
             </h2>
           </div>
 
@@ -328,23 +328,23 @@ export default function About() {
             ].map((service, i) => (
               <div
                 key={service.title}
-                className={`group p-6 md:p-8 bg-white/[0.02] border border-white/[0.06] rounded-2xl hover:border-[#375DEE]/30 transition-all duration-700 ${isVisible("services") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}
+                className={`group p-6 md:p-8 bg-white/[0.02] border border-white/[0.06] rounded-2xl hover:border-white/30 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)] transition-all duration-700 ${isVisible("services") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}
                 style={{ transitionDelay: `${(i + 1) * 150}ms` }}
               >
-                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-[#375DEE]/10 border border-[#375DEE]/30 flex items-center justify-center text-[#375DEE] mb-4 md:mb-6 group-hover:bg-[#375DEE]/20 transition-colors">
+                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-white/10 border border-white/30 flex items-center justify-center text-white mb-4 md:mb-6 group-hover:bg-white/20 group-hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all">
                   <svg className="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={service.icon} />
                   </svg>
                 </div>
                 <h3 className="text-xl md:text-2xl font-semibold text-white mb-2 md:mb-3" style={{ fontFamily: 'var(--font-display)' }}>{service.title}</h3>
                 <p className="text-white/50 leading-relaxed text-sm md:text-base">{service.desc}</p>
-                <div className="w-10 md:w-12 h-[2px] bg-[#375DEE] mt-4 md:mt-6 group-hover:w-16 md:group-hover:w-20 transition-all duration-300" />
+                <div className="w-10 md:w-12 h-[2px] bg-white mt-4 md:mt-6 group-hover:w-16 md:group-hover:w-20 transition-all duration-300 shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
               </div>
             ))}
           </div>
 
           <div className={`text-center mt-12 transition-all duration-1000 ${isVisible("services") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`} style={{ transitionDelay: "600ms" }}>
-            <a href="/services" className="inline-flex items-center gap-2 text-[#375DEE] hover:text-white transition-colors">
+            <a href="/services" className="inline-flex items-center gap-2 text-white/80 hover:text-white hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all">
               View All Services
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -361,17 +361,17 @@ export default function About() {
         className="relative py-16 md:py-32"
       >
         <div className={`max-w-4xl mx-auto px-4 md:px-6 lg:px-8 text-center transition-all duration-1000 ${isVisible("cta") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
-          <div className="p-8 md:p-16 rounded-2xl md:rounded-3xl border border-white/[0.06] bg-gradient-to-b from-[#375DEE]/10 to-transparent">
-            <div className="w-16 md:w-20 h-1 bg-[#375DEE] mx-auto mb-6 md:mb-8" />
+          <div className="p-8 md:p-16 rounded-2xl md:rounded-3xl border border-white/[0.06] bg-gradient-to-b from-white/10 to-transparent">
+            <div className="w-16 md:w-20 h-1 bg-white mx-auto mb-6 md:mb-8 shadow-[0_0_20px_rgba(255,255,255,0.5)] rounded-full" />
             <h2 className="text-3xl md:text-5xl font-bold mb-4 md:mb-6" style={{ fontFamily: 'var(--font-display)' }}>
-              Ready to <span className="text-[#375DEE]">Grow</span>?
+              Ready to <span className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">Grow</span>?
             </h2>
             <p className="text-white/50 text-base md:text-lg max-w-xl mx-auto mb-8 md:mb-10">
               Book a call to see how we can help scale your rental business to $50k+/month.
             </p>
             <a
               href="/survey"
-              className="inline-flex items-center gap-2 md:gap-3 px-8 md:px-10 py-4 md:py-5 bg-[#375DEE] hover:bg-[#4169E1] text-white text-base md:text-lg rounded-full transition-all duration-300 hover:shadow-[0_0_40px_rgba(55,93,238,0.4)]"
+              className="inline-flex items-center gap-2 md:gap-3 px-8 md:px-10 py-4 md:py-5 bg-white hover:bg-white/90 text-black text-base md:text-lg rounded-full transition-all duration-300 shadow-[0_0_40px_rgba(255,255,255,0.4)] hover:shadow-[0_0_50px_rgba(255,255,255,0.6)]"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               Get Started
@@ -388,30 +388,30 @@ export default function About() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10 md:mb-12">
             <div className="col-span-2">
-              <Image src="/scalexoticslong.png" alt="Scale Exotics" width={140} height={28} className="h-6 md:h-7 w-auto mb-3 md:mb-4" loading="lazy" />
+              <Image src="/velocitylongnobg.png" alt="Velocity Labs" width={160} height={32} className="h-8 w-auto mb-3 md:mb-4" loading="lazy" />
               <p className="text-white/40 text-xs md:text-sm max-w-sm leading-relaxed">
                 Helping exotic car rental fleet owners build automated systems that generate consistent $50k+ months.
               </p>
-              <div className="w-12 md:w-16 h-1 bg-[#375DEE] mt-4 md:mt-6" />
+              <div className="w-12 md:w-16 h-1 bg-white mt-4 md:mt-6 shadow-[0_0_10px_rgba(255,255,255,0.5)] rounded-full" />
             </div>
             <div>
               <h4 className="text-white text-xs md:text-sm font-medium mb-3 md:mb-4">Quick Links</h4>
               <div className="flex flex-col gap-2 md:gap-3">
-                <a href="/" className="text-white/40 text-xs md:text-sm hover:text-[#375DEE] transition-colors">Home</a>
-                <a href="/services" className="text-white/40 text-xs md:text-sm hover:text-[#375DEE] transition-colors">Services</a>
-                <a href="/survey" className="text-white/40 text-xs md:text-sm hover:text-[#375DEE] transition-colors">Get Started</a>
+                <a href="/" className="text-white/40 text-xs md:text-sm hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Home</a>
+                <a href="/services" className="text-white/40 text-xs md:text-sm hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Services</a>
+                <a href="/survey" className="text-white/40 text-xs md:text-sm hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Get Started</a>
               </div>
             </div>
             <div>
               <h4 className="text-white text-xs md:text-sm font-medium mb-3 md:mb-4">Legal</h4>
               <div className="flex flex-col gap-2 md:gap-3">
-                <a href="/privacy-policy" className="text-white/40 text-xs md:text-sm hover:text-[#375DEE] transition-colors">Privacy Policy</a>
-                <a href="/tos" className="text-white/40 text-xs md:text-sm hover:text-[#375DEE] transition-colors">Terms of Service</a>
+                <a href="/privacy-policy" className="text-white/40 text-xs md:text-sm hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Privacy Policy</a>
+                <a href="/tos" className="text-white/40 text-xs md:text-sm hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Terms of Service</a>
               </div>
             </div>
           </div>
           <div className="pt-6 md:pt-8 border-t border-white/[0.06] flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
-            <p className="text-white/30 text-[10px] md:text-xs">© {new Date().getFullYear()} Scale Exotics. All rights reserved.</p>
+            <p className="text-white/30 text-[10px] md:text-xs">© {new Date().getFullYear()} Velocity Labs. All rights reserved.</p>
             <p className="text-white/20 text-[9px] md:text-[10px] max-w-lg text-center md:text-right">
               This site is not a part of the Facebook website or Facebook Inc. Additionally, this site is NOT endorsed by Facebook in any way. FACEBOOK is a trademark of FACEBOOK, Inc.
             </p>

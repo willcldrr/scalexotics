@@ -1,4 +1,12 @@
 import { createClient } from "@supabase/supabase-js"
+import {
+  generateResponse,
+  shouldEscalate,
+  ChatMessage,
+  ModelId,
+  GenerateResult,
+  MODELS,
+} from "./anthropic"
 
 function getSupabase() {
   return createClient(
@@ -17,6 +25,8 @@ interface AISettings {
   tone: string
   require_deposit: boolean
   deposit_percentage: number
+  preferred_model?: ModelId
+  auto_escalate?: boolean
 }
 
 interface Vehicle {
@@ -51,13 +61,42 @@ interface BookingConflict {
   end_date: string
 }
 
+export interface AIResponseResult {
+  response: string
+  model: ModelId
+  escalated: boolean
+  escalationReason?: string
+  usage: {
+    inputTokens: number
+    outputTokens: number
+    cacheCreationInputTokens?: number
+    cacheReadInputTokens?: number
+  }
+  cost: {
+    inputCost: number
+    outputCost: number
+    totalCost: number
+    cacheSavings?: number
+  }
+  extractedData?: {
+    vehicleId?: string
+    startDate?: string
+    endDate?: string
+    confirmed?: boolean
+  }
+}
+
 export async function generateAIResponse(
   userId: string,
   leadId: string,
   incomingMessage: string,
   leadName: string,
-  channel: "sms" | "instagram" = "sms"
-): Promise<string> {
+  channel: "sms" | "instagram" = "sms",
+  options?: {
+    model?: ModelId
+    forceModel?: boolean
+  }
+): Promise<AIResponseResult> {
   const supabase = getSupabase()
 
   // Get AI settings for this user
@@ -106,6 +145,8 @@ export async function generateAIResponse(
     tone: "friendly",
     require_deposit: true,
     deposit_percentage: 25,
+    preferred_model: "claude-3-5-haiku-latest",
+    auto_escalate: true,
   }
 
   const vehicleList = vehicles || []
@@ -117,41 +158,33 @@ export async function generateAIResponse(
   const systemPrompt = buildEnhancedSystemPrompt(aiSettings, vehicleList, bookingList, leadInfo, channel)
 
   // Build conversation messages for context
-  const conversationMessages = buildConversationMessages(conversationHistory, incomingMessage, leadName)
+  const chatMessages: ChatMessage[] = buildChatMessages(conversationHistory, incomingMessage)
 
-  // Call OpenRouter API (Claude) with function calling for structured extraction
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": process.env.NEXT_PUBLIC_SUPABASE_URL || "http://localhost:3000",
-    },
-    body: JSON.stringify({
-      model: "anthropic/claude-3.5-sonnet",
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...conversationMessages,
-      ],
-      max_tokens: 500,
+  // Determine model to use
+  const requestedModel = options?.model || aiSettings.preferred_model || "claude-3-5-haiku-20241022"
+
+  // Generate response using Anthropic API with prompt caching
+  const result: GenerateResult = await generateResponse(
+    systemPrompt,
+    chatMessages,
+    {
+      model: requestedModel,
+      maxTokens: 500,
       temperature: 0.7,
-    }),
-  })
-
-  if (!response.ok) {
-    console.error("OpenRouter API error:", await response.text())
-    return "Thanks for your message! I'll get back to you shortly."
-  }
-
-  const data = await response.json()
-  let aiResponse = data.choices[0]?.message?.content || "Thanks for reaching out! How can I help you today?"
+      usePromptCaching: true,
+      forceModel: options?.forceModel || !aiSettings.auto_escalate,
+    }
+  )
 
   // Parse the AI response for structured data extraction
-  const extractedData = parseAIResponseForData(aiResponse, vehicleList)
+  const extractedData = parseAIResponseForData(result.content, vehicleList)
+
+  // Use the clean response (without [EXTRACTED] block)
+  let aiResponse = extractedData.cleanResponse
 
   // Update lead with any extracted information
   if (extractedData.hasUpdates) {
-    const updateData: any = {}
+    const updateData: Record<string, any> = {}
 
     if (extractedData.vehicleId) {
       updateData.collected_vehicle_id = extractedData.vehicleId
@@ -179,9 +212,13 @@ export async function generateAIResponse(
   }
 
   // Check if AI response indicates ready for payment link
-  if (aiResponse.includes("[SEND_PAYMENT_LINK]") ||
-      (leadInfo.ready_for_payment && aiResponse.toLowerCase().includes("payment link"))) {
+  // Only send if customer has confirmed AND we have [SEND_PAYMENT_LINK] marker
+  const shouldSendPaymentLink = aiResponse.includes("[SEND_PAYMENT_LINK]") && (
+    extractedData.confirmed ||
+    leadInfo.ready_for_payment
+  )
 
+  if (shouldSendPaymentLink) {
     const vehicleId = leadInfo.collected_vehicle_id || extractedData.vehicleId
     const startDate = leadInfo.collected_start_date || extractedData.startDate
     const endDate = leadInfo.collected_end_date || extractedData.endDate
@@ -199,14 +236,32 @@ export async function generateAIResponse(
       )
 
       if (paymentLink) {
-        // Replace placeholder with actual link
         aiResponse = aiResponse.replace("[SEND_PAYMENT_LINK]", "")
         aiResponse = aiResponse.trim() + `\n\nHere's your secure payment link: ${paymentLink}`
       }
+    } else {
+      // Remove marker if we don't have all info
+      aiResponse = aiResponse.replace("[SEND_PAYMENT_LINK]", "").trim()
     }
+  } else if (aiResponse.includes("[SEND_PAYMENT_LINK]")) {
+    // Remove marker if conditions not met
+    aiResponse = aiResponse.replace("[SEND_PAYMENT_LINK]", "").trim()
   }
 
-  return aiResponse
+  return {
+    response: aiResponse,
+    model: result.model,
+    escalated: result.escalated,
+    escalationReason: result.escalationReason,
+    usage: result.usage,
+    cost: result.cost,
+    extractedData: {
+      vehicleId: extractedData.vehicleId,
+      startDate: extractedData.startDate,
+      endDate: extractedData.endDate,
+      confirmed: extractedData.confirmed,
+    },
+  }
 }
 
 function buildEnhancedSystemPrompt(
@@ -216,43 +271,43 @@ function buildEnhancedSystemPrompt(
   leadInfo: LeadInfo,
   channel: "sms" | "instagram" = "sms"
 ): string {
-  const toneInstructions = {
+  const toneInstructions: Record<string, string> = {
     friendly: "Be warm, casual, and use occasional emojis. Feel like texting a friend.",
     professional: "Be polished and business-like, but still personable.",
     luxury: "Provide a premium, white-glove concierge experience. Be sophisticated.",
     energetic: "Be enthusiastic and excited about the cars! Show passion.",
   }
 
-  const vehicleInfo = vehicles.length > 0
-    ? vehicles.map(v => `- ${v.year} ${v.make} ${v.model}: $${v.daily_rate}/day (ID: ${v.id.substring(0, 8)}) [${v.status}]`).join("\n")
-    : "Various exotic vehicles available - ask for current inventory."
+  const vehicleInfo =
+    vehicles.length > 0
+      ? vehicles
+          .map((v) => `- ${v.year} ${v.make} ${v.model}: $${v.daily_rate}/day (ID: ${v.id.substring(0, 8)}) [${v.status}]`)
+          .join("\n")
+      : "Various exotic vehicles available - ask for current inventory."
 
-  // Format existing bookings for availability context
-  const bookingInfo = bookings.length > 0
-    ? bookings.map(b => `- Vehicle ${b.vehicle_id.substring(0, 8)}: ${b.start_date} to ${b.end_date}`).join("\n")
-    : "No current bookings - all vehicles available."
+  const bookingInfo =
+    bookings.length > 0
+      ? bookings.map((b) => `- Vehicle ${b.vehicle_id.substring(0, 8)}: ${b.start_date} to ${b.end_date}`).join("\n")
+      : "No current bookings - all vehicles available."
 
-  // What info has been collected from this lead
   const collectedInfo = []
   if (leadInfo.collected_vehicle_id) {
-    const vehicle = vehicles.find(v => v.id === leadInfo.collected_vehicle_id)
+    const vehicle = vehicles.find((v) => v.id === leadInfo.collected_vehicle_id)
     collectedInfo.push(`Vehicle: ${vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : "Selected"}`)
   }
   if (leadInfo.collected_start_date) collectedInfo.push(`Start Date: ${leadInfo.collected_start_date}`)
   if (leadInfo.collected_end_date) collectedInfo.push(`End Date: ${leadInfo.collected_end_date}`)
 
-  const collectedSummary = collectedInfo.length > 0
-    ? collectedInfo.join("\n")
-    : "None yet - need to collect vehicle choice and dates."
+  const collectedSummary = collectedInfo.length > 0 ? collectedInfo.join("\n") : "None yet - need to collect vehicle choice and dates."
 
   const missingInfo = []
   if (!leadInfo.collected_vehicle_id) missingInfo.push("which vehicle they want")
   if (!leadInfo.collected_start_date) missingInfo.push("start date")
   if (!leadInfo.collected_end_date) missingInfo.push("end date")
 
-  return `You are an AI assistant for ${settings.business_name || "an exotic car rental business"}. You handle SMS conversations to qualify leads and collect booking information.
+  return `You are an AI assistant for ${settings.business_name || "an exotic car rental business"}. You handle ${channel === "sms" ? "SMS" : "Instagram DM"} conversations to qualify leads and collect booking information.
 
-TONE: ${toneInstructions[settings.tone as keyof typeof toneInstructions] || toneInstructions.friendly}
+TONE: ${toneInstructions[settings.tone] || toneInstructions.friendly}
 
 BUSINESS INFO:
 - Business: ${settings.business_name}
@@ -275,8 +330,14 @@ YOUR GOALS (in order):
 1. If no vehicle selected: Help them choose a vehicle from our fleet
 2. If no dates: Ask for their rental dates (start and end date)
 3. If dates conflict with bookings: Let them know and suggest alternatives
-4. Once you have vehicle + dates: Calculate the total, explain the deposit, and offer to send a payment link
-5. When ready to send payment link, include "[SEND_PAYMENT_LINK]" in your response
+4. Once you have vehicle + dates: Calculate total and ask them to CONFIRM the booking details
+5. After customer CONFIRMS (says yes, sounds good, let's do it, etc.): Include "[SEND_PAYMENT_LINK]" to send the payment link
+
+IMPORTANT - CONFIRMATION STEP:
+- NEVER send a payment link without explicit customer confirmation
+- First summarize: vehicle, dates, total cost, deposit amount
+- Ask: "Does this look right? Ready to secure your booking?"
+- Only after they confirm positively, include [SEND_PAYMENT_LINK]
 
 AVAILABILITY CHECK:
 - When the customer mentions dates, check against CURRENT BOOKINGS above
@@ -289,32 +350,43 @@ PRICING CALCULATION:
 - Deposit is ${settings.deposit_percentage}% of total
 
 RESPONSE GUIDELINES:
-${channel === "sms"
+${
+  channel === "sms"
     ? `1. Keep responses SHORT - this is SMS, max 2-3 sentences
 2. Be conversational and natural`
     : `1. Keep responses conversational - this is Instagram DM, can be slightly longer than SMS but still concise
 2. You can use line breaks for readability
-3. Be friendly and engaging`}
+3. Be friendly and engaging`
+}
 ${channel === "sms" ? "3" : "4"}. Ask ONE question at a time to collect info
 ${channel === "sms" ? "4" : "5"}. When you have vehicle + dates, summarize and ask if they're ready to pay the deposit
 ${channel === "sms" ? "5" : "6"}. The customer's name is ${leadInfo.name} - use it occasionally
 ${channel === "sms" ? "6" : "7"}. Never make up prices - use the rates listed above
 
+DATA EXTRACTION - CRITICAL:
+After your message, you MUST include a data block with any information extracted from the customer's message.
+Format: [EXTRACTED]{"vehicle_id":"ID or null","start_date":"YYYY-MM-DD or null","end_date":"YYYY-MM-DD or null","confirmed":true/false}[/EXTRACTED]
+
+Rules for extraction:
+- vehicle_id: Use the vehicle ID from AVAILABLE VEHICLES list if customer mentions a car (e.g., "Lamborghini" → use the Lamborghini's ID)
+- start_date/end_date: Parse dates from customer message into YYYY-MM-DD format. Handle "March 15", "3/15", "this weekend", "next Friday" etc.
+- confirmed: Set to true ONLY if customer explicitly confirms booking details (says yes, sounds good, let's do it, confirm, book it, etc.)
+- Always include the [EXTRACTED] block, even if all values are null
+
 Example flow:
-- "Which car catches your eye?" → They pick Lamborghini
-- "Great choice! What dates are you looking at?" → March 15-17
-- "Perfect! The Lamborghini Huracan for March 15-17 is 3 days × $1,500 = $4,500 total. Deposit is $1,125 (25%). Ready to lock it in? I can send you a secure payment link!"
-- If they say yes → Include [SEND_PAYMENT_LINK] and say you're sending the link
+- You: "Which car catches your eye?"
+- Customer: "The Lamborghini looks sick"
+- You: "Great choice! What dates are you looking at? [EXTRACTED]{"vehicle_id":"${vehicles[0]?.id?.substring(0, 8) || "v1"}","start_date":null,"end_date":null,"confirmed":false}[/EXTRACTED]"
+- Customer: "March 15-17"
+- You: "Perfect! The Lamborghini Huracan for March 15-17 is 3 days × $1,500 = $4,500 total. Deposit is $1,125 (25%). Does this look right? Ready to lock it in? [EXTRACTED]{"vehicle_id":null,"start_date":"2026-03-15","end_date":"2026-03-17","confirmed":false}[/EXTRACTED]"
+- Customer: "Yes let's do it!"
+- You: "Awesome! Sending your secure payment link now! [SEND_PAYMENT_LINK] [EXTRACTED]{"vehicle_id":null,"start_date":null,"end_date":null,"confirmed":true}[/EXTRACTED]"
 
 Remember: ${channel === "sms" ? "You're texting, keep it brief" : "You're on Instagram DM, be personable"} and guide them toward booking!`
 }
 
-function buildConversationMessages(
-  history: Message[],
-  newMessage: string,
-  leadName: string
-): Array<{ role: "user" | "assistant"; content: string }> {
-  const messages: Array<{ role: "user" | "assistant"; content: string }> = []
+function buildChatMessages(history: Message[], newMessage: string): ChatMessage[] {
+  const messages: ChatMessage[] = []
 
   for (const msg of history) {
     messages.push({
@@ -331,42 +403,89 @@ function buildConversationMessages(
   return messages
 }
 
-function parseAIResponseForData(response: string, vehicles: Vehicle[]): {
+interface ExtractedData {
   hasUpdates: boolean
   vehicleId?: string
   startDate?: string
   endDate?: string
-} {
-  const result: any = { hasUpdates: false }
+  confirmed?: boolean
+  cleanResponse: string
+}
 
-  // Try to extract vehicle mentions
-  for (const vehicle of vehicles) {
-    const vehicleTerms = [
-      vehicle.make.toLowerCase(),
-      vehicle.model.toLowerCase(),
-      `${vehicle.make} ${vehicle.model}`.toLowerCase(),
-    ]
-
-    const responseLower = response.toLowerCase()
-    for (const term of vehicleTerms) {
-      if (responseLower.includes(term)) {
-        result.vehicleId = vehicle.id
-        result.hasUpdates = true
-        break
-      }
-    }
-    if (result.vehicleId) break
+function parseAIResponseForData(
+  response: string,
+  vehicles: Vehicle[]
+): ExtractedData {
+  const result: ExtractedData = {
+    hasUpdates: false,
+    cleanResponse: response
   }
 
-  // Try to extract dates (various formats)
-  const datePatterns = [
-    /(\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)/g,  // MM/DD or MM/DD/YYYY
-    /(\w+\s+\d{1,2}(?:st|nd|rd|th)?(?:\s*[-–to]+\s*\d{1,2}(?:st|nd|rd|th)?)?)/gi, // March 15-17
-    /(\d{4}-\d{2}-\d{2})/g, // YYYY-MM-DD
-  ]
+  // Try to extract structured data from [EXTRACTED] block
+  const extractedMatch = response.match(/\[EXTRACTED\](.*?)\[\/EXTRACTED\]/s)
 
-  // This is simplified - in production you'd want more robust date parsing
-  // For now, the AI will handle date understanding and we track when it confirms
+  if (extractedMatch) {
+    try {
+      const jsonStr = extractedMatch[1].trim()
+      const data = JSON.parse(jsonStr)
+
+      // Extract vehicle ID - match partial IDs from the prompt
+      if (data.vehicle_id && data.vehicle_id !== "null") {
+        // Try to find matching vehicle by partial ID
+        const matchedVehicle = vehicles.find(v =>
+          v.id.startsWith(data.vehicle_id) ||
+          v.id.substring(0, 8) === data.vehicle_id
+        )
+        if (matchedVehicle) {
+          result.vehicleId = matchedVehicle.id
+          result.hasUpdates = true
+        }
+      }
+
+      // Extract dates
+      if (data.start_date && data.start_date !== "null") {
+        result.startDate = data.start_date
+        result.hasUpdates = true
+      }
+      if (data.end_date && data.end_date !== "null") {
+        result.endDate = data.end_date
+        result.hasUpdates = true
+      }
+
+      // Extract confirmation
+      if (data.confirmed === true) {
+        result.confirmed = true
+        result.hasUpdates = true
+      }
+
+    } catch (e) {
+      console.error("Failed to parse extracted data:", e)
+    }
+
+    // Remove the [EXTRACTED] block from the response
+    result.cleanResponse = response.replace(/\s*\[EXTRACTED\].*?\[\/EXTRACTED\]\s*/s, "").trim()
+  }
+
+  // Fallback: Try to extract vehicle mentions from response text if no structured data
+  if (!result.vehicleId) {
+    for (const vehicle of vehicles) {
+      const vehicleTerms = [
+        vehicle.make.toLowerCase(),
+        vehicle.model.toLowerCase(),
+        `${vehicle.make} ${vehicle.model}`.toLowerCase()
+      ]
+
+      const responseLower = response.toLowerCase()
+      for (const term of vehicleTerms) {
+        if (responseLower.includes(term)) {
+          result.vehicleId = vehicle.id
+          result.hasUpdates = true
+          break
+        }
+      }
+      if (result.vehicleId) break
+    }
+  }
 
   return result
 }
@@ -384,30 +503,18 @@ async function generatePaymentLink(
   try {
     const supabase = getSupabase()
 
-    // Get vehicle info
-    const { data: vehicle } = await supabase
-      .from("vehicles")
-      .select("daily_rate")
-      .eq("id", vehicleId)
-      .single()
+    const { data: vehicle } = await supabase.from("vehicles").select("daily_rate").eq("id", vehicleId).single()
 
     if (!vehicle) return null
 
-    // Calculate amounts
     const start = new Date(startDate)
     const end = new Date(endDate)
     const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
     const totalAmount = days * vehicle.daily_rate
     const depositAmount = (totalAmount * depositPercentage) / 100
 
-    // Get lead email if available
-    const { data: lead } = await supabase
-      .from("leads")
-      .select("email")
-      .eq("id", leadId)
-      .single()
+    const { data: lead } = await supabase.from("leads").select("email").eq("id", leadId).single()
 
-    // Call our checkout API
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
     const response = await fetch(`${baseUrl}/api/payments/create-checkout`, {
       method: "POST",
@@ -431,17 +538,13 @@ async function generatePaymentLink(
 
     const data = await response.json()
     return data.checkoutUrl
-
   } catch (error) {
     console.error("Error generating payment link:", error)
     return null
   }
 }
 
-export async function findOrCreateLead(
-  userId: string,
-  phoneNumber: string
-): Promise<{ id: string; name: string } | null> {
+export async function findOrCreateLead(userId: string, phoneNumber: string): Promise<{ id: string; name: string } | null> {
   const supabase = getSupabase()
   const cleanPhone = phoneNumber.replace(/\D/g, "")
 
@@ -476,12 +579,7 @@ export async function findOrCreateLead(
   return newLead
 }
 
-export async function saveMessage(
-  userId: string,
-  leadId: string,
-  content: string,
-  direction: "inbound" | "outbound"
-): Promise<void> {
+export async function saveMessage(userId: string, leadId: string, content: string, direction: "inbound" | "outbound"): Promise<void> {
   const supabase = getSupabase()
   const { error } = await supabase.from("messages").insert({
     user_id: userId,
@@ -497,11 +595,11 @@ export async function saveMessage(
 
 export async function getDefaultUserId(): Promise<string | null> {
   const supabase = getSupabase()
-  const { data } = await supabase
-    .from("profiles")
-    .select("id")
-    .limit(1)
-    .single()
+  const { data } = await supabase.from("profiles").select("id").limit(1).single()
 
   return data?.id || null
 }
+
+// Re-export types and utilities from anthropic module
+export { MODELS, shouldEscalate }
+export type { ModelId }

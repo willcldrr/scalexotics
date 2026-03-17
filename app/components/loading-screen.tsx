@@ -34,7 +34,7 @@ export default function LoadingScreen() {
     >
       <div className={`transform transition-all duration-500 ${isFading ? "scale-95 opacity-0" : "scale-100 opacity-100"}`}>
         <Image
-          src="/scalexoticslogo.png"
+          src="/velocitylogo.png"
           alt="Scale Exotics"
           width={120}
           height={120}

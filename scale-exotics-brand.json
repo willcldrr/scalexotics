@@ -339,9 +339,9 @@
 
   "assets": {
     "logos": {
-      "primary": "/scalexoticslong.png",
-      "square": "/scalexotics.png",
-      "favicon": "/scalexoticslogo.png"
+      "primary": "/velocitylogo.png",
+      "square": "/velocitylogo.png",
+      "favicon": "/velocitynobg.png"
     },
     "images": {
       "hero_background": "/exoticcarmock.png",

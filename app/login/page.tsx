@@ -7,7 +7,7 @@ import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import { Loader2 } from "lucide-react"
 
-const SESSION_TOKEN_KEY = 'scale_exotics_session_token'
+const SESSION_TOKEN_KEY = 'velocity_labs_session_token'
 
 function LoginForm() {
   const [email, setEmail] = useState("")
@@ -67,11 +67,11 @@ function LoginForm() {
       <div className="text-center mb-12">
         <Link href="/">
           <Image
-            src="https://imagedelivery.net/CVEJyzst_6io-ETn1V_PSw/3bdba65e-fb1a-4a3e-ff6f-1aa89b081f00/public"
-            alt="Scale Exotics"
-            width={180}
-            height={48}
-            className="h-12 w-auto mx-auto mb-8"
+            src="/velocitylogo.png"
+            alt="Velocity Labs"
+            width={64}
+            height={64}
+            className="h-16 w-auto mx-auto mb-8"
             priority
           />
         </Link>
@@ -96,14 +96,14 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/20 text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+            className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/20 text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-all"
           />
         </div>
 
         <div>
           <div className="flex justify-between items-center mb-2">
             <label className="text-sm text-white/60">Password</label>
-            <Link href="/forgot-password" className="text-sm text-[#375DEE] hover:underline">
+            <Link href="/forgot-password" className="text-sm text-white/70 hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">
               Forgot password?
             </Link>
           </div>
@@ -113,7 +113,7 @@ function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/20 text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+            className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/20 text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-all"
           />
         </div>
 
@@ -126,7 +126,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-4 bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 disabled:cursor-not-allowed text-white text-lg font-semibold rounded-xl transition-colors"
+          className="w-full py-4 bg-white hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed text-black text-lg font-semibold rounded-xl transition-all shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:shadow-[0_0_40px_rgba(255,255,255,0.5)]"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           {loading ? "Signing in..." : "Sign In"}
@@ -135,7 +135,7 @@ function LoginForm() {
 
       <p className="text-center mt-8 text-white/50">
         Don't have an account?{" "}
-        <Link href="/signup" className="text-[#375DEE] hover:underline">
+        <Link href="/signup" className="text-white/70 hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">
           Sign up
         </Link>
       </p>
@@ -146,7 +146,7 @@ function LoginForm() {
 function LoadingFallback() {
   return (
     <div className="w-full max-w-md flex items-center justify-center">
-      <Loader2 className="w-8 h-8 animate-spin text-[#375DEE]" />
+      <Loader2 className="w-8 h-8 animate-spin text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
     </div>
   )
 }

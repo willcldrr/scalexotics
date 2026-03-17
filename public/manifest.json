@@ -8,12 +8,12 @@
   "theme_color": "#375DEE",
   "icons": [
     {
-      "src": "/scalexoticslogo.png",
+      "src": "/velocitynobg.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/scalexoticslogo.png",
+      "src": "/velocitynobg.png",
       "sizes": "512x512",
       "type": "image/png"
     }

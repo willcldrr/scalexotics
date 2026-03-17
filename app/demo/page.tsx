@@ -231,21 +231,8 @@ export default function Demo() {
       ],
       value: "$2,000+ value"
     }},
-    { id: 22, section: "bonuses", type: "bonus-card", content: {
-      badge: "BONUS #2",
-      title: "Client Reactivation Campaign",
-      subtitle: "Turn your past renters into repeat customers",
-      description: "We build automated campaigns that re-engage your previous customers with personalized offers, bringing back renters who already trust you.",
-      highlights: [
-        "Automated email/SMS sequences",
-        "Personalized offers based on history",
-        "Birthday & anniversary campaigns",
-        "Win-back sequences for cold leads"
-      ],
-      value: "$1,500+ value"
-    }},
     { id: 23, section: "bonuses", type: "referral-program", content: {
-      badge: "BONUS #3",
+      badge: "BONUS #2",
       title: "Let Us Pay You",
       subtitle: "Referral Program",
       description: "Know other exotic rental owners? For every fleet owner you refer who invests a minimum of $1,500/month with us, we send you $500 cash per month — as long as they stay.",

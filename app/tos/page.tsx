@@ -8,7 +8,7 @@ export default function TermsOfService() {
       {/* Navigation */}
       <nav className="flex items-center justify-between px-6 py-4 border-b border-white/10">
         <a href="/" className="flex items-center">
-          <Image src="/scalexoticslogo.png" alt="Scale Exotics" width={160} height={48} className="h-12 w-auto" priority />
+          <Image src="/velocitylogo.png" alt="Scale Exotics" width={160} height={48} className="h-12 w-auto" priority />
         </a>
         <a href="/" className="text-sm text-muted-foreground hover:text-foreground transition">
           ← Back to Home

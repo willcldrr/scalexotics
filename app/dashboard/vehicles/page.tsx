@@ -301,13 +301,13 @@ export default function VehiclesPage() {
             placeholder="Search vehicles..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/40 focus:outline-none focus:border-[#375DEE] transition-colors"
+            className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/40 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-colors"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white focus:outline-none focus:border-[#375DEE] transition-colors"
+          className="px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-colors"
         >
           <option value="">All Status</option>
           {statusOptions.map((status) => (
@@ -318,7 +318,7 @@ export default function VehiclesPage() {
         </select>
         <button
           onClick={openAddModal}
-          className="hidden sm:flex items-center gap-2 px-5 py-3 bg-[#375DEE] hover:bg-[#4169E1] text-white font-semibold rounded-xl transition-colors ml-auto"
+          className="hidden sm:flex items-center gap-2 px-5 py-3 bg-white hover:bg-white/90 text-black text-white font-semibold rounded-xl transition-colors ml-auto"
         >
           <Plus className="w-5 h-5" />
           Add Vehicle
@@ -338,7 +338,7 @@ export default function VehiclesPage() {
           {vehicles.length === 0 && (
             <button
               onClick={openAddModal}
-              className="inline-flex items-center gap-2 px-5 py-3 bg-[#375DEE] hover:bg-[#4169E1] text-white font-semibold rounded-xl transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-3 bg-white hover:bg-white/90 text-black text-white font-semibold rounded-xl transition-colors"
             >
               <Plus className="w-5 h-5" />
               Add Vehicle
@@ -405,7 +405,7 @@ export default function VehiclesPage() {
                       {vehicle.type}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 text-[#375DEE] font-semibold">
+                  <div className="flex items-center gap-1 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] font-semibold">
                     <DollarSign className="w-4 h-4" />
                     {vehicle.daily_rate.toLocaleString()}/day
                   </div>
@@ -420,7 +420,7 @@ export default function VehiclesPage() {
                   <select
                     value={vehicle.status}
                     onChange={(e) => handleStatusChange(vehicle.id, e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/[0.08] text-sm focus:outline-none focus:border-[#375DEE] transition-colors"
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/[0.08] text-sm focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-colors"
                   >
                     {statusOptions.map((status) => (
                       <option key={status.value} value={status.value}>
@@ -461,7 +461,7 @@ export default function VehiclesPage() {
                   max={new Date().getFullYear() + 1}
                   value={formData.year}
                   onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-colors"
                 />
               </div>
 
@@ -474,7 +474,7 @@ export default function VehiclesPage() {
                     placeholder="Lamborghini"
                     value={formData.make}
                     onChange={(e) => setFormData({ ...formData, make: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-colors"
                   />
                 </div>
                 <div>
@@ -484,7 +484,7 @@ export default function VehiclesPage() {
                     placeholder="Huracán"
                     value={formData.model}
                     onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-colors"
                   />
                 </div>
               </div>
@@ -499,7 +499,7 @@ export default function VehiclesPage() {
                   placeholder="1500"
                   value={formData.daily_rate || ""}
                   onChange={(e) => setFormData({ ...formData, daily_rate: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-colors"
                 />
               </div>
 
@@ -513,7 +513,7 @@ export default function VehiclesPage() {
                       onClick={() => setImageInputMode('upload')}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                         imageInputMode === 'upload'
-                          ? 'bg-[#375DEE] text-white'
+                          ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.2)]'
                           : 'bg-white/5 text-white/60 hover:bg-white/10'
                       }`}
                     >
@@ -525,7 +525,7 @@ export default function VehiclesPage() {
                       onClick={() => setImageInputMode('url')}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                         imageInputMode === 'url'
-                          ? 'bg-[#375DEE] text-white'
+                          ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.2)]'
                           : 'bg-white/5 text-white/60 hover:bg-white/10'
                       }`}
                     >
@@ -548,11 +548,11 @@ export default function VehiclesPage() {
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploading}
-                      className="w-full px-4 py-8 rounded-xl bg-white/5 border border-white/[0.08] border-dashed hover:border-[#375DEE] hover:bg-white/[0.02] transition-colors flex flex-col items-center justify-center gap-2 disabled:opacity-50"
+                      className="w-full px-4 py-8 rounded-xl bg-white/5 border border-white/[0.08] border-dashed hover:border-white/50 hover:bg-white/[0.02] transition-colors flex flex-col items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {uploading ? (
                         <>
-                          <Loader2 className="w-8 h-8 text-[#375DEE] animate-spin" />
+                          <Loader2 className="w-8 h-8 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] animate-spin" />
                           <span className="text-white/50 text-sm">Uploading...</span>
                         </>
                       ) : (
@@ -570,7 +570,7 @@ export default function VehiclesPage() {
                     placeholder="https://example.com/image.jpg"
                     value={formData.image_url}
                     onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-colors"
                   />
                 )}
 
@@ -603,7 +603,7 @@ export default function VehiclesPage() {
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors resize-none"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-colors resize-none"
                 />
               </div>
 
@@ -613,7 +613,7 @@ export default function VehiclesPage() {
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white focus:outline-none focus:border-[#375DEE] transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-colors"
                 >
                   {statusOptions.map((status) => (
                     <option key={status.value} value={status.value}>
@@ -634,7 +634,7 @@ export default function VehiclesPage() {
               <button
                 onClick={handleSave}
                 disabled={saving || !formData.make || !formData.model}
-                className="flex-1 px-5 py-3 rounded-xl bg-[#375DEE] hover:bg-[#4169E1] disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors"
+                className="flex-1 px-5 py-3 rounded-xl bg-white hover:bg-white/90 text-black disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors"
               >
                 {saving ? "Saving..." : editingVehicle ? "Save Changes" : "Add Vehicle"}
               </button>
