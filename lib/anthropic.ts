@@ -15,9 +15,9 @@ function getAnthropicClient(): Anthropic {
   return anthropicClient
 }
 
-// Model configurations with pricing (updated March 2026)
+// Model configurations with pricing
 export const MODELS = {
-  "claude-3-5-haiku-latest": {
+  "claude-3-5-haiku-20241022": {
     name: "Claude 3.5 Haiku",
     description: "Fast and cost-effective for routine conversations",
     inputCost: 0.80, // per 1M tokens
@@ -25,20 +25,20 @@ export const MODELS = {
     maxTokens: 8192,
     recommended: true,
   },
-  "claude-sonnet-4-20250514": {
-    name: "Claude Sonnet 4",
+  "claude-3-5-sonnet-20241022": {
+    name: "Claude 3.5 Sonnet",
     description: "Most capable, best for complex situations",
     inputCost: 3.0,
     outputCost: 15.0,
     maxTokens: 8192,
     recommended: false,
   },
-  "claude-3-5-sonnet-latest": {
-    name: "Claude 3.5 Sonnet",
-    description: "Previous gen Sonnet, still very capable",
-    inputCost: 3.0,
-    outputCost: 15.0,
-    maxTokens: 8192,
+  "claude-3-opus-20240229": {
+    name: "Claude 3 Opus",
+    description: "Previous gen flagship, very capable",
+    inputCost: 15.0,
+    outputCost: 75.0,
+    maxTokens: 4096,
     recommended: false,
   },
 } as const
@@ -180,7 +180,7 @@ export async function generateResponse(
   options: GenerateOptions = {}
 ): Promise<GenerateResult> {
   const {
-    model: requestedModel = "claude-3-5-haiku-latest",
+    model: requestedModel = "claude-3-5-haiku-20241022",
     maxTokens = 500,
     temperature = 0.7,
     usePromptCaching = true,
@@ -192,12 +192,12 @@ export async function generateResponse(
   let escalated = false
   let escalationReason: string | undefined
 
-  if (!forceModel && requestedModel === "claude-3-5-haiku-latest") {
+  if (!forceModel && requestedModel === "claude-3-5-haiku-20241022") {
     const lastUserMessage = messages.filter(m => m.role === "user").pop()?.content || ""
     const escalationCheck = shouldEscalate(lastUserMessage, messages)
 
     if (escalationCheck.shouldEscalate) {
-      finalModel = "claude-sonnet-4-20250514"
+      finalModel = "claude-3-5-sonnet-20241022"
       escalated = true
       escalationReason = escalationCheck.reason
     }

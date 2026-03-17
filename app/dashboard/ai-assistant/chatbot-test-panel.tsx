@@ -64,28 +64,28 @@ interface LeadData {
   ready_for_payment: boolean
 }
 
-type ModelId = "claude-3-5-haiku-latest" | "claude-sonnet-4-20250514" | "claude-3-5-sonnet-latest"
+type ModelId = "claude-3-5-haiku-20241022" | "claude-3-5-sonnet-20241022" | "claude-3-opus-20240229"
 
 const MODELS: Record<ModelId, { name: string; description: string; inputCost: number; outputCost: number; recommended: boolean }> = {
-  "claude-3-5-haiku-latest": {
+  "claude-3-5-haiku-20241022": {
     name: "Claude 3.5 Haiku",
     description: "Fast and cost-effective for routine conversations",
     inputCost: 0.80,
     outputCost: 4.00,
     recommended: true,
   },
-  "claude-sonnet-4-20250514": {
-    name: "Claude Sonnet 4",
+  "claude-3-5-sonnet-20241022": {
+    name: "Claude 3.5 Sonnet",
     description: "Most capable, best for complex situations",
     inputCost: 3.0,
     outputCost: 15.0,
     recommended: false,
   },
-  "claude-3-5-sonnet-latest": {
-    name: "Claude 3.5 Sonnet",
-    description: "Previous gen Sonnet, still very capable",
-    inputCost: 3.0,
-    outputCost: 15.0,
+  "claude-3-opus-20240229": {
+    name: "Claude 3 Opus",
+    description: "Previous gen flagship, very capable",
+    inputCost: 15.0,
+    outputCost: 75.0,
     recommended: false,
   },
 }
@@ -143,7 +143,7 @@ export default function ChatbotTestPanel({ initialSettings, initialVehicles }: C
     status: v.status || "available",
   })) : defaultVehicles)
   const [channel, setChannel] = useState<"sms" | "instagram">("sms")
-  const [selectedModel, setSelectedModel] = useState<ModelId>("claude-3-5-haiku-latest")
+  const [selectedModel, setSelectedModel] = useState<ModelId>("claude-3-5-haiku-20241022")
   const [forceModel, setForceModel] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showDebug, setShowDebug] = useState(false)
