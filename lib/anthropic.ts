@@ -209,24 +209,13 @@ export async function generateResponse(
     content: m.content,
   }))
 
-  // Build system prompt with caching
-  const systemContent = usePromptCaching
-    ? [
-        {
-          type: "text" as const,
-          text: systemPrompt,
-          cache_control: { type: "ephemeral" as const },
-        },
-      ]
-    : systemPrompt
-
   try {
     const client = getAnthropicClient()
     const response = await client.messages.create({
       model: finalModel,
       max_tokens: maxTokens,
       temperature,
-      system: systemContent,
+      system: systemPrompt,
       messages: anthropicMessages,
     })
 
@@ -237,16 +226,16 @@ export async function generateResponse(
     const usage = {
       inputTokens: response.usage.input_tokens,
       outputTokens: response.usage.output_tokens,
-      cacheCreationInputTokens: (response.usage as any).cache_creation_input_tokens || 0,
-      cacheReadInputTokens: (response.usage as any).cache_read_input_tokens || 0,
+      cacheCreationInputTokens: 0,
+      cacheReadInputTokens: 0,
     }
 
     const cost = calculateCost(
       finalModel,
       usage.inputTokens,
       usage.outputTokens,
-      usage.cacheCreationInputTokens,
-      usage.cacheReadInputTokens
+      0,
+      0
     )
 
     return {
