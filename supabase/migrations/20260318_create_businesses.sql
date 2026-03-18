@@ -61,7 +61,7 @@ CREATE POLICY "Admins can manage all businesses" ON businesses
     EXISTS (
       SELECT 1 FROM profiles
       WHERE profiles.id = auth.uid()
-      AND profiles.role = 'admin'
+      AND profiles.is_admin = true
     )
   );
 
