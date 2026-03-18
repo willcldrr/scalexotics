@@ -119,6 +119,7 @@ export default function AIAssistantPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [vehicles, setVehicles] = useState<any[]>([])
+  const [bookings, setBookings] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<"config" | "preview" | "connection" | "advanced" | "test">("config")
   const [userId, setUserId] = useState<string | null>(null)
   const [twilioStatus, setTwilioStatus] = useState<"loading" | "connected" | "error">("loading")
@@ -155,11 +156,23 @@ export default function AIAssistantPage() {
       // Fetch vehicles for context
       const { data: vehiclesData } = await supabase
         .from("vehicles")
-        .select("name, make, model, daily_rate")
+        .select("id, name, make, model, year, daily_rate, type, status")
         .eq("user_id", user.id)
         .neq("status", "inactive")
 
       setVehicles(vehiclesData || [])
+
+      // Fetch upcoming bookings for availability
+      const today = new Date().toISOString().split("T")[0]
+      const { data: bookingsData } = await supabase
+        .from("bookings")
+        .select("id, vehicle_id, start_date, end_date, status, customer_name")
+        .eq("user_id", user.id)
+        .in("status", ["confirmed", "pending", "active"])
+        .gte("end_date", today)
+        .order("start_date", { ascending: true })
+
+      setBookings(bookingsData || [])
     }
 
     // Check Twilio connection
@@ -1208,6 +1221,14 @@ export default function AIAssistantPage() {
             daily_rate: v.daily_rate,
             type: v.type || "exotic",
             status: v.status || "available",
+          }))}
+          initialBookings={bookings.map((b: any) => ({
+            id: b.id,
+            vehicleId: b.vehicle_id,
+            startDate: b.start_date,
+            endDate: b.end_date,
+            status: b.status,
+            customerName: b.customer_name,
           }))}
         />
       )}

@@ -119,12 +119,22 @@ const toneDescriptions = {
   energetic: "Enthusiastic and excited about the cars! Show passion.",
 }
 
+interface Booking {
+  id: string
+  vehicleId: string
+  startDate: string
+  endDate: string
+  status: string
+  customerName: string
+}
+
 interface ChatbotTestPanelProps {
   initialSettings?: Partial<AISettings>
   initialVehicles?: Vehicle[]
+  initialBookings?: Booking[]
 }
 
-export default function ChatbotTestPanel({ initialSettings, initialVehicles }: ChatbotTestPanelProps) {
+export default function ChatbotTestPanel({ initialSettings, initialVehicles, initialBookings }: ChatbotTestPanelProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -142,6 +152,7 @@ export default function ChatbotTestPanel({ initialSettings, initialVehicles }: C
     type: v.type || "exotic",
     status: v.status || "available",
   })) : defaultVehicles)
+  const [bookings] = useState<Booking[]>(initialBookings || [])
   const [channel, setChannel] = useState<"sms" | "instagram">("sms")
   const [selectedModel, setSelectedModel] = useState<ModelId>("claude-haiku-4-5-20251001")
   const [forceModel, setForceModel] = useState(false)
@@ -231,7 +242,13 @@ AVAILABLE VEHICLES:
 ${vehicleInfo}
 
 CURRENT BOOKINGS (for availability):
-No current bookings - all vehicles available for any date.
+${bookings.length > 0
+      ? bookings.map(b => {
+          const vehicle = vehicles.find(v => v.id === b.vehicleId)
+          const vehicleName = vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : "Unknown Vehicle"
+          return `- ${vehicleName}: BOOKED ${b.startDate} to ${b.endDate} (${b.status})`
+        }).join("\n")
+      : "No current bookings - all vehicles available for any date."}
 
 ALREADY COLLECTED FROM THIS LEAD:
 ${collectedSummary}
@@ -242,8 +259,10 @@ YOUR GOALS (in order):
 1. If no vehicle selected: Help them choose a vehicle from our fleet
 2. If no dates: Ask for their rental dates (start and end date)
 3. If customer wants TODAY: Check the SAME-DAY BOOKING RULE above - if it's too late, politely explain and suggest tomorrow instead
-4. If dates conflict with bookings: Let them know and suggest alternatives
-5. Once you have vehicle + dates: Calculate total and ask them to CONFIRM the booking details
+4. IMPORTANT - Check CURRENT BOOKINGS above: If the requested dates overlap with an existing booking for that vehicle, politely explain it's not available and suggest:
+   - Different dates when that vehicle IS available
+   - A similar vehicle that IS available for their dates
+5. Once you have vehicle + dates (and confirmed availability): Calculate total and ask them to CONFIRM the booking details
 6. After customer CONFIRMS (says yes, sounds good, let's do it, etc.): Include "[SEND_PAYMENT_LINK]" to send the payment link
 
 IMPORTANT - CONFIRMATION STEP:
