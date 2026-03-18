@@ -116,6 +116,14 @@ export async function POST(request: NextRequest) {
       aiResponse = aiResponse.replace(/\s*\[EXTRACTED\][\s\S]*?\[\/EXTRACTED\]\s*/, "").trim()
     }
 
+    // Check for fake URLs the AI might have made up (common hallucination)
+    const fakeUrlPattern = /https?:\/\/[^\s]+\/(payment|checkout|pay|book)[^\s]*/gi
+    if (fakeUrlPattern.test(aiResponse) && !aiResponse.includes("[SEND_PAYMENT_LINK]")) {
+      console.log("[Chatbot Test] WARNING: AI wrote a fake URL without using marker! Removing it.")
+      // Remove the fake URL and add the marker so we generate a real one
+      aiResponse = aiResponse.replace(fakeUrlPattern, "[SEND_PAYMENT_LINK]")
+    }
+
     // Generate payment link if [SEND_PAYMENT_LINK] marker is present
     console.log("[Chatbot Test] Checking for [SEND_PAYMENT_LINK]:", aiResponse.includes("[SEND_PAYMENT_LINK]"))
     if (aiResponse.includes("[SEND_PAYMENT_LINK]")) {
