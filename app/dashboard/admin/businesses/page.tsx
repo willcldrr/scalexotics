@@ -44,7 +44,7 @@ interface Business {
   deposit_percentage: number
   created_at: string
   updated_at: string
-  status: "active" | "inactive" | "suspended"
+  status: "active" | "inactive" | "suspended" | "pending"
 }
 
 const emptyBusiness: Partial<Business> = {
@@ -168,6 +168,38 @@ export default function AdminBusinessesPage() {
       fetchBusinesses()
     }
     setSaving(false)
+  }
+
+  const handleApprove = async (id: string) => {
+    const { error } = await supabase
+      .from("businesses")
+      .update({ status: "active" })
+      .eq("id", id)
+
+    if (error) {
+      console.error("Error approving business:", error)
+      alert("Failed to approve: " + error.message)
+    } else {
+      fetchBusinesses()
+    }
+  }
+
+  const handleDeny = async (id: string) => {
+    if (!confirm("Are you sure you want to deny this application? The user will not be able to access the dashboard.")) {
+      return
+    }
+
+    const { error } = await supabase
+      .from("businesses")
+      .update({ status: "suspended" })
+      .eq("id", id)
+
+    if (error) {
+      console.error("Error denying business:", error)
+      alert("Failed to deny: " + error.message)
+    } else {
+      fetchBusinesses()
+    }
   }
 
   const handleDelete = async (id: string) => {
@@ -472,23 +504,84 @@ export default function AdminBusinessesPage() {
         </div>
       )}
 
+      {/* Pending Approvals Section */}
+      {businesses.filter((b) => b.status === "pending").length > 0 && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-amber-400">Pending Approvals</h2>
+              <p className="text-sm text-white/50">
+                {businesses.filter((b) => b.status === "pending").length} new account{businesses.filter((b) => b.status === "pending").length !== 1 ? "s" : ""} awaiting review
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {businesses
+              .filter((b) => b.status === "pending")
+              .map((business) => (
+                <div
+                  key={business.id}
+                  className="flex items-center justify-between bg-black/30 rounded-xl p-4"
+                >
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold"
+                      style={{ backgroundColor: business.primary_color + "20", color: business.primary_color }}
+                    >
+                      {business.name.charAt(0)}
+                    </div>
+                    <div>
+                      <h3 className="font-medium">{business.name}</h3>
+                      <p className="text-sm text-white/50">{business.email}</p>
+                      <p className="text-xs text-white/30">
+                        Applied {new Date(business.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleApprove(business.id)}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-green-500 hover:bg-green-400 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-green-500/30"
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleDeny(business.id)}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-red-500/20 text-white/70 hover:text-red-400 rounded-xl transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                      Deny
+                    </button>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4">
-          <p className="text-2xl font-bold">{businesses.length}</p>
-          <p className="text-xs text-white/40">Total Businesses</p>
+          <p className="text-2xl font-bold">{businesses.filter((b) => b.status !== "pending").length}</p>
+          <p className="text-xs text-white/40">Active Businesses</p>
+        </div>
+        <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4">
+          <p className="text-2xl font-bold text-amber-400">
+            {businesses.filter((b) => b.status === "pending").length}
+          </p>
+          <p className="text-xs text-white/40">Pending Approval</p>
         </div>
         <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4">
           <p className="text-2xl font-bold text-green-400">
             {businesses.filter((b) => b.domain_status === "active").length}
           </p>
           <p className="text-xs text-white/40">Active Domains</p>
-        </div>
-        <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4">
-          <p className="text-2xl font-bold text-amber-400">
-            {businesses.filter((b) => b.domain_status === "pending").length}
-          </p>
-          <p className="text-xs text-white/40">Pending Setup</p>
         </div>
         <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4">
           <p className="text-2xl font-bold text-blue-400">

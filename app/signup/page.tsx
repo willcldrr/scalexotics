@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 
 export default function SignUpPage() {
@@ -10,6 +11,7 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("")
   const [fullName, setFullName] = useState("")
   const [companyName, setCompanyName] = useState("")
+  const [phone, setPhone] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -20,6 +22,7 @@ export default function SignUpPage() {
     setLoading(true)
     setError("")
 
+    // Sign up the user
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -32,27 +35,43 @@ export default function SignUpPage() {
     })
 
     if (signUpError) {
-      console.error("Signup error details:", {
-        message: signUpError.message,
-        status: signUpError.status,
-        name: signUpError.name,
-        cause: signUpError.cause,
-      })
-      setError(`${signUpError.message}${signUpError.status ? ` (Status: ${signUpError.status})` : ""}`)
+      console.error("Signup error:", signUpError)
+      setError(signUpError.message)
       setLoading(false)
       return
     }
 
     if (data.user) {
-      // Profile is automatically created by database trigger
+      // Create a business record with pending status
+      const slug = companyName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+
+      const { error: businessError } = await supabase.from("businesses").insert({
+        name: companyName,
+        slug: slug + "-" + Date.now().toString(36), // Ensure unique slug
+        owner_user_id: data.user.id,
+        email: email,
+        phone: phone || null,
+        status: "pending", // Pending approval
+        domain_status: "pending",
+      })
+
+      if (businessError) {
+        console.error("Business creation error:", businessError)
+        // Don't fail signup, just log it - admin can fix later
+      }
+
       // Record the session
       try {
         await fetch('/api/sessions', { method: 'POST' })
       } catch (e) {
         // Silently fail - session tracking is not critical
       }
-      // Redirect to access code verification page
-      router.push('/verify-access')
+
+      // Redirect to pending approval page
+      router.push('/pending-approval')
     }
   }
 
@@ -61,40 +80,43 @@ export default function SignUpPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-12">
           <Link href="/">
-            <img
-              src="https://imagedelivery.net/CVEJyzst_6io-ETn1V_PSw/3bdba65e-fb1a-4a3e-ff6f-1aa89b081f00/public"
-              alt="Scale Exotics"
-              className="h-12 w-auto mx-auto mb-8"
+            <Image
+              src="/velocitylogo.png"
+              alt="Velocity Labs"
+              width={64}
+              height={64}
+              className="h-16 w-auto mx-auto mb-8"
+              priority
             />
           </Link>
           <h1 className="text-4xl font-bold mb-3" style={{ fontFamily: 'var(--font-display)' }}>
             Get Started
           </h1>
-          <p className="text-lg text-white/50">Create your dashboard account</p>
+          <p className="text-lg text-white/50">Create your business account</p>
         </div>
 
         <form onSubmit={handleSignUp} className="space-y-5">
           <div>
-            <label className="block text-sm text-white/60 mb-2">Full Name</label>
+            <label className="block text-sm text-white/60 mb-2">Your Name</label>
             <input
               type="text"
               placeholder="John Smith"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
-              className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/20 text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+              className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/20 text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-white/60 mb-2">Company Name</label>
+            <label className="block text-sm text-white/60 mb-2">Business Name</label>
             <input
               type="text"
               placeholder="Exotic Rentals LLC"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               required
-              className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/20 text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+              className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/20 text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-all"
             />
           </div>
 
@@ -106,7 +128,18 @@ export default function SignUpPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/20 text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+              className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/20 text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-white/60 mb-2">Phone Number</label>
+            <input
+              type="tel"
+              placeholder="(555) 123-4567"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/20 text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-all"
             />
           </div>
 
@@ -119,7 +152,7 @@ export default function SignUpPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/20 text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+              className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/20 text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-all"
             />
             <p className="text-xs text-white/40 mt-2">Minimum 6 characters</p>
           </div>
@@ -133,7 +166,7 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-[#375DEE] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-lg font-semibold rounded-xl transition-colors"
+            className="w-full py-4 bg-white hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed text-black text-lg font-semibold rounded-xl transition-all shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:shadow-[0_0_40px_rgba(255,255,255,0.5)]"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             {loading ? "Creating account..." : "Create Account"}
@@ -142,7 +175,7 @@ export default function SignUpPage() {
 
         <p className="text-center mt-8 text-white/50">
           Already have an account?{" "}
-          <Link href="/login" className="text-[#375DEE] hover:underline">
+          <Link href="/login" className="text-white/70 hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">
             Sign in
           </Link>
         </p>

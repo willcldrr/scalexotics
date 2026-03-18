@@ -57,6 +57,36 @@ function LoginForm() {
       } catch (e) {
         // Silently fail - session tracking is not critical
       }
+
+      // Check if user has a pending business
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_admin")
+          .eq("id", user.id)
+          .single()
+
+        // Admins go straight to dashboard
+        if (profile?.is_admin) {
+          router.push("/dashboard")
+          router.refresh()
+          return
+        }
+
+        // Check business status
+        const { data: business } = await supabase
+          .from("businesses")
+          .select("status")
+          .eq("owner_user_id", user.id)
+          .single()
+
+        if (business?.status === "pending") {
+          router.push("/pending-approval")
+          return
+        }
+      }
+
       router.push("/dashboard")
       router.refresh()
     }

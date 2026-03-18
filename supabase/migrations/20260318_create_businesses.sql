@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS businesses (
   updated_at TIMESTAMPTZ DEFAULT NOW(),
 
   -- Status
-  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended'))
+  status TEXT DEFAULT 'pending' CHECK (status IN ('active', 'inactive', 'suspended', 'pending'))
 );
 
 -- Index for fast domain lookup
@@ -68,6 +68,10 @@ CREATE POLICY "Admins can manage all businesses" ON businesses
 -- Business owners can see their own business
 CREATE POLICY "Owners can view their business" ON businesses
   FOR SELECT USING (owner_user_id = auth.uid());
+
+-- Users can create their own business during signup
+CREATE POLICY "Users can create their own business" ON businesses
+  FOR INSERT WITH CHECK (owner_user_id = auth.uid());
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_businesses_updated_at()
