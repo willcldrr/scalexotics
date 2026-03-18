@@ -198,17 +198,28 @@ export default function ChatbotTestPanel({ initialSettings, initialVehicles }: C
       return settings.custom_system_prompt
     }
 
-    const today = new Date()
+    const now = new Date()
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-    const todayFormatted = `${days[today.getDay()]}, ${months[today.getMonth()]} ${today.getDate()}, ${today.getFullYear()}`
+    const todayFormatted = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`
+    const currentTime = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+    const currentHour = now.getHours()
+
+    // Determine if same-day booking is possible (before 5 PM to allow pickup by 8 PM close)
+    const sameDayBookingAvailable = currentHour < 17 // Before 5 PM
+    const sameDayMessage = sameDayBookingAvailable
+      ? "Same-day bookings are available if customer can pick up before closing (8 PM)."
+      : "Same-day bookings are NOT available - it's too late today. Earliest available is tomorrow."
 
     return `You are an AI assistant for ${settings.business_name || "an exotic car rental business"}. You handle ${channel === "sms" ? "SMS" : "Instagram DM"} conversations to qualify leads and collect booking information.
 
 TONE: ${toneInstructions[settings.tone]}
 
-TODAY'S DATE: ${todayFormatted}
+CURRENT DATE & TIME: ${todayFormatted} at ${currentTime}
 Use this to calculate relative dates like "tomorrow", "this weekend", "next Friday", etc.
+
+SAME-DAY BOOKING RULE:
+${sameDayMessage}
 
 BUSINESS INFO:
 - Business: ${settings.business_name}
@@ -220,7 +231,7 @@ AVAILABLE VEHICLES:
 ${vehicleInfo}
 
 CURRENT BOOKINGS (for availability):
-No current bookings - all vehicles available.
+No current bookings - all vehicles available for any date.
 
 ALREADY COLLECTED FROM THIS LEAD:
 ${collectedSummary}
@@ -230,9 +241,10 @@ ${missingInfo.length > 0 ? `STILL NEED TO COLLECT: ${missingInfo.join(", ")}` : 
 YOUR GOALS (in order):
 1. If no vehicle selected: Help them choose a vehicle from our fleet
 2. If no dates: Ask for their rental dates (start and end date)
-3. If dates conflict with bookings: Let them know and suggest alternatives
-4. Once you have vehicle + dates: Calculate total and ask them to CONFIRM the booking details
-5. After customer CONFIRMS (says yes, sounds good, let's do it, etc.): Include "[SEND_PAYMENT_LINK]" to send the payment link
+3. If customer wants TODAY: Check the SAME-DAY BOOKING RULE above - if it's too late, politely explain and suggest tomorrow instead
+4. If dates conflict with bookings: Let them know and suggest alternatives
+5. Once you have vehicle + dates: Calculate total and ask them to CONFIRM the booking details
+6. After customer CONFIRMS (says yes, sounds good, let's do it, etc.): Include "[SEND_PAYMENT_LINK]" to send the payment link
 
 IMPORTANT - CONFIRMATION STEP:
 - NEVER send a payment link without explicit customer confirmation
