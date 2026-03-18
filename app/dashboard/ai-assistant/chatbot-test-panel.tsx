@@ -896,6 +896,79 @@ Remember: ${channel === "sms" ? "You're texting, keep it brief" : "You're on Ins
             )}
           </div>
 
+          {/* Model Selection Card */}
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden">
+            <button
+              onClick={() => setShowModels(!showModels)}
+              className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Cpu className="w-5 h-5 text-white" />
+                <span className="font-medium">Model Selection</span>
+              </div>
+              {showModels ? <ChevronUp className="w-5 h-5 text-white/40" /> : <ChevronDown className="w-5 h-5 text-white/40" />}
+            </button>
+
+            {showModels && (
+              <div className="p-4 pt-0 space-y-3 border-t border-white/[0.06]">
+                {(Object.entries(MODELS) as [ModelId, typeof MODELS[ModelId]][]).map(([id, model]) => (
+                  <button
+                    key={id}
+                    onClick={() => setSelectedModel(id)}
+                    className={`w-full p-3 rounded-xl border text-left transition-all ${
+                      selectedModel === id
+                        ? "bg-white/10 border-white/30"
+                        : "bg-white/[0.02] border-white/[0.06] hover:border-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium flex items-center gap-2">
+                        {model.name}
+                        {model.recommended && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded">RECOMMENDED</span>
+                        )}
+                      </span>
+                    </div>
+                    <p className="text-xs text-white/40 mb-2">{model.description}</p>
+                    <div className="flex items-center gap-3 text-xs text-white/50">
+                      <span>In: ${model.inputCost}/1M</span>
+                      <span>Out: ${model.outputCost}/1M</span>
+                    </div>
+                  </button>
+                ))}
+
+                {/* Escalation Settings */}
+                <div className="pt-3 border-t border-white/[0.06] space-y-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.auto_escalate}
+                      onChange={(e) => setSettings(prev => ({ ...prev, auto_escalate: e.target.checked }))}
+                      className="w-4 h-4 rounded border-white/20 bg-white/5 text-white focus:ring-white"
+                    />
+                    <span className="text-sm">Auto-escalate to Sonnet</span>
+                  </label>
+                  <p className="text-xs text-white/30">
+                    Automatically use Sonnet for complaints, complex requests, or frustrated customers.
+                  </p>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={forceModel}
+                      onChange={(e) => setForceModel(e.target.checked)}
+                      className="w-4 h-4 rounded border-white/20 bg-white/5 text-white focus:ring-white"
+                    />
+                    <span className="text-sm">Force selected model</span>
+                  </label>
+                  <p className="text-xs text-white/30">
+                    Disable auto-escalation and always use the selected model.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Stripe Configuration Card */}
           <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden">
             <button
@@ -1302,80 +1375,7 @@ Remember: ${channel === "sms" ? "You're texting, keep it brief" : "You're on Ins
             )}
           </div>
 
-          {/* Model Selection Card */}
-          <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden">
-            <button
-              onClick={() => setShowModels(!showModels)}
-              className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <Cpu className="w-5 h-5 text-white" />
-                <span className="font-medium">Model Selection</span>
-              </div>
-              {showModels ? <ChevronUp className="w-5 h-5 text-white/40" /> : <ChevronDown className="w-5 h-5 text-white/40" />}
-            </button>
-
-            {showModels && (
-              <div className="p-4 pt-0 space-y-3 border-t border-white/[0.06]">
-                {(Object.entries(MODELS) as [ModelId, typeof MODELS[ModelId]][]).map(([id, model]) => (
-                  <button
-                    key={id}
-                    onClick={() => setSelectedModel(id)}
-                    className={`w-full p-3 rounded-xl border text-left transition-all ${
-                      selectedModel === id
-                        ? "bg-white/10 border-white/30"
-                        : "bg-white/[0.02] border-white/[0.06] hover:border-white/10"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium flex items-center gap-2">
-                        {model.name}
-                        {model.recommended && (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded">RECOMMENDED</span>
-                        )}
-                      </span>
-                    </div>
-                    <p className="text-xs text-white/40 mb-2">{model.description}</p>
-                    <div className="flex items-center gap-3 text-xs text-white/50">
-                      <span>In: ${model.inputCost}/1M</span>
-                      <span>Out: ${model.outputCost}/1M</span>
-                    </div>
-                  </button>
-                ))}
-
-                {/* Escalation Settings */}
-                <div className="pt-3 border-t border-white/[0.06] space-y-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settings.auto_escalate}
-                      onChange={(e) => setSettings(prev => ({ ...prev, auto_escalate: e.target.checked }))}
-                      className="w-4 h-4 rounded border-white/20 bg-white/5 text-white focus:ring-white"
-                    />
-                    <span className="text-sm">Auto-escalate to Sonnet</span>
-                  </label>
-                  <p className="text-xs text-white/30">
-                    Automatically use Sonnet for complaints, complex requests, or frustrated customers.
-                  </p>
-
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={forceModel}
-                      onChange={(e) => setForceModel(e.target.checked)}
-                      className="w-4 h-4 rounded border-white/20 bg-white/5 text-white focus:ring-white"
-                    />
-                    <span className="text-sm">Force selected model</span>
-                  </label>
-                  <p className="text-xs text-white/30">
-                    Disable auto-escalation and always use the selected model.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Cost Tracking Card */}
+{/* Cost Tracking Card */}
           <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden">
             <button
               onClick={() => setShowCosts(!showCosts)}

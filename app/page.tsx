@@ -60,11 +60,11 @@ export default function Home() {
       {/* Ultra-Modern Header */}
       <header className="fixed top-0 left-0 right-0 z-[70]" style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}>
         <div className={`transition-[background-color,border-color] duration-300 ${isScrolled ? "bg-black/90 border-b border-white/[0.08]" : ""}`}>
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="w-full pl-4 pr-6 lg:pl-6 lg:pr-8">
             <div className="flex items-center justify-between h-20">
               {/* Logo */}
               <a href="/" className="relative group">
-                <Image src="/velocitylong.png" alt="Velocity" width={200} height={40} className="h-10 w-auto" priority />
+                <Image src="/velocitylong.jpg" alt="Velocity" width={160} height={32} className="h-8 w-auto rounded" priority />
                 <div className="absolute -bottom-1 left-0 w-0 h-[2px] bg-white group-hover:w-full transition-all duration-300 shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
               </a>
 
@@ -762,7 +762,7 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-8 mb-10 md:mb-12">
             {/* Brand */}
             <div className="col-span-2">
-              <Image src="/velocitylogo.png" alt="Scale Exotics" width={140} height={28} className="h-6 md:h-7 w-auto mb-3 md:mb-4" />
+              <Image src="/velocity.jpg" alt="Scale Exotics" width={140} height={28} className="h-6 md:h-7 w-auto mb-3 md:mb-4" />
               <p className="text-white/40 text-xs md:text-sm max-w-sm leading-relaxed">
                 AI-powered lead capture and booking platform built for exotic car rental fleets.
               </p>

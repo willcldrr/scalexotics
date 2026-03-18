@@ -20,10 +20,7 @@ import {
   X,
   ChevronRight,
   Bot,
-  Globe,
   Shield,
-  FileText,
-  Key,
   Building2,
   Home,
 } from "lucide-react"
@@ -34,16 +31,15 @@ const allNavItems = [
   { name: "Leads", href: "/dashboard/leads", icon: Users, key: "leads" },
   { name: "Vehicles", href: "/dashboard/vehicles", icon: Car, key: "vehicles" },
   { name: "AI Assistant", href: "/dashboard/ai-assistant", icon: Bot, key: "ai-assistant" },
-  { name: "Settings", href: "/dashboard/settings", icon: Settings, key: "settings", alwaysVisible: true },
 ]
 
 const adminNavItems = [
+  { name: "Admin", href: "/dashboard/admin", icon: Shield, key: "admin" },
   { name: "CRM", href: "/dashboard/admin/crm", icon: Building2, key: "admin-crm" },
-  { name: "Domains", href: "/dashboard/admin/domains", icon: Globe, key: "admin-domains" },
-  { name: "Invoices", href: "/dashboard/admin/invoices", icon: FileText, key: "admin-invoices" },
-  { name: "Access Codes", href: "/dashboard/admin/access-codes", icon: Key, key: "admin-access-codes" },
-  { name: "Do Not Rent", href: "/dashboard/admin/do-not-rent", icon: Shield, key: "admin-do-not-rent" },
 ]
+
+// Settings is always at the bottom
+const settingsItem = { name: "Settings", href: "/dashboard/settings", icon: Settings, key: "settings" }
 
 export default function DashboardLayout({
   children,
@@ -55,14 +51,12 @@ export default function DashboardLayout({
   const supabase = createClient()
   const branding = useBranding()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [sidebarHovered, setSidebarHovered] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
   const [sidebarSettings, setSidebarSettings] = useState<SidebarSettings>(getDefaultSidebarSettings())
 
-  // Compute sidebar expansion state based on display mode
-  const displayMode = (sidebarSettings.displayMode as SidebarDisplayMode) || "hover"
-  const isExpanded = displayMode === "full" || (displayMode === "hover" && sidebarHovered)
+  // Sidebar is always collapsed on desktop, expanded on mobile
+  const isExpanded = false
 
   useEffect(() => {
     const getUser = async () => {
@@ -245,35 +239,29 @@ export default function DashboardLayout({
         />
       )}
 
-      {/* Sidebar - Display mode controlled by settings */}
+      {/* Sidebar - Always collapsed on desktop with hover tooltips */}
       <aside
-        onMouseEnter={() => displayMode === "hover" && setSidebarHovered(true)}
-        onMouseLeave={() => displayMode === "hover" && setSidebarHovered(false)}
-        className={`fixed top-0 left-0 z-50 h-full bg-black border-r border-white/10 transform transition-all duration-200 ease-out lg:translate-x-0 w-64 ${
-          displayMode === "full" ? "lg:w-64" : isExpanded ? "lg:w-64" : "lg:w-[72px]"
-        } ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed top-0 left-0 z-50 h-full bg-black border-r border-white/10 transform transition-all duration-200 ease-out lg:translate-x-0 w-64 lg:w-[72px] ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
-        <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex flex-col h-full overflow-hidden lg:overflow-visible">
           {/* Logo - aligned with header height */}
-          <div className={`py-3 lg:h-[73px] flex items-center transition-all duration-200 ${
-            isExpanded ? "px-6 justify-start" : "px-6 lg:px-3 justify-center lg:justify-center"
-          }`}>
+          <div className="py-3 lg:h-[73px] flex items-center transition-all duration-200 px-6 lg:px-3 justify-center">
             <Link href="/dashboard" className="flex items-center">
               <Image
-                src={branding.logoUrl || "/velocitylogo.png"}
-                alt={branding.companyName || "Scale Exotics"}
+                src={branding.logoUrl || "/velocity.jpg"}
+                alt={branding.companyName || "Velocity"}
                 width={48}
                 height={48}
-                className="h-[48px] w-[48px] object-contain"
+                className="h-[48px] w-[48px] object-contain rounded-lg"
                 unoptimized={branding.logoUrl ? true : false}
               />
             </Link>
           </div>
 
-          {/* Navigation */}
-          <nav className={`flex-1 space-y-1 overflow-y-auto transition-all duration-200 ${
-            isExpanded ? "p-4" : "p-4 lg:p-2"
-          }`}>
+          {/* Main Navigation */}
+          <nav className="flex-1 space-y-1 overflow-y-auto lg:overflow-visible transition-all duration-200 p-4 lg:p-2">
             {navItems.map((item) => {
               const isActive = pathname === item.href ||
                 (item.href !== "/dashboard" && pathname.startsWith(item.href))
@@ -282,9 +270,7 @@ export default function DashboardLayout({
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`group relative flex items-center py-3 rounded-xl transition-colors ${
-                    isExpanded ? "gap-3 px-4" : "gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center"
-                  } ${
+                  className={`group relative flex items-center py-3 rounded-xl transition-colors gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center ${
                     isActive
                       ? "text-white"
                       : "text-white/60 hover:text-white hover:bg-white/5"
@@ -292,22 +278,27 @@ export default function DashboardLayout({
                   style={isActive ? { backgroundColor: "rgba(255,255,255,0.15)" } : undefined}
                 >
                   <item.icon className="w-5 h-5 flex-shrink-0" />
-                  {isExpanded && <span className="font-medium whitespace-nowrap">{item.name}</span>}
-                  {!isExpanded && <span className="font-medium lg:hidden">{item.name}</span>}
-                  {isActive && isExpanded && <ChevronRight className="w-4 h-4 ml-auto" />}
-                  {isActive && !isExpanded && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
+                  {/* Mobile: always show text */}
+                  <span className="font-medium lg:hidden">{item.name}</span>
+                  {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
+                  {/* Desktop: tooltip on hover */}
+                  <div className="hidden lg:flex absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[100] shadow-xl items-center">
+                    <span className="text-sm font-medium text-white">{item.name}</span>
+                  </div>
                 </Link>
               )
             })}
+          </nav>
 
-            {/* Admin Section */}
+          {/* Bottom section: Admin + Settings + User */}
+          <div className="border-t border-white/10 transition-all duration-200 p-4 lg:p-2 lg:overflow-visible space-y-1">
+            {/* Admin Section - above Settings */}
             {profile?.is_admin && (
               <>
-                <div className={`pt-4 pb-2 ${isExpanded ? "px-4" : "px-4 lg:px-2 lg:flex lg:justify-center"}`}>
-                  <p className={`text-xs font-semibold text-white/30 uppercase tracking-wider flex items-center ${isExpanded ? "gap-2" : "gap-2 lg:gap-0"}`}>
+                <div className="pb-2 px-4 lg:px-2 lg:flex lg:justify-center">
+                  <p className="text-xs font-semibold text-white/30 uppercase tracking-wider flex items-center gap-2 lg:gap-0">
                     <Shield className="w-3 h-3" />
-                    {isExpanded && <span>Admin</span>}
-                    {!isExpanded && <span className="lg:hidden">Admin</span>}
+                    <span className="lg:hidden">Admin</span>
                   </p>
                 </div>
                 {adminNavItems.map((item) => {
@@ -318,9 +309,7 @@ export default function DashboardLayout({
                       key={item.href}
                       href={item.href}
                       onClick={() => setSidebarOpen(false)}
-                      className={`group relative flex items-center py-3 rounded-xl transition-colors ${
-                        isExpanded ? "gap-3 px-4" : "gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center"
-                      } ${
+                      className={`group relative flex items-center py-3 rounded-xl transition-colors gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center ${
                         isActive
                           ? "text-white"
                           : "text-white/60 hover:text-white hover:bg-white/5"
@@ -328,25 +317,47 @@ export default function DashboardLayout({
                       style={isActive ? { backgroundColor: "rgba(255,255,255,0.15)" } : undefined}
                     >
                       <item.icon className="w-5 h-5 flex-shrink-0" />
-                      {isExpanded && <span className="font-medium whitespace-nowrap">{item.name}</span>}
-                      {!isExpanded && <span className="font-medium lg:hidden">{item.name}</span>}
-                      {isActive && isExpanded && <ChevronRight className="w-4 h-4 ml-auto" />}
-                      {isActive && !isExpanded && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
+                      {/* Mobile: always show text */}
+                      <span className="font-medium lg:hidden">{item.name}</span>
+                      {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
+                      {/* Desktop: tooltip on hover */}
+                      <div className="hidden lg:flex absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[100] shadow-xl items-center">
+                        <span className="text-sm font-medium text-white">{item.name}</span>
+                      </div>
                     </Link>
                   )
                 })}
+                <div className="my-2 border-t border-white/10" />
               </>
             )}
-          </nav>
 
-          {/* User section */}
-          <div className={`border-t border-white/10 transition-all duration-200 ${
-            isExpanded ? "p-4" : "p-4 lg:p-2"
-          }`}>
-            {/* User info - shows on mobile always, on desktop when hovered */}
-            <div className={`flex items-center py-3 mb-2 ${
-              isExpanded ? "gap-3 px-4" : "gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center"
-            }`}>
+            {/* Settings - always at bottom */}
+            {(() => {
+              const isActive = pathname === settingsItem.href || pathname.startsWith(settingsItem.href)
+              return (
+                <Link
+                  href={settingsItem.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`group relative flex items-center py-3 rounded-xl transition-colors gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center ${
+                    isActive
+                      ? "text-white"
+                      : "text-white/60 hover:text-white hover:bg-white/5"
+                  }`}
+                  style={isActive ? { backgroundColor: "rgba(255,255,255,0.15)" } : undefined}
+                >
+                  <settingsItem.icon className="w-5 h-5 flex-shrink-0" />
+                  {/* Mobile: always show text */}
+                  <span className="font-medium lg:hidden">{settingsItem.name}</span>
+                  {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
+                  {/* Desktop: tooltip on hover */}
+                  <div className="hidden lg:flex absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[100] shadow-xl items-center">
+                    <span className="text-sm font-medium text-white">{settingsItem.name}</span>
+                  </div>
+                </Link>
+              )
+            })()}
+            {/* User info - shows on mobile always, tooltip on desktop */}
+            <div className="group relative flex items-center py-3 mb-2 gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center">
               <div
                 className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-white/10"
               >
@@ -354,44 +365,39 @@ export default function DashboardLayout({
                   {profile?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || "U"}
                 </span>
               </div>
-              {isExpanded && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">
-                    {profile?.full_name || "User"}
-                  </p>
-                  <p className="text-xs text-white/40 truncate">
-                    {profile?.company_name || user?.email}
-                  </p>
-                </div>
-              )}
-              {!isExpanded && (
-                <div className="flex-1 min-w-0 lg:hidden">
-                  <p className="text-sm font-medium truncate">
-                    {profile?.full_name || "User"}
-                  </p>
-                  <p className="text-xs text-white/40 truncate">
-                    {profile?.company_name || user?.email}
-                  </p>
-                </div>
-              )}
+              {/* Mobile: always show info */}
+              <div className="flex-1 min-w-0 lg:hidden">
+                <p className="text-sm font-medium truncate">
+                  {profile?.full_name || "User"}
+                </p>
+                <p className="text-xs text-white/40 truncate">
+                  {profile?.company_name || user?.email}
+                </p>
+              </div>
+              {/* Desktop: tooltip on hover */}
+              <div className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[100] shadow-xl">
+                <p className="text-sm font-medium text-white">{profile?.full_name || "User"}</p>
+                <p className="text-xs text-white/50">{profile?.company_name || user?.email}</p>
+              </div>
             </div>
             {/* Sign out button */}
             <button
               onClick={handleSignOut}
-              className={`flex items-center py-3 w-full rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors ${
-                isExpanded ? "gap-3 px-4" : "gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center"
-              }`}
+              className="group relative flex items-center py-3 w-full rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center"
             >
               <LogOut className="w-5 h-5 flex-shrink-0" />
-              {isExpanded && <span className="font-medium whitespace-nowrap">Sign Out</span>}
-              {!isExpanded && <span className="font-medium lg:hidden">Sign Out</span>}
+              <span className="font-medium lg:hidden">Sign Out</span>
+              {/* Desktop: tooltip on hover */}
+              <div className="hidden lg:flex absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[100] shadow-xl items-center">
+                <span className="text-sm font-medium text-white">Sign Out</span>
+              </div>
             </button>
           </div>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className={`${displayMode === "full" ? "lg:pl-64" : "lg:pl-[72px]"} ${pathname.startsWith("/dashboard/admin/crm") ? "" : "pb-16"} lg:pb-0 transition-all duration-200`}>
+      <div className={`lg:pl-[72px] ${pathname.startsWith("/dashboard/admin/crm") ? "" : "pb-16"} lg:pb-0 transition-all duration-200`}>
         {/* Top bar */}
         <header className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-white/10 lg:h-[73px]">
           <div className="flex items-center justify-between px-4 lg:px-6 py-3 h-full">

@@ -27,6 +27,8 @@ import {
   AlertTriangle,
   GripVertical,
   Clock,
+  Instagram,
+  MessageCircle,
 } from "lucide-react"
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns"
 import { leadStatusOptions, getStatusColor, getStatusLabel, defaultLeadStatus } from "@/lib/lead-status"
@@ -75,14 +77,14 @@ const sourceOptions = [
   { value: "other", label: "Other" },
 ]
 
-// Pipeline column configuration with white glow styling
+// Pipeline column configuration with progressive glow (dark → light → green/red)
 const pipelineColumns = [
-  { id: "new", label: "New", color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
-  { id: "contacted", label: "Contacted", color: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
-  { id: "qualified", label: "Qualified", color: "bg-amber-500/20 text-amber-400 border-amber-500/30" },
-  { id: "negotiating", label: "Negotiating", color: "bg-orange-500/20 text-orange-400 border-orange-500/30" },
-  { id: "booked", label: "Booked", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
-  { id: "lost", label: "Lost", color: "bg-red-500/20 text-red-400 border-red-500/30" },
+  { id: "new", label: "New", color: "bg-white/5 text-white/50 border-white/10", glow: "", textGlow: "" },
+  { id: "contacted", label: "Contacted", color: "bg-white/10 text-white/60 border-white/20", glow: "", textGlow: "" },
+  { id: "qualified", label: "Qualified", color: "bg-white/15 text-white/70 border-white/25", glow: "shadow-[0_0_8px_rgba(255,255,255,0.06)]", textGlow: "" },
+  { id: "negotiating", label: "Negotiating", color: "bg-white/25 text-white/90 border-white/30", glow: "shadow-[0_0_10px_rgba(255,255,255,0.1)]", textGlow: "" },
+  { id: "booked", label: "Booked", color: "bg-emerald-400 text-white border-emerald-300", glow: "shadow-[0_0_12px_rgba(52,211,153,0.4)]", textGlow: "" },
+  { id: "lost", label: "Lost", color: "bg-red-400 text-white border-red-300", glow: "shadow-[0_0_12px_rgba(248,113,113,0.4)]", textGlow: "" },
 ]
 
 export default function LeadsPage() {
@@ -641,6 +643,41 @@ export default function LeadsPage() {
 
   const unreadCount = leads.filter(l => l.unread).length
 
+  // Get channel info (icon, label, color) based on lead source
+  const getChannelInfo = (source: string | null) => {
+    switch (source) {
+      case "instagram":
+        return {
+          icon: Instagram,
+          label: "Instagram",
+          color: "bg-gradient-to-r from-purple-500 to-pink-500 text-white",
+          textColor: "text-pink-400"
+        }
+      case "sms":
+      case "phone":
+        return {
+          icon: MessageCircle,
+          label: "SMS",
+          color: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
+          textColor: "text-emerald-400"
+        }
+      case "facebook":
+        return {
+          icon: MessageSquare,
+          label: "Facebook",
+          color: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
+          textColor: "text-blue-400"
+        }
+      default:
+        return {
+          icon: MessageSquare,
+          label: source || "Unknown",
+          color: "bg-white/10 text-white/60 border border-white/20",
+          textColor: "text-white/60"
+        }
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -737,7 +774,7 @@ export default function LeadsPage() {
                   <div className="p-4 border-b border-white/[0.06]">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${column.color}`}>
+                        <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${column.color} ${column.glow} ${column.textGlow}`}>
                           {column.label}
                         </span>
                         <span className="text-white/40 text-sm">{columnLeads.length}</span>
@@ -784,7 +821,20 @@ export default function LeadsPage() {
                                     <span className="w-2 h-2 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
                                   )}
                                 </div>
-                                <span className="text-xs text-white/40">{lead.phone}</span>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-xs text-white/40">{lead.phone}</span>
+                                  {/* Channel Badge */}
+                                  {(() => {
+                                    const channel = getChannelInfo(lead.source)
+                                    const ChannelIcon = channel.icon
+                                    return (
+                                      <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold ${channel.color}`}>
+                                        <ChannelIcon className="w-2.5 h-2.5" />
+                                        {channel.label}
+                                      </span>
+                                    )
+                                  })()}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -1487,49 +1537,72 @@ export default function LeadsPage() {
         </div>
       )}
 
-      {/* Lead Details Modal (for Pipeline View) */}
+      {/* Lead Details Modal (for Pipeline View) - Two Column Layout */}
       {viewMode === "pipeline" && selectedLead && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setSelectedLead(null)}>
-          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-[0_0_60px_rgba(255,255,255,0.1)]" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-5xl h-[85vh] overflow-hidden flex flex-col shadow-[0_0_60px_rgba(255,255,255,0.1)]" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
-            <div className="p-6 border-b border-white/10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className={`w-14 h-14 rounded-full flex items-center justify-center ring-1 ${
-                    isOnDoNotRentList(selectedLead)
-                      ? "bg-gradient-to-br from-red-500/30 to-red-500/10 ring-red-500/30"
-                      : "bg-gradient-to-br from-white/20 to-white/5 ring-white/10"
-                  }`}>
-                    <span className={`text-xl font-semibold ${isOnDoNotRentList(selectedLead) ? "text-red-400" : "text-white"}`}>
-                      {selectedLead.name.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className={`text-xl font-bold ${isOnDoNotRentList(selectedLead) ? "text-red-400" : "text-white"}`}>
-                        {selectedLead.name}
-                      </h3>
-                      {isOnDoNotRentList(selectedLead) && (
-                        <span className="flex items-center gap-1 px-2 py-0.5 bg-red-500/20 text-red-400 text-[10px] font-bold rounded">
-                          <AlertTriangle className="w-3 h-3" />
-                          DO NOT RENT
+            <div className="p-4 border-b border-white/10 flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ring-1 ${
+                  isOnDoNotRentList(selectedLead)
+                    ? "bg-gradient-to-br from-red-500/30 to-red-500/10 ring-red-500/30"
+                    : "bg-gradient-to-br from-white/20 to-white/5 ring-white/10"
+                }`}>
+                  <span className={`text-lg font-semibold ${isOnDoNotRentList(selectedLead) ? "text-red-400" : "text-white"}`}>
+                    {selectedLead.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className={`text-lg font-bold ${isOnDoNotRentList(selectedLead) ? "text-red-400" : "text-white"}`}>
+                      {selectedLead.name}
+                    </h3>
+                    {/* Channel Badge */}
+                    {(() => {
+                      const channel = getChannelInfo(selectedLead.source)
+                      const ChannelIcon = channel.icon
+                      return (
+                        <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${channel.color}`}>
+                          <ChannelIcon className="w-3 h-3" />
+                          {channel.label}
                         </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-4 mt-1 text-sm text-white/50">
-                      <span className="flex items-center gap-1.5">
-                        <Phone className="w-4 h-4" />
-                        {selectedLead.phone}
+                      )
+                    })()}
+                    {isOnDoNotRentList(selectedLead) && (
+                      <span className="flex items-center gap-1 px-2 py-0.5 bg-red-500/20 text-red-400 text-[10px] font-bold rounded">
+                        <AlertTriangle className="w-3 h-3" />
+                        DNR
                       </span>
-                      {selectedLead.email && (
-                        <span className="flex items-center gap-1.5">
-                          <Mail className="w-4 h-4" />
-                          {selectedLead.email}
-                        </span>
-                      )}
-                    </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-white/50">
+                    <span className="flex items-center gap-1">
+                      <Phone className="w-3.5 h-3.5" />
+                      {selectedLead.phone}
+                    </span>
+                    {selectedLead.email && (
+                      <span className="flex items-center gap-1">
+                        <Mail className="w-3.5 h-3.5" />
+                        {selectedLead.email}
+                      </span>
+                    )}
                   </div>
                 </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => openEditModal(selectedLead)}
+                  className="p-2 rounded-lg hover:bg-white/5 transition-colors text-white/40 hover:text-white"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(selectedLead.id)}
+                  className="p-2 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
                 <button
                   onClick={() => setSelectedLead(null)}
                   className="p-2 rounded-lg hover:bg-white/5 transition-colors"
@@ -1539,113 +1612,171 @@ export default function LeadsPage() {
               </div>
             </div>
 
-            {/* Details & Actions */}
-            <div className="p-6 space-y-6 overflow-y-auto">
-              {/* Status */}
-              <div>
-                <label className="block text-sm text-white/50 mb-2">Status</label>
-                <div className="flex flex-wrap gap-2">
-                  {pipelineColumns.map((col) => (
+            {/* Two Column Layout */}
+            <div className="flex flex-1 overflow-hidden">
+              {/* Left Side - Lead Information (35%) */}
+              <div className="w-[35%] border-r border-white/10 overflow-y-auto p-4 space-y-4 flex-shrink-0">
+                {/* Status */}
+                <div>
+                  <label className="block text-xs text-white/40 uppercase tracking-wider mb-2">Status</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {pipelineColumns.map((col) => (
+                      <button
+                        key={col.id}
+                        onClick={() => handleStatusChange(selectedLead.id, col.id)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
+                          selectedLead.status === col.id
+                            ? `${col.color} ${col.glow} ${col.textGlow}`
+                            : "border-white/10 text-white/40 hover:border-white/20 hover:text-white/60"
+                        }`}
+                      >
+                        {col.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Info Cards */}
+                <div className="space-y-3">
+                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Car className="w-4 h-4 text-white/40" />
+                      <span className="text-[10px] text-white/40 uppercase tracking-wider">Vehicle Interest</span>
+                    </div>
+                    <p className="text-sm font-medium">{getVehicleName(selectedLead.vehicle_interest) || "Not specified"}</p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Calendar className="w-4 h-4 text-white/40" />
+                      <span className="text-[10px] text-white/40 uppercase tracking-wider">Created</span>
+                    </div>
+                    <p className="text-sm font-medium">{formatDate(selectedLead.created_at)}</p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Clock className="w-4 h-4 text-white/40" />
+                      <span className="text-[10px] text-white/40 uppercase tracking-wider">Last Activity</span>
+                    </div>
+                    <p className="text-sm font-medium">
+                      {selectedLead.last_message_time
+                        ? formatDistanceToNow(new Date(selectedLead.last_message_time), { addSuffix: true })
+                        : "No messages"}
+                    </p>
+                  </div>
+
+                  {selectedLead.notes && (
+                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <StickyNote className="w-4 h-4 text-white/40" />
+                        <span className="text-[10px] text-white/40 uppercase tracking-wider">Notes</span>
+                      </div>
+                      <p className="text-sm text-white/80 whitespace-pre-wrap">{selectedLead.notes}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Side - Conversation (65%) */}
+              <div className="flex-1 flex flex-col bg-black/30 min-w-0">
+                {/* Conversation Header */}
+                <div className="p-3 border-b border-white/[0.06] flex items-center gap-2 flex-shrink-0">
+                  {(() => {
+                    const channel = getChannelInfo(selectedLead.source)
+                    const ChannelIcon = channel.icon
+                    return (
+                      <>
+                        <ChannelIcon className={`w-4 h-4 ${channel.textColor}`} />
+                        <span className="text-sm font-medium text-white/70">Conversation</span>
+                        <span className="text-xs text-white/30">({messages.length} messages)</span>
+                      </>
+                    )
+                  })()}
+                </div>
+
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {messagesLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="w-6 h-6 animate-spin text-white/50" />
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center">
+                      <div className="w-16 h-16 rounded-2xl bg-white/[0.03] flex items-center justify-center mb-4">
+                        <MessageSquare className="w-8 h-8 text-white/15" />
+                      </div>
+                      <p className="text-white/50 font-medium">No messages yet</p>
+                      <p className="text-white/30 text-sm mt-1 max-w-[240px]">
+                        Send a message to start the conversation
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-center mb-4">
+                        <span className="px-3 py-1 bg-white/[0.04] rounded-full text-xs text-white/40">
+                          {format(new Date(messages[0]?.created_at || new Date()), "MMMM d, yyyy")}
+                        </span>
+                      </div>
+
+                      {messages.map((message, index) => {
+                        const isOutbound = message.direction === "outbound"
+                        const showTimestamp = index === messages.length - 1 ||
+                          new Date(messages[index + 1]?.created_at).getTime() - new Date(message.created_at).getTime() > 300000
+
+                        return (
+                          <div
+                            key={message.id}
+                            className={`flex ${isOutbound ? "justify-end" : "justify-start"}`}
+                          >
+                            <div className={`max-w-[80%] ${isOutbound ? "items-end" : "items-start"}`}>
+                              <div
+                                className={`rounded-2xl px-4 py-2.5 ${
+                                  isOutbound
+                                    ? "bg-white text-black rounded-br-md"
+                                    : "bg-white/[0.08] text-white rounded-bl-md"
+                                }`}
+                              >
+                                <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                              </div>
+                              {showTimestamp && (
+                                <div className={`flex items-center gap-1.5 mt-1.5 ${isOutbound ? "justify-end" : "justify-start"}`}>
+                                  {isOutbound && <CheckCheck className="w-3.5 h-3.5 text-white/30" />}
+                                  <p className="text-[11px] text-white/30">
+                                    {format(new Date(message.created_at), "h:mm a")}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Message Input */}
+                <div className="p-3 border-t border-white/[0.06] flex-shrink-0">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Type a message..."
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+                      className="flex-1 px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/20 transition-all text-sm"
+                    />
                     <button
-                      key={col.id}
-                      onClick={() => handleStatusChange(selectedLead.id, col.id)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                        selectedLead.status === col.id
-                          ? col.color + " shadow-[0_0_15px_rgba(255,255,255,0.1)]"
-                          : "border-white/10 text-white/40 hover:border-white/20 hover:text-white/60"
-                      }`}
+                      onClick={sendMessage}
+                      disabled={!newMessage.trim() || sending}
+                      className="px-4 py-2.5 bg-white hover:bg-white/90 disabled:opacity-50 text-black rounded-xl transition-all font-medium shadow-[0_0_20px_rgba(255,255,255,0.2)]"
                     >
-                      {col.label}
+                      {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                     </button>
-                  ))}
+                  </div>
                 </div>
               </div>
-
-              {/* Lead Info Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Car className="w-4 h-4 text-white/40" />
-                    <span className="text-xs text-white/40 uppercase tracking-wider">Vehicle Interest</span>
-                  </div>
-                  <p className="font-medium">{getVehicleName(selectedLead.vehicle_interest) || "Not specified"}</p>
-                </div>
-                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MessageSquare className="w-4 h-4 text-white/40" />
-                    <span className="text-xs text-white/40 uppercase tracking-wider">Source</span>
-                  </div>
-                  <p className="font-medium capitalize">{selectedLead.source || "Unknown"}</p>
-                </div>
-                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="w-4 h-4 text-white/40" />
-                    <span className="text-xs text-white/40 uppercase tracking-wider">Created</span>
-                  </div>
-                  <p className="font-medium">{formatDate(selectedLead.created_at)}</p>
-                </div>
-                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Clock className="w-4 h-4 text-white/40" />
-                    <span className="text-xs text-white/40 uppercase tracking-wider">Last Activity</span>
-                  </div>
-                  <p className="font-medium">
-                    {selectedLead.last_message_time
-                      ? formatDistanceToNow(new Date(selectedLead.last_message_time), { addSuffix: true })
-                      : "No messages"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Notes */}
-              {selectedLead.notes && (
-                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                  <div className="flex items-center gap-2 mb-2">
-                    <StickyNote className="w-4 h-4 text-white/40" />
-                    <span className="text-xs text-white/40 uppercase tracking-wider">Notes</span>
-                  </div>
-                  <p className="text-white/80">{selectedLead.notes}</p>
-                </div>
-              )}
-
-              {/* Quick Message */}
-              <div>
-                <label className="block text-sm text-white/50 mb-2">Send Message</label>
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    placeholder="Type a quick message..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-                    className="flex-1 px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/20 transition-all"
-                  />
-                  <button
-                    onClick={sendMessage}
-                    disabled={!newMessage.trim() || sending}
-                    className="px-5 py-3 bg-white hover:bg-white/90 disabled:opacity-50 text-black rounded-xl transition-all font-medium shadow-[0_0_20px_rgba(255,255,255,0.2)]"
-                  >
-                    {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer Actions */}
-            <div className="p-6 border-t border-white/10 flex gap-3">
-              <button
-                onClick={() => openEditModal(selectedLead)}
-                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-white/20 hover:bg-white/5 font-medium transition-colors"
-              >
-                <Pencil className="w-4 h-4" />
-                Edit Lead
-              </button>
-              <button
-                onClick={() => handleDelete(selectedLead.id)}
-                className="px-5 py-3 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 font-medium transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
             </div>
           </div>
         </div>

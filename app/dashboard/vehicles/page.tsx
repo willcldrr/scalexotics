@@ -13,6 +13,9 @@ import {
   Upload,
   Link as LinkIcon,
   Loader2,
+  Calendar,
+  RefreshCw,
+  ExternalLink,
 } from "lucide-react"
 
 interface Vehicle {
@@ -27,6 +30,8 @@ interface Vehicle {
   status: string
   notes: string | null
   created_at: string
+  turo_ical_url: string | null
+  last_turo_sync: string | null
 }
 
 // Auto-determine vehicle type based on make
@@ -88,7 +93,9 @@ export default function VehiclesPage() {
     image_url: "",
     status: "available",
     notes: "",
+    turo_ical_url: "",
   })
+  const [syncing, setSyncing] = useState<string | null>(null)
 
   useEffect(() => {
     fetchVehicles()
@@ -137,6 +144,7 @@ export default function VehiclesPage() {
       image_url: "",
       status: "available",
       notes: "",
+      turo_ical_url: "",
     })
     setImageInputMode('upload')
     setShowModal(true)
@@ -153,6 +161,7 @@ export default function VehiclesPage() {
       image_url: vehicle.image_url || "",
       status: vehicle.status,
       notes: vehicle.notes || "",
+      turo_ical_url: vehicle.turo_ical_url || "",
     })
     setImageInputMode(vehicle.image_url ? 'url' : 'upload')
     setShowModal(true)
@@ -209,6 +218,7 @@ export default function VehiclesPage() {
       image_url: formData.image_url || null,
       status: formData.status,
       notes: formData.notes || null,
+      turo_ical_url: formData.turo_ical_url || null,
     }
 
     if (editingVehicle) {
@@ -272,16 +282,39 @@ export default function VehiclesPage() {
     )
   }
 
+  const handleSyncCalendar = async (vehicleId: string) => {
+    setSyncing(vehicleId)
+    try {
+      const res = await fetch("/api/calendar/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vehicleId }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        // Update the vehicle's last sync time in local state
+        setVehicles(vehicles.map(v =>
+          v.id === vehicleId
+            ? { ...v, last_turo_sync: new Date().toISOString() }
+            : v
+        ))
+      }
+    } catch (error) {
+      console.error("Sync error:", error)
+    }
+    setSyncing(null)
+  }
+
   if (loading) {
     return (
       <div className="space-y-4 sm:space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] overflow-hidden">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="bg-white/5 rounded-2xl overflow-hidden animate-pulse">
-              <div className="h-48 bg-white/10" />
-              <div className="p-6 space-y-3">
-                <div className="h-6 bg-white/10 rounded w-3/4" />
-                <div className="h-4 bg-white/10 rounded w-1/2" />
+            <div key={i} className="flex items-center gap-3 px-3 py-2 border-b border-white/[0.06] animate-pulse">
+              <div className="w-14 h-10 rounded-md bg-white/10" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-4 bg-white/10 rounded w-1/3" />
+                <div className="h-3 bg-white/10 rounded w-1/4" />
               </div>
             </div>
           ))}
@@ -325,7 +358,7 @@ export default function VehiclesPage() {
         </button>
       </div>
 
-      {/* Vehicle Grid */}
+      {/* Vehicle Table */}
       {filteredVehicles.length === 0 ? (
         <div className="text-center py-16">
           <Car className="w-16 h-16 text-white/20 mx-auto mb-4" />
@@ -338,7 +371,7 @@ export default function VehiclesPage() {
           {vehicles.length === 0 && (
             <button
               onClick={openAddModal}
-              className="inline-flex items-center gap-2 px-5 py-3 bg-white hover:bg-white/90 text-black text-white font-semibold rounded-xl transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-3 bg-white hover:bg-white/90 text-black font-semibold rounded-xl transition-colors"
             >
               <Plus className="w-5 h-5" />
               Add Vehicle
@@ -346,81 +379,122 @@ export default function VehiclesPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredVehicles.map((vehicle) => (
-            <div
-              key={vehicle.id}
-              className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden hover:border-white/20 transition-colors group"
-            >
-              {/* Image */}
-              <div className="relative h-48 bg-white/5">
-                {vehicle.image_url ? (
-                  <img
-                    src={vehicle.image_url}
-                    alt={vehicle.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Car className="w-16 h-16 text-white/20" />
-                  </div>
-                )}
-                {/* Status Badge */}
-                <div className="absolute top-4 left-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(vehicle.status)}`}>
-                    {vehicle.status}
-                  </span>
+        <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden">
+          {/* Table Header */}
+          <div className="hidden sm:grid sm:grid-cols-[60px_1fr_100px_100px_90px_80px] gap-3 px-3 py-2 bg-white/[0.03] border-b border-white/[0.08] text-[11px] font-medium text-white/40 uppercase tracking-wider">
+            <div>Image</div>
+            <div>Vehicle</div>
+            <div>Type</div>
+            <div>Daily Rate</div>
+            <div>Status</div>
+            <div className="text-right">Actions</div>
+          </div>
+
+          {/* Table Rows */}
+          <div className="divide-y divide-white/[0.06]">
+            {filteredVehicles.map((vehicle) => (
+              <div
+                key={vehicle.id}
+                className="grid grid-cols-1 sm:grid-cols-[60px_1fr_100px_100px_90px_80px] gap-3 px-3 py-2 items-center hover:bg-white/[0.02] transition-colors group"
+              >
+                {/* Image */}
+                <div className="w-14 h-10 rounded-md overflow-hidden bg-white/5 flex-shrink-0">
+                  {vehicle.image_url ? (
+                    <img
+                      src={vehicle.image_url}
+                      alt={vehicle.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Car className="w-4 h-4 text-white/20" />
+                    </div>
+                  )}
                 </div>
-                {/* Action Buttons */}
-                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                {/* Vehicle Info */}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="text-sm font-medium text-white truncate">{vehicle.name}</h3>
+                    {vehicle.turo_ical_url && (
+                      <span title="Synced with Turo" className="flex-shrink-0">
+                        <Calendar className="w-3 h-3 text-[#00D4AA]" />
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-white/50 truncate">
+                    {vehicle.year} {vehicle.make} {vehicle.model}
+                  </p>
+                </div>
+
+                {/* Type */}
+                <div className="hidden sm:block">
+                  <span className="text-xs text-white/60">{vehicle.type}</span>
+                </div>
+
+                {/* Daily Rate */}
+                <div className="hidden sm:flex items-center gap-0.5 text-sm text-white font-medium">
+                  <DollarSign className="w-3.5 h-3.5 text-white/50" />
+                  {vehicle.daily_rate.toLocaleString()}
+                  <span className="text-white/40 text-xs">/day</span>
+                </div>
+
+                {/* Status */}
+                <div className="hidden sm:block">
+                  <select
+                    value={vehicle.status}
+                    onChange={(e) => handleStatusChange(vehicle.id, e.target.value)}
+                    className={`px-2 py-0.5 rounded text-[11px] font-medium border-0 cursor-pointer focus:outline-none focus:ring-1 focus:ring-white/20 ${getStatusColor(vehicle.status)}`}
+                  >
+                    {statusOptions.map((status) => (
+                      <option key={status.value} value={status.value}>
+                        {status.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-1">
+                  {vehicle.turo_ical_url && (
+                    <button
+                      onClick={() => handleSyncCalendar(vehicle.id)}
+                      disabled={syncing === vehicle.id}
+                      title="Sync Turo calendar"
+                      className="p-1.5 rounded hover:bg-[#00D4AA]/20 text-white/40 hover:text-[#00D4AA] transition-colors disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${syncing === vehicle.id ? 'animate-spin' : ''}`} />
+                    </button>
+                  )}
                   <button
                     onClick={() => openEditModal(vehicle)}
-                    className="p-2 rounded-lg bg-black/50 hover:bg-black/70 transition-colors"
+                    className="p-1.5 rounded hover:bg-white/10 text-white/40 hover:text-white transition-colors"
                   >
-                    <Pencil className="w-4 h-4" />
+                    <Pencil className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => handleDelete(vehicle.id)}
                     disabled={deleting === vehicle.id}
-                    className="p-2 rounded-lg bg-black/50 hover:bg-red-500/50 transition-colors disabled:opacity-50"
+                    className="p-1.5 rounded hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-colors disabled:opacity-50"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    {deleting === vehicle.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-3.5 h-3.5" />
+                    )}
                   </button>
                 </div>
-              </div>
 
-              {/* Content */}
-              <div className="p-6">
-                <h3 className="text-lg font-bold mb-1">
-                  {vehicle.name}
-                </h3>
-                <p className="text-white/50 text-sm mb-4">
-                  {vehicle.year} {vehicle.make} {vehicle.model}
-                </p>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1.5 text-sm text-white/60">
-                      <Car className="w-4 h-4" />
-                      {vehicle.type}
-                    </div>
+                {/* Mobile: Extra Info */}
+                <div className="sm:hidden col-span-1 flex items-center justify-between pt-2 border-t border-white/[0.06]">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-white/60">{vehicle.type}</span>
+                    <span className="text-xs font-medium">${vehicle.daily_rate.toLocaleString()}/day</span>
                   </div>
-                  <div className="flex items-center gap-1 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] font-semibold">
-                    <DollarSign className="w-4 h-4" />
-                    {vehicle.daily_rate.toLocaleString()}/day
-                  </div>
-                </div>
-
-                {vehicle.notes && (
-                  <p className="text-white/40 text-sm mt-3 line-clamp-2">{vehicle.notes}</p>
-                )}
-
-                {/* Quick Status Change */}
-                <div className="mt-4 pt-4 border-t border-white/[0.08]">
                   <select
                     value={vehicle.status}
                     onChange={(e) => handleStatusChange(vehicle.id, e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/[0.08] text-sm focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-colors"
+                    className={`px-2 py-0.5 rounded text-[11px] font-medium border-0 cursor-pointer focus:outline-none ${getStatusColor(vehicle.status)}`}
                   >
                     {statusOptions.map((status) => (
                       <option key={status.value} value={status.value}>
@@ -430,8 +504,8 @@ export default function VehiclesPage() {
                   </select>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
@@ -605,6 +679,34 @@ export default function VehiclesPage() {
                   rows={3}
                   className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-colors resize-none"
                 />
+              </div>
+
+              {/* Turo iCal URL */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm text-white/60 flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Turo iCal URL (optional)
+                  </label>
+                  <a
+                    href="https://support.turo.com/hc/en-us/articles/203991880-Exporting-your-Turo-calendar"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-white/40 hover:text-white/60 flex items-center gap-1"
+                  >
+                    How to get this <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+                <input
+                  type="url"
+                  placeholder="https://turo.com/reservations/subscribe/ical.ics?..."
+                  value={formData.turo_ical_url}
+                  onChange={(e) => setFormData({ ...formData, turo_ical_url: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-colors text-sm"
+                />
+                <p className="mt-1.5 text-xs text-white/30">
+                  Auto-sync Turo bookings to keep your calendar up to date
+                </p>
               </div>
 
               {/* Status */}

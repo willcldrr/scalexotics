@@ -98,7 +98,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
 
         {/* Preload critical assets */}
-        <link rel="preload" href="/velocitylogo.png" as="image" />
+        <link rel="preload" href="/velocity.jpg" as="image" />
 
         {/* JSON-LD Structured Data - moved to end of head for non-blocking */}
         <script

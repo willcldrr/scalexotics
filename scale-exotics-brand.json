@@ -339,8 +339,8 @@
 
   "assets": {
     "logos": {
-      "primary": "/velocitylogo.png",
-      "square": "/velocitylogo.png",
+      "primary": "/velocity.jpg",
+      "square": "/velocity.jpg",
       "favicon": "/velocitynobg.png"
     },
     "images": {

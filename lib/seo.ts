@@ -113,7 +113,7 @@ export const organizationSchema = {
   '@type': 'Organization',
   name: 'Scale Exotics',
   url: SITE_URL,
-  logo: `${SITE_URL}/velocitylogo.png`,
+  logo: `${SITE_URL}/velocity.jpg`,
   description:
     'AI-powered lead capture and booking platform for exotic car rental fleets. Scale your rental business to $50k+/month with automated systems.',
   foundingDate: '2024',
@@ -136,7 +136,7 @@ export const websiteSchema = {
     name: 'Scale Exotics',
     logo: {
       '@type': 'ImageObject',
-      url: `${SITE_URL}/velocitylogo.png`,
+      url: `${SITE_URL}/velocity.jpg`,
     },
   },
 }
@@ -170,7 +170,7 @@ export const localBusinessSchema = {
   '@type': 'ProfessionalService',
   name: 'Scale Exotics',
   url: SITE_URL,
-  logo: `${SITE_URL}/velocitylogo.png`,
+  logo: `${SITE_URL}/velocity.jpg`,
   image: `${SITE_URL}/og-image.png`,
   description:
     'Growth platform for exotic car rental businesses. We help fleet owners scale to $50k+/month with AI-powered lead generation and automated booking systems.',

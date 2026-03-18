@@ -97,7 +97,7 @@ function LoginForm() {
       <div className="text-center mb-12">
         <Link href="/">
           <Image
-            src="/velocitylogo.png"
+            src="/velocity.jpg"
             alt="Velocity Labs"
             width={64}
             height={64}

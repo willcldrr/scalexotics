@@ -34,11 +34,11 @@ export default function LoadingScreen() {
     >
       <div className={`transform transition-all duration-500 ${isFading ? "scale-95 opacity-0" : "scale-100 opacity-100"}`}>
         <Image
-          src="/velocitylogo.png"
+          src="/fulllogo.jpg"
           alt="Scale Exotics"
-          width={120}
-          height={120}
-          className="w-20 h-20 md:w-28 md:h-28 object-contain"
+          width={400}
+          height={400}
+          className="w-48 h-48 md:w-72 md:h-72 object-contain rounded-xl"
           priority
         />
       </div>

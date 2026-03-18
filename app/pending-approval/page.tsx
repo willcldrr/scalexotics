@@ -92,7 +92,7 @@ export default function PendingApprovalPage() {
       <div className="max-w-md w-full text-center">
         <Link href="/" className="inline-block mb-8">
           <Image
-            src="/velocitylogo.png"
+            src="/velocity.jpg"
             alt="Velocity Labs"
             width={64}
             height={64}
