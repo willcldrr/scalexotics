@@ -306,6 +306,8 @@ Remember: ${channel === "sms" ? "You're texting, keep it brief" : "You're on Ins
           model: selectedModel,
           forceModel,
           autoEscalate: settings.auto_escalate,
+          vehicles,
+          leadData,
         }),
       })
 
