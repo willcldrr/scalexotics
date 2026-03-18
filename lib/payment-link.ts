@@ -1,8 +1,6 @@
 import crypto from "crypto"
+import { createClient } from "@supabase/supabase-js"
 
-const ALGORITHM = "aes-256-gcm"
-const IV_LENGTH = 12 // GCM standard IV length
-const AUTH_TAG_LENGTH = 16 // GCM auth tag length
 const EXPIRATION_HOURS = 24
 
 export interface PaymentLinkData {
@@ -16,196 +14,228 @@ export interface PaymentLinkData {
   customerName: string
   customerPhone: string
   businessName?: string
+  // Stripe keys for multi-tenant support
+  stripePublishableKey?: string
+  stripeSecretKey?: string
 }
 
-interface TokenPayload extends PaymentLinkData {
-  exp: number // Expiration timestamp
-  iat: number // Issued at timestamp
-}
-
-/**
- * Get the encryption key from environment variable
- * Must be a 32-byte (64 hex character) string
- */
-function getEncryptionKey(): Buffer {
-  const secret = process.env.PAYMENT_LINK_SECRET
-  if (!secret) {
-    throw new Error("PAYMENT_LINK_SECRET environment variable is not set")
-  }
-
-  // If it's a hex string, convert to buffer
-  if (secret.length === 64 && /^[0-9a-fA-F]+$/.test(secret)) {
-    return Buffer.from(secret, "hex")
-  }
-
-  // Otherwise, hash it to get a consistent 32-byte key
-  return crypto.createHash("sha256").update(secret).digest()
+interface StoredPaymentLink extends PaymentLinkData {
+  id: string
+  short_token: string
+  expires_at: string
+  created_at: string
+  used_at: string | null
 }
 
 /**
  * Get the payment link domain from environment variable
  */
 function getPaymentDomain(): string {
-  return process.env.PAYMENT_LINK_DOMAIN || "https://www.rentalcapture.xyz"
+  return process.env.PAYMENT_LINK_DOMAIN || "http://localhost:3000/checkout"
 }
 
 /**
- * Encode buffer to URL-safe base64
+ * Generate a short, readable token in format: XXXXXXX-XXXXXXX-XXXXX
+ * Uses alphanumeric characters (excluding confusing ones like 0/O, 1/I/l)
  */
-function toBase64Url(buffer: Buffer): string {
-  return buffer
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "")
-}
+function generateShortToken(): string {
+  // Alphanumeric without confusing characters
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
-/**
- * Decode URL-safe base64 to buffer
- */
-function fromBase64Url(str: string): Buffer {
-  // Add padding if needed
-  const padded = str + "=".repeat((4 - (str.length % 4)) % 4)
-  return Buffer.from(
-    padded.replace(/-/g, "+").replace(/_/g, "/"),
-    "base64"
-  )
-}
-
-/**
- * Generate a secure payment link with AES-256-GCM encrypted data
- *
- * @param data - Payment/booking data to encode
- * @returns Full payment URL with encrypted token
- */
-export function generateSecurePaymentLink(data: PaymentLinkData): string {
-  const key = getEncryptionKey()
-  const domain = getPaymentDomain()
-
-  // Create payload with expiration
-  const now = Math.floor(Date.now() / 1000)
-  const payload: TokenPayload = {
-    ...data,
-    iat: now,
-    exp: now + (EXPIRATION_HOURS * 60 * 60),
+  const generateSegment = (length: number): string => {
+    const bytes = crypto.randomBytes(length)
+    let result = ""
+    for (let i = 0; i < length; i++) {
+      result += chars[bytes[i] % chars.length]
+    }
+    return result
   }
 
-  // Generate random IV
-  const iv = crypto.randomBytes(IV_LENGTH)
-
-  // Create cipher
-  const cipher = crypto.createCipheriv(ALGORITHM, key, iv)
-
-  // Encrypt payload
-  const payloadJson = JSON.stringify(payload)
-  const encrypted = Buffer.concat([
-    cipher.update(payloadJson, "utf8"),
-    cipher.final(),
-  ])
-
-  // Get auth tag
-  const authTag = cipher.getAuthTag()
-
-  // Combine: IV + AuthTag + Ciphertext
-  const combined = Buffer.concat([iv, authTag, encrypted])
-
-  // Encode to URL-safe base64
-  const token = toBase64Url(combined)
-
-  return `${domain}/${token}`
+  return `${generateSegment(7)}-${generateSegment(7)}-${generateSegment(5)}`
 }
 
 /**
- * Decode and decrypt a payment token
- *
- * @param token - The base64url encoded token (without domain)
- * @returns Decoded payment data or null if invalid/expired
+ * Get Supabase client for server-side operations
  */
-export function decodePaymentToken(token: string): PaymentLinkData | null {
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error("Supabase environment variables not configured")
+  }
+
+  return createClient(supabaseUrl, supabaseKey)
+}
+
+/**
+ * Generate a secure payment link with a short, readable token
+ * Stores payment data in database and returns a short URL
+ *
+ * @param data - Payment/booking data to store
+ * @returns Full payment URL with short token (e.g., /checkout/ABC1234-XYZ5678-12345)
+ */
+export async function generateSecurePaymentLink(data: PaymentLinkData): Promise<string> {
+  const domain = getPaymentDomain()
+  const shortToken = generateShortToken()
+
+  // Calculate expiration
+  const expiresAt = new Date(Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000).toISOString()
+
   try {
-    const key = getEncryptionKey()
+    const supabase = getSupabaseClient()
 
-    // Decode from base64url
-    const combined = fromBase64Url(token)
+    // Store payment link in database
+    const { error } = await supabase.from("payment_links").insert({
+      short_token: shortToken,
+      vehicle_id: data.vehicleId,
+      vehicle_name: data.vehicleName,
+      start_date: data.startDate,
+      end_date: data.endDate,
+      daily_rate: data.dailyRate,
+      total_amount: data.totalAmount,
+      deposit_amount: data.depositAmount,
+      customer_name: data.customerName,
+      customer_phone: data.customerPhone,
+      business_name: data.businessName || "Velocity Exotics",
+      expires_at: expiresAt,
+      // Store Stripe keys for multi-tenant checkout
+      stripe_publishable_key: data.stripePublishableKey || null,
+      stripe_secret_key: data.stripeSecretKey || null,
+    })
 
-    // Minimum length check: IV + AuthTag + at least 1 byte of ciphertext
-    if (combined.length < IV_LENGTH + AUTH_TAG_LENGTH + 1) {
-      console.error("Token too short")
-      return null
+    if (error) {
+      console.error("Failed to store payment link:", error)
+      throw new Error("Failed to create payment link")
     }
 
-    // Extract components
-    const iv = combined.subarray(0, IV_LENGTH)
-    const authTag = combined.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH)
-    const encrypted = combined.subarray(IV_LENGTH + AUTH_TAG_LENGTH)
+    return `${domain}/${shortToken}`
+  } catch (error) {
+    console.error("Payment link generation error:", error)
+    throw error
+  }
+}
 
-    // Create decipher
-    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv)
-    decipher.setAuthTag(authTag)
+/**
+ * Legacy sync version - generates token without DB storage
+ * Used as fallback if DB is unavailable
+ */
+export function generateSecurePaymentLinkSync(data: PaymentLinkData): string {
+  const domain = getPaymentDomain()
+  const shortToken = generateShortToken()
 
-    // Decrypt
-    const decrypted = Buffer.concat([
-      decipher.update(encrypted),
-      decipher.final(),
-    ])
+  // For sync version, encode minimal data in token itself
+  // This is a fallback and won't persist
+  console.warn("Using sync payment link generation - link data will not be persisted")
 
-    // Parse JSON
-    const payload: TokenPayload = JSON.parse(decrypted.toString("utf8"))
+  const payload = Buffer.from(JSON.stringify({
+    ...data,
+    exp: Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000,
+  })).toString("base64url")
+
+  return `${domain}/${shortToken}?d=${payload}`
+}
+
+/**
+ * Look up payment data by short token from database
+ *
+ * @param shortToken - The short token (e.g., ABC1234-XYZ5678-12345)
+ * @returns Payment data or null if not found/expired
+ */
+export async function lookupPaymentToken(shortToken: string): Promise<PaymentLinkData | null> {
+  try {
+    const supabase = getSupabaseClient()
+
+    const { data, error } = await supabase
+      .from("payment_links")
+      .select("*")
+      .eq("short_token", shortToken.toUpperCase())
+      .single()
+
+    if (error || !data) {
+      console.error("Payment link not found:", error)
+      return null
+    }
 
     // Check expiration
-    const now = Math.floor(Date.now() / 1000)
-    if (payload.exp < now) {
-      console.error("Token expired")
+    if (new Date(data.expires_at) < new Date()) {
+      console.error("Payment link expired")
       return null
     }
 
-    // Return data without internal fields
-    const { exp, iat, ...data } = payload
-    return data
+    // Check if already used
+    if (data.used_at) {
+      console.error("Payment link already used")
+      return null
+    }
 
+    return {
+      vehicleId: data.vehicle_id,
+      vehicleName: data.vehicle_name,
+      startDate: data.start_date,
+      endDate: data.end_date,
+      dailyRate: data.daily_rate,
+      totalAmount: data.total_amount,
+      depositAmount: data.deposit_amount,
+      customerName: data.customer_name,
+      customerPhone: data.customer_phone,
+      businessName: data.business_name,
+      stripePublishableKey: data.stripe_publishable_key || undefined,
+      stripeSecretKey: data.stripe_secret_key || undefined,
+    }
   } catch (error) {
-    console.error("Failed to decode payment token:", error)
+    console.error("Failed to lookup payment token:", error)
     return null
   }
 }
 
 /**
- * Extract token from a full payment URL
- *
- * @param url - Full URL like https://www.rentalcapture.xyz/abc123...
- * @returns Just the token portion
+ * Mark a payment link as used (after successful payment)
  */
-export function extractTokenFromUrl(url: string): string | null {
+export async function markPaymentLinkUsed(shortToken: string): Promise<boolean> {
   try {
-    const urlObj = new URL(url)
-    // Token is the path without leading slash
-    const token = urlObj.pathname.slice(1)
-    return token || null
+    const supabase = getSupabaseClient()
+
+    const { error } = await supabase
+      .from("payment_links")
+      .update({ used_at: new Date().toISOString() })
+      .eq("short_token", shortToken.toUpperCase())
+
+    return !error
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Legacy decode function for old-style tokens
+ * Kept for backwards compatibility
+ */
+export function decodePaymentToken(token: string): PaymentLinkData | null {
+  // Check if it's a short token format (has dashes)
+  if (token.includes("-")) {
+    // This is async, but we need sync for backwards compat
+    // Return null and let the API handle async lookup
+    return null
+  }
+
+  // Try to decode as legacy base64 token
+  try {
+    // Check for query param encoded data
+    if (token.includes("?d=")) {
+      const [, encoded] = token.split("?d=")
+      const payload = JSON.parse(Buffer.from(encoded, "base64url").toString())
+
+      if (payload.exp && payload.exp < Date.now()) {
+        return null
+      }
+
+      const { exp, ...data } = payload
+      return data
+    }
+
+    return null
   } catch {
     return null
   }
-}
-
-/**
- * Validate that a payment link is properly formed and not expired
- *
- * @param url - Full payment URL to validate
- * @returns Validation result with decoded data if valid
- */
-export function validatePaymentLink(url: string): {
-  valid: boolean
-  data?: PaymentLinkData
-  error?: string
-} {
-  const token = extractTokenFromUrl(url)
-  if (!token) {
-    return { valid: false, error: "Invalid URL format" }
-  }
-
-  const data = decodePaymentToken(token)
-  if (!data) {
-    return { valid: false, error: "Invalid or expired token" }
-  }
-
-  return { valid: true, data }
 }

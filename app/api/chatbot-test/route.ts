@@ -14,9 +14,23 @@ interface Vehicle {
   daily_rate: number
 }
 
+// Default vehicles as fallback if client doesn't send them
+const DEFAULT_VEHICLES: Vehicle[] = [
+  { id: "v1", name: "Lamborghini Huracan", make: "Lamborghini", model: "Huracan EVO", year: 2024, daily_rate: 1500 },
+  { id: "v2", name: "Ferrari 488", make: "Ferrari", model: "488 Spider", year: 2023, daily_rate: 1800 },
+  { id: "v3", name: "Rolls Royce Cullinan", make: "Rolls Royce", model: "Cullinan", year: 2024, daily_rate: 2000 },
+  { id: "v4", name: "Mercedes G63 AMG", make: "Mercedes", model: "G63 AMG", year: 2024, daily_rate: 800 },
+  { id: "v5", name: "Porsche 911 Turbo S", make: "Porsche", model: "911 Turbo S", year: 2024, daily_rate: 1200 },
+]
+
 interface LeadData {
   name: string
   phone: string
+  email: string | null
+  instagram_username: string | null
+  collected_name: string | null
+  collected_email: string | null
+  collected_phone: string | null
   collected_vehicle_id: string | null
   collected_start_date: string | null
   collected_end_date: string | null
@@ -30,6 +44,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     console.log("[Chatbot Test] Request body parsed, model:", body.model)
+    console.log("[Chatbot Test] Request body KEYS:", Object.keys(body))
+    console.log("[Chatbot Test] leadData received:", JSON.stringify(body.leadData, null, 2))
+    console.log("[Chatbot Test] vehicles count:", body.vehicles?.length)
+    console.log("[Chatbot Test] settings keys:", body.settings ? Object.keys(body.settings) : "no settings")
     const { messages, systemPrompt, model, forceModel, autoEscalate, vehicles, leadData, settings } = body
 
     if (!process.env.ANTHROPIC_API_KEY) {
@@ -62,49 +80,96 @@ export async function POST(request: NextRequest) {
     )
 
     let aiResponse = result.content
+    console.log("[Chatbot Test] Raw AI response:", aiResponse.substring(0, 500))
 
     // Parse extracted data from response
     let extractedData: {
       vehicleId?: string
       startDate?: string
       endDate?: string
+      name?: string
+      email?: string
+      phone?: string
       confirmed?: boolean
     } | undefined
 
-    const extractedMatch = aiResponse.match(/\[EXTRACTED\](.*?)\[\/EXTRACTED\]/s)
+    const extractedMatch = aiResponse.match(/\[EXTRACTED\]([\s\S]*?)\[\/EXTRACTED\]/)
+    console.log("[Chatbot Test] extractedMatch found:", !!extractedMatch)
     if (extractedMatch) {
       try {
         const data = JSON.parse(extractedMatch[1].trim())
         extractedData = {
-          vehicleId: data.vehicle_id !== "null" ? data.vehicle_id : undefined,
-          startDate: data.start_date !== "null" ? data.start_date : undefined,
-          endDate: data.end_date !== "null" ? data.end_date : undefined,
+          vehicleId: data.vehicle_id !== "null" && data.vehicle_id !== null ? data.vehicle_id : undefined,
+          startDate: data.start_date !== "null" && data.start_date !== null ? data.start_date : undefined,
+          endDate: data.end_date !== "null" && data.end_date !== null ? data.end_date : undefined,
+          name: data.name !== "null" && data.name !== null ? data.name : undefined,
+          email: data.email !== "null" && data.email !== null ? data.email : undefined,
+          phone: data.phone !== "null" && data.phone !== null ? data.phone : undefined,
           confirmed: data.confirmed === true,
         }
+        console.log("[Chatbot Test] Parsed extractedData:", JSON.stringify(extractedData, null, 2))
       } catch (e) {
         console.error("Failed to parse extracted data:", e)
       }
 
       // Remove the [EXTRACTED] block from the response
-      aiResponse = aiResponse.replace(/\s*\[EXTRACTED\].*?\[\/EXTRACTED\]\s*/s, "").trim()
+      aiResponse = aiResponse.replace(/\s*\[EXTRACTED\][\s\S]*?\[\/EXTRACTED\]\s*/, "").trim()
     }
 
     // Generate payment link if [SEND_PAYMENT_LINK] marker is present
+    console.log("[Chatbot Test] Checking for [SEND_PAYMENT_LINK]:", aiResponse.includes("[SEND_PAYMENT_LINK]"))
     if (aiResponse.includes("[SEND_PAYMENT_LINK]")) {
+      console.log("[Payment Link] Marker detected! Starting payment link generation...")
       aiResponse = aiResponse.replace("[SEND_PAYMENT_LINK]", "")
       aiResponse = aiResponse.trim()
+
+      // Use default vehicles as fallback if none received from client
+      const vehicleList: Vehicle[] = (vehicles && (vehicles as Vehicle[]).length > 0)
+        ? vehicles as Vehicle[]
+        : DEFAULT_VEHICLES
+
+      console.log("[Payment Link] Using vehicle list with", vehicleList.length, "vehicles", vehicles ? "(from client)" : "(DEFAULT FALLBACK)")
 
       // Try to generate a real payment link
       const vehicleId = extractedData?.vehicleId || (leadData as LeadData)?.collected_vehicle_id
       const startDate = extractedData?.startDate || (leadData as LeadData)?.collected_start_date
       const endDate = extractedData?.endDate || (leadData as LeadData)?.collected_end_date
-      const customerName = (leadData as LeadData)?.name || "Customer"
-      const customerPhone = (leadData as LeadData)?.phone || ""
+      // Use extracted name, or collected name from leadData, or instagram username, or fallback to "Customer"
+      const customerName = extractedData?.name || (leadData as LeadData)?.collected_name || (leadData as LeadData)?.name || "Customer"
+      const customerPhone = extractedData?.phone || (leadData as LeadData)?.collected_phone || (leadData as LeadData)?.phone || ""
 
-      if (vehicleId && startDate && endDate && vehicles) {
-        const vehicle = (vehicles as Vehicle[]).find((v: Vehicle) => v.id === vehicleId)
+      // Debug logging
+      console.log("[Payment Link] extractedData:", extractedData)
+      console.log("[Payment Link] leadData:", leadData)
+      console.log("[Payment Link] vehicleId:", vehicleId, "startDate:", startDate, "endDate:", endDate)
+      console.log("[Payment Link] vehicles count:", vehicleList.length)
+
+      console.log("[Payment Link] Final check - vehicleId:", vehicleId, "startDate:", startDate, "endDate:", endDate, "vehicleList length:", vehicleList.length)
+
+      if (vehicleId && startDate && endDate && vehicleList.length > 0) {
+        console.log("[Payment Link] All data present, looking up vehicle:", vehicleId)
+        console.log("[Payment Link] Available vehicles:", vehicleList.map((v: Vehicle) => ({ id: v.id, name: v.name, make: v.make, model: v.model })))
+
+        // Try to find vehicle by ID first, then by name/make/model match
+        let vehicle = vehicleList.find((v: Vehicle) => v.id === vehicleId)
+
+        if (!vehicle) {
+          // AI might have output vehicle name instead of ID - try matching by name
+          const vehicleIdLower = vehicleId.toLowerCase()
+          vehicle = vehicleList.find((v: Vehicle) => {
+            const fullName = `${v.year} ${v.make} ${v.model}`.toLowerCase()
+            const shortName = `${v.make} ${v.model}`.toLowerCase()
+            return fullName === vehicleIdLower ||
+                   shortName === vehicleIdLower ||
+                   (vehicleIdLower.includes(v.make.toLowerCase()) && vehicleIdLower.includes(v.model.toLowerCase()))
+          })
+          if (vehicle) {
+            console.log("[Payment Link] Found vehicle by name match:", vehicle.name)
+          }
+        }
 
         if (vehicle) {
+          console.log("[Payment Link] Found vehicle:", vehicle.name, "with daily_rate:", vehicle.daily_rate)
           // Calculate number of days
           const start = new Date(startDate)
           const end = new Date(endDate)
@@ -126,18 +191,23 @@ export async function POST(request: NextRequest) {
               customerName,
               customerPhone,
               businessName: settings?.business_name || "Velocity Exotics",
+              // Include Stripe keys for multi-tenant checkout
+              stripePublishableKey: settings?.stripe_publishable_key || undefined,
+              stripeSecretKey: settings?.stripe_secret_key || undefined,
             }
 
-            const paymentLink = generateSecurePaymentLink(paymentData)
+            const paymentLink = await generateSecurePaymentLink(paymentData)
             aiResponse += `\n\nHere's your secure payment link: ${paymentLink}`
           } catch (error) {
             console.error("Failed to generate payment link:", error)
             aiResponse += "\n\n[Payment link generation failed - please contact us directly]"
           }
         } else {
+          console.log("[Payment Link] Vehicle not found in list!")
           aiResponse += "\n\n[Could not find vehicle information for payment link]"
         }
       } else {
+        console.log("[Payment Link] Missing data - vehicleId:", !!vehicleId, "startDate:", !!startDate, "endDate:", !!endDate, "vehicleList length:", vehicleList.length)
         aiResponse += "\n\n[Missing booking details for payment link - please provide vehicle and dates]"
       }
     }
