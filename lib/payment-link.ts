@@ -19,6 +19,23 @@ export interface PaymentLinkData {
   stripeSecretKey?: string
   // Custom payment domain (e.g., "exoticrentals.com" - defaults to rentalcapture.xyz)
   paymentDomain?: string
+  // Business reference for multi-tenant
+  businessId?: string
+}
+
+export interface BusinessInfo {
+  id: string
+  name: string
+  slug: string
+  payment_domain: string | null
+  stripe_publishable_key: string | null
+  stripe_secret_key: string | null
+  logo_url: string | null
+  primary_color: string
+  secondary_color: string
+  phone: string | null
+  email: string | null
+  deposit_percentage: number
 }
 
 interface StoredPaymentLink extends PaymentLinkData {
@@ -196,6 +213,7 @@ export async function lookupPaymentToken(shortToken: string): Promise<PaymentLin
       stripePublishableKey: data.stripe_publishable_key || undefined,
       stripeSecretKey: data.stripe_secret_key || undefined,
       paymentDomain: data.payment_domain || undefined,
+      businessId: data.business_id || undefined,
     }
   } catch (error) {
     console.error("Failed to lookup payment token:", error)
@@ -218,6 +236,62 @@ export async function markPaymentLinkUsed(shortToken: string): Promise<boolean> 
     return !error
   } catch {
     return false
+  }
+}
+
+/**
+ * Look up business by payment domain
+ */
+export async function lookupBusinessByDomain(domain: string): Promise<BusinessInfo | null> {
+  try {
+    const supabase = getSupabaseClient()
+
+    // Normalize domain (remove protocol and trailing slashes)
+    const normalizedDomain = domain.replace(/^https?:\/\//, "").replace(/\/+$/, "")
+
+    const { data, error } = await supabase
+      .from("businesses")
+      .select("id, name, slug, payment_domain, stripe_publishable_key, stripe_secret_key, logo_url, primary_color, secondary_color, phone, email, deposit_percentage")
+      .eq("payment_domain", normalizedDomain)
+      .eq("domain_status", "active")
+      .eq("status", "active")
+      .single()
+
+    if (error || !data) {
+      console.error("Business not found for domain:", normalizedDomain, error)
+      return null
+    }
+
+    return data as BusinessInfo
+  } catch (error) {
+    console.error("Failed to lookup business:", error)
+    return null
+  }
+}
+
+/**
+ * Look up business by ID
+ */
+export async function lookupBusinessById(businessId: string): Promise<BusinessInfo | null> {
+  try {
+    const supabase = getSupabaseClient()
+
+    const { data, error } = await supabase
+      .from("businesses")
+      .select("id, name, slug, payment_domain, stripe_publishable_key, stripe_secret_key, logo_url, primary_color, secondary_color, phone, email, deposit_percentage")
+      .eq("id", businessId)
+      .eq("status", "active")
+      .single()
+
+    if (error || !data) {
+      console.error("Business not found:", businessId, error)
+      return null
+    }
+
+    return data as BusinessInfo
+  } catch (error) {
+    console.error("Failed to lookup business:", error)
+    return null
   }
 }
 

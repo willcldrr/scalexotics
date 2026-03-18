@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
-import { Car, Calendar, DollarSign, Clock, Shield, AlertCircle, Loader2, CheckCircle } from "lucide-react"
+import { Car, Calendar, DollarSign, Clock, Shield, AlertCircle, Loader2, CheckCircle, Phone, Mail } from "lucide-react"
 
 interface PaymentData {
   vehicleId: string
@@ -17,6 +17,15 @@ interface PaymentData {
   businessName?: string
 }
 
+interface BusinessBranding {
+  name: string
+  logo_url: string | null
+  primary_color: string
+  secondary_color: string
+  phone: string | null
+  email: string | null
+}
+
 export default function CheckoutPage() {
   const params = useParams()
   const token = params.token as string
@@ -24,6 +33,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null)
+  const [business, setBusiness] = useState<BusinessBranding | null>(null)
   const [processingPayment, setProcessingPayment] = useState(false)
 
   useEffect(() => {
@@ -49,6 +59,7 @@ export default function CheckoutPage() {
       }
 
       setPaymentData(data.data)
+      setBusiness(data.business)
       setLoading(false)
     } catch (err) {
       setError("Failed to validate payment link")
@@ -133,14 +144,30 @@ export default function CheckoutPage() {
 
   const days = calculateDays()
 
+  // Get branding colors
+  const primaryColor = business?.primary_color || "#FFFFFF"
+  const businessName = business?.name || paymentData.businessName || "Velocity Exotics"
+
   return (
     <div className="min-h-screen bg-black">
       <div className="border-b border-white/10 bg-black/50 backdrop-blur-xl sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-white">{paymentData.businessName || "Velocity Exotics"}</h1>
-              <p className="text-sm text-white/50">Secure Payment</p>
+            <div className="flex items-center gap-3">
+              {business?.logo_url ? (
+                <img src={business.logo_url} alt={businessName} className="h-10 w-auto object-contain" />
+              ) : (
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold"
+                  style={{ backgroundColor: primaryColor + "20", color: primaryColor }}
+                >
+                  {businessName.charAt(0)}
+                </div>
+              )}
+              <div>
+                <h1 className="text-xl font-bold text-white">{businessName}</h1>
+                <p className="text-sm text-white/50">Secure Payment</p>
+              </div>
             </div>
             <div className="flex items-center gap-2 text-green-400 text-sm">
               <Shield className="w-4 h-4" />
@@ -221,7 +248,12 @@ export default function CheckoutPage() {
         <button
           onClick={handlePayment}
           disabled={processingPayment}
-          className="w-full py-4 px-6 bg-white hover:bg-white/90 disabled:bg-white/50 text-black font-semibold rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-white/20"
+          className="w-full py-4 px-6 font-semibold rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg"
+          style={{
+            backgroundColor: primaryColor,
+            color: business?.secondary_color || "#000000",
+            boxShadow: `0 10px 25px -5px ${primaryColor}40`,
+          }}
         >
           {processingPayment ? (
             <>
@@ -251,6 +283,27 @@ export default function CheckoutPage() {
           By completing this payment, you agree to the rental terms and conditions.
           The remaining balance of ${(paymentData.totalAmount - paymentData.depositAmount).toLocaleString()} is due at vehicle pickup.
         </p>
+
+        {/* Business Contact */}
+        {(business?.phone || business?.email) && (
+          <div className="mt-8 pt-6 border-t border-white/10 text-center">
+            <p className="text-xs text-white/40 mb-2">Questions? Contact us:</p>
+            <div className="flex items-center justify-center gap-4">
+              {business?.phone && (
+                <a href={`tel:${business.phone}`} className="flex items-center gap-1 text-sm text-white/60 hover:text-white">
+                  <Phone className="w-4 h-4" />
+                  {business.phone}
+                </a>
+              )}
+              {business?.email && (
+                <a href={`mailto:${business.email}`} className="flex items-center gap-1 text-sm text-white/60 hover:text-white">
+                  <Mail className="w-4 h-4" />
+                  {business.email}
+                </a>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
