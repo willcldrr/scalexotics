@@ -54,6 +54,8 @@ interface AISettings {
   // Stripe settings
   stripe_publishable_key: string
   stripe_secret_key: string
+  // Custom payment domain (optional - defaults to rentalcapture.xyz)
+  payment_domain: string
 }
 
 // Simulated contact info for testing
@@ -139,6 +141,8 @@ const defaultSettings: AISettings = {
   // Stripe
   stripe_publishable_key: "",
   stripe_secret_key: "",
+  // Payment domain (empty = use default rentalcapture.xyz)
+  payment_domain: "",
 }
 
 const defaultSimulatedContact: SimulatedContact = {
@@ -966,6 +970,26 @@ Remember: ${channel === "sms" ? "You're texting, keep it brief" : "You're on Ins
                     </button>
                   </div>
                   <p className="text-xs text-white/30">Never share your secret key publicly</p>
+                </div>
+
+                {/* Custom Payment Domain */}
+                <div className="pt-3 border-t border-white/[0.06] space-y-2">
+                  <label className="block text-xs text-white/40">Payment Link Domain (Optional)</label>
+                  <input
+                    type="text"
+                    value={settings.payment_domain}
+                    onChange={(e) => setSettings(prev => ({ ...prev, payment_domain: e.target.value }))}
+                    placeholder="yourdomain.com"
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:border-blue-500/50 focus:outline-none"
+                  />
+                  <p className="text-xs text-white/30">
+                    Leave empty to use default: <span className="text-blue-400">rentalcapture.xyz</span>
+                  </p>
+                  {settings.payment_domain && (
+                    <p className="text-xs text-white/50">
+                      Links will be: <span className="text-white font-mono">https://{settings.payment_domain}/checkout/XXXXXX</span>
+                    </p>
+                  )}
                 </div>
 
                 {/* Status */}

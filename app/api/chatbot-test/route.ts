@@ -202,6 +202,8 @@ export async function POST(request: NextRequest) {
               // Include Stripe keys for multi-tenant checkout
               stripePublishableKey: settings?.stripe_publishable_key || undefined,
               stripeSecretKey: settings?.stripe_secret_key || undefined,
+              // Include custom payment domain (defaults to rentalcapture.xyz)
+              paymentDomain: settings?.payment_domain || undefined,
             }
 
             const paymentLink = await generateSecurePaymentLink(paymentData)

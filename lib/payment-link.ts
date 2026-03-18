@@ -17,6 +17,8 @@ export interface PaymentLinkData {
   // Stripe keys for multi-tenant support
   stripePublishableKey?: string
   stripeSecretKey?: string
+  // Custom payment domain (e.g., "exoticrentals.com" - defaults to rentalcapture.xyz)
+  paymentDomain?: string
 }
 
 interface StoredPaymentLink extends PaymentLinkData {
@@ -27,11 +29,20 @@ interface StoredPaymentLink extends PaymentLinkData {
   used_at: string | null
 }
 
+// Default payment domain
+const DEFAULT_PAYMENT_DOMAIN = "https://rentalcapture.xyz/checkout"
+
 /**
- * Get the payment link domain from environment variable
+ * Get the payment link domain
+ * Priority: custom domain > env variable > default (rentalcapture.xyz)
  */
-function getPaymentDomain(): string {
-  return process.env.PAYMENT_LINK_DOMAIN || "http://localhost:3000/checkout"
+function getPaymentDomain(customDomain?: string): string {
+  if (customDomain) {
+    // Normalize the custom domain
+    const domain = customDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")
+    return `https://${domain}/checkout`
+  }
+  return process.env.PAYMENT_LINK_DOMAIN || DEFAULT_PAYMENT_DOMAIN
 }
 
 /**
@@ -76,7 +87,7 @@ function getSupabaseClient() {
  * @returns Full payment URL with short token (e.g., /checkout/ABC1234-XYZ5678-12345)
  */
 export async function generateSecurePaymentLink(data: PaymentLinkData): Promise<string> {
-  const domain = getPaymentDomain()
+  const domain = getPaymentDomain(data.paymentDomain)
   const shortToken = generateShortToken()
 
   // Calculate expiration
@@ -102,6 +113,8 @@ export async function generateSecurePaymentLink(data: PaymentLinkData): Promise<
       // Store Stripe keys for multi-tenant checkout
       stripe_publishable_key: data.stripePublishableKey || null,
       stripe_secret_key: data.stripeSecretKey || null,
+      // Store custom payment domain
+      payment_domain: data.paymentDomain || null,
     })
 
     if (error) {
@@ -182,6 +195,7 @@ export async function lookupPaymentToken(shortToken: string): Promise<PaymentLin
       businessName: data.business_name,
       stripePublishableKey: data.stripe_publishable_key || undefined,
       stripeSecretKey: data.stripe_secret_key || undefined,
+      paymentDomain: data.payment_domain || undefined,
     }
   } catch (error) {
     console.error("Failed to lookup payment token:", error)
