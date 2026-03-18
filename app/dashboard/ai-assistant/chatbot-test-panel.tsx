@@ -198,9 +198,17 @@ export default function ChatbotTestPanel({ initialSettings, initialVehicles }: C
       return settings.custom_system_prompt
     }
 
+    const today = new Date()
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+    const todayFormatted = `${days[today.getDay()]}, ${months[today.getMonth()]} ${today.getDate()}, ${today.getFullYear()}`
+
     return `You are an AI assistant for ${settings.business_name || "an exotic car rental business"}. You handle ${channel === "sms" ? "SMS" : "Instagram DM"} conversations to qualify leads and collect booking information.
 
 TONE: ${toneInstructions[settings.tone]}
+
+TODAY'S DATE: ${todayFormatted}
+Use this to calculate relative dates like "tomorrow", "this weekend", "next Friday", etc.
 
 BUSINESS INFO:
 - Business: ${settings.business_name}
@@ -255,7 +263,12 @@ Format: [EXTRACTED]{"vehicle_id":"ID or null","start_date":"YYYY-MM-DD or null",
 
 Rules for extraction:
 - vehicle_id: Use the vehicle ID from AVAILABLE VEHICLES list if customer mentions a car (e.g., "Lamborghini" → use that vehicle's ID)
-- start_date/end_date: Parse dates from customer message into YYYY-MM-DD format. Handle "March 15", "3/15", "this weekend", "next Friday" etc.
+- start_date/end_date: Parse dates from customer message into YYYY-MM-DD format. Use TODAY'S DATE above to calculate relative dates:
+  * "tomorrow" → add 1 day to today
+  * "this weekend" → next Saturday
+  * "next Friday" → the coming Friday
+  * "in 2 weeks" → add 14 days
+  * "March 15" or "3/15" → use current year unless past, then next year
 - confirmed: Set to true ONLY if customer explicitly confirms booking details (says yes, sounds good, let's do it, confirm, book it, etc.)
 - Always include the [EXTRACTED] block, even if all values are null
 
