@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 
 export default function ForgotPasswordPage() {
@@ -34,10 +35,12 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-12">
           <Link href="/">
-            <img
-              src="https://imagedelivery.net/CVEJyzst_6io-ETn1V_PSw/3bdba65e-fb1a-4a3e-ff6f-1aa89b081f00/public"
-              alt="Scale Exotics"
-              className="h-12 w-auto mx-auto mb-8"
+            <Image
+              src="/velocity.jpg"
+              alt="Velocity"
+              width={80}
+              height={80}
+              className="h-16 w-16 mx-auto mb-8 rounded-xl object-contain"
             />
           </Link>
           <h1 className="text-4xl font-bold mb-3" style={{ fontFamily: 'var(--font-display)' }}>
@@ -55,12 +58,12 @@ export default function ForgotPasswordPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/20 text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors"
+              className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/20 text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-white/50 transition-colors"
             />
           </div>
 
           {error && (
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+            <div className="p-4 rounded-xl bg-white/5 border border-white/20 text-white/70 text-sm">
               {error}
             </div>
           )}
@@ -68,7 +71,7 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-[#375DEE] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-lg font-semibold rounded-xl transition-colors"
+            className="w-full py-4 bg-white hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed text-black text-lg font-semibold rounded-xl transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)]"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             {loading ? "Sending..." : "Send Reset Link"}
@@ -77,7 +80,7 @@ export default function ForgotPasswordPage() {
 
         <p className="text-center mt-8 text-white/50">
           Remember your password?{" "}
-          <Link href="/login" className="text-[#375DEE] hover:underline">
+          <Link href="/login" className="text-white hover:underline">
             Sign in
           </Link>
         </p>

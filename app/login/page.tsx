@@ -99,9 +99,9 @@ function LoginForm() {
           <Image
             src="/velocity.jpg"
             alt="Velocity Labs"
-            width={64}
-            height={64}
-            className="h-16 w-auto mx-auto mb-8"
+            width={128}
+            height={128}
+            className="h-32 w-auto mx-auto mb-8 rounded-xl"
             priority
           />
         </Link>

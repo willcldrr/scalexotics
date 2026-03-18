@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import { Mail, CheckCircle, Loader2 } from "lucide-react"
 
@@ -40,15 +41,17 @@ function CheckEmailContent() {
   return (
     <div className="w-full max-w-md text-center">
       <Link href="/">
-        <img
-          src="https://imagedelivery.net/CVEJyzst_6io-ETn1V_PSw/3bdba65e-fb1a-4a3e-ff6f-1aa89b081f00/public"
-          alt="Scale Exotics"
-          className="h-12 w-auto mx-auto mb-8"
+        <Image
+          src="/velocity.jpg"
+          alt="Velocity"
+          width={128}
+          height={128}
+          className="h-32 w-auto mx-auto mb-8 rounded-xl"
         />
       </Link>
 
-      <div className="w-20 h-20 rounded-full bg-[#375DEE]/20 flex items-center justify-center mx-auto mb-6">
-        <Mail className="w-10 h-10 text-[#375DEE]" />
+      <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+        <Mail className="w-10 h-10 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
       </div>
 
       <h1 className="text-4xl font-bold mb-3" style={{ fontFamily: 'var(--font-display)' }}>
@@ -84,7 +87,7 @@ function CheckEmailContent() {
         <button
           onClick={handleResend}
           disabled={resending || resent}
-          className="text-[#375DEE] hover:underline disabled:opacity-50 disabled:no-underline flex items-center justify-center gap-2 mx-auto"
+          className="text-white hover:underline disabled:opacity-50 disabled:no-underline flex items-center justify-center gap-2 mx-auto"
         >
           {resent ? (
             <>
@@ -101,13 +104,13 @@ function CheckEmailContent() {
 
       <p className="text-white/40 text-sm mt-8">
         Wrong email?{" "}
-        <Link href={isSignup ? "/signup" : "/forgot-password"} className="text-[#375DEE] hover:underline">
+        <Link href={isSignup ? "/signup" : "/forgot-password"} className="text-white hover:underline">
           {isSignup ? "Sign up again" : "Try again"}
         </Link>
       </p>
 
       <p className="text-white/40 text-sm mt-4">
-        <Link href="/login" className="text-[#375DEE] hover:underline">
+        <Link href="/login" className="text-white hover:underline">
           Back to sign in
         </Link>
       </p>
@@ -118,7 +121,7 @@ function CheckEmailContent() {
 function LoadingFallback() {
   return (
     <div className="w-full max-w-md flex items-center justify-center">
-      <Loader2 className="w-8 h-8 animate-spin text-[#375DEE]" />
+      <Loader2 className="w-8 h-8 animate-spin text-white" />
     </div>
   )
 }
