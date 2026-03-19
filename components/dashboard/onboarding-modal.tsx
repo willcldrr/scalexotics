@@ -211,7 +211,7 @@ export default function OnboardingModal() {
               </div>
               <div>
                 <h2 className="text-xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-                  Welcome to Scale Exotics!
+                  Welcome to Velocity Labs!
                 </h2>
                 <p className="text-white/50 text-sm">Let's get your dashboard set up</p>
               </div>

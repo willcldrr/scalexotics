@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     canonical: "/offer",
   },
   openGraph: {
-    title: "Get Started with Scale Exotics",
+    title: "Get Started with Velocity Labs",
     description:
       "Only pay us when you get paid. We send pre-qualified renters to your exotic car fleet. Fill your weekday gaps and scale your rental business.",
     url: "/offer",

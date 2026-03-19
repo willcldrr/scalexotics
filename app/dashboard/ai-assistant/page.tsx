@@ -119,7 +119,7 @@ export default function AIAssistantPage() {
   const [saved, setSaved] = useState(false)
   const [vehicles, setVehicles] = useState<any[]>([])
   const [bookings, setBookings] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState<"config" | "connection" | "advanced" | "test">("config")
+  const [activeTab, setActiveTab] = useState<"test" | "connection" | "config">("test")
   const [userId, setUserId] = useState<string | null>(null)
   const [twilioStatus, setTwilioStatus] = useState<"loading" | "connected" | "error">("loading")
   const [twilioInfo, setTwilioInfo] = useState<any>(null)
@@ -284,13 +284,43 @@ export default function AIAssistantPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-32 bg-white/5 rounded-2xl" />
-          <div className="h-12 bg-white/5 rounded-xl w-96" />
-          <div className="grid lg:grid-cols-2 gap-6">
-            <div className="h-64 bg-white/5 rounded-2xl" />
-            <div className="h-64 bg-white/5 rounded-2xl" />
+      <div className="space-y-6 animate-pulse">
+        {/* Hero Card Skeleton */}
+        <div className="rounded-2xl bg-white/[0.02] border border-white/[0.08] p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/10" />
+              <div className="space-y-2">
+                <div className="h-6 w-40 bg-white/10 rounded" />
+                <div className="h-4 w-56 bg-white/5 rounded" />
+              </div>
+            </div>
+            <div className="h-10 w-28 bg-white/10 rounded-xl" />
+          </div>
+        </div>
+        {/* Tabs Skeleton */}
+        <div className="flex gap-2">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-10 w-28 bg-white/5 rounded-xl" />
+          ))}
+        </div>
+        {/* Content Grid Skeleton */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] p-5 h-72">
+            <div className="h-5 w-32 bg-white/10 rounded mb-4" />
+            <div className="space-y-3">
+              <div className="h-10 bg-white/5 rounded-lg" />
+              <div className="h-10 bg-white/5 rounded-lg" />
+              <div className="h-10 bg-white/5 rounded-lg" />
+            </div>
+          </div>
+          <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] p-5 h-72">
+            <div className="h-5 w-32 bg-white/10 rounded mb-4" />
+            <div className="space-y-3">
+              <div className="h-10 bg-white/5 rounded-lg" />
+              <div className="h-10 bg-white/5 rounded-lg" />
+              <div className="h-10 bg-white/5 rounded-lg" />
+            </div>
           </div>
         </div>
       </div>
@@ -403,10 +433,9 @@ export default function AIAssistantPage() {
       {/* Tab Navigation */}
       <div className="flex items-center gap-1 p-1 bg-white/[0.03] rounded-xl border border-white/[0.06] w-fit">
         {[
-          { key: "config", label: "Configuration", icon: Settings },
-          { key: "connection", label: "Connection", icon: Link },
-          { key: "advanced", label: "Advanced", icon: Code },
           { key: "test", label: "Test", icon: FlaskConical },
+          { key: "connection", label: "Connection", icon: Link },
+          { key: "config", label: "Configuration", icon: Settings },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -424,223 +453,359 @@ export default function AIAssistantPage() {
       </div>
 
       {activeTab === "config" && (
-        <div className="max-w-2xl space-y-6">
-          {/* Quick Settings - Single Card */}
-          <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden">
-            {/* Business Basics */}
-            <div className="p-5 space-y-4 border-b border-white/[0.06]">
-              <div className="flex items-center gap-2 mb-4">
-                <Info className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
-                <span className="text-xs font-semibold text-white/40 uppercase tracking-wider">Business</span>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  placeholder="Business Name"
-                  value={settings.business_name}
-                  onChange={(e) => setSettings({ ...settings, business_name: e.target.value })}
-                  className="px-4 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 transition-all"
-                />
-                <input
-                  type="tel"
-                  placeholder="Phone Number"
-                  value={settings.business_phone}
-                  onChange={(e) => setSettings({ ...settings, business_phone: e.target.value })}
-                  className="px-4 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 transition-all"
-                />
-              </div>
-              <input
-                type="text"
-                placeholder="Business Hours (e.g., 9 AM - 6 PM, Mon - Sat)"
-                value={settings.business_hours}
-                onChange={(e) => setSettings({ ...settings, business_hours: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 transition-all"
-              />
-            </div>
-
-            {/* AI Tone - Horizontal Pills */}
-            <div className="p-5 border-b border-white/[0.06]">
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
-                <span className="text-xs font-semibold text-white/40 uppercase tracking-wider">AI Tone</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {toneOptions.map((tone) => (
-                  <button
-                    key={tone.value}
-                    onClick={() => setSettings({ ...settings, tone: tone.value })}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                      settings.tone === tone.value
-                        ? "bg-white text-black shadow-lg shadow-white/25"
-                        : "bg-white/[0.04] text-white/60 hover:bg-white/[0.08] hover:text-white"
-                    }`}
-                  >
-                    {tone.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Greeting - Single Textarea */}
-            <div className="p-5 border-b border-white/[0.06]">
-              <div className="flex items-center gap-2 mb-4">
-                <MessageSquare className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
-                <span className="text-xs font-semibold text-white/40 uppercase tracking-wider">Greeting Message</span>
-              </div>
-              <textarea
-                rows={2}
-                placeholder="Hey! Thanks for reaching out about renting an exotic car..."
-                value={settings.greeting_message}
-                onChange={(e) => setSettings({ ...settings, greeting_message: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 transition-all resize-none"
-              />
-            </div>
-
-            {/* Quick Toggles - Inline */}
-            <div className="p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Zap className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
-                <span className="text-xs font-semibold text-white/40 uppercase tracking-wider">Settings</span>
-              </div>
-              <div className="space-y-3">
-                {/* Auto-Respond */}
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-white/80">Auto-respond to messages</span>
-                  <button
-                    onClick={() => setSettings({ ...settings, auto_respond: !settings.auto_respond })}
-                    className={`relative w-10 h-5 rounded-full transition-all ${
-                      settings.auto_respond ? "bg-white" : "bg-white/15"
-                    }`}
-                  >
-                    <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                      settings.auto_respond ? "translate-x-[22px]" : "translate-x-0.5"
-                    }`} />
-                  </button>
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Left Column - Main Settings */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Business Info Section */}
+            <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden">
+              <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                  <Info className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
                 </div>
-
-                {/* Response Delay */}
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-white/80">Response delay</span>
-                  <div className="flex items-center gap-2">
+                <div>
+                  <h3 className="font-bold">Business Info</h3>
+                  <p className="text-xs text-white/40">Basic information for AI context</p>
+                </div>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-white/50 mb-2">Business Name</label>
                     <input
-                      type="number"
-                      min="0"
-                      max="300"
-                      value={settings.response_delay_seconds}
-                      onChange={(e) => setSettings({ ...settings, response_delay_seconds: parseInt(e.target.value) || 0 })}
-                      className="w-16 px-2 py-1 rounded-md bg-white/[0.04] border border-white/[0.08] text-sm text-white text-center focus:outline-none focus:border-white/50"
+                      type="text"
+                      placeholder="Your Business Name"
+                      value={settings.business_name}
+                      onChange={(e) => setSettings({ ...settings, business_name: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 transition-all"
                     />
-                    <span className="text-xs text-white/40">sec</span>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-white/50 mb-2">Phone Number</label>
+                    <input
+                      type="tel"
+                      placeholder="+1 (555) 123-4567"
+                      value={settings.business_phone}
+                      onChange={(e) => setSettings({ ...settings, business_phone: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 transition-all"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-white/50 mb-2">Business Hours</label>
+                  <input
+                    type="text"
+                    placeholder="9 AM - 6 PM, Monday - Saturday"
+                    value={settings.business_hours}
+                    onChange={(e) => setSettings({ ...settings, business_hours: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* AI Behavior Section */}
+            <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden">
+              <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+                </div>
+                <div>
+                  <h3 className="font-bold">AI Behavior</h3>
+                  <p className="text-xs text-white/40">How the AI responds to customers</p>
+                </div>
+              </div>
+              <div className="p-5 space-y-5">
+                {/* Tone Selection */}
+                <div>
+                  <label className="block text-xs text-white/50 mb-3">Conversation Tone</label>
+                  <div className="flex flex-wrap gap-2">
+                    {toneOptions.map((tone) => (
+                      <button
+                        key={tone.value}
+                        onClick={() => setSettings({ ...settings, tone: tone.value })}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                          settings.tone === tone.value
+                            ? "bg-white text-black shadow-lg shadow-white/25"
+                            : "bg-white/[0.04] text-white/60 hover:bg-white/[0.08] hover:text-white"
+                        }`}
+                      >
+                        {tone.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                {/* Follow-ups */}
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-white/80">Send follow-ups after</span>
-                  <div className="flex items-center gap-2">
+                {/* Response Settings Grid */}
+                <div className="grid sm:grid-cols-2 gap-4 pt-2">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                    <span className="text-sm text-white/80">Auto-respond</span>
                     <button
-                      onClick={() => setSettings({ ...settings, follow_up_enabled: !settings.follow_up_enabled })}
-                      className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
-                        settings.follow_up_enabled
-                          ? "bg-white/20 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
-                          : "bg-white/[0.04] text-white/40"
+                      onClick={() => setSettings({ ...settings, auto_respond: !settings.auto_respond })}
+                      className={`relative w-10 h-5 rounded-full transition-all ${
+                        settings.auto_respond ? "bg-white" : "bg-white/15"
                       }`}
                     >
-                      {settings.follow_up_enabled ? "ON" : "OFF"}
+                      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                        settings.auto_respond ? "translate-x-[22px]" : "translate-x-0.5"
+                      }`} />
                     </button>
-                    {settings.follow_up_enabled && (
-                      <>
-                        <input
-                          type="number"
-                          min="1"
-                          max="72"
-                          value={settings.follow_up_hours}
-                          onChange={(e) => setSettings({ ...settings, follow_up_hours: parseInt(e.target.value) || 24 })}
-                          className="w-14 px-2 py-1 rounded-md bg-white/[0.04] border border-white/[0.08] text-sm text-white text-center focus:outline-none focus:border-white/50"
-                        />
-                        <span className="text-xs text-white/40">hrs</span>
-                      </>
-                    )}
                   </div>
-                </div>
 
-                {/* Deposit */}
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-white/80">Mention deposit</span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setSettings({ ...settings, require_deposit: !settings.require_deposit })}
-                      className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
-                        settings.require_deposit
-                          ? "bg-white/20 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
-                          : "bg-white/[0.04] text-white/40"
-                      }`}
-                    >
-                      {settings.require_deposit ? "ON" : "OFF"}
-                    </button>
-                    {settings.require_deposit && (
-                      <>
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={settings.deposit_percentage}
-                          onChange={(e) => setSettings({ ...settings, deposit_percentage: parseInt(e.target.value) || 25 })}
-                          className="w-14 px-2 py-1 rounded-md bg-white/[0.04] border border-white/[0.08] text-sm text-white text-center focus:outline-none focus:border-white/50"
-                        />
-                        <span className="text-xs text-white/40">%</span>
-                      </>
-                    )}
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                    <span className="text-sm text-white/80">Response delay</span>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        max="300"
+                        value={settings.response_delay_seconds}
+                        onChange={(e) => setSettings({ ...settings, response_delay_seconds: parseInt(e.target.value) || 0 })}
+                        className="w-14 px-2 py-1 rounded-md bg-white/[0.04] border border-white/[0.08] text-sm text-white text-center focus:outline-none focus:border-white/50"
+                      />
+                      <span className="text-xs text-white/40">sec</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                    <span className="text-sm text-white/80">Follow-ups</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setSettings({ ...settings, follow_up_enabled: !settings.follow_up_enabled })}
+                        className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
+                          settings.follow_up_enabled
+                            ? "bg-white/20 text-white"
+                            : "bg-white/[0.04] text-white/40"
+                        }`}
+                      >
+                        {settings.follow_up_enabled ? "ON" : "OFF"}
+                      </button>
+                      {settings.follow_up_enabled && (
+                        <>
+                          <input
+                            type="number"
+                            min="1"
+                            max="72"
+                            value={settings.follow_up_hours}
+                            onChange={(e) => setSettings({ ...settings, follow_up_hours: parseInt(e.target.value) || 24 })}
+                            className="w-12 px-2 py-1 rounded-md bg-white/[0.04] border border-white/[0.08] text-sm text-white text-center focus:outline-none focus:border-white/50"
+                          />
+                          <span className="text-xs text-white/40">hrs</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                    <span className="text-sm text-white/80">Deposit</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setSettings({ ...settings, require_deposit: !settings.require_deposit })}
+                        className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
+                          settings.require_deposit
+                            ? "bg-white/20 text-white"
+                            : "bg-white/[0.04] text-white/40"
+                        }`}
+                      >
+                        {settings.require_deposit ? "ON" : "OFF"}
+                      </button>
+                      {settings.require_deposit && (
+                        <>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={settings.deposit_percentage}
+                            onChange={(e) => setSettings({ ...settings, deposit_percentage: parseInt(e.target.value) || 25 })}
+                            className="w-12 px-2 py-1 rounded-md bg-white/[0.04] border border-white/[0.08] text-sm text-white text-center focus:outline-none focus:border-white/50"
+                          />
+                          <span className="text-xs text-white/40">%</span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+
+            {/* Messages Section */}
+            <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden">
+              <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                  <MessageSquare className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+                </div>
+                <div>
+                  <h3 className="font-bold">Messages & Templates</h3>
+                  <p className="text-xs text-white/40">Default responses and info</p>
+                </div>
+              </div>
+              <div className="p-5 space-y-4">
+                <div>
+                  <label className="block text-xs text-white/50 mb-2">Greeting Message</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Hey! Thanks for reaching out about renting an exotic car..."
+                    value={settings.greeting_message}
+                    onChange={(e) => setSettings({ ...settings, greeting_message: e.target.value })}
+                    className="w-full px-4 py-3 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 transition-all resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-white/50 mb-2">Booking Process</label>
+                  <textarea
+                    rows={2}
+                    placeholder="To secure your booking, we require a 25% deposit..."
+                    value={settings.booking_process}
+                    onChange={(e) => setSettings({ ...settings, booking_process: e.target.value })}
+                    className="w-full px-4 py-3 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 transition-all resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-white/50 mb-2">Pricing Info</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Our rates vary by vehicle and rental duration..."
+                    value={settings.pricing_info}
+                    onChange={(e) => setSettings({ ...settings, pricing_info: e.target.value })}
+                    className="w-full px-4 py-3 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/50 transition-all resize-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Advanced - Custom System Prompt */}
+            <details className="group rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden">
+              <summary className="px-5 py-4 cursor-pointer flex items-center justify-between hover:bg-white/[0.02] transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                    <Code className="w-4 h-4 text-white/60" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white/80">Advanced: Custom System Prompt</h3>
+                    <p className="text-xs text-white/40">Override the default AI instructions</p>
+                  </div>
+                </div>
+                <svg className="w-5 h-5 text-white/40 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </summary>
+              <div className="px-5 pb-5 space-y-4 border-t border-white/[0.06] pt-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-white/50">
+                    Leave empty to use the default prompt with your settings automatically applied.
+                  </p>
+                  <button
+                    onClick={() => setSettings({ ...settings, custom_system_prompt: "" })}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.05] transition-all"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Reset
+                  </button>
+                </div>
+
+                <textarea
+                  rows={12}
+                  placeholder={DEFAULT_SYSTEM_PROMPT}
+                  value={settings.custom_system_prompt}
+                  onChange={(e) => setSettings({ ...settings, custom_system_prompt: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white placeholder:text-white/15 focus:outline-none focus:border-white/50 focus:bg-white/[0.03] transition-all font-mono text-sm resize-none"
+                />
+
+                <div className="flex items-center justify-between text-xs text-white/30">
+                  <span>{settings.custom_system_prompt?.length || 0} characters</span>
+                  <span className={settings.custom_system_prompt ? "text-white/60" : ""}>
+                    {settings.custom_system_prompt ? "Using custom prompt" : "Using default prompt"}
+                  </span>
+                </div>
+
+                {/* Available Variables */}
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                  <p className="text-xs text-white/50 mb-3 font-medium">Available Variables</p>
+                  <div className="flex flex-wrap gap-2">
+                    {["{{business_name}}", "{{business_phone}}", "{{business_hours}}", "{{tone}}", "{{vehicles}}", "{{deposit_percentage}}"].map((v) => (
+                      <button
+                        key={v}
+                        onClick={() => navigator.clipboard.writeText(v)}
+                        className="px-2 py-1 rounded bg-white/[0.04] border border-white/[0.06] font-mono text-xs text-white/60 hover:bg-white/[0.08] hover:text-white transition-colors"
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </details>
           </div>
 
-          {/* Additional Info - Collapsible */}
-          <details className="group rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden">
-            <summary className="px-5 py-4 cursor-pointer flex items-center justify-between hover:bg-white/[0.02] transition-colors">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-white/40" />
-                <span className="text-sm text-white/60">Additional Templates</span>
+          {/* Right Column - Quick Info */}
+          <div className="space-y-6">
+            {/* Vehicle Count */}
+            <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                  <Car className="w-5 h-5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{vehicles.length}</p>
+                  <p className="text-xs text-white/50">Vehicles in AI context</p>
+                </div>
               </div>
-              <svg className="w-4 h-4 text-white/40 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </summary>
-            <div className="px-5 pb-5 space-y-3 border-t border-white/[0.06] pt-4">
-              <div>
-                <label className="block text-xs text-white/40 mb-1.5">Booking Process</label>
-                <textarea
-                  rows={2}
-                  placeholder="To secure your booking, we require a 25% deposit..."
-                  value={settings.booking_process}
-                  onChange={(e) => setSettings({ ...settings, booking_process: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-white/50 transition-all resize-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-white/40 mb-1.5">Pricing Info</label>
-                <textarea
-                  rows={2}
-                  placeholder="Our rates vary by vehicle and rental duration..."
-                  value={settings.pricing_info}
-                  onChange={(e) => setSettings({ ...settings, pricing_info: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-white/50 transition-all resize-none"
-                />
-              </div>
+              {vehicles.length > 0 && (
+                <div className="text-xs text-white/40 space-y-1 max-h-32 overflow-y-auto">
+                  {vehicles.slice(0, 5).map((v: any) => (
+                    <p key={v.id} className="truncate">{v.year} {v.make} {v.model}</p>
+                  ))}
+                  {vehicles.length > 5 && (
+                    <p className="text-white/30">+{vehicles.length - 5} more</p>
+                  )}
+                </div>
+              )}
             </div>
-          </details>
 
-          {/* Vehicle Count - Minimal */}
-          {vehicles.length > 0 && (
-            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-              <Car className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
-              <span className="text-sm text-white/60">
-                AI knows about <span className="text-white font-medium">{vehicles.length} vehicle{vehicles.length !== 1 ? 's' : ''}</span>
-              </span>
+            {/* Current Status */}
+            <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  settings.auto_respond ? "bg-white/20" : "bg-white/10"
+                }`}>
+                  <Zap className={`w-5 h-5 ${settings.auto_respond ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" : "text-white/40"}`} />
+                </div>
+                <div>
+                  <p className="font-medium">{settings.auto_respond ? "AI Active" : "AI Paused"}</p>
+                  <p className="text-xs text-white/50">
+                    {settings.auto_respond ? "Responding to messages" : "Manual responses only"}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between text-white/60">
+                  <span>Tone</span>
+                  <span className="text-white capitalize">{settings.tone}</span>
+                </div>
+                <div className="flex justify-between text-white/60">
+                  <span>Response delay</span>
+                  <span className="text-white">{settings.response_delay_seconds}s</span>
+                </div>
+                <div className="flex justify-between text-white/60">
+                  <span>Deposit</span>
+                  <span className="text-white">{settings.require_deposit ? `${settings.deposit_percentage}%` : "Off"}</span>
+                </div>
+              </div>
             </div>
-          )}
+
+            {/* Tips */}
+            <div className="rounded-2xl bg-gradient-to-br from-white/10 to-transparent border border-white/20 p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+                <h3 className="font-bold text-sm">Quick Tips</h3>
+              </div>
+              <ul className="text-xs text-white/60 space-y-2">
+                <li>• Use Test tab to preview AI responses</li>
+                <li>• Set delay 15-45s for natural feel</li>
+                <li>• Friendly tone works best for most</li>
+                <li>• Keep messages concise for SMS</li>
+              </ul>
+            </div>
+          </div>
         </div>
       )}
 
@@ -976,145 +1141,6 @@ export default function AIAssistantPage() {
         </div>
       )}
 
-      {activeTab === "advanced" && (
-        <div className="space-y-6">
-          {/* System Prompt Editor */}
-          <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden">
-            <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-                  <Code className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
-                </div>
-                <div>
-                  <h3 className="font-bold">Custom System Prompt</h3>
-                  <p className="text-xs text-white/40">Customize the AI's instructions</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setSettings({ ...settings, custom_system_prompt: "" })}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.05] transition-all"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                Reset
-              </button>
-            </div>
-
-            <div className="p-5 space-y-4">
-              <p className="text-sm text-white/50">
-                Leave empty to use the default prompt with your settings automatically applied.
-              </p>
-
-              <textarea
-                rows={20}
-                placeholder={DEFAULT_SYSTEM_PROMPT}
-                value={settings.custom_system_prompt}
-                onChange={(e) => setSettings({ ...settings, custom_system_prompt: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white placeholder:text-white/15 focus:outline-none focus:border-white/50 focus:bg-white/[0.03] transition-all font-mono text-sm resize-none"
-                style={{ minHeight: "400px" }}
-              />
-
-              <div className="flex items-center justify-between text-xs text-white/30">
-                <span>{settings.custom_system_prompt?.length || 0} characters</span>
-                <span className={settings.custom_system_prompt ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" : ""}>
-                  {settings.custom_system_prompt ? "Using custom prompt" : "Using default prompt"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Available Variables */}
-          <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden">
-            <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-                <FileText className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
-              </div>
-              <div>
-                <h3 className="font-bold">Available Variables</h3>
-                <p className="text-xs text-white/40">Use these placeholders in your prompt</p>
-              </div>
-            </div>
-
-            <div className="p-5">
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {[
-                  { variable: "{{business_name}}", description: "Your business name", value: settings.business_name || "(not set)" },
-                  { variable: "{{business_phone}}", description: "Your business phone", value: settings.business_phone || "(not set)" },
-                  { variable: "{{business_hours}}", description: "Your business hours", value: settings.business_hours || "(not set)" },
-                  { variable: "{{tone}}", description: "Conversation tone setting", value: settings.tone },
-                  { variable: "{{greeting_message}}", description: "Initial greeting message", value: settings.greeting_message?.substring(0, 30) + "..." || "(not set)" },
-                  { variable: "{{booking_process}}", description: "Booking process info", value: settings.booking_process?.substring(0, 30) + "..." || "(not set)" },
-                  { variable: "{{pricing_info}}", description: "Pricing information", value: settings.pricing_info?.substring(0, 30) + "..." || "(not set)" },
-                  { variable: "{{vehicles}}", description: "List of available vehicles", value: vehicles.length > 0 ? `${vehicles.length} vehicles` : "(none)" },
-                  { variable: "{{deposit_percentage}}", description: "Deposit percentage", value: `${settings.deposit_percentage}%` },
-                ].map((item) => (
-                  <div key={item.variable} className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] transition-colors">
-                    <div className="flex items-center justify-between mb-1">
-                      <code className="text-xs font-mono text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">{item.variable}</code>
-                      <button
-                        onClick={() => navigator.clipboard.writeText(item.variable)}
-                        className="p-1 rounded hover:bg-white/[0.08] transition-colors"
-                        title="Copy variable"
-                      >
-                        <Copy className="w-3 h-3 text-white/30" />
-                      </button>
-                    </div>
-                    <p className="text-[11px] text-white/40">{item.description}</p>
-                    <p className="text-[10px] text-white/25 mt-1 truncate">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Default Prompt Reference */}
-          <div className="rounded-2xl bg-black border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden">
-            <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center">
-                <Info className="w-4 h-4 text-white/60" />
-              </div>
-              <div>
-                <h3 className="font-bold">Default Prompt Reference</h3>
-                <p className="text-xs text-white/40">Copy as a starting point for customization</p>
-              </div>
-            </div>
-
-            <div className="p-5">
-              <div className="relative">
-                <pre className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs font-mono text-white/60 whitespace-pre-wrap overflow-x-auto max-h-64 overflow-y-auto">
-                  {DEFAULT_SYSTEM_PROMPT}
-                </pre>
-                <button
-                  onClick={() => setSettings({ ...settings, custom_system_prompt: DEFAULT_SYSTEM_PROMPT })}
-                  className="absolute top-3 right-3 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] text-xs font-medium transition-colors border border-white/20"
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                  Copy to Editor
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Tips */}
-          <div className="rounded-2xl bg-gradient-to-br from-white/10 to-transparent border border-white/20 p-5">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
-              </div>
-              <div>
-                <h3 className="font-bold text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] mb-2">Tips for Customizing</h3>
-                <ul className="text-sm text-white/60 space-y-1.5">
-                  <li>• Keep instructions clear and specific for best results</li>
-                  <li>• SMS has a 160 character limit per segment, so instruct AI to be brief</li>
-                  <li>• Include examples of ideal responses if you want specific formatting</li>
-                  <li>• Test your custom prompt by sending test messages from the Connection tab</li>
-                  <li>• Add specific rules like "never mention competitor names"</li>
-                  <li>• Variables are replaced at runtime, reference them anywhere</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {activeTab === "test" && (
         <ChatbotTestPanel

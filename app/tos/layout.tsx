@@ -3,14 +3,14 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: "Terms of Service",
   description:
-    "Scale Exotics Terms of Service - Read our terms and conditions for using our platform and services.",
+    "Velocity Labs Terms of Service - Read our terms and conditions for using our platform and services.",
   alternates: {
     canonical: "/tos",
   },
   openGraph: {
-    title: "Terms of Service | Scale Exotics",
+    title: "Terms of Service | Velocity Labs",
     description:
-      "Scale Exotics Terms of Service - Read our terms and conditions for using our platform and services.",
+      "Velocity Labs Terms of Service - Read our terms and conditions for using our platform and services.",
     url: "/tos",
   },
 }

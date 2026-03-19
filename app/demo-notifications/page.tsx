@@ -207,7 +207,7 @@ export default function DemoNotificationsPage() {
             </div>
             <div>
               <h2 className="font-semibold text-lg">Notifications</h2>
-              <p className="text-sm text-white/50">Scale Exotics Dashboard</p>
+              <p className="text-sm text-white/50">Velocity Labs Dashboard</p>
             </div>
           </div>
           {notifications.length > 0 && (

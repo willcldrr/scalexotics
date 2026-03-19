@@ -8,7 +8,7 @@ export default function PrivacyPolicy() {
       {/* Navigation */}
       <nav className="flex items-center justify-between px-6 py-4 border-b border-white/10">
         <a href="/" className="flex items-center">
-          <Image src="/velocity.jpg" alt="Scale Exotics" width={160} height={48} className="h-12 w-auto" priority />
+          <Image src="/velocity.jpg" alt="Velocity Labs" width={160} height={48} className="h-12 w-auto" priority />
         </a>
         <a href="/" className="text-sm text-muted-foreground hover:text-foreground transition">
           ← Back to Home
@@ -27,14 +27,14 @@ export default function PrivacyPolicy() {
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">1. Introduction</h2>
               <p className="text-muted-foreground">
-                Scale Exotics is a Florida-based marketing and growth service for exotic and luxury car rental companies. This Privacy Policy explains how we collect, use, and protect your data when you use our services.
+                Velocity Labs is a Florida-based marketing and growth service for exotic and luxury car rental companies. This Privacy Policy explains how we collect, use, and protect your data when you use our services.
               </p>
             </section>
 
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">2. Data We Collect</h2>
               <p className="text-muted-foreground">
-                When you interact with Scale Exotics or our clients&apos; services, we collect the following information:
+                When you interact with Velocity Labs or our clients&apos; services, we collect the following information:
               </p>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                 <li>Full name</li>
@@ -94,7 +94,7 @@ export default function PrivacyPolicy() {
               </p>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                 <li>Replying <strong className="text-foreground">STOP</strong> to any text message</li>
-                <li>Contacting us at info@scalexotics.com</li>
+                <li>Contacting us at info@managevelocity.com</li>
               </ul>
               <p className="text-muted-foreground mt-2">
                 After opting out, you will receive a confirmation message and no further marketing texts will be sent. Transactional messages (like booking confirmations) may still be sent if you have an active rental.
@@ -158,7 +158,7 @@ export default function PrivacyPolicy() {
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">8. Age Requirement</h2>
               <p className="text-muted-foreground">
-                You must be at least 18 years old to use Scale Exotics services. We do not knowingly collect data from users under 18.
+                You must be at least 18 years old to use Velocity Labs services. We do not knowingly collect data from users under 18.
               </p>
             </section>
 
@@ -172,7 +172,7 @@ export default function PrivacyPolicy() {
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">10. Contact Us</h2>
               <p className="text-muted-foreground">
-                If you have any questions about this Privacy Policy or your data, please contact us at: <strong className="text-foreground">info@scalexotics.com</strong>
+                If you have any questions about this Privacy Policy or your data, please contact us at: <strong className="text-foreground">info@managevelocity.com</strong>
               </p>
             </section>
           </div>
@@ -193,12 +193,12 @@ export default function PrivacyPolicy() {
       <footer className="px-6 py-12 border-t border-border/30">
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="text-sm text-muted-foreground">&copy; 2026 Scale Exotics Marketing. All rights reserved.</div>
+            <div className="text-sm text-muted-foreground">&copy; 2026 Velocity Labs Marketing. All rights reserved.</div>
             <div className="flex gap-6 text-sm text-muted-foreground">
               <a href="/privacy-policy" className="hover:text-foreground transition">Privacy Policy</a>
               <a href="/tos" className="hover:text-foreground transition">Terms of Service</a>
               <a href="/sms-terms" className="hover:text-foreground transition">SMS Terms</a>
-              <a href="mailto:info@scalexotics.com" className="hover:text-foreground transition">Support</a>
+              <a href="mailto:info@managevelocity.com" className="hover:text-foreground transition">Support</a>
             </div>
           </div>
         </div>

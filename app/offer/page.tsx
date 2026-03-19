@@ -284,7 +284,7 @@ export default function OfferPage() {
       <div className="relative z-10 mb-8">
         <Image
           src="/velocity.jpg"
-          alt="Scale Exotics"
+          alt="Velocity Labs"
           width={56}
           height={56}
           className="w-14 h-14 object-contain"
@@ -393,7 +393,7 @@ export default function OfferPage() {
       <div className="relative z-10 mb-8">
         <Image
           src="/velocity.jpg"
-          alt="Scale Exotics"
+          alt="Velocity Labs"
           width={56}
           height={56}
           className="w-14 h-14 object-contain"

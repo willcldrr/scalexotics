@@ -14,7 +14,7 @@ export default function TermsOfServicePage() {
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Car className="w-6 h-6" style={{ color: primaryColor }} />
-            <span className="text-white font-semibold text-lg">Scale Exotics</span>
+            <span className="text-white font-semibold text-lg">Velocity Labs</span>
           </div>
           <Link
             href="/lead/capture"
@@ -34,8 +34,8 @@ export default function TermsOfServicePage() {
         <div className="text-sm text-white/70 space-y-6">
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">1. Program Overview</h2>
-            <p><strong className="text-white">Program Name:</strong> Scale Exotics Vehicle Alerts</p>
-            <p className="mt-2"><strong className="text-white">Description:</strong> By opting in, you agree to receive recurring automated marketing and informational text messages from Scale Exotics about exotic and luxury vehicle rentals, including promotional offers, booking confirmations, availability updates, and customer service communications.</p>
+            <p><strong className="text-white">Program Name:</strong> Velocity Labs Vehicle Alerts</p>
+            <p className="mt-2"><strong className="text-white">Description:</strong> By opting in, you agree to receive recurring automated marketing and informational text messages from Velocity Labs about exotic and luxury vehicle rentals, including promotional offers, booking confirmations, availability updates, and customer service communications.</p>
           </section>
 
           <section>
@@ -65,7 +65,7 @@ export default function TermsOfServicePage() {
             <ul className="list-disc list-inside space-y-1 ml-2">
               <li>Replying <strong className="text-white">STOP</strong> to any message</li>
               <li>Replying <strong className="text-white">CANCEL</strong>, <strong className="text-white">END</strong>, <strong className="text-white">QUIT</strong>, or <strong className="text-white">UNSUBSCRIBE</strong></li>
-              <li>Emailing support@scaleexotics.com with your phone number</li>
+              <li>Emailing support@managevelocity.com with your phone number</li>
             </ul>
             <p className="mt-2">You will receive a confirmation message after opting out. No further promotional messages will be sent.</p>
           </section>
@@ -75,7 +75,7 @@ export default function TermsOfServicePage() {
             <p className="mb-2">For assistance:</p>
             <ul className="list-disc list-inside space-y-1 ml-2">
               <li>Reply <strong className="text-white">HELP</strong> to any message</li>
-              <li>Email support@scaleexotics.com</li>
+              <li>Email support@managevelocity.com</li>
             </ul>
           </section>
 
@@ -107,7 +107,7 @@ export default function TermsOfServicePage() {
 
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">11. Contact</h2>
-            <p>Questions? Email support@scaleexotics.com or reply HELP to any message.</p>
+            <p>Questions? Email support@managevelocity.com or reply HELP to any message.</p>
           </section>
         </div>
 
@@ -117,7 +117,7 @@ export default function TermsOfServicePage() {
           <div className="grid md:grid-cols-2 gap-4 text-sm text-white/70">
             <div>
               <p className="text-white font-medium">Program Name</p>
-              <p>Scale Exotics Vehicle Alerts</p>
+              <p>Velocity Labs Vehicle Alerts</p>
             </div>
             <div>
               <p className="text-white font-medium">Message Frequency</p>
@@ -129,7 +129,7 @@ export default function TermsOfServicePage() {
             </div>
             <div>
               <p className="text-white font-medium">For Help</p>
-              <p>Reply HELP or email support@scaleexotics.com</p>
+              <p>Reply HELP or email support@managevelocity.com</p>
             </div>
             <div>
               <p className="text-white font-medium">Message Rates</p>
@@ -144,13 +144,13 @@ export default function TermsOfServicePage() {
 
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-white/10 text-center text-sm text-white/50">
-          <p>&copy; {new Date().getFullYear()} Scale Exotics. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Velocity Labs. All rights reserved.</p>
           <p className="mt-2">
             <Link href="/lead/privacy-policy" className="hover:text-white/70">Privacy Policy</Link>
             {" | "}
             <Link href="/lead/tos" className="hover:text-white/70">SMS Terms</Link>
             {" | "}
-            <a href="mailto:support@scaleexotics.com" className="hover:text-white/70">Contact</a>
+            <a href="mailto:support@managevelocity.com" className="hover:text-white/70">Contact</a>
           </p>
         </div>
       </div>

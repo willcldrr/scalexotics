@@ -8,7 +8,7 @@ export default function TermsOfService() {
       {/* Navigation */}
       <nav className="flex items-center justify-between px-6 py-4 border-b border-white/10">
         <a href="/" className="flex items-center">
-          <Image src="/velocity.jpg" alt="Scale Exotics" width={160} height={48} className="h-12 w-auto" priority />
+          <Image src="/velocity.jpg" alt="Velocity Labs" width={160} height={48} className="h-12 w-auto" priority />
         </a>
         <a href="/" className="text-sm text-muted-foreground hover:text-foreground transition">
           ← Back to Home
@@ -27,28 +27,28 @@ export default function TermsOfService() {
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">1. Agreement to Terms</h2>
               <p className="text-muted-foreground">
-                By accessing and using Scale Exotics services, you agree to be bound by these Terms of Service. If you do not agree to abide by the above, please do not use this service. Scale Exotics is a marketing and growth service for exotic and luxury car rental businesses.
+                By accessing and using Velocity Labs services, you agree to be bound by these Terms of Service. If you do not agree to abide by the above, please do not use this service. Velocity Labs is a marketing and growth service for exotic and luxury car rental businesses.
               </p>
             </section>
 
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">2. Services</h2>
               <p className="text-muted-foreground">
-                Scale Exotics provides marketing, booking automation, and growth consulting services to exotic and luxury car rental companies. Our services include but are not limited to: booking engine implementation, profit optimization strategies, and 24/7 support.
+                Velocity Labs provides marketing, booking automation, and growth consulting services to exotic and luxury car rental companies. Our services include but are not limited to: booking engine implementation, profit optimization strategies, and 24/7 support.
               </p>
             </section>
 
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">3. Age Requirement</h2>
               <p className="text-muted-foreground">
-                You must be at least 18 years old to use Scale Exotics services. By using our service, you represent and warrant that you are at least 18 years of age and possess the legal authority to enter into this agreement.
+                You must be at least 18 years old to use Velocity Labs services. By using our service, you represent and warrant that you are at least 18 years of age and possess the legal authority to enter into this agreement.
               </p>
             </section>
 
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">4. Acceptable Use</h2>
               <p className="text-muted-foreground">
-                You agree not to use Scale Exotics for any unlawful purpose or in any way that violates these terms. Specifically, you agree not to:
+                You agree not to use Velocity Labs for any unlawful purpose or in any way that violates these terms. Specifically, you agree not to:
               </p>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                 <li>Harass, threaten, or abuse our team members</li>
@@ -61,7 +61,7 @@ export default function TermsOfService() {
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">5. Data and Privacy</h2>
               <p className="text-muted-foreground">
-                By using Scale Exotics, you consent to the collection and use of your data as outlined in our <a href="/privacy-policy" className="text-foreground underline hover:opacity-80">Privacy Policy</a>. We collect your name, business information, phone number, email, and other relevant details for the purpose of providing our services.
+                By using Velocity Labs, you consent to the collection and use of your data as outlined in our <a href="/privacy-policy" className="text-foreground underline hover:opacity-80">Privacy Policy</a>. We collect your name, business information, phone number, email, and other relevant details for the purpose of providing our services.
               </p>
               <p className="text-muted-foreground mt-4">
                 Data is shared only with partners and third-party service processors necessary to deliver our services. We do not sell your data.
@@ -81,28 +81,28 @@ export default function TermsOfService() {
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">7. Limitation of Liability</h2>
               <p className="text-muted-foreground">
-                Scale Exotics services are provided on an "as-is" basis. To the maximum extent permitted by law, we are not liable for any indirect, incidental, special, or consequential damages arising from your use of our services.
+                Velocity Labs services are provided on an "as-is" basis. To the maximum extent permitted by law, we are not liable for any indirect, incidental, special, or consequential damages arising from your use of our services.
               </p>
             </section>
 
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">8. Indemnification</h2>
               <p className="text-muted-foreground">
-                You agree to indemnify and hold harmless Scale Exotics and its team from any claims, losses, or damages arising from your use of our services, violation of these terms, or infringement of any third-party rights.
+                You agree to indemnify and hold harmless Velocity Labs and its team from any claims, losses, or damages arising from your use of our services, violation of these terms, or infringement of any third-party rights.
               </p>
             </section>
 
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">9. Termination</h2>
               <p className="text-muted-foreground">
-                We reserve the right to terminate or suspend your access to Scale Exotics services at any time, for any reason, with notice. You may also discontinue use at any time by contacting our support team.
+                We reserve the right to terminate or suspend your access to Velocity Labs services at any time, for any reason, with notice. You may also discontinue use at any time by contacting our support team.
               </p>
             </section>
 
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">10. Changes to Terms</h2>
               <p className="text-muted-foreground">
-                We reserve the right to modify these Terms of Service at any time. Changes will be effective immediately upon posting to the website. Your continued use of Scale Exotics after changes are posted constitutes your acceptance of the new terms.
+                We reserve the right to modify these Terms of Service at any time. Changes will be effective immediately upon posting to the website. Your continued use of Velocity Labs after changes are posted constitutes your acceptance of the new terms.
               </p>
             </section>
 
@@ -116,7 +116,7 @@ export default function TermsOfService() {
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">12. Contact Us</h2>
               <p className="text-muted-foreground">
-                If you have any questions about these Terms of Service, please contact us at: <strong className="text-foreground">info@scalexotics.com</strong>
+                If you have any questions about these Terms of Service, please contact us at: <strong className="text-foreground">info@managevelocity.com</strong>
               </p>
             </section>
           </div>
@@ -137,12 +137,12 @@ export default function TermsOfService() {
       <footer className="px-6 py-12 border-t border-border/30">
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="text-sm text-muted-foreground">&copy; 2026 Scale Exotics Marketing. All rights reserved.</div>
+            <div className="text-sm text-muted-foreground">&copy; 2026 Velocity Labs Marketing. All rights reserved.</div>
             <div className="flex gap-6 text-sm text-muted-foreground">
               <a href="/privacy-policy" className="hover:text-foreground transition">Privacy Policy</a>
               <a href="/tos" className="hover:text-foreground transition">Terms of Service</a>
               <a href="/sms-terms" className="hover:text-foreground transition">SMS Terms</a>
-              <a href="mailto:info@scalexotics.com" className="hover:text-foreground transition">Support</a>
+              <a href="mailto:info@managevelocity.com" className="hover:text-foreground transition">Support</a>
             </div>
           </div>
         </div>

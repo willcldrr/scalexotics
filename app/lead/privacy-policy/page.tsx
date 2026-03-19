@@ -14,7 +14,7 @@ export default function PrivacyPolicyPage() {
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Car className="w-6 h-6" style={{ color: primaryColor }} />
-            <span className="text-white font-semibold text-lg">Scale Exotics</span>
+            <span className="text-white font-semibold text-lg">Velocity Labs</span>
           </div>
           <Link
             href="/lead/capture"
@@ -34,7 +34,7 @@ export default function PrivacyPolicyPage() {
         <div className="text-sm text-white/70 space-y-6">
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">1. Introduction</h2>
-            <p>This Privacy Policy explains how Scale Exotics (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) collects, uses, and protects your personal information when you use our exotic and luxury vehicle rental inquiry services and opt-in to receive SMS/text messages.</p>
+            <p>This Privacy Policy explains how Velocity Labs (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) collects, uses, and protects your personal information when you use our exotic and luxury vehicle rental inquiry services and opt-in to receive SMS/text messages.</p>
           </section>
 
           <section>
@@ -71,7 +71,7 @@ export default function PrivacyPolicyPage() {
               <li>Opt-in and opt-out history</li>
               <li>Message delivery records</li>
             </ul>
-            <p className="mt-2"><strong className="text-white">Important:</strong> We do NOT sell, rent, or share your phone number or SMS consent data with third parties for their marketing purposes. Your phone number is used solely for communications from Scale Exotics.</p>
+            <p className="mt-2"><strong className="text-white">Important:</strong> We do NOT sell, rent, or share your phone number or SMS consent data with third parties for their marketing purposes. Your phone number is used solely for communications from Velocity Labs.</p>
           </section>
 
           <section>
@@ -91,7 +91,7 @@ export default function PrivacyPolicyPage() {
             <ul className="list-disc list-inside space-y-1 ml-2">
               <li>Reply <strong className="text-white">STOP</strong> to any text message</li>
               <li>Reply <strong className="text-white">CANCEL</strong>, <strong className="text-white">END</strong>, <strong className="text-white">QUIT</strong>, or <strong className="text-white">UNSUBSCRIBE</strong></li>
-              <li>Contact us at support@scaleexotics.com</li>
+              <li>Contact us at support@managevelocity.com</li>
             </ul>
             <p className="mt-2">After opting out, you will receive a confirmation message and no further promotional texts will be sent.</p>
           </section>
@@ -119,19 +119,19 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">10. Contact Us</h2>
-            <p>For questions about this Privacy Policy or your data, contact us at: support@scaleexotics.com</p>
+            <p>For questions about this Privacy Policy or your data, contact us at: support@managevelocity.com</p>
           </section>
         </div>
 
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-white/10 text-center text-sm text-white/50">
-          <p>&copy; {new Date().getFullYear()} Scale Exotics. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Velocity Labs. All rights reserved.</p>
           <p className="mt-2">
             <Link href="/lead/privacy-policy" className="hover:text-white/70">Privacy Policy</Link>
             {" | "}
             <Link href="/lead/tos" className="hover:text-white/70">SMS Terms</Link>
             {" | "}
-            <a href="mailto:support@scaleexotics.com" className="hover:text-white/70">Contact</a>
+            <a href="mailto:support@managevelocity.com" className="hover:text-white/70">Contact</a>
           </p>
         </div>
       </div>

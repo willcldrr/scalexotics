@@ -68,7 +68,7 @@ function UnsubscribeForm() {
     <div className="min-h-screen flex items-center justify-center bg-background text-foreground px-4">
       <div className="w-full max-w-md space-y-8 text-center">
         <a href="/" className="inline-flex items-center justify-center gap-2" style={{ fontFamily: "Anton, sans-serif" }}>
-          <Image src="/logo.png" alt="Scale Exotics" width={40} height={40} className="h-10 w-10" priority />
+          <Image src="/logo.png" alt="Velocity Labs" width={40} height={40} className="h-10 w-10" priority />
           <span className="text-3xl font-bold tracking-wider">SCALE</span>
           <span className="text-3xl font-bold tracking-wider" style={{ color: "#326FF5" }}>
             EXOTICS
@@ -124,7 +124,7 @@ export default function UnsubscribePage() {
       <div className="min-h-screen flex items-center justify-center bg-background text-foreground px-4">
         <div className="w-full max-w-md space-y-8 text-center">
           <a href="/" className="inline-flex items-center justify-center gap-2" style={{ fontFamily: "Anton, sans-serif" }}>
-            <Image src="/logo.png" alt="Scale Exotics" width={40} height={40} className="h-10 w-10" priority />
+            <Image src="/logo.png" alt="Velocity Labs" width={40} height={40} className="h-10 w-10" priority />
             <span className="text-3xl font-bold tracking-wider">SCALE</span>
             <span className="text-3xl font-bold tracking-wider" style={{ color: "#326FF5" }}>
               EXOTICS

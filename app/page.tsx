@@ -298,7 +298,7 @@ export default function Home() {
             {/* After */}
             <div className="relative p-6 md:p-10 rounded-2xl border border-white/30 bg-white/5 shadow-[0_0_40px_rgba(255,255,255,0.1)] hover:shadow-[0_0_50px_rgba(255,255,255,0.15)] transition-shadow duration-500">
               <div className="absolute top-0 left-6 md:left-8 -translate-y-1/2 px-3 md:px-4 py-1 bg-white text-black rounded-full">
-                <span className="text-[10px] md:text-xs tracking-widest uppercase font-medium">With Scale Exotics</span>
+                <span className="text-[10px] md:text-xs tracking-widest uppercase font-medium">With Velocity Labs</span>
               </div>
               <div className="space-y-4 md:space-y-5 mt-4">
                 {[
@@ -369,7 +369,7 @@ export default function Home() {
                 </div>
                 <div className="flex-1 mx-4">
                   <div className="bg-black/50 rounded-lg px-4 py-1.5 text-xs text-white/40 max-w-md mx-auto">
-                    app.scalexotics.com/dashboard
+                    app.managevelocity.com/dashboard
                   </div>
                 </div>
               </div>
@@ -676,7 +676,7 @@ export default function Home() {
                 img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop"
               },
               {
-                quote: "Went from $18k to $52k/month in 90 days. Scale Exotics knows exactly what works in this industry.",
+                quote: "Went from $18k to $52k/month in 90 days. Velocity Labs knows exactly what works in this industry.",
                 name: "Anthony M.",
                 role: "6-Vehicle Fleet, Vegas",
                 img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop"
@@ -762,7 +762,7 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-8 mb-10 md:mb-12">
             {/* Brand */}
             <div className="col-span-2">
-              <Image src="/velocity.jpg" alt="Scale Exotics" width={140} height={28} className="h-6 md:h-7 w-auto mb-3 md:mb-4" />
+              <Image src="/velocity.jpg" alt="Velocity Labs" width={140} height={28} className="h-6 md:h-7 w-auto mb-3 md:mb-4" />
               <p className="text-white/40 text-xs md:text-sm max-w-sm leading-relaxed">
                 AI-powered lead capture and booking platform built for exotic car rental fleets.
               </p>
@@ -793,7 +793,7 @@ export default function Home() {
           {/* Bottom bar */}
           <div className="pt-6 md:pt-8 border-t border-white/[0.06] flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
             <p className="text-white/30 text-[10px] md:text-xs">
-              © {new Date().getFullYear()} Scale Exotics. All rights reserved.
+              © {new Date().getFullYear()} Velocity Labs. All rights reserved.
             </p>
             <p className="text-white/20 text-[9px] md:text-[10px] max-w-lg text-center md:text-right">
               This site is not a part of the Facebook website or Facebook Inc. Additionally, this site is NOT endorsed by Facebook in any way. FACEBOOK is a trademark of FACEBOOK, Inc.

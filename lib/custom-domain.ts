@@ -7,8 +7,8 @@ const supabase = createClient(
 
 // List of primary domains (not custom domains)
 const PRIMARY_DOMAINS = [
-  "scalexotics.com",
-  "www.scalexotics.com",
+  "managevelocity.com",
+  "www.managevelocity.com",
   "localhost",
   "localhost:3000",
   "127.0.0.1",

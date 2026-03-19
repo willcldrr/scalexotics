@@ -825,7 +825,7 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
                     <strong className="text-white">Rates:</strong> Message and data rates may apply. Check with your mobile carrier for details.
                   </p>
                   <p>
-                    <strong className="text-white">Opt-Out:</strong> You can opt out at any time by replying <span className="font-mono bg-white/10 px-1.5 py-0.5 rounded">STOP</span> to any message. For help, reply <span className="font-mono bg-white/10 px-1.5 py-0.5 rounded">HELP</span> or contact us at info@scalexotics.com.
+                    <strong className="text-white">Opt-Out:</strong> You can opt out at any time by replying <span className="font-mono bg-white/10 px-1.5 py-0.5 rounded">STOP</span> to any message. For help, reply <span className="font-mono bg-white/10 px-1.5 py-0.5 rounded">HELP</span> or contact us at info@managevelocity.com.
                   </p>
                   <p>
                     <strong className="text-white">Consent Not Required:</strong> Consent to receive text messages is not a condition of purchasing any goods or services.

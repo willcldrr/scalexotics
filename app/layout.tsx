@@ -6,12 +6,12 @@ import AnalyticsWrapper from "./components/analytics-wrapper"
 import LoadingScreen from "./components/loading-screen"
 import "./globals.css"
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://scalexotics.com'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://managevelocity.com'
 
 export const metadata: Metadata = {
   title: {
-    default: seoConfig.defaultTitle,
-    template: `%s | ${seoConfig.siteName}`,
+    default: "Velocity Labs",
+    template: "Velocity Labs",
   },
   description: seoConfig.defaultDescription,
   keywords: seoConfig.keywords,
@@ -23,9 +23,9 @@ export const metadata: Metadata = {
     canonical: SITE_URL,
   },
   icons: {
-    icon: "/velocitynobg.png",
-    apple: "/velocitynobg.png",
-    shortcut: "/velocitynobg.png",
+    icon: "/vector.png",
+    apple: "/vector.png",
+    shortcut: "/vector.png",
   },
   manifest: "/manifest.json",
   openGraph: {
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
         url: `${SITE_URL}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "Scale Exotics - Exotic Car Rental Growth Platform",
+        alt: "Velocity Labs - Exotic Car Rental Growth Platform",
       },
     ],
   },

@@ -11,7 +11,7 @@ interface Branding {
 
 const defaultBranding: Branding = {
   logoUrl: null,
-  companyName: "Scale Exotics",
+  companyName: "Velocity Labs",
   isLoading: true,
 }
 
@@ -45,7 +45,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
 
     setBranding({
       logoUrl: data?.logo_url || null,
-      companyName: data?.company_name || "Scale Exotics",
+      companyName: data?.company_name || "Velocity Labs",
       isLoading: false,
     })
   }, [])

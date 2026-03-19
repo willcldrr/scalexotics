@@ -8,7 +8,7 @@ export default function SMSTerms() {
       {/* Navigation */}
       <nav className="flex items-center justify-between px-6 py-4 border-b border-white/10">
         <a href="/" className="flex items-center">
-          <Image src="/velocity.jpg" alt="Scale Exotics" width={160} height={48} className="h-12 w-auto" priority />
+          <Image src="/velocity.jpg" alt="Velocity Labs" width={160} height={48} className="h-12 w-auto" priority />
         </a>
         <a href="/" className="text-sm text-muted-foreground hover:text-foreground transition">
           &larr; Back to Home
@@ -27,10 +27,10 @@ export default function SMSTerms() {
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold text-foreground">1. SMS Program Overview</h2>
               <p className="text-muted-foreground">
-                By opting in to receive SMS/text messages from Scale Exotics or our partner rental businesses, you agree to the following terms and conditions. These terms govern our text messaging communications with you.
+                By opting in to receive SMS/text messages from Velocity Labs or our partner rental businesses, you agree to the following terms and conditions. These terms govern our text messaging communications with you.
               </p>
               <p className="text-muted-foreground">
-                <strong className="text-foreground">Program Name:</strong> Scale Exotics Vehicle Rental Alerts
+                <strong className="text-foreground">Program Name:</strong> Velocity Labs Vehicle Rental Alerts
               </p>
               <p className="text-muted-foreground">
                 <strong className="text-foreground">Program Description:</strong> Receive promotional offers, booking confirmations, appointment reminders, availability updates, and customer service communications related to exotic and luxury vehicle rentals.
@@ -72,7 +72,7 @@ export default function SMSTerms() {
                 <strong className="text-foreground">Message and data rates may apply.</strong> You are responsible for any charges from your mobile carrier for sending or receiving text messages. Check with your carrier for details about your messaging plan.
               </p>
               <p className="text-muted-foreground">
-                Scale Exotics does not charge a fee for sending text messages, but standard carrier messaging rates apply.
+                Velocity Labs does not charge a fee for sending text messages, but standard carrier messaging rates apply.
               </p>
             </section>
 
@@ -84,7 +84,7 @@ export default function SMSTerms() {
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                 <li><strong className="text-foreground">Text STOP:</strong> Reply <span className="font-mono bg-white/10 px-1.5 py-0.5 rounded">STOP</span> to any message to unsubscribe from all promotional messages</li>
                 <li><strong className="text-foreground">Text CANCEL:</strong> Reply <span className="font-mono bg-white/10 px-1.5 py-0.5 rounded">CANCEL</span>, <span className="font-mono bg-white/10 px-1.5 py-0.5 rounded">END</span>, <span className="font-mono bg-white/10 px-1.5 py-0.5 rounded">QUIT</span>, or <span className="font-mono bg-white/10 px-1.5 py-0.5 rounded">UNSUBSCRIBE</span> to any message</li>
-                <li><strong className="text-foreground">Email:</strong> Contact us at info@scalexotics.com with your phone number and opt-out request</li>
+                <li><strong className="text-foreground">Email:</strong> Contact us at info@managevelocity.com with your phone number and opt-out request</li>
               </ul>
               <p className="text-muted-foreground mt-4">
                 After opting out, you will receive a single confirmation message. No further promotional messages will be sent. Note: You may still receive transactional messages for active bookings.
@@ -98,7 +98,7 @@ export default function SMSTerms() {
               </p>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                 <li><strong className="text-foreground">Text HELP:</strong> Reply <span className="font-mono bg-white/10 px-1.5 py-0.5 rounded">HELP</span> to any message for support information</li>
-                <li><strong className="text-foreground">Email:</strong> Contact us at info@scalexotics.com</li>
+                <li><strong className="text-foreground">Email:</strong> Contact us at info@managevelocity.com</li>
                 <li><strong className="text-foreground">Phone:</strong> Call our support team during business hours</li>
               </ul>
             </section>
@@ -161,7 +161,7 @@ export default function SMSTerms() {
                 If you have questions about these SMS Terms &amp; Conditions, please contact us:
               </p>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                <li><strong className="text-foreground">Email:</strong> info@scalexotics.com</li>
+                <li><strong className="text-foreground">Email:</strong> info@managevelocity.com</li>
                 <li><strong className="text-foreground">Text:</strong> Reply HELP to any message</li>
               </ul>
             </section>
@@ -197,12 +197,12 @@ export default function SMSTerms() {
       <footer className="px-6 py-12 border-t border-border/30">
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="text-sm text-muted-foreground">&copy; 2026 Scale Exotics Marketing. All rights reserved.</div>
+            <div className="text-sm text-muted-foreground">&copy; 2026 Velocity Labs Marketing. All rights reserved.</div>
             <div className="flex gap-6 text-sm text-muted-foreground">
               <a href="/privacy-policy" className="hover:text-foreground transition">Privacy Policy</a>
               <a href="/tos" className="hover:text-foreground transition">Terms of Service</a>
               <a href="/sms-terms" className="hover:text-foreground transition">SMS Terms</a>
-              <a href="mailto:info@scalexotics.com" className="hover:text-foreground transition">Support</a>
+              <a href="mailto:info@managevelocity.com" className="hover:text-foreground transition">Support</a>
             </div>
           </div>
         </div>

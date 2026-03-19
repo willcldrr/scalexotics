@@ -76,9 +76,9 @@ function CarouselCard({ card, index }: { card: typeof carouselCards[0]; index: n
 
         {/* Top bar */}
         <div className="relative z-10 px-10 pt-10 flex items-center justify-between">
-          <Image src="/velocity.jpg" alt="Scale Exotics" width={52} height={52} className="w-13 h-13 object-contain" />
+          <Image src="/velocity.jpg" alt="Velocity Labs" width={52} height={52} className="w-13 h-13 object-contain" />
           <span className={`${inter.className} text-white/40 text-xs font-medium tracking-[0.25em] uppercase`}>
-            @scaleexotics
+            @veloctylabs
           </span>
         </div>
 
@@ -132,7 +132,7 @@ function CarouselCard({ card, index }: { card: typeof carouselCards[0]; index: n
 
         {/* Header */}
         <div className="relative z-10 px-8 pl-14 pt-12">
-          <Image src="/velocity.jpg" alt="Scale Exotics" width={44} height={44} className="w-11 h-11 object-contain opacity-70" />
+          <Image src="/velocity.jpg" alt="Velocity Labs" width={44} height={44} className="w-11 h-11 object-contain opacity-70" />
         </div>
 
         {/* Content */}
@@ -176,7 +176,7 @@ function CarouselCard({ card, index }: { card: typeof carouselCards[0]; index: n
 
         {/* Header */}
         <div className="relative z-10 px-8 pl-14 pt-12">
-          <Image src="/velocity.jpg" alt="Scale Exotics" width={44} height={44} className="w-11 h-11 object-contain opacity-80" />
+          <Image src="/velocity.jpg" alt="Velocity Labs" width={44} height={44} className="w-11 h-11 object-contain opacity-80" />
         </div>
 
         {/* Content */}

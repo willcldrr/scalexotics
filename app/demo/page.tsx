@@ -17,7 +17,7 @@ export default function Demo() {
   const slides = [
     // SECTION 1: OPENING & PROCESS
     { id: 1, section: "intro", type: "hero", content: {
-      title: "Scale Exotics",
+      title: "Velocity Labs",
       subtitle: "Partner Demo"
     }},
     { id: 2, section: "intro", type: "process-timeline", content: {
@@ -69,7 +69,7 @@ export default function Demo() {
       subtitle: "This isn't your typical agency"
     }},
     { id: 8, section: "comparison", type: "differentiator", content: {
-      title: "Scale Exotics vs Everyone Else",
+      title: "Velocity Labs vs Everyone Else",
       comparison: {
         left: {
           title: "Other Agencies",
@@ -82,7 +82,7 @@ export default function Demo() {
           ]
         },
         right: {
-          title: "Scale Exotics",
+          title: "Velocity Labs",
           items: [
             { text: "Pay per deposit-secured lead only", icon: "check" },
             { text: "We nurture until booking is secured", icon: "check" },
@@ -193,7 +193,7 @@ export default function Demo() {
       label: "BONUS",
       title: "Dedicated Account Manager",
       before: {
-        title: "Without Scale Exotics",
+        title: "Without Velocity Labs",
         points: [
           "You manage ads yourself (or pay an agency $2-5K/mo)",
           "You answer every DM and inquiry manually",
@@ -202,7 +202,7 @@ export default function Demo() {
         ]
       },
       after: {
-        title: "With Scale Exotics",
+        title: "With Velocity Labs",
         points: [
           "Dedicated expert manages everything for you",
           "Weekly strategy calls to review performance",
@@ -446,7 +446,7 @@ export default function Demo() {
 
             <div className="relative z-10 max-w-4xl">
               {/* Logo */}
-              <Image src={LOGO_URL} alt="Scale Exotics" width={200} height={64} className="h-16 w-auto mx-auto mb-12 fade-up" />
+              <Image src={LOGO_URL} alt="Velocity Labs" width={200} height={64} className="h-16 w-auto mx-auto mb-12 fade-up" />
 
               {/* Main title */}
               <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6 tracking-tight fade-up delay-1" style={{ fontFamily: 'var(--font-display)' }}>
@@ -1487,7 +1487,7 @@ export default function Demo() {
               <div className="w-[2px] flex-1 bg-gradient-to-b from-transparent via-[#375DEE]/40 to-transparent" />
             </div>
 
-            {/* Right side - Scale Exotics */}
+            {/* Right side - Velocity Labs */}
             <div className="flex flex-col justify-center px-10 lg:px-14 relative bg-gradient-to-l from-[#375DEE]/10 to-transparent">
               <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[400px] h-[400px] bg-[#375DEE]/20 rounded-full blur-[120px]" />
               <div className="relative fade-up delay-1">
@@ -2136,7 +2136,7 @@ export default function Demo() {
               <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-[#375DEE]/15 rounded-t-full blur-[150px]" />
             </div>
             <div className="relative z-10 text-center max-w-3xl px-8">
-              <Image src={LOGO_URL} alt="Scale Exotics" width={175} height={56} className="h-14 w-auto mx-auto mb-12 fade-up" />
+              <Image src={LOGO_URL} alt="Velocity Labs" width={175} height={56} className="h-14 w-auto mx-auto mb-12 fade-up" />
               <h2 className="text-5xl lg:text-6xl font-bold mb-6 fade-up delay-1" style={{ fontFamily: 'var(--font-display)' }}>{content.title}</h2>
               <p className="text-xl text-white/50 mb-12 fade-up delay-2">{content.subtitle}</p>
               <p className="text-3xl text-[#375DEE] font-bold fade-up delay-3" style={{ fontFamily: 'var(--font-display)' }}>{content.cta}</p>
@@ -2166,7 +2166,7 @@ export default function Demo() {
         <style>{animationStyles}</style>
         <div className="w-full max-w-md fade-up">
           <div className="text-center mb-12">
-            <Image src={LOGO_URL} alt="Scale Exotics" width={150} height={48} className="h-12 w-auto mx-auto mb-8" />
+            <Image src={LOGO_URL} alt="Velocity Labs" width={150} height={48} className="h-12 w-auto mx-auto mb-8" />
             <h1 className="text-4xl font-bold mb-3" style={{ fontFamily: 'var(--font-display)' }}>Demo Access</h1>
             <p className="text-lg text-white/50">Enter password to continue</p>
           </div>
@@ -2186,7 +2186,7 @@ export default function Demo() {
       <style>{animationStyles}</style>
 
       <div className="fixed top-0 left-0 right-0 z-50 px-8 py-6 flex items-center justify-between">
-        <Image src={LOGO_URL} alt="Scale Exotics" width={88} height={28} priority className="h-7 w-auto opacity-50" />
+        <Image src={LOGO_URL} alt="Velocity Labs" width={88} height={28} priority className="h-7 w-auto opacity-50" />
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             {sections.map((section, i) => (

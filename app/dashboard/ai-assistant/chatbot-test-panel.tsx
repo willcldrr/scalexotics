@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Send, Settings, Bot, User, Sparkles, RotateCcw, Copy, Check, ChevronDown, ChevronUp, Smartphone, Instagram, Zap, Car, DollarSign, MessageSquare, AlertTriangle, TrendingUp, Cpu, Link, Phone, AtSign, Image, CreditCard, HelpCircle, X, Eye, EyeOff, ExternalLink } from "lucide-react"
+import { Send, Settings, Bot, User, Sparkles, RotateCcw, Copy, Check, ChevronDown, ChevronUp, Smartphone, Instagram, Zap, Car, DollarSign, MessageSquare, AlertTriangle, TrendingUp, Cpu, Link, Phone, AtSign, Image, CreditCard, HelpCircle, X, Eye, EyeOff, ExternalLink, Save, Loader2 } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 interface Message {
   role: "user" | "assistant"
@@ -298,8 +299,53 @@ export default function ChatbotTestPanel({ initialSettings, initialVehicles, ini
   const [showStripeSettings, setShowStripeSettings] = useState(true)
   const [showStripeHelp, setShowStripeHelp] = useState(false)
   const [showSecretKey, setShowSecretKey] = useState(false)
+  const [savingStripeKeys, setSavingStripeKeys] = useState(false)
+  const [stripeKeysSaved, setStripeKeysSaved] = useState(false)
+  const [stripeKeyError, setStripeKeyError] = useState<string | null>(null)
 
+  const supabase = createClient()
   const inputRef = useRef<HTMLInputElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+    }
+  }, [messages, isLoading])
+
+  // Load saved Stripe keys from database on mount
+  useEffect(() => {
+    const loadSavedStripeKeys = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const { data: config } = await supabase
+          .from("deposit_portal_config")
+          .select("stripe_publishable_key, stripe_secret_key, custom_domain")
+          .eq("user_id", user.id)
+          .single()
+
+        if (config) {
+          setSettings(prev => ({
+            ...prev,
+            stripe_publishable_key: config.stripe_publishable_key || prev.stripe_publishable_key,
+            stripe_secret_key: config.stripe_secret_key || prev.stripe_secret_key,
+            payment_domain: config.custom_domain || prev.payment_domain,
+          }))
+          // Mark as saved if keys exist in database
+          if (config.stripe_publishable_key && config.stripe_secret_key) {
+            setStripeKeysSaved(true)
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load saved Stripe keys:", error)
+      }
+    }
+
+    loadSavedStripeKeys()
+  }, [])
 
   // Update lead data when channel changes
   useEffect(() => {
@@ -709,6 +755,76 @@ Remember: ${channel === "sms" ? "You're texting, keep it brief" : "You're on Ins
     return `$${cost.toFixed(3)}`
   }
 
+  const saveStripeKeys = async () => {
+    if (!settings.stripe_publishable_key || !settings.stripe_secret_key) {
+      setStripeKeyError("Both publishable key and secret key are required")
+      return
+    }
+
+    setSavingStripeKeys(true)
+    setStripeKeyError(null)
+    setStripeKeysSaved(false)
+
+    try {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (userError || !user) {
+        throw new Error("You must be logged in to save Stripe keys")
+      }
+
+      // Check if config exists
+      const { data: existingConfig, error: fetchError } = await supabase
+        .from("deposit_portal_config")
+        .select("id")
+        .eq("user_id", user.id)
+        .single()
+
+      if (fetchError && fetchError.code !== "PGRST116") {
+        // PGRST116 = not found, which is OK
+        console.error("Fetch error:", fetchError)
+        throw new Error(`Failed to check existing configuration: ${fetchError.message}`)
+      }
+
+      if (existingConfig) {
+        // Update existing config
+        const { error: updateError } = await supabase
+          .from("deposit_portal_config")
+          .update({
+            stripe_publishable_key: settings.stripe_publishable_key,
+            stripe_secret_key: settings.stripe_secret_key,
+            custom_domain: settings.payment_domain || null,
+          })
+          .eq("user_id", user.id)
+
+        if (updateError) {
+          throw new Error("Failed to update Stripe keys: " + updateError.message)
+        }
+      } else {
+        // Create new config
+        const { error: insertError } = await supabase
+          .from("deposit_portal_config")
+          .insert({
+            user_id: user.id,
+            stripe_publishable_key: settings.stripe_publishable_key,
+            stripe_secret_key: settings.stripe_secret_key,
+            custom_domain: settings.payment_domain || null,
+          })
+
+        if (insertError) {
+          throw new Error("Failed to save Stripe keys: " + insertError.message)
+        }
+      }
+
+      setStripeKeysSaved(true)
+      setTimeout(() => setStripeKeysSaved(false), 3000)
+    } catch (error: any) {
+      console.error("Error saving Stripe keys:", error)
+      setStripeKeyError(error.message || "Failed to save Stripe keys")
+    } finally {
+      setSavingStripeKeys(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header Controls */}
@@ -1065,8 +1181,48 @@ Remember: ${channel === "sms" ? "You're texting, keep it brief" : "You're on Ins
                   )}
                 </div>
 
+                {/* Error Message */}
+                {stripeKeyError && (
+                  <div className="p-3 bg-red-500/10 rounded-lg border border-red-500/20 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-red-400" />
+                    <p className="text-sm text-red-400">{stripeKeyError}</p>
+                  </div>
+                )}
+
+                {/* Save Button */}
+                <button
+                  onClick={saveStripeKeys}
+                  disabled={savingStripeKeys || !settings.stripe_publishable_key || !settings.stripe_secret_key}
+                  className={`w-full py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-all ${
+                    stripeKeysSaved
+                      ? "bg-green-500 text-white"
+                      : savingStripeKeys
+                      ? "bg-white/10 text-white/60 cursor-wait"
+                      : settings.stripe_publishable_key && settings.stripe_secret_key
+                      ? "bg-white hover:bg-white/90 text-black"
+                      : "bg-white/10 text-white/40 cursor-not-allowed"
+                  }`}
+                >
+                  {savingStripeKeys ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : stripeKeysSaved ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Saved Successfully
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      Save Stripe Keys
+                    </>
+                  )}
+                </button>
+
                 {/* Status */}
-                {settings.stripe_publishable_key && settings.stripe_secret_key && (
+                {settings.stripe_publishable_key && settings.stripe_secret_key && stripeKeysSaved && (
                   <div className="p-3 bg-green-500/10 rounded-lg border border-green-500/20 flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-400" />
                     <p className="text-sm text-green-400">Stripe connected - payment links are active</p>
@@ -1598,7 +1754,7 @@ Remember: ${channel === "sms" ? "You're texting, keep it brief" : "You're on Ins
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center text-center">
                   <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mb-4">
@@ -1692,7 +1848,7 @@ Remember: ${channel === "sms" ? "You're texting, keep it brief" : "You're on Ins
                 </div>
               )}
 
-            </div>
+                          </div>
 
             {/* Input */}
             <div className="p-4 border-t border-white/[0.06]">

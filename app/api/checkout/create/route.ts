@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     // Create Stripe instance with the appropriate key
     const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: "2024-11-20.acacia",
+      apiVersion: "2026-02-25.clover",
     })
 
     // Build success and cancel URLs
@@ -64,16 +64,19 @@ export async function POST(request: NextRequest) {
         },
       ],
       metadata: {
+        // Include lead_id for webhook to update the correct lead
+        lead_id: paymentData.leadId || "",
+        vehicle_id: paymentData.vehicleId,
+        start_date: paymentData.startDate,
+        end_date: paymentData.endDate,
+        customer_phone: paymentData.customerPhone,
+        customer_name: paymentData.customerName,
+        total_amount: paymentData.totalAmount.toString(),
+        deposit_amount: paymentData.depositAmount.toString(),
+        // Additional fields for reference
         paymentToken: token,
-        vehicleId: paymentData.vehicleId,
         vehicleName: paymentData.vehicleName,
-        startDate: paymentData.startDate,
-        endDate: paymentData.endDate,
         dailyRate: paymentData.dailyRate.toString(),
-        totalAmount: paymentData.totalAmount.toString(),
-        depositAmount: paymentData.depositAmount.toString(),
-        customerName: paymentData.customerName,
-        customerPhone: paymentData.customerPhone,
         businessName: paymentData.businessName || "Velocity Exotics",
       },
       success_url: successUrl,

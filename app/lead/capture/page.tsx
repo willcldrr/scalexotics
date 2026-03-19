@@ -115,7 +115,7 @@ export default function LeadCapturePage() {
         <div className="max-w-lg mx-auto">
           <div className="flex items-center justify-center gap-2">
             <Car className="w-7 h-7" style={{ color: primaryColor }} />
-            <span className="text-white font-bold text-xl">Scale Exotics</span>
+            <span className="text-white font-bold text-xl">Velocity Labs</span>
           </div>
           <p className="text-white/50 text-sm text-center mt-2">Exotic & Luxury Vehicle Rentals</p>
         </div>
@@ -222,7 +222,7 @@ export default function LeadCapturePage() {
                   className="mt-1 w-5 h-5 rounded border-white/30 bg-white/5 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
                 />
                 <span className="text-sm text-white/80 leading-relaxed">
-                  I consent to receive promotional SMS from Scale Exotics about vehicle rentals, availability, offers, confirmations, and reminders (up to 10 messages per month). Message and data rates may apply. Reply STOP to unsubscribe.
+                  I consent to receive promotional SMS from Velocity Labs about vehicle rentals, availability, offers, confirmations, and reminders (up to 10 messages per month). Message and data rates may apply. Reply STOP to unsubscribe.
                 </span>
               </label>
               <p className="text-xs text-white/50 mt-3 ml-8">
@@ -275,13 +275,13 @@ export default function LeadCapturePage() {
           {/* Brand */}
           <div className="flex items-center justify-center gap-2 mb-4">
             <Car className="w-5 h-5" style={{ color: primaryColor }} />
-            <span className="text-white font-semibold">Scale Exotics</span>
+            <span className="text-white font-semibold">Velocity Labs</span>
           </div>
 
           {/* SMS Program Summary */}
           <div className="text-xs text-white/50 space-y-2 mb-4">
             <p>
-              <strong className="text-white/70">SMS Program:</strong> Scale Exotics Vehicle Alerts
+              <strong className="text-white/70">SMS Program:</strong> Velocity Labs Vehicle Alerts
             </p>
             <p>
               <strong className="text-white/70">Message Frequency:</strong> Up to 10 messages/month
@@ -293,7 +293,7 @@ export default function LeadCapturePage() {
               <strong className="text-white/70">Opt-Out:</strong> Reply STOP to any message
             </p>
             <p>
-              <strong className="text-white/70">Help:</strong> Reply HELP or email support@scaleexotics.com
+              <strong className="text-white/70">Help:</strong> Reply HELP or email support@managevelocity.com
             </p>
           </div>
 
@@ -317,7 +317,7 @@ export default function LeadCapturePage() {
 
           {/* Copyright and Additional Disclosures */}
           <p className="text-xs text-white/40">
-            &copy; {new Date().getFullYear()} Scale Exotics. All rights reserved.
+            &copy; {new Date().getFullYear()} Velocity Labs. All rights reserved.
           </p>
           <p className="text-xs text-white/40 mt-2">
             Exotic vehicle rentals require renters to be 25+ years old with valid insurance and driver&apos;s license.

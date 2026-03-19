@@ -13,7 +13,11 @@ export interface PaymentLinkData {
   depositAmount: number
   customerName: string
   customerPhone: string
+  customerEmail?: string
   businessName?: string
+  // Lead tracking - critical for webhook to update correct lead
+  leadId?: string
+  userId?: string
   // Stripe keys for multi-tenant support
   stripePublishableKey?: string
   stripeSecretKey?: string
@@ -127,6 +131,10 @@ export async function generateSecurePaymentLink(data: PaymentLinkData): Promise<
       customer_phone: data.customerPhone,
       business_name: data.businessName || "Velocity Exotics",
       expires_at: expiresAt,
+      // Lead and user tracking for webhook
+      lead_id: data.leadId || null,
+      user_id: data.userId || null,
+      business_id: data.businessId || null,
       // Store Stripe keys for multi-tenant checkout
       stripe_publishable_key: data.stripePublishableKey || null,
       stripe_secret_key: data.stripeSecretKey || null,
@@ -210,6 +218,8 @@ export async function lookupPaymentToken(shortToken: string): Promise<PaymentLin
       customerName: data.customer_name,
       customerPhone: data.customer_phone,
       businessName: data.business_name,
+      leadId: data.lead_id || undefined,
+      userId: data.user_id || undefined,
       stripePublishableKey: data.stripe_publishable_key || undefined,
       stripeSecretKey: data.stripe_secret_key || undefined,
       paymentDomain: data.payment_domain || undefined,

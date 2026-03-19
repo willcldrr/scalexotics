@@ -2,12 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createClient } from "@supabase/supabase-js"
 
-function getStripe() {
-  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2024-11-20.acacia",
-  })
-}
-
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,7 +11,6 @@ function getSupabase() {
 
 export async function POST(request: NextRequest) {
   try {
-    const stripe = getStripe()
     const supabase = getSupabase()
 
     const { leadId, vehicleId, startDate, endDate, depositAmount, customerPhone, customerName, customerEmail } = await request.json()
@@ -28,6 +21,42 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Get the lead to find the user_id (business owner)
+    const { data: lead } = await supabase
+      .from("leads")
+      .select("user_id")
+      .eq("id", leadId)
+      .single()
+
+    if (!lead) {
+      return NextResponse.json(
+        { error: "Lead not found" },
+        { status: 404 }
+      )
+    }
+
+    // Get the business's Stripe configuration
+    const { data: depositConfig } = await supabase
+      .from("deposit_portal_config")
+      .select("stripe_secret_key, stripe_publishable_key")
+      .eq("user_id", lead.user_id)
+      .single()
+
+    // Use business's Stripe key if available, otherwise fall back to platform key
+    const stripeSecretKey = depositConfig?.stripe_secret_key || process.env.STRIPE_SECRET_KEY
+
+    if (!stripeSecretKey) {
+      return NextResponse.json(
+        { error: "Stripe is not configured. Please add your Stripe API keys in Settings > Deposit Portal." },
+        { status: 400 }
+      )
+    }
+
+    // Create Stripe instance with the business's key
+    const stripe = new Stripe(stripeSecretKey, {
+      apiVersion: "2026-02-25.clover",
+    })
 
     // Get vehicle details
     const { data: vehicle } = await supabase

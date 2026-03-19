@@ -8,8 +8,8 @@ export const dynamic = 'force-dynamic'
 // Prevent search engines from indexing dashboard pages
 export const metadata: Metadata = {
   title: {
-    default: "Dashboard",
-    template: "%s | Scale Exotics Dashboard",
+    default: "Velocity Labs",
+    template: "Velocity Labs",
   },
   robots: {
     index: false,

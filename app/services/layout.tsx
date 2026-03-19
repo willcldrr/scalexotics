@@ -3,14 +3,14 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: "Services",
   description:
-    "Explore Scale Exotics services: Lead Magnet for targeted acquisition, Conversion System for AI-powered booking automation, and Insight Engine for real-time analytics.",
+    "Explore Velocity Labs services: Lead Magnet for targeted acquisition, Conversion System for AI-powered booking automation, and Insight Engine for real-time analytics.",
   alternates: {
     canonical: "/services",
   },
   openGraph: {
-    title: "Services | Scale Exotics",
+    title: "Services | Velocity Labs",
     description:
-      "Explore Scale Exotics services: Lead Magnet for targeted acquisition, Conversion System for AI-powered booking automation, and Insight Engine for real-time analytics.",
+      "Explore Velocity Labs services: Lead Magnet for targeted acquisition, Conversion System for AI-powered booking automation, and Insight Engine for real-time analytics.",
     url: "/services",
   },
 }

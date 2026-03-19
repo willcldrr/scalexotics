@@ -3,14 +3,14 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: "SMS Terms",
   description:
-    "Scale Exotics SMS Terms and Conditions - Learn about our SMS communication policies and your rights.",
+    "Velocity Labs SMS Terms and Conditions - Learn about our SMS communication policies and your rights.",
   alternates: {
     canonical: "/sms-terms",
   },
   openGraph: {
-    title: "SMS Terms | Scale Exotics",
+    title: "SMS Terms | Velocity Labs",
     description:
-      "Scale Exotics SMS Terms and Conditions - Learn about our SMS communication policies and your rights.",
+      "Velocity Labs SMS Terms and Conditions - Learn about our SMS communication policies and your rights.",
     url: "/sms-terms",
   },
 }

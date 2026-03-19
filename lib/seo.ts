@@ -1,16 +1,16 @@
 import type { Metadata } from 'next'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://scalexotics.com'
-const SITE_NAME = 'Scale Exotics'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://managevelocity.com'
+const SITE_NAME = 'Velocity Labs'
 
 export const seoConfig = {
   siteName: SITE_NAME,
   siteUrl: SITE_URL,
-  defaultTitle: 'Scale Exotics | Exotic Car Rental Growth Platform',
+  defaultTitle: 'Velocity Labs | Exotic Car Rental Growth Platform',
   defaultDescription:
     'Scale your exotic car rental business to $50k+/month with AI-powered lead generation, automated booking, and fleet management. Trusted by 20+ fleet owners.',
   keywords: [
-    'Scale Exotics',
+    'Velocity Labs',
     'exotic car rental',
     'luxury car rental',
     'exotic car rental marketing',
@@ -24,8 +24,8 @@ export const seoConfig = {
     'car rental CRM',
     'rental business growth',
   ],
-  author: 'Scale Exotics',
-  twitterHandle: '@scaleexotics',
+  author: 'Velocity Labs',
+  twitterHandle: '@veloctylabs',
   ogImage: `${SITE_URL}/og-image.png`,
   locale: 'en_US',
 }
@@ -111,7 +111,7 @@ export function generateMetadata({
 export const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  name: 'Scale Exotics',
+  name: 'Velocity Labs',
   url: SITE_URL,
   logo: `${SITE_URL}/velocity.jpg`,
   description:
@@ -119,7 +119,7 @@ export const organizationSchema = {
   foundingDate: '2024',
   contactPoint: {
     '@type': 'ContactPoint',
-    email: 'info@scalexotics.com',
+    email: 'info@managevelocity.com',
     contactType: 'customer service',
   },
   sameAs: [],
@@ -128,12 +128,12 @@ export const organizationSchema = {
 export const websiteSchema = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
-  name: 'Scale Exotics',
+  name: 'Velocity Labs',
   url: SITE_URL,
   description: seoConfig.defaultDescription,
   publisher: {
     '@type': 'Organization',
-    name: 'Scale Exotics',
+    name: 'Velocity Labs',
     logo: {
       '@type': 'ImageObject',
       url: `${SITE_URL}/velocity.jpg`,
@@ -144,7 +144,7 @@ export const websiteSchema = {
 export const softwareApplicationSchema = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
-  name: 'Scale Exotics',
+  name: 'Velocity Labs',
   applicationCategory: 'BusinessApplication',
   operatingSystem: 'Web',
   description:
@@ -168,7 +168,7 @@ export const softwareApplicationSchema = {
 export const localBusinessSchema = {
   '@context': 'https://schema.org',
   '@type': 'ProfessionalService',
-  name: 'Scale Exotics',
+  name: 'Velocity Labs',
   url: SITE_URL,
   logo: `${SITE_URL}/velocity.jpg`,
   image: `${SITE_URL}/og-image.png`,
@@ -179,7 +179,7 @@ export const localBusinessSchema = {
     '@type': 'PostalAddress',
     addressCountry: 'US',
   },
-  email: 'info@scalexotics.com',
+  email: 'info@managevelocity.com',
   areaServed: {
     '@type': 'Country',
     name: 'United States',

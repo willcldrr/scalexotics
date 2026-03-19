@@ -85,7 +85,7 @@ async function createSurvey() {
       console.error("Failed to update survey:", updateError)
     } else {
       console.log("Survey updated successfully!")
-      console.log("URL: https://scalexotics.com/lead/miami-exotics")
+      console.log("URL: https://managevelocity.com/lead/miami-exotics")
     }
     return
   }
@@ -124,7 +124,7 @@ async function createSurvey() {
   }
 
   console.log("Survey created successfully!")
-  console.log("URL: https://scalexotics.com/lead/miami-exotics")
+  console.log("URL: https://managevelocity.com/lead/miami-exotics")
   console.log("Local: http://localhost:3000/lead/miami-exotics")
 }
 

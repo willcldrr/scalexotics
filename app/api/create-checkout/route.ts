@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-06-20",
+  apiVersion: "2026-02-25.clover",
 })
 
 export async function POST(request: NextRequest) {
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: description || "Scale Exotics Invoice",
+              name: description || "Velocity Labs Invoice",
               description: `Invoice payment for ${clientName}`,
             },
             unit_amount: Math.round(amount * 100), // Convert to cents

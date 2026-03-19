@@ -454,7 +454,7 @@ export default function AdminInvoicesPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold">Create Invoice</h3>
-                  <p className="text-sm text-white/50">Scale Exotics Partner Invoice</p>
+                  <p className="text-sm text-white/50">Velocity Labs Partner Invoice</p>
                 </div>
               </div>
               <button

@@ -89,7 +89,7 @@ export async function POST(request: Request) {
       }, { status: 400 })
     }
 
-    const testMessage = message || "This is a test message from the Scale Exotics AI Assistant!"
+    const testMessage = message || "This is a test message from the Velocity Labs AI Assistant!"
 
     console.log(`[Debug] Sending test message to ${recipientId}: ${testMessage}`)
 

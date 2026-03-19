@@ -73,8 +73,8 @@ export default function PaymentPage() {
           clientName: invoice.client_name,
           clientEmail: invoice.client_email,
           description: invoice.type === "retainer"
-            ? "Scale Exotics Retainer"
-            : invoice.booking_description || "Scale Exotics Booking",
+            ? "Velocity Labs Retainer"
+            : invoice.booking_description || "Velocity Labs Booking",
         }),
       })
 
@@ -136,7 +136,7 @@ export default function PaymentPage() {
         <div className="text-center mb-8">
           <img
             src="https://imagedelivery.net/CVEJyzst_6io-ETn1V_PSw/3bdba65e-fb1a-4a3e-ff6f-1aa89b081f00/public"
-            alt="Scale Exotics"
+            alt="Velocity Labs"
             className="h-10 mx-auto"
           />
         </div>
@@ -284,7 +284,7 @@ export default function PaymentPage() {
         {/* Footer */}
         <div className="text-center mt-8 text-white/40 text-sm">
           <p>Questions about this invoice?</p>
-          <a href="mailto:support@scalexotics.com" className="text-[#375DEE] hover:underline">
+          <a href="mailto:support@managevelocity.com" className="text-[#375DEE] hover:underline">
             Contact us
           </a>
         </div>

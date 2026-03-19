@@ -1,5 +1,5 @@
 // CRM Lead Status Configuration
-// Used for B2B leads (potential Scale Exotics customers)
+// Used for B2B leads (potential Velocity Labs customers)
 
 export type CRMLeadStatus =
   | "not_contacted"
@@ -41,7 +41,7 @@ export const crmStatusOptions: CRMStatusOption[] = [
     label: "Interested",
     color: "text-[#5a7df4]",
     bgColor: "bg-[#375DEE]/25",
-    description: "Showed interest in Scale Exotics",
+    description: "Showed interest in Velocity Labs",
   },
   {
     value: "not_interested",
