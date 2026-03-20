@@ -247,9 +247,10 @@ interface ChatbotTestPanelProps {
   initialSettings?: Partial<AISettings>
   initialVehicles?: Vehicle[]
   initialBookings?: Booking[]
+  userId?: string | null
 }
 
-export default function ChatbotTestPanel({ initialSettings, initialVehicles, initialBookings }: ChatbotTestPanelProps) {
+export default function ChatbotTestPanel({ initialSettings, initialVehicles, initialBookings, userId }: ChatbotTestPanelProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -413,12 +414,43 @@ export default function ChatbotTestPanel({ initialSettings, initialVehicles, ini
     const todayFormatted = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`
     const currentTime = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
     const currentHour = now.getHours()
+    const currentMinutes = now.getMinutes()
 
-    // Determine if same-day booking is possible (before 5 PM to allow pickup by 8 PM close)
-    const sameDayBookingAvailable = currentHour < 17 // Before 5 PM
+    // Business hours: 9 AM (9:00) to 8 PM (20:00)
+    const openHour = 9
+    const closeHour = 20
+    const isCurrentlyOpen = currentHour >= openHour && currentHour < closeHour
+    const hoursUntilOpen = isCurrentlyOpen ? 0 : (currentHour < openHour ? openHour - currentHour : 24 - currentHour + openHour)
+    const hoursUntilClose = isCurrentlyOpen ? closeHour - currentHour : 0
+
+    // Calculate tomorrow's date
+    const tomorrow = new Date(now)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const tomorrowFormatted = `${days[tomorrow.getDay()]}, ${months[tomorrow.getMonth()]} ${tomorrow.getDate()}`
+
+    // Determine business status message
+    let businessStatusMessage: string
+    if (isCurrentlyOpen) {
+      if (hoursUntilClose <= 3) {
+        businessStatusMessage = `OPEN NOW - But closing soon at 8 PM (in ~${hoursUntilClose} hours). Same-day pickup only if customer can arrive before 8 PM.`
+      } else {
+        businessStatusMessage = `OPEN NOW - Taking pickups until 8 PM today.`
+      }
+    } else {
+      if (currentHour >= closeHour) {
+        businessStatusMessage = `CLOSED - We closed at 8 PM. Next opening: Tomorrow (${tomorrowFormatted}) at 9 AM.`
+      } else {
+        businessStatusMessage = `CLOSED - We open at 9 AM (in ~${hoursUntilOpen} hours).`
+      }
+    }
+
+    // Determine if same-day booking is possible
+    const sameDayBookingAvailable = isCurrentlyOpen && hoursUntilClose >= 1
     const sameDayMessage = sameDayBookingAvailable
-      ? "Same-day bookings are available if customer can pick up before closing (8 PM)."
-      : "Same-day bookings are NOT available - it's too late today. Earliest available is tomorrow."
+      ? "Same-day pickups are available if customer can arrive before 8 PM."
+      : isCurrentlyOpen
+        ? "Same-day pickups NOT available - too close to closing time. Earliest pickup is tomorrow at 9 AM."
+        : "Same-day pickups NOT available - we are CLOSED. Earliest pickup is tomorrow at 9 AM."
 
     return `You are an AI assistant for ${settings.business_name || "an exotic car rental business"}. You handle ${channel === "sms" ? "SMS" : "Instagram DM"} conversations to qualify leads and collect booking information.
 
@@ -427,8 +459,15 @@ ${personality.systemInstructions}
 CURRENT DATE & TIME: ${todayFormatted} at ${currentTime}
 Use this to calculate relative dates like "tomorrow", "this weekend", "next Friday", etc.
 
-SAME-DAY BOOKING RULE:
+=== BUSINESS STATUS (CRITICAL - CHECK THIS FIRST) ===
+${businessStatusMessage}
 ${sameDayMessage}
+
+When customer asks for "today":
+- If we are CLOSED: Immediately tell them we're closed and offer to book for tomorrow (${tomorrowFormatted}) instead
+- If we are OPEN but closing soon: Make sure they can pick up before 8 PM
+- NEVER offer same-day pickup when we are closed - this is the #1 priority to check
+=====================================================
 
 BUSINESS INFO:
 - Business: ${settings.business_name}
@@ -454,9 +493,12 @@ ${collectedSummary}
 ${missingInfo.length > 0 ? `STILL NEED TO COLLECT: ${missingInfo.join(", ")}` : "ALL INFO COLLECTED - Ready to send payment link!"}
 
 YOUR GOALS (in order):
-1. If no vehicle selected: Help them choose a vehicle from our fleet
-2. If no dates: Ask for their rental dates (start and end date)
-3. If customer wants TODAY: Check the SAME-DAY BOOKING RULE above - if it's too late, politely explain and suggest tomorrow instead
+1. **FIRST - CHECK BUSINESS STATUS**: If customer mentions "today" or wants immediate pickup, IMMEDIATELY check the BUSINESS STATUS section above:
+   - If CLOSED: Tell them right away "We're actually closed right now - we open at 9 AM tomorrow. Want me to set you up for tomorrow instead?"
+   - If OPEN: Proceed normally
+   - DO NOT ask "what time?" if we're closed - that makes no sense
+2. If no vehicle selected: Help them choose a vehicle from our fleet
+3. If no dates: Ask for their rental dates (start and end date)
 4. IMPORTANT - Check CURRENT BOOKINGS above: If the requested dates overlap with an existing booking for that vehicle, politely explain it's not available and suggest:
    - Different dates when that vehicle IS available
    - A similar vehicle that IS available for their dates
@@ -567,6 +609,7 @@ Remember: ${channel === "sms" ? "You're texting, keep it brief" : "You're on Ins
         autoEscalate: settings.auto_escalate,
         vehicles: vehicles,
         leadData: leadData,
+        userId: userId, // Pass user ID for booking creation
       }
 
       console.log("[ChatbotTest Client] Full request body keys:", Object.keys(requestBody))

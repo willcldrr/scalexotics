@@ -120,6 +120,7 @@ export async function POST(request: NextRequest) {
     }
 
     const leadId = metadata.lead_id
+    const metadataUserId = metadata.user_id // User ID passed from checkout
     const vehicleId = metadata.vehicle_id
     const startDate = metadata.start_date
     const endDate = metadata.end_date
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
 
     try {
       let lead: any = null
-      let userId: string | null = null
+      let userId: string | null = metadataUserId || null // Use metadata user_id first
 
       // Try to get the lead if we have a lead_id
       if (leadId) {
@@ -147,7 +148,7 @@ export async function POST(request: NextRequest) {
           .single()
 
         lead = leadData
-        userId = leadData?.user_id
+        if (!userId) userId = leadData?.user_id
       }
 
       // If no lead found but we have customer phone, try to find by phone
@@ -162,11 +163,11 @@ export async function POST(request: NextRequest) {
 
         if (leadByPhone) {
           lead = leadByPhone
-          userId = leadByPhone.user_id
+          if (!userId) userId = leadByPhone.user_id
         }
       }
 
-      // If still no lead/user, try to get user from vehicle
+      // If still no user, try to get user from vehicle
       if (!userId && vehicleId) {
         const { data: vehicle } = await supabase
           .from("vehicles")
@@ -181,6 +182,8 @@ export async function POST(request: NextRequest) {
         console.error("Could not determine user_id for booking")
         return NextResponse.json({ received: true })
       }
+
+      console.log("Creating booking with userId:", userId, "vehicleId:", vehicleId)
 
       // Update lead status to converted (if we have a lead)
       if (lead && lead.id) {

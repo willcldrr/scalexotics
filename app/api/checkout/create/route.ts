@@ -64,8 +64,9 @@ export async function POST(request: NextRequest) {
         },
       ],
       metadata: {
-        // Include lead_id for webhook to update the correct lead
+        // Include lead_id and user_id for webhook to create booking
         lead_id: paymentData.leadId || "",
+        user_id: paymentData.userId || "",
         vehicle_id: paymentData.vehicleId,
         start_date: paymentData.startDate,
         end_date: paymentData.endDate,

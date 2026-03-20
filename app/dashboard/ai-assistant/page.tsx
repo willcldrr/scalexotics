@@ -1144,6 +1144,7 @@ export default function AIAssistantPage() {
 
       {activeTab === "test" && (
         <ChatbotTestPanel
+          userId={userId}
           initialSettings={{
             business_name: settings.business_name,
             business_phone: settings.business_phone,

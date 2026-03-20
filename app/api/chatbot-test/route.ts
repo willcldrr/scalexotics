@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     console.log("[Chatbot Test] leadData received:", JSON.stringify(body.leadData, null, 2))
     console.log("[Chatbot Test] vehicles count:", body.vehicles?.length)
     console.log("[Chatbot Test] settings keys:", body.settings ? Object.keys(body.settings) : "no settings")
-    const { messages, systemPrompt, model, forceModel, autoEscalate, vehicles, leadData, settings } = body
+    const { messages, systemPrompt, model, forceModel, autoEscalate, vehicles, leadData, settings, userId } = body
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
@@ -199,6 +199,8 @@ export async function POST(request: NextRequest) {
               customerName,
               customerPhone,
               businessName: settings?.business_name || "Velocity Exotics",
+              // Include user ID for booking creation
+              userId: userId || undefined,
               // Include Stripe keys for multi-tenant checkout
               stripePublishableKey: settings?.stripe_publishable_key || undefined,
               stripeSecretKey: settings?.stripe_secret_key || undefined,
