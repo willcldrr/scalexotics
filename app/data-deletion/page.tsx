@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft, Trash2, CheckCircle, AlertCircle, Loader2, Shield, Instagram, Database, MessageSquare, Users, Lock, ChevronUp } from "lucide-react"
+import { ArrowLeft, Trash2, CheckCircle, AlertCircle, Loader2, Shield, Instagram, Database, MessageSquare, Users, Lock } from "lucide-react"
 
 type DeletionType = "account" | "instagram" | "leads" | "messages" | "all"
 
@@ -21,35 +21,30 @@ const deletionOptions = [
     label: "All My Data",
     description: "Delete my entire account and all associated data",
     icon: Database,
-    color: "red",
   },
   {
     value: "account" as DeletionType,
     label: "Account Information",
     description: "Name, email, profile info, and auth data",
     icon: Shield,
-    color: "blue",
   },
   {
     value: "instagram" as DeletionType,
     label: "Instagram Integration",
     description: "Instagram connection data and access tokens",
     icon: Instagram,
-    color: "purple",
   },
   {
     value: "leads" as DeletionType,
     label: "Lead & Customer Data",
     description: "All leads, customer info, and booking history",
     icon: Users,
-    color: "emerald",
   },
   {
     value: "messages" as DeletionType,
     label: "Message History",
     description: "AI conversation logs and DM interaction history",
     icon: MessageSquare,
-    color: "amber",
   },
 ]
 
@@ -117,7 +112,7 @@ export default function DataDeletionPage() {
       <div className="min-h-screen bg-black text-white">
         {/* Background Effects */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute w-[800px] h-[800px] rounded-full blur-[150px] opacity-20" style={{ background: "radial-gradient(circle, rgba(52,211,153,0.2) 0%, transparent 70%)", top: "-20%", left: "20%" }} />
+          <div className="absolute w-[800px] h-[800px] rounded-full blur-[150px] opacity-20" style={{ background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)", top: "-20%", left: "20%" }} />
         </div>
 
         {/* Navigation */}
@@ -136,8 +131,8 @@ export default function DataDeletionPage() {
         </nav>
 
         <div className="max-w-lg mx-auto px-4 py-24 text-center">
-          <div className="w-20 h-20 rounded-2xl bg-emerald-500/20 flex items-center justify-center mx-auto mb-8">
-            <CheckCircle className="w-10 h-10 text-emerald-400" />
+          <div className="w-20 h-20 rounded-2xl bg-white/[0.05] flex items-center justify-center mx-auto mb-8">
+            <CheckCircle className="w-10 h-10 text-white/60" />
           </div>
           <h1 className="text-3xl font-bold mb-4">Request Submitted</h1>
           <p className="text-white/60 mb-8">
@@ -165,7 +160,7 @@ export default function DataDeletionPage() {
     <div className="min-h-screen bg-black text-white">
       {/* Background Effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute w-[800px] h-[800px] rounded-full blur-[150px] opacity-20" style={{ background: "radial-gradient(circle, rgba(239,68,68,0.15) 0%, transparent 70%)", top: "-20%", right: "-10%" }} />
+        <div className="absolute w-[800px] h-[800px] rounded-full blur-[150px] opacity-20" style={{ background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)", top: "-20%", right: "-10%" }} />
         <div className="absolute w-[600px] h-[600px] rounded-full blur-[120px] opacity-15" style={{ background: "radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)", bottom: "-10%", left: "-5%" }} />
       </div>
 
@@ -203,8 +198,8 @@ export default function DataDeletionPage() {
         <div className="grid sm:grid-cols-2 gap-4 mb-8">
           <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] p-6">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-blue-400" />
+              <div className="w-10 h-10 rounded-xl bg-white/[0.05] flex items-center justify-center">
+                <Shield className="w-5 h-5 text-white/60" />
               </div>
               <h3 className="font-semibold">Your Privacy Rights</h3>
             </div>
@@ -214,8 +209,8 @@ export default function DataDeletionPage() {
           </div>
           <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] p-6">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                <Lock className="w-5 h-5 text-emerald-400" />
+              <div className="w-10 h-10 rounded-xl bg-white/[0.05] flex items-center justify-center">
+                <Lock className="w-5 h-5 text-white/60" />
               </div>
               <h3 className="font-semibold">What Happens Next</h3>
             </div>
@@ -226,13 +221,13 @@ export default function DataDeletionPage() {
         </div>
 
         {/* Instagram Notice */}
-        <div className="bg-gradient-to-br from-purple-500/[0.08] to-pink-500/[0.08] rounded-2xl border border-purple-500/20 p-6 mb-8">
+        <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] p-6 mb-8">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-              <Instagram className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-white/[0.05] flex items-center justify-center flex-shrink-0">
+              <Instagram className="w-5 h-5 text-white/60" />
             </div>
             <div>
-              <h3 className="font-semibold text-purple-300 mb-2">Instagram Integration Data</h3>
+              <h3 className="font-semibold mb-2">Instagram Integration Data</h3>
               <p className="text-sm text-white/60">
                 If you connected your Instagram account, we will disconnect the integration and delete all associated data.
                 This does not affect data stored on Instagram/Meta&apos;s servers. Visit your{" "}
@@ -240,7 +235,7 @@ export default function DataDeletionPage() {
                   href="https://www.facebook.com/settings?tab=your_facebook_information"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-purple-400 hover:underline"
+                  className="text-white/80 hover:underline"
                 >
                   Facebook Privacy Settings
                 </a>
@@ -255,7 +250,7 @@ export default function DataDeletionPage() {
           {/* Email */}
           <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] p-6">
             <label htmlFor="email" className="block text-sm font-medium mb-3">
-              Email Address <span className="text-red-400">*</span>
+              Email Address <span className="text-white/40">*</span>
             </label>
             <input
               type="email"
@@ -271,7 +266,7 @@ export default function DataDeletionPage() {
           {/* Confirm Email */}
           <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] p-6">
             <label htmlFor="confirmEmail" className="block text-sm font-medium mb-3">
-              Confirm Email Address <span className="text-red-400">*</span>
+              Confirm Email Address <span className="text-white/40">*</span>
             </label>
             <input
               type="email"
@@ -287,30 +282,20 @@ export default function DataDeletionPage() {
           {/* Deletion Type */}
           <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] p-6">
             <label className="block text-sm font-medium mb-4">
-              What data would you like deleted? <span className="text-red-400">*</span>
+              What data would you like deleted? <span className="text-white/40">*</span>
             </label>
             <div className="space-y-3">
               {deletionOptions.map((option) => {
                 const Icon = option.icon
                 const isSelected = formData.deletionType === option.value
-                const colorClasses = {
-                  red: isSelected ? "border-red-500/50 bg-red-500/10" : "border-white/[0.08] hover:border-white/20",
-                  blue: isSelected ? "border-blue-500/50 bg-blue-500/10" : "border-white/[0.08] hover:border-white/20",
-                  purple: isSelected ? "border-purple-500/50 bg-purple-500/10" : "border-white/[0.08] hover:border-white/20",
-                  emerald: isSelected ? "border-emerald-500/50 bg-emerald-500/10" : "border-white/[0.08] hover:border-white/20",
-                  amber: isSelected ? "border-amber-500/50 bg-amber-500/10" : "border-white/[0.08] hover:border-white/20",
-                }
-                const iconColorClasses = {
-                  red: "text-red-400",
-                  blue: "text-blue-400",
-                  purple: "text-purple-400",
-                  emerald: "text-emerald-400",
-                  amber: "text-amber-400",
-                }
                 return (
                   <label
                     key={option.value}
-                    className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${colorClasses[option.color as keyof typeof colorClasses]}`}
+                    className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${
+                      isSelected
+                        ? "border-white/30 bg-white/[0.05]"
+                        : "border-white/[0.08] hover:border-white/20"
+                    }`}
                   >
                     <input
                       type="radio"
@@ -322,8 +307,8 @@ export default function DataDeletionPage() {
                       }
                       className="mt-1 accent-white"
                     />
-                    <div className={`w-10 h-10 rounded-xl bg-white/[0.05] flex items-center justify-center flex-shrink-0`}>
-                      <Icon className={`w-5 h-5 ${iconColorClasses[option.color as keyof typeof iconColorClasses]}`} />
+                    <div className="w-10 h-10 rounded-xl bg-white/[0.05] flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-5 h-5 text-white/60" />
                     </div>
                     <div>
                       <p className="font-medium text-white">{option.label}</p>
@@ -351,7 +336,7 @@ export default function DataDeletionPage() {
           </div>
 
           {/* Acknowledgment */}
-          <div className="bg-red-500/[0.08] rounded-2xl border border-red-500/20 p-6">
+          <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] p-6">
             <label className="flex items-start gap-4 cursor-pointer">
               <input
                 type="checkbox"
@@ -360,8 +345,8 @@ export default function DataDeletionPage() {
                 className="mt-1 accent-red-500"
               />
               <div>
-                <p className="font-medium text-red-300">
-                  I understand this action is permanent <span className="text-red-400">*</span>
+                <p className="font-medium text-white">
+                  I understand this action is permanent <span className="text-white/40">*</span>
                 </p>
                 <p className="text-sm text-white/50 mt-1">
                   I acknowledge that once my data is deleted, it cannot be recovered. This may include
@@ -374,9 +359,9 @@ export default function DataDeletionPage() {
 
           {/* Error */}
           {error && (
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-red-400">{error}</p>
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/[0.08]">
+              <AlertCircle className="w-5 h-5 text-white/60 flex-shrink-0 mt-0.5" />
+              <p className="text-white/70">{error}</p>
             </div>
           )}
 
@@ -384,7 +369,7 @@ export default function DataDeletionPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl transition-all font-semibold shadow-[0_0_30px_rgba(239,68,68,0.3)] hover:shadow-[0_0_40px_rgba(239,68,68,0.4)]"
+            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl transition-all font-semibold"
           >
             {submitting ? (
               <>
@@ -405,13 +390,13 @@ export default function DataDeletionPage() {
           <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] p-6">
             <h3 className="font-semibold mb-4">Questions or Concerns?</h3>
             <p className="text-sm text-white/60 mb-4">
-              If you have questions about data deletion or need assistance, please contact our privacy team:
+              If you have questions about data deletion or need assistance, please contact us:
             </p>
             <div className="space-y-2 text-sm">
               <p>
                 <span className="text-white/40">Email:</span>{" "}
-                <a href="mailto:privacy@managevelocity.com" className="text-blue-400 hover:underline">
-                  privacy@managevelocity.com
+                <a href="mailto:info@managevelocity.com" className="text-white/80 hover:underline">
+                  info@managevelocity.com
                 </a>
               </p>
               <p>
