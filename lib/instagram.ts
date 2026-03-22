@@ -13,15 +13,23 @@ interface SendMessageResponse {
   message_id: string
 }
 
+export interface InstagramCredentials {
+  accessToken: string
+  accountId: string
+}
+
 /**
  * Send a message to an Instagram user via the Instagram Graph API
+ * Supports both per-user credentials and env var fallback
  */
 export async function sendInstagramMessage(
   recipientId: string,
-  message: string
+  message: string,
+  credentials?: InstagramCredentials
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
-  const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN
-  const accountId = process.env.INSTAGRAM_ACCOUNT_ID
+  // Use provided credentials or fall back to env vars
+  const accessToken = credentials?.accessToken || process.env.INSTAGRAM_ACCESS_TOKEN
+  const accountId = credentials?.accountId || process.env.INSTAGRAM_ACCOUNT_ID
 
   if (!accessToken || !accountId) {
     console.error("Instagram credentials not configured")
@@ -100,9 +108,10 @@ export function verifyWebhookSignature(
  * Note: Only works for users who have messaged the business account
  */
 export async function getInstagramUserInfo(
-  userId: string
+  userId: string,
+  credentials?: InstagramCredentials
 ): Promise<InstagramUserInfo | null> {
-  const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN
+  const accessToken = credentials?.accessToken || process.env.INSTAGRAM_ACCESS_TOKEN
 
   if (!accessToken) {
     console.error("Instagram access token not configured")
@@ -185,9 +194,12 @@ export function parseInstagramWebhook(body: any): InstagramMessage | null {
 /**
  * Mark a message as seen (send read receipt)
  */
-export async function markMessageSeen(senderId: string): Promise<boolean> {
-  const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN
-  const accountId = process.env.INSTAGRAM_ACCOUNT_ID
+export async function markMessageSeen(
+  senderId: string,
+  credentials?: InstagramCredentials
+): Promise<boolean> {
+  const accessToken = credentials?.accessToken || process.env.INSTAGRAM_ACCESS_TOKEN
+  const accountId = credentials?.accountId || process.env.INSTAGRAM_ACCOUNT_ID
 
   if (!accessToken || !accountId) {
     return false
@@ -218,10 +230,11 @@ export async function markMessageSeen(senderId: string): Promise<boolean> {
  */
 export async function sendTypingIndicator(
   senderId: string,
-  typingOn: boolean
+  typingOn: boolean,
+  credentials?: InstagramCredentials
 ): Promise<boolean> {
-  const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN
-  const accountId = process.env.INSTAGRAM_ACCOUNT_ID
+  const accessToken = credentials?.accessToken || process.env.INSTAGRAM_ACCESS_TOKEN
+  const accountId = credentials?.accountId || process.env.INSTAGRAM_ACCOUNT_ID
 
   if (!accessToken || !accountId) {
     return false

@@ -7,6 +7,7 @@ import {
   getInstagramUserInfo,
   markMessageSeen,
   sendTypingIndicator,
+  InstagramCredentials,
 } from "@/lib/instagram"
 import {
   generateAIResponse,
@@ -21,26 +22,58 @@ function getSupabase() {
   )
 }
 
-// Look up user by their configured Instagram account ID
-async function getUserIdByInstagramAccount(instagramAccountId: string): Promise<string | null> {
+interface InstagramConnection {
+  user_id: string
+  instagram_account_id: string
+  access_token: string
+  is_active: boolean
+}
+
+// Look up user and credentials by their Instagram account ID
+async function getConnectionByInstagramAccount(instagramAccountId: string): Promise<{
+  userId: string
+  credentials: InstagramCredentials
+} | null> {
   const supabase = getSupabase()
 
-  // Look up in ai_settings by instagram_account_id or check user_settings
-  const { data: settings } = await supabase
-    .from("ai_settings")
-    .select("user_id")
-    .eq("instagram_enabled", true)
+  // First, try to look up in instagram_connections table (OAuth-based connections)
+  const { data: connection } = await supabase
+    .from("instagram_connections")
+    .select("user_id, instagram_account_id, access_token")
+    .eq("instagram_account_id", instagramAccountId)
+    .eq("is_active", true)
+    .single()
 
-  // For now, if Instagram is enabled for a user, route to them
-  // In production, you'd want a mapping table for Instagram account -> user
-  if (settings && settings.length > 0) {
-    // If only one user has Instagram enabled, use them
-    if (settings.length === 1) {
-      return settings[0].user_id
+  if (connection) {
+    return {
+      userId: connection.user_id,
+      credentials: {
+        accessToken: connection.access_token,
+        accountId: connection.instagram_account_id,
+      },
     }
-    // TODO: Add instagram_account_id to ai_settings for proper multi-tenant
-    // For now, return the first one
-    return settings[0].user_id
+  }
+
+  // Fall back to env vars if no OAuth connection found
+  // This supports legacy single-tenant setup
+  if (process.env.INSTAGRAM_ACCESS_TOKEN && process.env.INSTAGRAM_ACCOUNT_ID) {
+    // Look up a user with instagram_enabled in ai_settings
+    const { data: settings } = await supabase
+      .from("ai_settings")
+      .select("user_id")
+      .eq("instagram_enabled", true)
+      .limit(1)
+      .single()
+
+    if (settings) {
+      return {
+        userId: settings.user_id,
+        credentials: {
+          accessToken: process.env.INSTAGRAM_ACCESS_TOKEN,
+          accountId: process.env.INSTAGRAM_ACCOUNT_ID,
+        },
+      }
+    }
   }
 
   return null
@@ -112,28 +145,32 @@ async function processInstagramMessage(webhookBody: any): Promise<void> {
     return
   }
 
+  // Look up user and credentials by Instagram account (multi-tenant support)
+  const recipientId = message.recipientId || process.env.INSTAGRAM_ACCOUNT_ID
+  const connection = await getConnectionByInstagramAccount(recipientId || "")
+
+  if (!connection) {
+    console.error("[Instagram] No user configured for this Instagram account")
+    return
+  }
+
+  const { userId, credentials } = connection
+
   // Skip if no text content (e.g., media-only message)
   if (!message.text) {
     await sendInstagramMessage(
       message.senderId,
-      "Thanks for reaching out! Feel free to send me a text message and I'll help you book an exotic car rental."
+      "Thanks for reaching out! Feel free to send me a text message and I'll help you book an exotic car rental.",
+      credentials
     )
     return
   }
 
   // Mark message as seen
-  await markMessageSeen(message.senderId)
-
-  // Look up user by Instagram account (multi-tenant support)
-  const recipientId = message.recipientId || process.env.INSTAGRAM_ACCOUNT_ID
-  const userId = await getUserIdByInstagramAccount(recipientId || "")
-  if (!userId) {
-    console.error("[Instagram] No user configured for this Instagram account")
-    return
-  }
+  await markMessageSeen(message.senderId, credentials)
 
   // Get Instagram user info for better lead creation
-  const userInfo = await getInstagramUserInfo(message.senderId)
+  const userInfo = await getInstagramUserInfo(message.senderId, credentials)
 
   // Find or create lead for this Instagram user
   const lead = await findOrCreateInstagramLead(
@@ -152,7 +189,7 @@ async function processInstagramMessage(webhookBody: any): Promise<void> {
   await saveMessage(userId, lead.id, message.text, "inbound")
 
   // Show typing indicator while generating response
-  await sendTypingIndicator(message.senderId, true)
+  await sendTypingIndicator(message.senderId, true, credentials)
 
   try {
     // Generate AI response using the existing AI engine
@@ -166,25 +203,26 @@ async function processInstagramMessage(webhookBody: any): Promise<void> {
     )
 
     // Turn off typing indicator
-    await sendTypingIndicator(message.senderId, false)
+    await sendTypingIndicator(message.senderId, false, credentials)
 
     // Save the outgoing message
     await saveMessage(userId, lead.id, aiResult.response, "outbound")
 
     // Send the response via Instagram
-    const sendResult = await sendInstagramMessage(message.senderId, aiResult.response)
+    const sendResult = await sendInstagramMessage(message.senderId, aiResult.response, credentials)
 
     if (!sendResult.success) {
       console.error("[Instagram] Failed to send response")
     }
   } catch (error) {
     console.error("[Instagram] AI response error")
-    await sendTypingIndicator(message.senderId, false)
+    await sendTypingIndicator(message.senderId, false, credentials)
 
     // Send fallback message
     await sendInstagramMessage(
       message.senderId,
-      "Thanks for your message! One of our team members will get back to you shortly."
+      "Thanks for your message! One of our team members will get back to you shortly.",
+      credentials
     )
   }
 }
