@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { createClient } from "@supabase/supabase-js"
 import {
   verifyWebhookSignature,
   parseInstagramWebhook,
@@ -10,9 +11,40 @@ import {
 import {
   generateAIResponse,
   saveMessage,
-  getDefaultUserId,
 } from "@/lib/sms-ai"
 import { findOrCreateInstagramLead } from "@/lib/instagram-leads"
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
+
+// Look up user by their configured Instagram account ID
+async function getUserIdByInstagramAccount(instagramAccountId: string): Promise<string | null> {
+  const supabase = getSupabase()
+
+  // Look up in ai_settings by instagram_account_id or check user_settings
+  const { data: settings } = await supabase
+    .from("ai_settings")
+    .select("user_id")
+    .eq("instagram_enabled", true)
+
+  // For now, if Instagram is enabled for a user, route to them
+  // In production, you'd want a mapping table for Instagram account -> user
+  if (settings && settings.length > 0) {
+    // If only one user has Instagram enabled, use them
+    if (settings.length === 1) {
+      return settings[0].user_id
+    }
+    // TODO: Add instagram_account_id to ai_settings for proper multi-tenant
+    // For now, return the first one
+    return settings[0].user_id
+  }
+
+  return null
+}
 
 /**
  * GET handler for webhook verification
@@ -27,19 +59,11 @@ export async function GET(request: NextRequest) {
 
   const verifyToken = process.env.INSTAGRAM_VERIFY_TOKEN
 
-  console.log("[Instagram Webhook] GET request received")
-  console.log("[Instagram Webhook] Mode:", mode)
-  console.log("[Instagram Webhook] Token received:", token ? "yes" : "no")
-  console.log("[Instagram Webhook] Verify token configured:", verifyToken ? "yes" : "no")
-  console.log("[Instagram Webhook] Tokens match:", token === verifyToken)
-
   // Verify the webhook subscription
   if (mode === "subscribe" && token === verifyToken) {
-    console.log("[Instagram Webhook] Verification SUCCESS - returning challenge")
     return new NextResponse(challenge, { status: 200 })
   }
 
-  console.error("[Instagram Webhook] Verification FAILED")
   return new NextResponse("Verification failed", { status: 403 })
 }
 
@@ -48,43 +72,30 @@ export async function GET(request: NextRequest) {
  * Meta sends webhook events here when users message the Instagram account
  */
 export async function POST(request: NextRequest) {
-  console.log("[Instagram Webhook] ========== POST REQUEST RECEIVED ==========")
-
   try {
     // Get raw body for signature verification
     const rawBody = await request.text()
     const signature = request.headers.get("x-hub-signature-256")
 
-    console.log("[Instagram Webhook] Raw body length:", rawBody.length)
-    console.log("[Instagram Webhook] Raw body:", rawBody.substring(0, 500))
-    console.log("[Instagram Webhook] Signature present:", !!signature)
-
-    // Verify the request is from Meta (optional but recommended in production)
-    if (process.env.NODE_ENV === "production") {
-      const signatureValid = verifyWebhookSignature(signature, rawBody)
-      console.log("[Instagram Webhook] Signature valid:", signatureValid)
-      if (!signatureValid) {
-        console.error("[Instagram Webhook] Signature verification FAILED")
-        return new NextResponse("Invalid signature", { status: 401 })
-      }
+    // Always verify the request is from Meta
+    if (!verifyWebhookSignature(signature, rawBody)) {
+      console.error("[Instagram Webhook] Signature verification failed")
+      return new NextResponse("Invalid signature", { status: 401 })
     }
 
     // Parse the webhook payload
     const body = JSON.parse(rawBody)
-    console.log("[Instagram Webhook] Parsed body object:", body.object)
-    console.log("[Instagram Webhook] Entry count:", body.entry?.length)
 
     // Meta expects a 200 OK response quickly to avoid retries
     // Process the message asynchronously
     processInstagramMessage(body).catch((error) => {
-      console.error("[Instagram Webhook] Error processing message:", error)
+      console.error("[Instagram Webhook] Processing error")
     })
 
     // Return 200 immediately (Meta best practice)
-    console.log("[Instagram Webhook] Returning 200 OK")
     return new NextResponse("EVENT_RECEIVED", { status: 200 })
   } catch (error) {
-    console.error("[Instagram Webhook] Error:", error)
+    console.error("[Instagram Webhook] Error")
     // Still return 200 to prevent Meta retries
     return new NextResponse("EVENT_RECEIVED", { status: 200 })
   }
@@ -94,39 +105,30 @@ export async function POST(request: NextRequest) {
  * Process incoming Instagram message asynchronously
  */
 async function processInstagramMessage(webhookBody: any): Promise<void> {
-  console.log("[Instagram Process] Starting message processing...")
-  console.log("[Instagram Process] Webhook body:", JSON.stringify(webhookBody, null, 2))
-
   // Parse the Instagram message from webhook payload
   const message = parseInstagramWebhook(webhookBody)
 
-  console.log("[Instagram Process] Parsed message:", message)
-
   if (!message) {
-    console.log("[Instagram Process] No valid message found (might be echo, reaction, or other event)")
     return
   }
 
   // Skip if no text content (e.g., media-only message)
   if (!message.text) {
-    console.log("[Instagram Process] Non-text message received, sending fallback")
-    const fallbackResult = await sendInstagramMessage(
+    await sendInstagramMessage(
       message.senderId,
       "Thanks for reaching out! Feel free to send me a text message and I'll help you book an exotic car rental."
     )
-    console.log("[Instagram Process] Fallback send result:", fallbackResult)
     return
   }
-
-  console.log(`[Instagram Process] Message from ${message.senderId}: "${message.text}"`)
 
   // Mark message as seen
   await markMessageSeen(message.senderId)
 
-  // Get user ID (in production, map Instagram account to user)
-  const userId = await getDefaultUserId()
+  // Look up user by Instagram account (multi-tenant support)
+  const recipientId = message.recipientId || process.env.INSTAGRAM_ACCOUNT_ID
+  const userId = await getUserIdByInstagramAccount(recipientId || "")
   if (!userId) {
-    console.error("No user found for Instagram webhook")
+    console.error("[Instagram] No user configured for this Instagram account")
     return
   }
 
@@ -142,7 +144,7 @@ async function processInstagramMessage(webhookBody: any): Promise<void> {
   )
 
   if (!lead) {
-    console.error("Could not find or create Instagram lead")
+    console.error("[Instagram] Could not find or create lead")
     return
   }
 
@@ -172,13 +174,11 @@ async function processInstagramMessage(webhookBody: any): Promise<void> {
     // Send the response via Instagram
     const sendResult = await sendInstagramMessage(message.senderId, aiResult.response)
 
-    if (sendResult.success) {
-      console.log(`Sent Instagram response to ${message.senderId}: ${aiResult.response} [Model: ${aiResult.model}, Cost: $${aiResult.cost.totalCost.toFixed(4)}]`)
-    } else {
-      console.error(`Failed to send Instagram response: ${sendResult.error}`)
+    if (!sendResult.success) {
+      console.error("[Instagram] Failed to send response")
     }
   } catch (error) {
-    console.error("Error generating/sending AI response:", error)
+    console.error("[Instagram] AI response error")
     await sendTypingIndicator(message.senderId, false)
 
     // Send fallback message

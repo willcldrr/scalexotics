@@ -1,13 +1,27 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
+import { z } from "zod"
 import { lookupPaymentToken, decodePaymentToken, markPaymentLinkUsed } from "@/lib/payment-link"
+
+const checkoutSchema = z.object({
+  token: z.string().min(1, "Payment token is required").max(500, "Invalid token"),
+})
 
 export const runtime = "nodejs"
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { token } = body
+
+    const parseResult = checkoutSchema.safeParse(body)
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parseResult.error.flatten().fieldErrors },
+        { status: 400 }
+      )
+    }
+
+    const { token } = parseResult.data
 
     // Try database lookup first (for short tokens)
     let paymentData = await lookupPaymentToken(token)
@@ -36,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     // Create Stripe instance with the appropriate key
     const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: "2026-02-25.clover",
+      apiVersion: "2025-12-15.clover",
     })
 
     // Build success and cancel URLs

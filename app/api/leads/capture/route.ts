@@ -1,7 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import twilio from "twilio"
+import { z } from "zod"
 import { defaultLeadStatus, contactedStatus } from "@/lib/lead-status"
+import { checkRateLimit, getRateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
+
+// Input validation schema
+const leadCaptureSchema = z.object({
+  name: z.string().min(1, "Name is required").max(200, "Name too long"),
+  email: z.string().email("Invalid email").max(255).optional().nullable(),
+  phone: z.string().min(10, "Phone number too short").max(20, "Phone number too long"),
+  vehicle_interest: z.string().max(500).optional().nullable(),
+  notes: z.string().max(2000).optional().nullable(),
+  source: z.string().max(100).optional().nullable(),
+  sms_consent: z.boolean().optional(),
+  consent_timestamp: z.string().optional(),
+})
 
 function getSupabase() {
   return createClient(
@@ -29,12 +43,42 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limit by IP address
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+             request.headers.get("x-real-ip") ||
+             "unknown"
+
+  const rateLimitResult = checkRateLimit(`lead-capture:${ip}`, RATE_LIMITS.leadCapture)
+
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      {
+        status: 429,
+        headers: {
+          ...corsHeaders,
+          ...getRateLimitHeaders(rateLimitResult),
+        }
+      }
+    )
+  }
+
   try {
     const supabase = getSupabase()
 
-    // Parse body first to check for A2P compliance form
+    // Parse and validate body
     const body = await request.json()
-    const { name, email, phone, vehicle_interest, notes, source, sms_consent, consent_timestamp } = body
+
+    // Validate input with Zod schema
+    const parseResult = leadCaptureSchema.safeParse(body)
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parseResult.error.flatten().fieldErrors },
+        { status: 400, headers: corsHeaders }
+      )
+    }
+
+    const { name, email, phone, vehicle_interest, notes, source, sms_consent, consent_timestamp } = parseResult.data
 
     // Handle A2P compliance form submissions (no API key required)
     if (source === "lead-capture-a2p") {
@@ -61,14 +105,7 @@ export async function POST(request: NextRequest) {
 
       // Store in a2p_leads table (create if needed) or just log success
       // For A2P compliance, just return success - actual lead handling can be configured separately
-      console.log("A2P Lead captured:", {
-        name,
-        email,
-        phone: formattedPhone,
-        vehicle_interest,
-        sms_consent,
-        consent_timestamp,
-      })
+      // Note: PII is not logged for security
 
       return NextResponse.json(
         {
@@ -232,8 +269,8 @@ export async function POST(request: NextRequest) {
         aiSettings?.business_name || "our exotic car rental",
         aiSettings?.tone || "friendly",
         vehicles || [],
-        vehicle_interest,
-        notes
+        vehicle_interest ?? null,
+        notes ?? null
       )
 
       // Send SMS
@@ -257,7 +294,7 @@ export async function POST(request: NextRequest) {
         .update({ status: contactedStatus })
         .eq("id", newLead.id)
 
-      console.log(`Sent initial SMS to ${formattedPhone}`)
+      // SMS sent successfully
 
     } catch (smsError) {
       console.error("Failed to send initial SMS:", smsError)

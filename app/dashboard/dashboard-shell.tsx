@@ -23,6 +23,8 @@ import {
   Shield,
   Building2,
   Home,
+  CalendarDays,
+  Sparkles,
 } from "lucide-react"
 
 // Ordered by frequency of use for rental fleet owners
@@ -30,10 +32,12 @@ const allNavItems = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard, key: "overview", alwaysVisible: true },
   { name: "Leads", href: "/dashboard/leads", icon: Users, key: "leads" },
   { name: "Vehicles", href: "/dashboard/vehicles", icon: Car, key: "vehicles" },
+  { name: "Bookings", href: "/dashboard/bookings", icon: CalendarDays, key: "bookings" },
   { name: "AI Assistant", href: "/dashboard/ai-assistant", icon: Bot, key: "ai-assistant" },
 ]
 
 const adminNavItems = [
+  { name: "Velocity AI", href: "/dashboard/velocity-ai", icon: Sparkles, key: "velocity-ai" },
   { name: "Admin", href: "/dashboard/admin", icon: Shield, key: "admin" },
   { name: "CRM", href: "/dashboard/admin/crm", icon: Building2, key: "admin-crm" },
 ]
@@ -192,42 +196,9 @@ export default function DashboardLayout({
     }
   }, [router])
 
-  // Session validation - TEMPORARILY DISABLED for debugging
-  // TODO: Re-enable once session creation is fixed
-  // useEffect(() => {
-  //   let isSigningOut = false
-  //   const validateSession = async () => {
-  //     if (isSigningOut) return
-  //     const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY)
-  //     if (!sessionToken) return
-  //     try {
-  //       const response = await fetch('/api/sessions/validate', {
-  //         headers: { 'x-session-token': sessionToken }
-  //       })
-  //       if (response.status === 401) {
-  //         const data = await response.json()
-  //         if (data.revoked) {
-  //           isSigningOut = true
-  //           localStorage.removeItem(SESSION_TOKEN_KEY)
-  //           await supabase.auth.signOut()
-  //           router.push("/login")
-  //           router.refresh()
-  //         }
-  //       }
-  //     } catch {}
-  //   }
-  //   const initialTimeout = setTimeout(validateSession, 2000)
-  //   const interval = setInterval(validateSession, 30000)
-  //   const handleVisibilityChange = () => {
-  //     if (document.visibilityState === 'visible') validateSession()
-  //   }
-  //   document.addEventListener('visibilitychange', handleVisibilityChange)
-  //   return () => {
-  //     clearTimeout(initialTimeout)
-  //     clearInterval(interval)
-  //     document.removeEventListener('visibilitychange', handleVisibilityChange)
-  //   }
-  // }, [supabase, router])
+  // Note: Device session management (user_sessions table) is available but not active
+  // The sessions API exists at /api/sessions for tracking devices and allowing "logout all devices"
+  // This can be enabled in a future release by creating sessions on login and validating them here
 
   return (
     <div className="min-h-screen bg-black text-white">

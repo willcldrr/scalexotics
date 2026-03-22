@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createClient } from "@supabase/supabase-js"
+import { z } from "zod"
+
+const paymentCheckoutSchema = z.object({
+  leadId: z.string().uuid("Invalid lead ID"),
+  vehicleId: z.string().uuid("Invalid vehicle ID"),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+  depositAmount: z.number().positive("Deposit must be positive").max(100000, "Deposit too large"),
+  customerPhone: z.string().max(20).optional(),
+  customerName: z.string().max(200).optional(),
+  customerEmail: z.string().email().optional().nullable(),
+})
 
 function getSupabase() {
   return createClient(
@@ -13,14 +25,17 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = getSupabase()
 
-    const { leadId, vehicleId, startDate, endDate, depositAmount, customerPhone, customerName, customerEmail } = await request.json()
+    const body = await request.json()
 
-    if (!leadId || !vehicleId || !startDate || !endDate || !depositAmount) {
+    const parseResult = paymentCheckoutSchema.safeParse(body)
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Invalid input", details: parseResult.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
+
+    const { leadId, vehicleId, startDate, endDate, depositAmount, customerPhone, customerName, customerEmail } = parseResult.data
 
     // Get the lead to find the user_id (business owner)
     const { data: lead } = await supabase
@@ -55,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     // Create Stripe instance with the business's key
     const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: "2026-02-25.clover",
+      apiVersion: "2025-12-15.clover",
     })
 
     // Get vehicle details

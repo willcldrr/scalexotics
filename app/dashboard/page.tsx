@@ -19,10 +19,11 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { format, subDays, startOfMonth, endOfMonth, isWithinInterval, parseISO, differenceInDays } from "date-fns"
+import OnboardingChecklist from "./onboarding-checklist"
 
 type DateRange = '7d' | '30d' | 'ytd'
 
-// Revenue Chart Component with illuminated grid effect
+// Premium Revenue Line Chart with glow effects and gradients
 function RevenueChart({
   data,
   labels,
@@ -35,36 +36,74 @@ function RevenueChart({
   onRangeChange: (range: DateRange) => void
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [containerWidth, setContainerWidth] = useState(800)
+  const [dimensions, setDimensions] = useState({ width: 800, height: 280 })
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
   useEffect(() => {
-    const updateWidth = () => {
+    const updateDimensions = () => {
       if (containerRef.current) {
-        setContainerWidth(containerRef.current.offsetWidth - 32) // minus padding
+        setDimensions({
+          width: containerRef.current.offsetWidth,
+          height: 280
+        })
       }
     }
-    updateWidth()
-    window.addEventListener('resize', updateWidth)
-    return () => window.removeEventListener('resize', updateWidth)
+    updateDimensions()
+    window.addEventListener('resize', updateDimensions)
+    return () => window.removeEventListener('resize', updateDimensions)
   }, [])
 
-  const maxValue = Math.max(...data, 1)
-  const padding = { top: 20, right: 20, bottom: 40, left: 50 }
-  const height = 240
-  const chartWidth = containerWidth - padding.left - padding.right
-  const chartHeight = height - padding.top - padding.bottom
+  const padding = { top: 40, right: 20, bottom: 40, left: 50 }
+  const chartWidth = dimensions.width - padding.left - padding.right
+  const chartHeight = dimensions.height - padding.top - padding.bottom
 
-  // Calculate square grid cells
-  const cellSize = chartHeight / 5 // 5 rows
-  const numCols = Math.floor(chartWidth / cellSize)
+  const maxValue = Math.max(...data, 1)
+  const totalRevenue = data.reduce((a, b) => a + b, 0)
 
   const getX = (index: number) => {
-    if (data.length <= 1) return padding.left
+    if (data.length <= 1) return padding.left + chartWidth / 2
     return padding.left + (index / (data.length - 1)) * chartWidth
   }
 
   const getY = (value: number) => {
     return padding.top + chartHeight - (value / maxValue) * chartHeight
+  }
+
+  // Create smooth curved path using catmull-rom spline
+  const createPath = () => {
+    if (data.length < 2) return ''
+
+    const points = data.map((value, i) => ({ x: getX(i), y: getY(value) }))
+
+    let path = `M ${points[0].x},${points[0].y}`
+
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[i === 0 ? 0 : i - 1]
+      const p1 = points[i]
+      const p2 = points[i + 1]
+      const p3 = points[i + 2 >= points.length ? i + 1 : i + 2]
+
+      const cp1x = p1.x + (p2.x - p0.x) / 6
+      const cp1y = p1.y + (p2.y - p0.y) / 6
+      const cp2x = p2.x - (p3.x - p1.x) / 6
+      const cp2y = p2.y - (p3.y - p1.y) / 6
+
+      path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`
+    }
+
+    return path
+  }
+
+  const linePath = createPath()
+  const areaPath = linePath + ` L ${getX(data.length - 1)},${padding.top + chartHeight} L ${padding.left},${padding.top + chartHeight} Z`
+
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left - padding.left
+    const index = Math.round((x / chartWidth) * (data.length - 1))
+    if (index >= 0 && index < data.length) {
+      setHoveredIndex(index)
+    }
   }
 
   const rangeLabels: Record<DateRange, string> = {
@@ -73,165 +112,278 @@ function RevenueChart({
     'ytd': 'Year to date'
   }
 
-  // Build the line path
-  const linePath = data.length > 0
-    ? `M ${getX(0)} ${getY(data[0])}` + data.slice(1).map((value, i) => ` L ${getX(i + 1)} ${getY(value)}`).join('')
-    : ''
-
-  // Build the area path
-  const areaPath = data.length > 0
-    ? linePath + ` L ${getX(data.length - 1)} ${padding.top + chartHeight} L ${padding.left} ${padding.top + chartHeight} Z`
-    : ''
-
   return (
-    <div ref={containerRef} className="w-full bg-black rounded-2xl border border-white/[0.08] p-4 overflow-hidden">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="text-lg font-semibold">Revenue</h3>
-          <p className="text-sm text-white/40">{rangeLabels[selectedRange]}</p>
-        </div>
-        <div className="flex items-center gap-4">
-          {/* Range Picker */}
-          <div className="flex items-center gap-1 bg-white/[0.03] rounded-lg p-1">
-            {(['7d', '30d', 'ytd'] as DateRange[]).map((range) => (
-              <button
-                key={range}
-                onClick={() => onRangeChange(range)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                  selectedRange === range
-                    ? 'bg-white text-black shadow-[0_0_10px_rgba(255,255,255,0.3)]'
-                    : 'text-white/50 hover:text-white hover:bg-white/[0.05]'
-                }`}
-              >
-                {range.toUpperCase()}
-              </button>
-            ))}
-          </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold">${data.reduce((a, b) => a + b, 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-            <p className="text-xs text-white/40">Total period</p>
-          </div>
-        </div>
+    <div
+      ref={containerRef}
+      className="w-full rounded-2xl border border-white/[0.08] overflow-hidden relative"
+      style={{
+        background: 'linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.95) 100%)'
+      }}
+    >
+      {/* Background glow orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div
+          className="absolute w-[600px] h-[400px] rounded-full blur-[120px] opacity-30"
+          style={{
+            background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)',
+            top: '-50%',
+            left: '20%',
+          }}
+        />
+        <div
+          className="absolute w-[400px] h-[300px] rounded-full blur-[100px] opacity-20"
+          style={{
+            background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)',
+            bottom: '-30%',
+            right: '10%',
+          }}
+        />
       </div>
 
-      <div style={{ height: `${height}px`, position: 'relative' }}>
-        <svg
-          width={containerWidth}
-          height={height}
-          style={{ display: 'block' }}
-        >
-          <defs>
-            <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="white" stopOpacity="0.12" />
-              <stop offset="100%" stopColor="white" stopOpacity="0" />
-            </linearGradient>
-            <clipPath id="belowLine">
-              <path d={areaPath} />
-            </clipPath>
-            <clipPath id="aboveLine">
-              <path d={data.length > 0
-                ? `M ${padding.left} ${padding.top}` + data.map((value, i) => ` L ${getX(i)} ${getY(value)}`).join('') + ` L ${getX(data.length - 1)} ${padding.top} Z`
-                : ''
-              } />
-            </clipPath>
-          </defs>
+      <div className="relative z-10 p-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+          <div>
+            <h3 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+              Revenue
+            </h3>
+            <p className="text-sm text-white/40 mt-1">{rangeLabels[selectedRange]}</p>
+          </div>
 
-          {/* Grid - dim (above line) */}
-          <g clipPath="url(#aboveLine)">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <line
-                key={`h-dim-${i}`}
-                x1={padding.left}
-                y1={padding.top + (i / 5) * chartHeight}
-                x2={padding.left + chartWidth}
-                y2={padding.top + (i / 5) * chartHeight}
-                stroke="white"
-                strokeOpacity="0.05"
-              />
-            ))}
-            {Array.from({ length: numCols + 1 }).map((_, i) => (
-              <line
-                key={`v-dim-${i}`}
-                x1={padding.left + i * cellSize}
-                y1={padding.top}
-                x2={padding.left + i * cellSize}
-                y2={padding.top + chartHeight}
-                stroke="white"
-                strokeOpacity="0.05"
-              />
-            ))}
-          </g>
+          <div className="flex flex-col-reverse sm:flex-row items-start sm:items-center gap-4">
+            {/* Range Picker */}
+            <div className="flex items-center gap-0.5 bg-white/[0.05] backdrop-blur-sm rounded-xl p-1 border border-white/[0.08]">
+              {(['7d', '30d', 'ytd'] as DateRange[]).map((range) => (
+                <button
+                  key={range}
+                  onClick={() => onRangeChange(range)}
+                  className={`px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all duration-300 ${
+                    selectedRange === range
+                      ? 'bg-white text-black shadow-[0_0_30px_rgba(255,255,255,0.4),0_0_60px_rgba(255,255,255,0.2)]'
+                      : 'text-white/40 hover:text-white/80 hover:bg-white/[0.05]'
+                  }`}
+                >
+                  {range.toUpperCase()}
+                </button>
+              ))}
+            </div>
 
-          {/* Grid - lit (below line) */}
-          <g clipPath="url(#belowLine)">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <line
-                key={`h-lit-${i}`}
-                x1={padding.left}
-                y1={padding.top + (i / 5) * chartHeight}
-                x2={padding.left + chartWidth}
-                y2={padding.top + (i / 5) * chartHeight}
-                stroke="white"
-                strokeOpacity="0.2"
-              />
-            ))}
-            {Array.from({ length: numCols + 1 }).map((_, i) => (
-              <line
-                key={`v-lit-${i}`}
-                x1={padding.left + i * cellSize}
-                y1={padding.top}
-                x2={padding.left + i * cellSize}
-                y2={padding.top + chartHeight}
-                stroke="white"
-                strokeOpacity="0.2"
-              />
-            ))}
-          </g>
-
-          {/* Area fill */}
-          {data.length > 0 && (
-            <path d={areaPath} fill="url(#areaGradient)" />
-          )}
-
-          {/* Line */}
-          {data.length > 0 && (
-            <path
-              d={linePath}
-              fill="none"
-              stroke="white"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.4))' }}
-            />
-          )}
-        </svg>
-
-        {/* Y-axis labels - positioned with CSS */}
-        <div className="absolute left-0 top-0 h-full flex flex-col justify-between py-[20px]" style={{ width: `${padding.left - 8}px` }}>
-          {Array.from({ length: 6 }).map((_, i) => {
-            const value = maxValue - (i / 5) * maxValue
-            return (
-              <span key={i} className="text-[11px] text-white/30 text-right pr-2">
-                ${value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value.toFixed(0)}
-              </span>
-            )
-          })}
+            {/* Total Revenue */}
+            <div className="text-right">
+              <p
+                className="text-4xl font-bold tracking-tight"
+                style={{
+                  fontFeatureSettings: '"tnum"',
+                  textShadow: '0 0 40px rgba(255,255,255,0.3), 0 0 80px rgba(255,255,255,0.1)'
+                }}
+              >
+                ${totalRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </p>
+              <p className="text-xs text-white/30 mt-1 uppercase tracking-widest">Total Revenue</p>
+            </div>
+          </div>
         </div>
 
-        {/* X-axis labels - positioned with CSS */}
-        <div
-          className="absolute bottom-0 flex justify-between"
-          style={{ left: `${padding.left}px`, right: `${padding.right}px`, height: '24px' }}
-        >
-          {labels.filter((_, i, arr) => {
-            const step = Math.max(1, Math.floor(labels.length / 5))
-            return i === 0 || i === labels.length - 1 || i % step === 0
-          }).slice(0, 6).map((label, i) => (
-            <span key={i} className="text-[11px] text-white/30">
-              {label}
-            </span>
-          ))}
+        {/* Chart */}
+        <div style={{ height: dimensions.height }}>
+          <svg
+            width={dimensions.width}
+            height={dimensions.height}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={() => setHoveredIndex(null)}
+            className="cursor-crosshair"
+          >
+            <defs>
+              {/* Area gradient - white to transparent */}
+              <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="white" stopOpacity="0.25" />
+                <stop offset="40%" stopColor="white" stopOpacity="0.1" />
+                <stop offset="100%" stopColor="white" stopOpacity="0" />
+              </linearGradient>
+
+              {/* Line gradient */}
+              <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="white" stopOpacity="0.6" />
+                <stop offset="50%" stopColor="white" stopOpacity="1" />
+                <stop offset="100%" stopColor="white" stopOpacity="0.6" />
+              </linearGradient>
+
+              {/* Glow filter for line */}
+              <filter id="lineGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="4" result="blur1"/>
+                <feGaussianBlur stdDeviation="8" result="blur2"/>
+                <feMerge>
+                  <feMergeNode in="blur2"/>
+                  <feMergeNode in="blur1"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+
+              {/* Strong glow for points */}
+              <filter id="pointGlow" x="-200%" y="-200%" width="500%" height="500%">
+                <feGaussianBlur stdDeviation="6" result="blur"/>
+                <feMerge>
+                  <feMergeNode in="blur"/>
+                  <feMergeNode in="blur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+
+              {/* Radial gradient for hover point */}
+              <radialGradient id="pointRadial">
+                <stop offset="0%" stopColor="white" stopOpacity="1" />
+                <stop offset="50%" stopColor="white" stopOpacity="0.5" />
+                <stop offset="100%" stopColor="white" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+
+            {/* Subtle horizontal grid lines */}
+            {[0.25, 0.5, 0.75].map((ratio, i) => (
+              <line
+                key={i}
+                x1={padding.left}
+                y1={padding.top + chartHeight * ratio}
+                x2={padding.left + chartWidth}
+                y2={padding.top + chartHeight * ratio}
+                stroke="white"
+                strokeOpacity="0.04"
+                strokeDasharray="8 8"
+              />
+            ))}
+
+            {/* Area fill */}
+            {data.length > 1 && (
+              <path
+                d={areaPath}
+                fill="url(#areaGradient)"
+              />
+            )}
+
+            {/* Main line - clean, no glow */}
+            {data.length > 1 && (
+              <path
+                d={linePath}
+                fill="none"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            )}
+
+            {/* Hover vertical line */}
+            {hoveredIndex !== null && (
+              <>
+                <line
+                  x1={getX(hoveredIndex)}
+                  y1={padding.top}
+                  x2={getX(hoveredIndex)}
+                  y2={padding.top + chartHeight}
+                  stroke="white"
+                  strokeOpacity="0.15"
+                  strokeWidth="1"
+                  strokeDasharray="6 6"
+                />
+
+                {/* Glow ring around point */}
+                <circle
+                  cx={getX(hoveredIndex)}
+                  cy={getY(data[hoveredIndex])}
+                  r="20"
+                  fill="url(#pointRadial)"
+                  opacity="0.4"
+                />
+
+                {/* Outer ring */}
+                <circle
+                  cx={getX(hoveredIndex)}
+                  cy={getY(data[hoveredIndex])}
+                  r="8"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="1"
+                  strokeOpacity="0.3"
+                />
+
+                {/* Inner point */}
+                <circle
+                  cx={getX(hoveredIndex)}
+                  cy={getY(data[hoveredIndex])}
+                  r="4"
+                  fill="white"
+                  filter="url(#pointGlow)"
+                />
+              </>
+            )}
+
+            {/* Y-axis labels */}
+            {[0, 0.5, 1].map((ratio, i) => {
+              const value = maxValue * (1 - ratio)
+              return (
+                <text
+                  key={i}
+                  x={padding.left - 12}
+                  y={padding.top + chartHeight * ratio + 4}
+                  textAnchor="end"
+                  fill="white"
+                  fillOpacity="0.25"
+                  fontSize="11"
+                  fontWeight="500"
+                  style={{ fontFeatureSettings: '"tnum"' }}
+                >
+                  ${value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value.toFixed(0)}
+                </text>
+              )
+            })}
+
+            {/* X-axis labels */}
+            {labels.filter((_, i) => {
+              if (data.length <= 7) return true
+              const step = Math.ceil(data.length / 6)
+              return i === 0 || i === data.length - 1 || i % step === 0
+            }).map((label, i, arr) => {
+              const originalIndex = labels.indexOf(label)
+              return (
+                <text
+                  key={i}
+                  x={getX(originalIndex)}
+                  y={padding.top + chartHeight + 24}
+                  textAnchor="middle"
+                  fill="white"
+                  fillOpacity="0.25"
+                  fontSize="11"
+                  fontWeight="500"
+                >
+                  {label}
+                </text>
+              )
+            })}
+          </svg>
+
+          {/* Tooltip */}
+          {hoveredIndex !== null && (
+            <div
+              className="absolute pointer-events-none transform -translate-x-1/2"
+              style={{
+                left: getX(hoveredIndex) + 24, // Account for padding
+                top: getY(data[hoveredIndex]) - 8,
+              }}
+            >
+              <div
+                className="bg-white text-black px-4 py-2.5 rounded-xl text-center"
+                style={{
+                  boxShadow: '0 0 40px rgba(255,255,255,0.5), 0 0 80px rgba(255,255,255,0.25), 0 4px 20px rgba(0,0,0,0.3)'
+                }}
+              >
+                <p className="text-xl font-bold" style={{ fontFeatureSettings: '"tnum"' }}>
+                  ${data[hoveredIndex].toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </p>
+                <p className="text-[10px] text-black/50 uppercase tracking-wider font-medium mt-0.5">
+                  {labels[hoveredIndex]}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -254,7 +406,10 @@ interface Booking {
   end_date: string
   status: string
   total_amount: number
+  deposit_amount: number
   deposit_paid: boolean
+  stripe_payment_intent: string | null
+  created_at: string
   vehicles?: Vehicle
 }
 
@@ -282,7 +437,9 @@ export default function DashboardOverview() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [leads, setLeads] = useState<Lead[]>([])
   const [calendarSyncs, setCalendarSyncs] = useState<CalendarSync[]>([])
-  const [revenueRange, setRevenueRange] = useState<DateRange>('30d')
+  const [revenueRange, setRevenueRange] = useState<DateRange>('7d')
+  const [hasStripeConnected, setHasStripeConnected] = useState(false)
+  const [hasAIConfigured, setHasAIConfigured] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -295,17 +452,22 @@ export default function DashboardOverview() {
       return
     }
 
-    const [vehiclesRes, bookingsRes, leadsRes, syncsRes] = await Promise.all([
+    const [vehiclesRes, bookingsRes, leadsRes, syncsRes, settingsRes] = await Promise.all([
       supabase.from("vehicles").select("*").eq("user_id", user.id),
       supabase.from("bookings").select("*, vehicles(*)").eq("user_id", user.id).order("start_date", { ascending: false }),
       supabase.from("leads").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("calendar_syncs").select("*").eq("user_id", user.id),
+      supabase.from("user_settings").select("stripe_secret_key, business_name").eq("user_id", user.id).single(),
     ])
 
     if (vehiclesRes.data) setVehicles(vehiclesRes.data)
     if (bookingsRes.data) setBookings(bookingsRes.data)
     if (leadsRes.data) setLeads(leadsRes.data)
     if (syncsRes.data) setCalendarSyncs(syncsRes.data)
+    if (settingsRes.data) {
+      setHasStripeConnected(!!settingsRes.data.stripe_secret_key)
+      setHasAIConfigured(!!settingsRes.data.business_name)
+    }
 
     setLoading(false)
   }
@@ -317,18 +479,28 @@ export default function DashboardOverview() {
     const lastMonthStart = startOfMonth(subDays(thisMonthStart, 1))
     const lastMonthEnd = endOfMonth(subDays(thisMonthStart, 1))
 
+    // Only count bookings with a stripe_payment_intent (confirmed Stripe payments only)
+    const thisMonthPayments = bookings.filter(b => {
+      if (!b.stripe_payment_intent || !b.created_at) return false
+      const paymentDate = parseISO(b.created_at)
+      return isWithinInterval(paymentDate, { start: thisMonthStart, end: thisMonthEnd })
+    })
+
+    const lastMonthPayments = bookings.filter(b => {
+      if (!b.stripe_payment_intent || !b.created_at) return false
+      const paymentDate = parseISO(b.created_at)
+      return isWithinInterval(paymentDate, { start: lastMonthStart, end: lastMonthEnd })
+    })
+
+    // Revenue = actual deposit amounts from confirmed Stripe payments
+    const thisMonthRevenue = thisMonthPayments.reduce((sum, b) => sum + (b.deposit_amount || 0), 0)
+    const lastMonthRevenue = lastMonthPayments.reduce((sum, b) => sum + (b.deposit_amount || 0), 0)
+
+    // Keep track of bookings for other metrics
     const thisMonthBookings = bookings.filter(b => {
       const startDate = parseISO(b.start_date)
       return isWithinInterval(startDate, { start: thisMonthStart, end: thisMonthEnd })
     })
-
-    const lastMonthBookings = bookings.filter(b => {
-      const startDate = parseISO(b.start_date)
-      return isWithinInterval(startDate, { start: lastMonthStart, end: lastMonthEnd })
-    })
-
-    const thisMonthRevenue = thisMonthBookings.reduce((sum, b) => sum + (b.total_amount || 0), 0)
-    const lastMonthRevenue = lastMonthBookings.reduce((sum, b) => sum + (b.total_amount || 0), 0)
     const revenueChange = lastMonthRevenue > 0 ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0
 
     const activeBookings = bookings.filter(b => {
@@ -368,22 +540,24 @@ export default function DashboardOverview() {
 
     const pendingDeposits = bookings.filter(b => !b.deposit_paid && b.status !== 'cancelled')
 
-    // Daily revenue for chart - will be recalculated based on range
+    // Daily revenue for chart - only confirmed Stripe payments
     const dailyRevenue: number[] = []
     const dailyLabels: string[] = []
-    // Default 30 days calculation (will be filtered in render based on range)
+    // Calculate revenue based on when payment was collected (created_at date)
     for (let i = 364; i >= 0; i--) {
       const date = subDays(now, i)
+      const dateStr = format(date, 'yyyy-MM-dd')
       dailyLabels.push(format(date, 'MMM d'))
-      const dayBookings = bookings.filter(b => {
-        const start = parseISO(b.start_date)
-        const end = parseISO(b.end_date)
-        return date >= start && date <= end && b.status !== 'cancelled'
+
+      // Only count bookings with stripe_payment_intent (confirmed Stripe payments)
+      const dayPayments = bookings.filter(b => {
+        if (!b.stripe_payment_intent || !b.created_at) return false
+        const paymentDate = format(parseISO(b.created_at), 'yyyy-MM-dd')
+        return paymentDate === dateStr
       })
-      const dayRevenue = dayBookings.reduce((sum, b) => {
-        const days = differenceInDays(parseISO(b.end_date), parseISO(b.start_date)) || 1
-        return sum + (b.total_amount / days)
-      }, 0)
+
+      // Sum up the deposit amounts (actual money collected via Stripe)
+      const dayRevenue = dayPayments.reduce((sum, b) => sum + (b.deposit_amount || 0), 0)
       dailyRevenue.push(dayRevenue)
     }
 
@@ -488,6 +662,13 @@ export default function DashboardOverview() {
 
   return (
     <div className="space-y-4">
+      {/* Onboarding Checklist */}
+      <OnboardingChecklist
+        hasVehicles={vehicles.length > 0}
+        hasStripeConnected={hasStripeConnected}
+        hasAIConfigured={hasAIConfigured}
+      />
+
       {/* Revenue Chart - Full Width */}
       <RevenueChart
         data={chartData.data}

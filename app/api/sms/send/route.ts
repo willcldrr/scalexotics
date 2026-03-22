@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import twilio from "twilio"
 import { createClient } from "@supabase/supabase-js"
+import { z } from "zod"
+
+const sendSmsSchema = z.object({
+  to: z.string().min(10, "Phone number too short").max(20, "Phone number too long"),
+  message: z.string().min(1, "Message is required").max(1600, "Message too long"),
+  leadId: z.string().uuid().optional(),
+  userId: z.string().uuid().optional(),
+})
 
 function getTwilioClient() {
   return twilio(
@@ -21,14 +29,17 @@ export async function POST(request: NextRequest) {
     const twilioClient = getTwilioClient()
     const supabase = getSupabase()
 
-    const { to, message, leadId, userId } = await request.json()
+    const body = await request.json()
 
-    if (!to || !message) {
+    const parseResult = sendSmsSchema.safeParse(body)
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: "Missing 'to' or 'message' field" },
+        { error: "Invalid input", details: parseResult.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
+
+    const { to, message, leadId, userId } = parseResult.data
 
     // Send SMS via Twilio
     const twilioMessage = await twilioClient.messages.create({

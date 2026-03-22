@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import twilio from "twilio"
+import { createClient } from "@supabase/supabase-js"
 import {
   generateAIResponse,
   findOrCreateLead,
   saveMessage,
-  getDefaultUserId,
 } from "@/lib/sms-ai"
 
 function getTwilioClient() {
@@ -12,6 +12,41 @@ function getTwilioClient() {
     process.env.TWILIO_ACCOUNT_SID,
     process.env.TWILIO_AUTH_TOKEN
   )
+}
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
+
+// Look up user by their configured Twilio phone number
+async function getUserIdByPhoneNumber(phoneNumber: string): Promise<string | null> {
+  const supabase = getSupabase()
+
+  // Normalize the phone number for comparison
+  const normalizedPhone = phoneNumber.replace(/\D/g, "")
+
+  // Look up in ai_settings by business_phone
+  const { data: settings } = await supabase
+    .from("ai_settings")
+    .select("user_id, business_phone")
+
+  if (!settings || settings.length === 0) {
+    return null
+  }
+
+  // Find matching phone number
+  for (const setting of settings) {
+    if (!setting.business_phone) continue
+    const settingPhone = setting.business_phone.replace(/\D/g, "")
+    if (settingPhone === normalizedPhone || normalizedPhone.endsWith(settingPhone) || settingPhone.endsWith(normalizedPhone)) {
+      return setting.user_id
+    }
+  }
+
+  return null
 }
 
 export async function POST(request: NextRequest) {
@@ -23,17 +58,15 @@ export async function POST(request: NextRequest) {
     const to = formData.get("To") as string
     const body = formData.get("Body") as string
 
-    console.log(`Incoming SMS from ${from}: ${body}`)
-
-    if (!from || !body) {
+    if (!from || !body || !to) {
       return new NextResponse("Missing required fields", { status: 400 })
     }
 
-    // Get the user ID (in production, map Twilio number to user)
-    const userId = await getDefaultUserId()
+    // Look up the user by the Twilio number they received the SMS on
+    const userId = await getUserIdByPhoneNumber(to)
     if (!userId) {
-      console.error("No user found")
-      return new NextResponse("No user configured", { status: 500 })
+      console.error(`No user configured for phone number: ${to}`)
+      return new NextResponse("No user configured for this number", { status: 404 })
     }
 
     // Find or create the lead
@@ -59,7 +92,8 @@ export async function POST(request: NextRequest) {
       to: from,
     })
 
-    console.log(`Sent response to ${from}: ${aiResult.response} [Model: ${aiResult.model}, Cost: $${aiResult.cost.totalCost.toFixed(4)}]`)
+    // Log without PII
+    console.log(`SMS response sent [Model: ${aiResult.model}, Cost: $${aiResult.cost.totalCost.toFixed(4)}]`)
 
     // Return TwiML response (Twilio expects this)
     const twiml = `<?xml version="1.0" encoding="UTF-8"?><Response></Response>`
