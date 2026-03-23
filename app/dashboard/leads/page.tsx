@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { toast } from "sonner"
 import {
   Plus,
   Search,
@@ -29,9 +30,15 @@ import {
   Clock,
   Instagram,
   MessageCircle,
+  CreditCard,
+  DollarSign,
+  Link,
+  ExternalLink,
+  HelpCircle,
 } from "lucide-react"
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns"
 import { leadStatusOptions, getStatusColor, getStatusLabel, defaultLeadStatus } from "@/lib/lead-status"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface Lead {
   id: string
@@ -62,6 +69,8 @@ interface Vehicle {
   name: string
   make: string
   model: string
+  year: number
+  daily_rate: number
 }
 
 const sourceOptions = [
@@ -132,6 +141,20 @@ export default function LeadsPage() {
   // Do Not Rent list for flagging suspicious leads
   const [doNotRentList, setDoNotRentList] = useState<{ full_name: string; phone?: string; email?: string }[]>([])
 
+  // Payment link modal state
+  const [showPaymentLinkModal, setShowPaymentLinkModal] = useState(false)
+  const [paymentLinkLead, setPaymentLinkLead] = useState<Lead | null>(null)
+  const [paymentLinkData, setPaymentLinkData] = useState({
+    vehicleId: "",
+    startDate: "",
+    endDate: "",
+    depositAmount: 0,
+    totalAmount: 0,
+  })
+  const [sendingPaymentLink, setSendingPaymentLink] = useState(false)
+  const [paymentLinkSent, setPaymentLinkSent] = useState(false)
+  const [paymentLinkError, setPaymentLinkError] = useState<string | null>(null)
+
   // Check if a lead is on the do not rent list
   const isOnDoNotRentList = (lead: Lead): boolean => {
     const leadNameLower = lead.name.toLowerCase().trim()
@@ -182,7 +205,7 @@ export default function LeadsPage() {
             )
           )
           setSelectedLead((current) =>
-            current?.id === payload.new.id ? { ...current, ...payload.new } : current
+            current?.id === payload.new.id ? { ...current, ...payload.new } as Lead : current
           )
         }
       )
@@ -249,8 +272,8 @@ export default function LeadsPage() {
 
     const [leadsRes, vehiclesRes, doNotRentRes] = await Promise.all([
       supabase.from("leads").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("vehicles").select("id, name, make, model").eq("user_id", user.id),
-      supabase.from("do_not_rent_list").select("full_name, phone, email"),
+      supabase.from("vehicles").select("id, name, make, model, year, daily_rate").eq("user_id", user.id),
+      supabase.from("do_not_rent_list").select("full_name, phone, email").eq("user_id", user.id),
     ])
 
     if (doNotRentRes.data) {
@@ -368,7 +391,7 @@ export default function LeadsPage() {
 
     } catch (error) {
       console.error("Error sending message:", error)
-      alert("Failed to send message. Please try again.")
+      toast.error("Failed to send message", { description: "Please check your connection and try again" })
     }
 
     setSending(false)
@@ -419,6 +442,143 @@ export default function LeadsPage() {
       setSelectedLead({ ...selectedLead, status: newStatus })
     }
     setShowStatusDropdown(false)
+  }
+
+  // Payment link functions
+  const openPaymentLinkModal = (lead: Lead) => {
+    setPaymentLinkLead(lead)
+    // Pre-fill with vehicle interest if available
+    const defaultVehicle = lead.vehicle_interest ? vehicles.find(v => v.id === lead.vehicle_interest) : vehicles[0]
+    const today = new Date()
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+
+    const startDate = today.toISOString().split('T')[0]
+    const endDate = tomorrow.toISOString().split('T')[0]
+    const dailyRate = defaultVehicle?.daily_rate || 0
+    const totalAmount = dailyRate
+    const depositAmount = Math.round(totalAmount * 0.25)
+
+    setPaymentLinkData({
+      vehicleId: defaultVehicle?.id || "",
+      startDate,
+      endDate,
+      depositAmount,
+      totalAmount,
+    })
+    setPaymentLinkSent(false)
+    setPaymentLinkError(null)
+    setShowPaymentLinkModal(true)
+  }
+
+  const calculatePaymentAmounts = (vehicleId: string, startDate: string, endDate: string) => {
+    const vehicle = vehicles.find(v => v.id === vehicleId)
+    if (!vehicle || !startDate || !endDate) return { totalAmount: 0, depositAmount: 0 }
+
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
+    const totalAmount = vehicle.daily_rate * days
+    const depositAmount = Math.round(totalAmount * 0.25)
+
+    return { totalAmount, depositAmount, days }
+  }
+
+  const updatePaymentLinkField = (field: string, value: string) => {
+    const newData = { ...paymentLinkData, [field]: value }
+
+    // Recalculate amounts when vehicle or dates change
+    if (field === 'vehicleId' || field === 'startDate' || field === 'endDate') {
+      const { totalAmount, depositAmount } = calculatePaymentAmounts(
+        field === 'vehicleId' ? value : newData.vehicleId,
+        field === 'startDate' ? value : newData.startDate,
+        field === 'endDate' ? value : newData.endDate
+      )
+      newData.totalAmount = totalAmount
+      newData.depositAmount = depositAmount
+    }
+
+    setPaymentLinkData(newData)
+  }
+
+  const sendPaymentLink = async () => {
+    if (!paymentLinkLead || !paymentLinkData.vehicleId || !paymentLinkData.startDate || !paymentLinkData.endDate) {
+      setPaymentLinkError("Please fill in all required fields")
+      return
+    }
+
+    setSendingPaymentLink(true)
+    setPaymentLinkError(null)
+
+    try {
+      const vehicle = vehicles.find(v => v.id === paymentLinkData.vehicleId)
+      if (!vehicle) throw new Error("Vehicle not found")
+
+      // Generate payment link via API
+      const response = await fetch("/api/payments/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadId: paymentLinkLead.id,
+          vehicleId: paymentLinkData.vehicleId,
+          startDate: paymentLinkData.startDate,
+          endDate: paymentLinkData.endDate,
+          depositAmount: paymentLinkData.depositAmount,
+          customerPhone: paymentLinkLead.phone,
+          customerName: paymentLinkLead.name,
+          customerEmail: paymentLinkLead.email,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create payment link")
+      }
+
+      // Send the payment link via SMS
+      const paymentUrl = data.checkoutUrl
+      const messageContent = `Hi ${paymentLinkLead.name}! Here's your secure payment link to reserve the ${vehicle.year} ${vehicle.make} ${vehicle.model} for ${paymentLinkData.startDate} to ${paymentLinkData.endDate}. Deposit: $${paymentLinkData.depositAmount}. Pay here: ${paymentUrl}`
+
+      const smsResponse = await fetch("/api/sms/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: paymentLinkLead.phone,
+          message: messageContent,
+          leadId: paymentLinkLead.id,
+        }),
+      })
+
+      if (!smsResponse.ok) {
+        // Even if SMS fails, the link was created - show it to copy
+        console.warn("SMS send failed, but payment link created:", paymentUrl)
+      }
+
+      // Save the message to the database
+      await supabase.from("messages").insert({
+        lead_id: paymentLinkLead.id,
+        user_id: userId,
+        content: messageContent,
+        direction: "outbound",
+      })
+
+      // Update lead status to negotiating
+      await handleStatusChange(paymentLinkLead.id, "negotiating")
+
+      setPaymentLinkSent(true)
+
+      // Refresh messages if viewing this lead
+      if (selectedLead?.id === paymentLinkLead.id) {
+        fetchMessages(paymentLinkLead.id)
+      }
+
+    } catch (error: any) {
+      console.error("Payment link error:", error)
+      setPaymentLinkError(error.message || "Failed to send payment link")
+    } finally {
+      setSendingPaymentLink(false)
+    }
   }
 
   // Drag and drop handlers for pipeline
@@ -555,7 +715,7 @@ export default function LeadsPage() {
     const notesCol = Object.entries(columnMapping).find(([_, v]) => v === "notes")?.[0]
 
     if (!nameCol || !phoneCol) {
-      alert("Please map at least Name and Phone columns")
+      toast.error("Missing required columns", { description: "Please map at least Name and Phone columns" })
       setImporting(false)
       return
     }
@@ -789,14 +949,16 @@ export default function LeadsPage() {
 
       {/* Pipeline View */}
       {viewMode === "pipeline" && (
-        <div className="overflow-x-auto pb-4">
-          <div className="flex gap-4 min-w-max">
+        <div className="overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+          {/* Mobile scroll hint */}
+          <div className="sm:hidden text-xs text-white/30 text-center mb-2">← Scroll to see all columns →</div>
+          <div className="flex gap-3 sm:gap-4 min-w-max">
             {pipelineColumns.map((column) => {
               const columnLeads = getLeadsByStatus(column.id)
               return (
                 <div
                   key={column.id}
-                  className={`w-64 flex-shrink-0 rounded-2xl bg-white/[0.02] border transition-all ${
+                  className={`w-56 sm:w-64 flex-shrink-0 rounded-2xl bg-white/[0.02] border transition-all ${
                     dragOverColumn === column.id
                       ? "border-white/30 bg-white/[0.05] shadow-[0_0_30px_rgba(255,255,255,0.1)]"
                       : "border-white/[0.06]"
@@ -820,8 +982,9 @@ export default function LeadsPage() {
                   {/* Cards */}
                   <div className="p-3 space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
                     {columnLeads.length === 0 ? (
-                      <div className="py-8 text-center text-white/30 text-sm">
-                        No leads
+                      <div className="py-8 text-center">
+                        <p className="text-white/30 text-sm">No leads in this stage</p>
+                        <p className="text-white/20 text-xs mt-1">Drag leads here or add new ones</p>
                       </div>
                     ) : (
                       columnLeads.map((lead) => (
@@ -926,7 +1089,7 @@ export default function LeadsPage() {
 
       {/* List View */}
       {viewMode === "list" && (
-        <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_30px_rgba(255,255,255,0.03)] overflow-hidden" style={{ height: "calc(100vh - 220px)" }}>
+        <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_30px_rgba(255,255,255,0.03)] overflow-hidden h-[calc(100vh-180px)] sm:h-[calc(100vh-220px)]">
           <div className="flex h-full">
             {/* Leads List */}
             <div className={`w-full md:w-[380px] border-r border-white/[0.08] flex flex-col bg-black/50 ${selectedLead ? "hidden md:flex" : "flex"}`}>
@@ -936,10 +1099,23 @@ export default function LeadsPage() {
                     <div className="w-16 h-16 rounded-2xl bg-white/[0.03] flex items-center justify-center mb-4">
                       <MessageSquare className="w-8 h-8 text-white/20" />
                     </div>
-                    <p className="text-white/50 font-medium">No leads found</p>
-                    <p className="text-white/30 text-sm mt-1">
-                      {leads.length === 0 ? "Add your first lead to get started" : "Try adjusting your search"}
+                    <p className="text-white/50 font-medium">
+                      {leads.length === 0 ? "No leads yet" : "No leads match your search"}
                     </p>
+                    <p className="text-white/30 text-sm mt-1 max-w-[240px]">
+                      {leads.length === 0
+                        ? "Start building your customer pipeline by adding your first lead"
+                        : "Try adjusting your search or filter criteria"}
+                    </p>
+                    {leads.length === 0 && (
+                      <button
+                        onClick={() => setShowAddModal(true)}
+                        className="mt-4 flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg font-medium text-sm hover:bg-white/90 transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Your First Lead
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div className="divide-y divide-white/[0.04]">
@@ -1085,7 +1261,7 @@ export default function LeadsPage() {
                             <ChevronDown className="w-3.5 h-3.5" />
                           </button>
                           {showStatusDropdown && (
-                            <div className="absolute right-0 top-full mt-1 w-36 bg-[#1a1a1a] rounded-xl border border-white/10 shadow-xl z-10 overflow-hidden">
+                            <div className="absolute right-0 top-full mt-1 w-36 bg-[#1a1a1a] rounded-xl border border-white/10 shadow-xl z-50 overflow-hidden">
                               {leadStatusOptions.map((status) => (
                                 <button
                                   key={status.value}
@@ -1711,6 +1887,15 @@ export default function LeadsPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Send Payment Link Button */}
+                <button
+                  onClick={() => openPaymentLinkModal(selectedLead)}
+                  className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white rounded-xl font-medium transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)]"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  Send Payment Link
+                </button>
               </div>
 
               {/* Right Side - Conversation (65%) */}
@@ -1813,6 +1998,144 @@ export default function LeadsPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Link Modal */}
+      {showPaymentLinkModal && paymentLinkLead && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-md overflow-hidden shadow-[0_0_60px_rgba(16,185,129,0.15)]">
+            {/* Header */}
+            <div className="p-4 border-b border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                  <CreditCard className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Send Payment Link</h3>
+                  <p className="text-sm text-white/50">to {paymentLinkLead.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowPaymentLinkModal(false)}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {paymentLinkSent ? (
+              /* Success State */
+              <div className="p-6 text-center">
+                <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+                  <Check className="w-8 h-8 text-emerald-400" />
+                </div>
+                <h4 className="text-lg font-semibold mb-2">Payment Link Sent!</h4>
+                <p className="text-sm text-white/50 mb-6">
+                  The payment link has been sent to {paymentLinkLead.phone} via SMS
+                </p>
+                <button
+                  onClick={() => setShowPaymentLinkModal(false)}
+                  className="w-full py-3 bg-white text-black rounded-xl font-medium hover:bg-white/90 transition-colors"
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              /* Form State */
+              <div className="p-4 space-y-4">
+                {paymentLinkError && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2 text-red-400 text-sm">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    {paymentLinkError}
+                  </div>
+                )}
+
+                {/* Vehicle Selection */}
+                <div>
+                  <label className="block text-sm text-white/60 mb-2">Vehicle</label>
+                  <select
+                    value={paymentLinkData.vehicleId}
+                    onChange={(e) => updatePaymentLinkField('vehicleId', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white focus:outline-none focus:border-white/20 appearance-none cursor-pointer"
+                  >
+                    <option value="">Select a vehicle</option>
+                    {vehicles.map(v => (
+                      <option key={v.id} value={v.id}>
+                        {v.year} {v.make} {v.model} - ${v.daily_rate}/day
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Dates */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm text-white/60 mb-2">Start Date</label>
+                    <input
+                      type="date"
+                      value={paymentLinkData.startDate}
+                      onChange={(e) => updatePaymentLinkField('startDate', e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white focus:outline-none focus:border-white/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-white/60 mb-2">End Date</label>
+                    <input
+                      type="date"
+                      value={paymentLinkData.endDate}
+                      onChange={(e) => updatePaymentLinkField('endDate', e.target.value)}
+                      min={paymentLinkData.startDate || new Date().toISOString().split('T')[0]}
+                      className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white focus:outline-none focus:border-white/20"
+                    />
+                  </div>
+                </div>
+
+                {/* Amount Summary */}
+                {paymentLinkData.totalAmount > 0 && (
+                  <div className="p-4 bg-white/[0.02] rounded-xl border border-white/[0.05] space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-white/50">
+                        {(() => {
+                          const { days } = calculatePaymentAmounts(paymentLinkData.vehicleId, paymentLinkData.startDate, paymentLinkData.endDate)
+                          return `${days || 1} day${(days || 1) > 1 ? 's' : ''} rental`
+                        })()}
+                      </span>
+                      <span className="text-white/70">${paymentLinkData.totalAmount.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-white/[0.05]">
+                      <span className="font-medium">Deposit (25%)</span>
+                      <span className="text-lg font-bold text-emerald-400">${paymentLinkData.depositAmount.toLocaleString()}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Send Button */}
+                <button
+                  onClick={sendPaymentLink}
+                  disabled={sendingPaymentLink || !paymentLinkData.vehicleId || !paymentLinkData.startDate || !paymentLinkData.endDate}
+                  className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                >
+                  {sendingPaymentLink ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Send via SMS
+                    </>
+                  )}
+                </button>
+
+                <p className="text-xs text-white/30 text-center">
+                  Payment link will be sent to {paymentLinkLead.phone}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}

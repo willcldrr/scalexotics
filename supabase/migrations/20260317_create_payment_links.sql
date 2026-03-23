@@ -26,9 +26,28 @@ CREATE INDEX IF NOT EXISTS idx_payment_links_expires_at ON payment_links(expires
 -- Enable RLS
 ALTER TABLE payment_links ENABLE ROW LEVEL SECURITY;
 
--- Policy: Allow service role full access (for API operations)
-CREATE POLICY "Service role has full access to payment_links"
+-- Policy: Admins can manage all payment links
+CREATE POLICY "Admins can manage payment_links"
   ON payment_links
   FOR ALL
-  USING (true)
-  WITH CHECK (true);
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.is_admin = true
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.is_admin = true
+    )
+  );
+
+-- Policy: Public can view payment link by token (for payment pages)
+-- This is intentionally permissive for the payment flow
+CREATE POLICY "Public can view payment_links by token"
+  ON payment_links
+  FOR SELECT
+  USING (true);

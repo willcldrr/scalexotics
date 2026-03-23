@@ -171,7 +171,7 @@ export default function LeadDetailModal({
               </button>
 
               {showStatusDropdown && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-[#0a0a0a] border border-white/[0.08] rounded-xl overflow-hidden shadow-xl z-10">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-[#0a0a0a] border border-white/[0.08] rounded-xl overflow-hidden shadow-xl z-50">
                   {leadStatusOptions.map((status) => (
                     <button
                       key={status.value}

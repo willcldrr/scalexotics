@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react"
 import { createClient } from "@/lib/supabase/client"
 
 interface Lead {
@@ -120,9 +120,14 @@ const saveCachedData = (data: DashboardData) => {
 
 export function DashboardCacheProvider({ children }: { children: ReactNode }) {
   const supabase = createClient()
+  // Track last fetch time in a ref to avoid dependency issues
+  const lastFetchedRef = useRef<number | null>(null)
   // Initialize with cached data if available for instant first render
   const [data, setData] = useState<DashboardData>(() => {
     const cached = loadCachedData()
+    if (cached?.lastFetched) {
+      lastFetchedRef.current = cached.lastFetched
+    }
     return cached || {
       leads: [],
       vehicles: [],
@@ -134,8 +139,8 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
   })
 
   const fetchAllData = useCallback(async (force = false) => {
-    // Skip if data is fresh and not forced
-    if (!force && data.lastFetched && Date.now() - data.lastFetched < CACHE_DURATION) {
+    // Skip if data is fresh and not forced (use ref to avoid dependency)
+    if (!force && lastFetchedRef.current && Date.now() - lastFetchedRef.current < CACHE_DURATION) {
       return
     }
 
@@ -153,13 +158,13 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
       const [leadsRes, vehiclesRes, bookingsRes] = await Promise.all([
         supabase
           .from("leads")
-          .select("id, name, email, phone, status, source, vehicle_interest, notes, created_at, user_id")
+          .select("id, name, email, phone, status, source, vehicle_interest, notes, created_at, updated_at, user_id")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(500),
         supabase
           .from("vehicles")
-          .select("id, name, make, model, year, type, status, daily_rate, image_url, created_at, user_id")
+          .select("id, name, make, model, year, vin, license_plate, color, type, status, daily_rate, image_url, created_at, user_id")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         supabase
@@ -170,11 +175,16 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
           .limit(500),
       ])
 
-      const newData = {
-        leads: leadsRes.data || [],
-        vehicles: vehiclesRes.data || [],
-        bookings: bookingsRes.data || [],
-        lastFetched: Date.now(),
+      const now = Date.now()
+      lastFetchedRef.current = now
+      const newData: DashboardData = {
+        leads: (leadsRes.data || []) as Lead[],
+        vehicles: (vehiclesRes.data || []) as Vehicle[],
+        bookings: (bookingsRes.data || []).map((b: any) => ({
+          ...b,
+          vehicles: Array.isArray(b.vehicles) ? b.vehicles[0] : b.vehicles,
+        })) as Booking[],
+        lastFetched: now,
         isLoading: false,
         error: null,
       }
@@ -189,7 +199,7 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
         error: "Failed to fetch data",
       }))
     }
-  }, [data.lastFetched, supabase])
+  }, [supabase])
 
   // Initial fetch
   useEffect(() => {
@@ -253,14 +263,19 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const { data: bookings } = await supabase
+    const { data: bookingsData } = await supabase
       .from("bookings")
       .select("id, vehicle_id, customer_name, customer_email, customer_phone, start_date, end_date, status, total_amount, deposit_amount, deposit_paid, notes, created_at, user_id, vehicles(id, name, make, model, year, image_url, daily_rate)")
       .eq("user_id", user.id)
       .order("start_date", { ascending: false })
       .limit(500)
 
-    setData(prev => ({ ...prev, bookings: bookings || [], lastFetched: Date.now() }))
+    const bookings = (bookingsData || []).map((b: any) => ({
+      ...b,
+      vehicles: Array.isArray(b.vehicles) ? b.vehicles[0] : b.vehicles,
+    })) as Booking[]
+
+    setData(prev => ({ ...prev, bookings, lastFetched: Date.now() }))
   }, [supabase])
 
   // Optimistic updates - update local state immediately without refetching

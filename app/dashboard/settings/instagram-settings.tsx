@@ -28,14 +28,20 @@ export default function InstagramSettings() {
 
     // Check for URL params (success/error from OAuth)
     const params = new URLSearchParams(window.location.search)
+    let successTimeout: ReturnType<typeof setTimeout> | undefined
+
     if (params.get("instagram_success")) {
       setSuccess(true)
       window.history.replaceState({}, "", window.location.pathname)
-      setTimeout(() => setSuccess(false), 5000)
+      successTimeout = setTimeout(() => setSuccess(false), 5000)
     }
     if (params.get("instagram_error")) {
       setError(decodeURIComponent(params.get("instagram_error") || "Connection failed"))
       window.history.replaceState({}, "", window.location.pathname)
+    }
+
+    return () => {
+      if (successTimeout) clearTimeout(successTimeout)
     }
   }, [])
 

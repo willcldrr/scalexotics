@@ -532,7 +532,7 @@ export default function LeadsTab() {
                           <ChevronDown className="w-3 h-3 opacity-60" />
                         </button>
                         {inlineStatusId === lead.id && (
-                          <div className="absolute left-0 top-full mt-1.5 w-40 bg-[#1a1a1a] rounded-xl border border-white/10 shadow-2xl z-20 overflow-hidden py-1">
+                          <div className="absolute left-0 top-full mt-1.5 w-40 bg-[#1a1a1a] rounded-xl border border-white/10 shadow-2xl z-50 overflow-hidden py-1">
                             {statusOptions.map((status) => (
                               <button
                                 key={status.value}

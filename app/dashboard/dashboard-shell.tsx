@@ -110,6 +110,12 @@ export default function DashboardLayout({
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
   const sidebarRef = useRef<HTMLElement>(null)
+  const sidebarOpenRef = useRef(sidebarOpen)
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    sidebarOpenRef.current = sidebarOpen
+  }, [sidebarOpen])
 
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
@@ -127,13 +133,13 @@ export default function DashboardLayout({
 
       // Only trigger if horizontal swipe is dominant
       if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-        // Swipe right from left edge to open
-        if (deltaX > 0 && touchStartX.current < 30 && !sidebarOpen) {
+        // Swipe right from left edge to open (use ref to avoid dependency)
+        if (deltaX > 0 && touchStartX.current < 30 && !sidebarOpenRef.current) {
           setSidebarOpen(true)
           touchStartX.current = null
         }
         // Swipe left to close
-        if (deltaX < 0 && sidebarOpen) {
+        if (deltaX < 0 && sidebarOpenRef.current) {
           setSidebarOpen(false)
           touchStartX.current = null
         }
@@ -154,7 +160,7 @@ export default function DashboardLayout({
       document.removeEventListener("touchmove", handleTouchMove)
       document.removeEventListener("touchend", handleTouchEnd)
     }
-  }, [sidebarOpen])
+  }, [])
 
   // Bottom nav items for mobile (most important ones)
   const bottomNavItems = [
@@ -188,11 +194,21 @@ export default function DashboardLayout({
       })
     }
 
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+    let idleCallbackId: number | undefined
+
     if ('requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(prefetchRoutes)
+      idleCallbackId = (window as any).requestIdleCallback(prefetchRoutes)
     } else {
       // Fallback for Safari
-      setTimeout(prefetchRoutes, 100)
+      timeoutId = setTimeout(prefetchRoutes, 100)
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId)
+      if (idleCallbackId && 'cancelIdleCallback' in window) {
+        (window as any).cancelIdleCallback(idleCallbackId)
+      }
     }
   }, [router])
 
@@ -253,7 +269,7 @@ export default function DashboardLayout({
                   <span className="font-medium lg:hidden">{item.name}</span>
                   {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
                   {/* Desktop: tooltip on hover */}
-                  <div className="hidden lg:flex absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[100] shadow-xl items-center">
+                  <div className="hidden lg:flex absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[60] shadow-xl items-center">
                     <span className="text-sm font-medium text-white">{item.name}</span>
                   </div>
                 </Link>
@@ -292,7 +308,7 @@ export default function DashboardLayout({
                       <span className="font-medium lg:hidden">{item.name}</span>
                       {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
                       {/* Desktop: tooltip on hover */}
-                      <div className="hidden lg:flex absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[100] shadow-xl items-center">
+                      <div className="hidden lg:flex absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[60] shadow-xl items-center">
                         <span className="text-sm font-medium text-white">{item.name}</span>
                       </div>
                     </Link>
@@ -321,7 +337,7 @@ export default function DashboardLayout({
                   <span className="font-medium lg:hidden">{settingsItem.name}</span>
                   {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
                   {/* Desktop: tooltip on hover */}
-                  <div className="hidden lg:flex absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[100] shadow-xl items-center">
+                  <div className="hidden lg:flex absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[60] shadow-xl items-center">
                     <span className="text-sm font-medium text-white">{settingsItem.name}</span>
                   </div>
                 </Link>
@@ -346,7 +362,7 @@ export default function DashboardLayout({
                 </p>
               </div>
               {/* Desktop: tooltip on hover */}
-              <div className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[100] shadow-xl">
+              <div className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[60] shadow-xl">
                 <p className="text-sm font-medium text-white">{profile?.full_name || "User"}</p>
                 <p className="text-xs text-white/50">{profile?.company_name || user?.email}</p>
               </div>
@@ -359,7 +375,7 @@ export default function DashboardLayout({
               <LogOut className="w-5 h-5 flex-shrink-0" />
               <span className="font-medium lg:hidden">Sign Out</span>
               {/* Desktop: tooltip on hover */}
-              <div className="hidden lg:flex absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[100] shadow-xl items-center">
+              <div className="hidden lg:flex absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[60] shadow-xl items-center">
                 <span className="text-sm font-medium text-white">Sign Out</span>
               </div>
             </button>

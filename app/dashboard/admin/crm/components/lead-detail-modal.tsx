@@ -224,7 +224,7 @@ export default function LeadDetailModal({
                 <ChevronDown className="w-3 h-3 md:w-3.5 md:h-3.5" />
               </button>
               {showStatusDropdown && (
-                <div className="absolute right-0 top-full mt-1 w-40 bg-[#1a1a1a] rounded-xl border border-white/10 shadow-xl z-10 overflow-hidden">
+                <div className="absolute right-0 top-full mt-1 w-40 bg-[#1a1a1a] rounded-xl border border-white/10 shadow-xl z-50 overflow-hidden">
                   {statusOptions.map((status) => (
                     <button
                       key={status.value}

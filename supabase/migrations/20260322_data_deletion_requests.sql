@@ -31,9 +31,9 @@ CREATE POLICY "Admins can view all deletion requests"
   ON data_deletion_requests FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM users
-      WHERE users.id = auth.uid()
-      AND users.is_admin = true
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.is_admin = true
     )
   );
 
@@ -47,9 +47,9 @@ CREATE POLICY "Admins can update deletion requests"
   ON data_deletion_requests FOR UPDATE
   USING (
     EXISTS (
-      SELECT 1 FROM users
-      WHERE users.id = auth.uid()
-      AND users.is_admin = true
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.is_admin = true
     )
   );
 

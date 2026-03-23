@@ -26,9 +26,21 @@ CREATE POLICY "Allow public to verify codes" ON access_codes
   FOR SELECT
   USING (is_active = true);
 
--- Allow authenticated users to manage codes (you'll want to restrict this to admins later)
-CREATE POLICY "Allow authenticated to manage codes" ON access_codes
+-- Only admins can manage access codes
+CREATE POLICY "Admins can manage codes" ON access_codes
   FOR ALL
   TO authenticated
-  USING (true)
-  WITH CHECK (true);
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.is_admin = true
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.is_admin = true
+    )
+  );
