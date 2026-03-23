@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { toast } from "sonner"
 import {
   Users,
   Shield,
@@ -30,6 +31,8 @@ import {
   Building,
   RefreshCw,
   Receipt,
+  LogIn,
+  Save,
 } from "lucide-react"
 import { format } from "date-fns"
 
@@ -116,6 +119,13 @@ export default function AdminPage() {
   const [users, setUsers] = useState<UserProfile[]>([])
   const [userSearch, setUserSearch] = useState("")
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
+  const [editingProfile, setEditingProfile] = useState<{
+    full_name: string
+    email: string
+    company_name: string
+    phone: string
+  } | null>(null)
+  const [impersonating, setImpersonating] = useState(false)
 
   // Do Not Rent tab state
   const [dnrEntries, setDnrEntries] = useState<DoNotRentEntry[]>([])
@@ -298,6 +308,98 @@ export default function AdminPage() {
     }
   }
 
+  const handleSaveProfile = async () => {
+    if (!selectedUser || !editingProfile) return
+    setSaving(true)
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        full_name: editingProfile.full_name || null,
+        company_name: editingProfile.company_name || null,
+        phone: editingProfile.phone || null,
+      })
+      .eq("id", selectedUser.id)
+
+    if (error) {
+      setMessage({ type: "error", text: "Failed to update profile" })
+    } else {
+      setMessage({ type: "success", text: "Profile updated successfully" })
+      // Update local state
+      setUsers(users.map(u => u.id === selectedUser.id ? {
+        ...u,
+        full_name: editingProfile.full_name,
+        company_name: editingProfile.company_name,
+        phone: editingProfile.phone,
+      } : u))
+      setSelectedUser({
+        ...selectedUser,
+        full_name: editingProfile.full_name,
+        company_name: editingProfile.company_name,
+        phone: editingProfile.phone,
+      })
+    }
+    setSaving(false)
+  }
+
+  const handleImpersonate = async (userId: string) => {
+    if (!confirm("You are about to log in as this user. Continue?")) return
+
+    setImpersonating(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        setMessage({ type: "error", text: "Not authenticated" })
+        setImpersonating(false)
+        return
+      }
+
+      const response = await fetch("/api/admin/impersonate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ userId }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setMessage({ type: "error", text: data.error || "Failed to impersonate user" })
+        setImpersonating(false)
+        return
+      }
+
+      // Store original admin session for returning later
+      localStorage.setItem("admin_return_token", session.access_token)
+
+      // Set the new session
+      await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      })
+
+      // Redirect to dashboard
+      toast.success(`Now logged in as ${selectedUser?.full_name || selectedUser?.email}`)
+      window.location.href = "/dashboard"
+    } catch (error) {
+      console.error("Impersonation error:", error)
+      setMessage({ type: "error", text: "Failed to impersonate user" })
+      setImpersonating(false)
+    }
+  }
+
+  const openUserSettings = (user: UserProfile) => {
+    setSelectedUser(user)
+    setEditingProfile({
+      full_name: user.full_name || "",
+      email: user.email || "",
+      company_name: user.company_name || "",
+      phone: user.phone || "",
+    })
+  }
+
   // Users with pending businesses
   const pendingUsers = users.filter(u => u.business?.status === "pending")
   // Other users
@@ -405,7 +507,7 @@ export default function AdminPage() {
   const parseDnrCSV = (text: string) => {
     const lines = text.split(/\r?\n/).filter(line => line.trim())
     if (lines.length < 2) {
-      alert("CSV file appears to be empty or has no data rows")
+      toast.error("Invalid CSV file", { description: "File appears to be empty or has no data rows" })
       return
     }
 
@@ -454,7 +556,7 @@ export default function AdminPage() {
     }
 
     if (rows.length === 0) {
-      alert("No valid entries found in CSV")
+      toast.error("No valid entries found", { description: "Make sure your CSV has a column for names" })
       return
     }
 
@@ -470,7 +572,7 @@ export default function AdminPage() {
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      alert("You must be logged in to import entries")
+      toast.error("Authentication required", { description: "You must be logged in to import entries" })
       setImporting(false)
       return
     }
@@ -829,54 +931,25 @@ export default function AdminPage() {
       {/* ========== USERS TAB ========== */}
       {activeTab === "users" && (
         <div className="space-y-6">
-          {/* Pending Approvals Section */}
-          {pendingUsers.length > 0 && (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-amber-400" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-amber-400">Pending Approvals</h2>
-                  <p className="text-sm text-white/50">{pendingUsers.length} user{pendingUsers.length !== 1 ? "s" : ""} awaiting approval</p>
-                </div>
-              </div>
-              <div className="space-y-3">
-                {pendingUsers.map((user) => (
-                  <div key={user.id} className="bg-black/30 rounded-xl p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center">
-                        <User className="w-6 h-6 text-amber-400" />
-                      </div>
-                      <div>
-                        <p className="font-semibold">{user.business?.name || user.full_name || "Unknown"}</p>
-                        <p className="text-sm text-white/50">{user.email}</p>
-                        <p className="text-xs text-white/30">Signed up {formatDate(user.created_at)}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => user.business && handleApprove(user.business.id)}
-                        disabled={saving || !user.business}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-colors disabled:opacity-50"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => user.business && handleDeny(user.business.id)}
-                        disabled={saving || !user.business}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-medium rounded-xl transition-colors disabled:opacity-50"
-                      >
-                        <XCircle className="w-4 h-4" />
-                        Deny
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {/* Stats Row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+              <div className="text-white/50 text-sm">Total Users</div>
+              <div className="text-2xl font-bold mt-1">{users.length}</div>
             </div>
-          )}
+            <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+              <div className="text-white/50 text-sm">Pending Approval</div>
+              <div className="text-2xl font-bold mt-1 text-amber-400">{pendingUsers.length}</div>
+            </div>
+            <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+              <div className="text-white/50 text-sm">Active</div>
+              <div className="text-2xl font-bold mt-1 text-green-400">{users.filter(u => u.business?.status === "active").length}</div>
+            </div>
+            <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+              <div className="text-white/50 text-sm">Admins</div>
+              <div className="text-2xl font-bold mt-1 text-purple-400">{users.filter(u => u.is_admin).length}</div>
+            </div>
+          </div>
 
           {/* Search */}
           <div className="relative max-w-md">
@@ -944,19 +1017,35 @@ export default function AdminPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      {/* Quick approve/deny for pending users */}
+                      {user.business?.status === "pending" && (
+                        <>
+                          <button
+                            onClick={() => user.business && handleApprove(user.business.id)}
+                            disabled={saving}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                            title="Approve"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                            <span className="hidden sm:inline">Approve</span>
+                          </button>
+                          <button
+                            onClick={() => user.business && handleDeny(user.business.id)}
+                            disabled={saving}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                            title="Deny"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            <span className="hidden sm:inline">Deny</span>
+                          </button>
+                        </>
+                      )}
                       <button
-                        onClick={() => setSelectedUser(user)}
+                        onClick={() => openUserSettings(user)}
                         className="p-2 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-colors"
-                        title="Settings"
+                        title="Manage User"
                       >
                         <Settings className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteUser(user.id, user.business?.id)}
-                        className="p-2 rounded-lg hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
@@ -1336,106 +1425,251 @@ export default function AdminPage() {
       {/* ========== MODALS ========== */}
 
       {/* User Settings Modal */}
-      {selectedUser && (
+      {selectedUser && editingProfile && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold">{selectedUser.full_name || selectedUser.email}</h2>
-                {selectedUser.is_admin && (
-                  <span className="text-sm text-purple-400">Administrator</span>
-                )}
+              <div className="flex items-center gap-4">
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
+                  selectedUser.is_admin ? "bg-purple-500/20" :
+                  selectedUser.business?.status === "pending" ? "bg-amber-500/20" :
+                  selectedUser.business?.status === "active" ? "bg-green-500/20" :
+                  "bg-white/10"
+                }`}>
+                  <User className={`w-7 h-7 ${
+                    selectedUser.is_admin ? "text-purple-400" :
+                    selectedUser.business?.status === "pending" ? "text-amber-400" :
+                    selectedUser.business?.status === "active" ? "text-green-400" :
+                    "text-white/60"
+                  }`} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">{selectedUser.full_name || selectedUser.email}</h2>
+                  <div className="flex items-center gap-2 mt-1">
+                    {selectedUser.is_admin && (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">Admin</span>
+                    )}
+                    {selectedUser.business && (
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        selectedUser.business.status === "pending" ? "bg-amber-500/20 text-amber-400" :
+                        selectedUser.business.status === "active" ? "bg-green-500/20 text-green-400" :
+                        "bg-red-500/20 text-red-400"
+                      }`}>
+                        {selectedUser.business.status}
+                      </span>
+                    )}
+                    <span className="text-xs text-white/40">Joined {formatDate(selectedUser.created_at)}</span>
+                  </div>
+                </div>
               </div>
-              <button onClick={() => setSelectedUser(null)} className="p-2 rounded-lg hover:bg-white/5">
+              <button onClick={() => { setSelectedUser(null); setEditingProfile(null); }} className="p-2 rounded-lg hover:bg-white/5">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-white/50">Email</p>
-                  <p className="font-medium">{selectedUser.email || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-white/50">Joined</p>
-                  <p className="font-medium">{formatDate(selectedUser.created_at)}</p>
-                </div>
-                <div>
-                  <p className="text-white/50">Company</p>
-                  <p className="font-medium">{selectedUser.company_name || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-white/50">Phone</p>
-                  <p className="font-medium">{selectedUser.phone || "—"}</p>
+
+            <div className="p-6 space-y-6">
+              {/* Profile Information - Editable */}
+              <div>
+                <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-4">Profile Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-white/50 mb-2">Full Name</label>
+                    <input
+                      type="text"
+                      value={editingProfile.full_name}
+                      onChange={(e) => setEditingProfile({ ...editingProfile, full_name: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
+                      placeholder="John Doe"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-white/50 mb-2">Email</label>
+                    <input
+                      type="email"
+                      value={editingProfile.email}
+                      disabled
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/50 cursor-not-allowed"
+                    />
+                    <p className="text-xs text-white/30 mt-1">Email cannot be changed</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-white/50 mb-2">Company Name</label>
+                    <input
+                      type="text"
+                      value={editingProfile.company_name}
+                      onChange={(e) => setEditingProfile({ ...editingProfile, company_name: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
+                      placeholder="Acme Rentals"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-white/50 mb-2">Phone</label>
+                    <input
+                      type="tel"
+                      value={editingProfile.phone}
+                      onChange={(e) => setEditingProfile({ ...editingProfile, phone: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
+                      placeholder="+1 (555) 123-4567"
+                    />
+                  </div>
                 </div>
               </div>
 
+              {/* Business Information */}
               {selectedUser.business && (
-                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                  <h3 className="font-semibold mb-3">Business Info</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-white/50">Business Name</p>
-                      <p className="font-medium">{selectedUser.business.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-white/50">Status</p>
-                      <p className={`font-medium capitalize ${
-                        selectedUser.business.status === "active" ? "text-green-400" :
-                        selectedUser.business.status === "pending" ? "text-amber-400" :
-                        "text-red-400"
-                      }`}>{selectedUser.business.status}</p>
-                    </div>
-                    <div>
-                      <p className="text-white/50">Payment Domain</p>
-                      <p className="font-medium">{selectedUser.business.payment_domain || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-white/50">Stripe Connected</p>
-                      <p className="font-medium">{selectedUser.business.stripe_connected ? "Yes" : "No"}</p>
+                <div>
+                  <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-4">Business Information</h3>
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-white/50">Business Name</p>
+                        <p className="font-medium">{selectedUser.business.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-white/50">Status</p>
+                        <p className={`font-medium capitalize ${
+                          selectedUser.business.status === "active" ? "text-green-400" :
+                          selectedUser.business.status === "pending" ? "text-amber-400" :
+                          "text-red-400"
+                        }`}>{selectedUser.business.status}</p>
+                      </div>
+                      <div>
+                        <p className="text-white/50">Payment Domain</p>
+                        <p className="font-medium">{selectedUser.business.payment_domain || "Not set"}</p>
+                      </div>
+                      <div>
+                        <p className="text-white/50">Stripe Connected</p>
+                        <p className={`font-medium ${selectedUser.business.stripe_connected ? "text-green-400" : "text-white/50"}`}>
+                          {selectedUser.business.stripe_connected ? "Yes" : "No"}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="pt-4 border-t border-white/10 space-y-3">
-                {/* Admin Toggle */}
-                <button
-                  onClick={() => toggleAdmin(selectedUser.id, selectedUser.is_admin)}
-                  className={`w-full px-4 py-2 rounded-xl font-medium transition-colors ${
-                    selectedUser.is_admin
-                      ? "bg-purple-500/20 hover:bg-purple-500/30 text-purple-400"
-                      : "bg-white/10 hover:bg-white/20 text-white"
-                  }`}
-                >
-                  {selectedUser.is_admin ? "Remove Admin Access" : "Grant Admin Access"}
-                </button>
+              {/* Quick Actions */}
+              <div>
+                <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-4">Quick Actions</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* Admin Toggle */}
+                  <button
+                    onClick={() => toggleAdmin(selectedUser.id, selectedUser.is_admin)}
+                    className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-colors ${
+                      selectedUser.is_admin
+                        ? "bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/30"
+                        : "bg-white/5 hover:bg-white/10 text-white border border-white/10"
+                    }`}
+                  >
+                    <Shield className="w-4 h-4" />
+                    {selectedUser.is_admin ? "Remove Admin Access" : "Grant Admin Access"}
+                  </button>
 
-                <div className="flex gap-3">
+                  {/* Business Status Actions */}
                   {selectedUser.business?.status === "pending" && (
-                    <button
-                      onClick={() => { handleApprove(selectedUser.business!.id); setSelectedUser(null); }}
-                      className="flex-1 px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-xl"
-                    >
-                      Approve
-                    </button>
+                    <>
+                      <button
+                        onClick={() => { handleApprove(selectedUser.business!.id); fetchUsers(); }}
+                        className="flex items-center justify-center gap-2 px-4 py-3 bg-green-500 hover:bg-green-600 text-white font-medium rounded-xl"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        Approve Business
+                      </button>
+                      <button
+                        onClick={() => { handleDeny(selectedUser.business!.id); fetchUsers(); }}
+                        className="flex items-center justify-center gap-2 px-4 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-medium rounded-xl border border-red-500/30"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        Deny Business
+                      </button>
+                    </>
                   )}
                   {selectedUser.business?.status === "active" && (
                     <button
-                      onClick={() => { handleDeny(selectedUser.business!.id); setSelectedUser(null); }}
-                      className="flex-1 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-medium rounded-xl"
+                      onClick={() => { handleDeny(selectedUser.business!.id); fetchUsers(); }}
+                      className="flex items-center justify-center gap-2 px-4 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-medium rounded-xl border border-red-500/30"
                     >
-                      Suspend
+                      <XCircle className="w-4 h-4" />
+                      Suspend Business
                     </button>
                   )}
+                  {selectedUser.business?.status === "suspended" && (
+                    <button
+                      onClick={() => { handleApprove(selectedUser.business!.id); fetchUsers(); }}
+                      className="flex items-center justify-center gap-2 px-4 py-3 bg-green-500/20 hover:bg-green-500/30 text-green-400 font-medium rounded-xl border border-green-500/30"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      Reactivate Business
+                    </button>
+                  )}
+
+                  {/* Delete User */}
                   <button
-                    onClick={() => setSelectedUser(null)}
-                    className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-xl"
+                    onClick={() => { handleDeleteUser(selectedUser.id, selectedUser.business?.id); setSelectedUser(null); setEditingProfile(null); }}
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium rounded-xl border border-red-500/20"
                   >
-                    Close
+                    <Trash2 className="w-4 h-4" />
+                    Delete User
                   </button>
                 </div>
               </div>
+
+              {/* Impersonation Section */}
+              <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/30">
+                <div className="flex items-start gap-3">
+                  <LogIn className="w-5 h-5 text-blue-400 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-blue-400">Log In As User</h3>
+                    <p className="text-sm text-white/50 mt-1">
+                      Access this user's account to help configure their settings.
+                    </p>
+                    <button
+                      onClick={() => handleImpersonate(selectedUser.id)}
+                      disabled={impersonating}
+                      className="mt-3 flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl transition-colors disabled:opacity-50"
+                    >
+                      {impersonating ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Logging in...
+                        </>
+                      ) : (
+                        <>
+                          <LogIn className="w-4 h-4" />
+                          Log In As {selectedUser.full_name?.split(" ")[0] || "User"}
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-white/10 flex justify-between">
+              <button
+                onClick={() => { setSelectedUser(null); setEditingProfile(null); }}
+                className="px-6 py-2.5 bg-white/5 hover:bg-white/10 text-white font-medium rounded-xl border border-white/10"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveProfile}
+                disabled={saving}
+                className="flex items-center gap-2 px-6 py-2.5 bg-white hover:bg-white/90 text-black font-medium rounded-xl disabled:opacity-50"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Save Changes
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
