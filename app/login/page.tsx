@@ -58,35 +58,25 @@ function LoginForm() {
         // Silently fail - session tracking is not critical
       }
 
-      // Check if user has a pending business
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("is_admin")
-          .eq("id", user.id)
-          .single()
+      // Check user status via server API (bypasses RLS issues)
+      try {
+        const statusResponse = await fetch('/api/auth/status')
+        const status = await statusResponse.json()
 
-        // Admins go straight to dashboard
-        if (profile?.is_admin) {
+        if (status.canAccessDashboard) {
           router.push("/dashboard")
           router.refresh()
           return
-        }
-
-        // Check business status
-        const { data: business } = await supabase
-          .from("businesses")
-          .select("status")
-          .eq("owner_user_id", user.id)
-          .single()
-
-        if (business?.status === "pending") {
+        } else if (status.authenticated) {
+          // User is authenticated but doesn't have access yet
           router.push("/pending-approval")
           return
         }
+      } catch (e) {
+        console.error("Status check error:", e)
       }
 
+      // Fallback to dashboard (middleware will handle redirect if needed)
       router.push("/dashboard")
       router.refresh()
     }

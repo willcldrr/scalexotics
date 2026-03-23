@@ -1,5 +1,14 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
+
+// Service role client for bypassing RLS in middleware checks
+function getServiceSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -31,6 +40,9 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Service role client for database queries (bypasses RLS)
+  const serviceSupabase = getServiceSupabase()
+
   const pathname = request.nextUrl.pathname
 
   // Public auth pages - allow access without login
@@ -60,11 +72,72 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // For authenticated users, redirect away from login/signup pages
-  if (user && (pathname === '/login' || pathname === '/signup')) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+  // For authenticated users, check business approval status
+  if (user) {
+    // Check business approval for dashboard routes
+    if (pathname.startsWith('/dashboard')) {
+      // Use service role to bypass RLS for reliable checks
+      const { data: profile } = await serviceSupabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single()
+
+      // Admins always have access
+      if (profile?.is_admin) {
+        // But protect admin routes - only allow admins
+        return supabaseResponse
+      }
+
+      // SECURITY: Protect admin routes - only allow admins
+      if (pathname.startsWith('/dashboard/admin')) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/dashboard'
+        return NextResponse.redirect(url)
+      }
+
+      // Non-admin users need an active business
+      const { data: business } = await serviceSupabase
+        .from('businesses')
+        .select('status')
+        .eq('owner_user_id', user.id)
+        .single()
+
+      // If business is not active, redirect to pending-approval
+      if (!business || business.status !== 'active') {
+        const url = request.nextUrl.clone()
+        url.pathname = '/pending-approval'
+        return NextResponse.redirect(url)
+      }
+    }
+
+    // Redirect logged in users away from auth pages (login/signup)
+    if (pathname === '/login' || pathname === '/signup') {
+      // Use service role to bypass RLS
+      const { data: profile } = await serviceSupabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single()
+
+      // Admins go to dashboard
+      if (profile?.is_admin) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/dashboard'
+        return NextResponse.redirect(url)
+      }
+
+      // Check business status for non-admins
+      const { data: business } = await serviceSupabase
+        .from('businesses')
+        .select('status')
+        .eq('owner_user_id', user.id)
+        .single()
+
+      const url = request.nextUrl.clone()
+      url.pathname = business?.status === 'active' ? '/dashboard' : '/pending-approval'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse
