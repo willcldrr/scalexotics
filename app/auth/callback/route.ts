@@ -22,20 +22,36 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${origin}/reset-password`)
     }
 
-    // For any other auth flow - redirect to verify-access or dashboard
+    // Check user's business status to determine redirect
     const { data: { user } } = await supabase.auth.getUser()
 
     if (user) {
+      // Check if user is admin (admins always go to dashboard)
       const { data: profile } = await supabase
         .from('profiles')
-        .select('access_verified')
+        .select('is_admin')
         .eq('id', user.id)
         .single()
 
-      if (profile?.access_verified) {
+      if (profile?.is_admin) {
         return NextResponse.redirect(`${origin}/dashboard`)
       }
-      return NextResponse.redirect(`${origin}/verify-access`)
+
+      // Check business status for non-admin users
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('status')
+        .eq('owner_user_id', user.id)
+        .single()
+
+      if (business?.status === 'active') {
+        return NextResponse.redirect(`${origin}/dashboard`)
+      } else if (business?.status === 'suspended') {
+        return NextResponse.redirect(`${origin}/login?error=account_suspended`)
+      } else {
+        // Pending or no business - go to pending approval
+        return NextResponse.redirect(`${origin}/pending-approval`)
+      }
     }
   }
 

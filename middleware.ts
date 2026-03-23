@@ -10,7 +10,7 @@ export const config = {
     '/dashboard/:path*',
     '/login',
     '/signup',
-    '/verify-access',
+    '/pending-approval',
     '/forgot-password',
     '/reset-password',
     '/check-email',

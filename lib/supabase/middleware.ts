@@ -46,8 +46,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Verify access page - require login but not access verification
-  if (!user && pathname === '/verify-access') {
+  // Pending approval page - require login
+  if (!user && pathname === '/pending-approval') {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
@@ -60,40 +60,39 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // For authenticated users, check access code verification
+  // For authenticated users, check business approval status
   if (user) {
-    // Check access verification for dashboard routes
+    // Check business approval for dashboard routes
     if (pathname.startsWith('/dashboard')) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('access_verified, is_admin')
+        .select('is_admin')
         .eq('id', user.id)
         .single()
 
-      // If not verified, redirect to verify-access page
-      if (!profile?.access_verified) {
+      // Admins always have access
+      if (profile?.is_admin) {
+        // SECURITY: Protect admin routes - only allow admins
+        // (redundant check but kept for clarity)
+        return supabaseResponse
+      }
+
+      // Non-admin users need an active business
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('status')
+        .eq('owner_user_id', user.id)
+        .single()
+
+      // If business is not active, redirect to pending-approval
+      if (!business || business.status !== 'active') {
         const url = request.nextUrl.clone()
-        url.pathname = '/verify-access'
+        url.pathname = '/pending-approval'
         return NextResponse.redirect(url)
       }
 
       // SECURITY: Protect admin routes - only allow admins
-      if (pathname.startsWith('/dashboard/admin') && !profile?.is_admin) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/dashboard'
-        return NextResponse.redirect(url)
-      }
-    }
-
-    // Redirect verified users away from verify-access page
-    if (pathname === '/verify-access') {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('access_verified')
-        .eq('id', user.id)
-        .single()
-
-      if (profile?.access_verified) {
+      if (pathname.startsWith('/dashboard/admin')) {
         const url = request.nextUrl.clone()
         url.pathname = '/dashboard'
         return NextResponse.redirect(url)
@@ -102,15 +101,28 @@ export async function updateSession(request: NextRequest) {
 
     // Redirect logged in users away from auth pages (login/signup)
     if (pathname === '/login' || pathname === '/signup') {
-      // Check if they need to verify access first
       const { data: profile } = await supabase
         .from('profiles')
-        .select('access_verified')
+        .select('is_admin')
         .eq('id', user.id)
         .single()
 
+      // Admins go to dashboard
+      if (profile?.is_admin) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/dashboard'
+        return NextResponse.redirect(url)
+      }
+
+      // Check business status for non-admins
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('status')
+        .eq('owner_user_id', user.id)
+        .single()
+
       const url = request.nextUrl.clone()
-      url.pathname = profile?.access_verified ? '/dashboard' : '/verify-access'
+      url.pathname = business?.status === 'active' ? '/dashboard' : '/pending-approval'
       return NextResponse.redirect(url)
     }
   }
