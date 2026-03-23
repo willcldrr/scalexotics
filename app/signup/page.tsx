@@ -42,25 +42,26 @@ export default function SignUpPage() {
     }
 
     if (data.user) {
-      // Create a business record with pending status
-      const slug = companyName
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "")
+      // Create business using server-side API (bypasses RLS issues during signup)
+      try {
+        const businessResponse = await fetch('/api/signup/business', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: data.user.id,
+            companyName,
+            fullName,
+            email,
+            phone: phone || null,
+          }),
+        })
 
-      const { error: businessError } = await supabase.from("businesses").insert({
-        name: companyName,
-        slug: slug + "-" + Date.now().toString(36), // Ensure unique slug
-        owner_user_id: data.user.id,
-        email: email,
-        phone: phone || null,
-        status: "pending", // Pending approval
-        domain_status: "pending",
-      })
-
-      if (businessError) {
-        console.error("Business creation error:", businessError)
-        // Don't fail signup, just log it - admin can fix later
+        if (!businessResponse.ok) {
+          const errorData = await businessResponse.json()
+          console.error("Business creation error:", errorData)
+        }
+      } catch (e) {
+        console.error("Business API error:", e)
       }
 
       // Record the session
