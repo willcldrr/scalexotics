@@ -327,16 +327,18 @@ export default function DepositPortalSettings() {
       {/* Stripe Configuration */}
       {activeSection === 'stripe' && (
         <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-            <div className="flex items-start gap-3">
-              <Shield className="w-5 h-5 text-amber-400 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-amber-400">Secure Payment Processing</p>
-                <p className="text-xs text-amber-400/70 mt-1">
-                  Your Stripe keys are encrypted and never exposed to customers. Get your API keys from the{' '}
-                  <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener noreferrer" className="underline">
+          <div className="p-5 rounded-2xl bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-white/[0.08] backdrop-blur-sm">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-white/[0.08] flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(255,255,255,0.15)]">
+                <Shield className="w-6 h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-white tracking-wide">Secure Payment Processing</p>
+                <p className="text-xs text-white/40 mt-1 leading-relaxed">
+                  Your Stripe keys are encrypted and stored securely. Get your API keys from the{' '}
+                  <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener noreferrer" className="text-white/60 hover:text-white transition-colors underline underline-offset-2">
                     Stripe Dashboard
-                  </a>.
+                  </a>
                 </p>
               </div>
             </div>
@@ -360,7 +362,7 @@ export default function DepositPortalSettings() {
               <input
                 type="text"
                 placeholder="pk_live_..."
-                value={config.stripe_publishable_key}
+                value={config.stripe_publishable_key || ''}
                 onChange={(e) => setConfig({ ...config, stripe_publishable_key: e.target.value })}
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 font-mono text-sm"
               />
@@ -384,7 +386,7 @@ export default function DepositPortalSettings() {
                 <input
                   type={showSecretKey ? "text" : "password"}
                   placeholder="sk_live_..."
-                  value={config.stripe_secret_key}
+                  value={config.stripe_secret_key || ''}
                   onChange={(e) => setConfig({ ...config, stripe_secret_key: e.target.value })}
                   className="w-full px-4 py-3 pr-12 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 font-mono text-sm"
                 />
@@ -521,7 +523,7 @@ export default function DepositPortalSettings() {
             <input
               type="text"
               placeholder="Secure Deposit"
-              value={config.portal_title}
+              value={config.portal_title || ''}
               onChange={(e) => setConfig({ ...config, portal_title: e.target.value })}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
             />
@@ -532,7 +534,7 @@ export default function DepositPortalSettings() {
             <input
               type="text"
               placeholder="Complete your rental deposit to confirm your booking"
-              value={config.portal_subtitle}
+              value={config.portal_subtitle || ''}
               onChange={(e) => setConfig({ ...config, portal_subtitle: e.target.value })}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
             />
@@ -825,7 +827,7 @@ export default function DepositPortalSettings() {
               <label className="block text-sm text-white/60 mb-2">Terms Text</label>
               <textarea
                 rows={3}
-                value={config.terms_text}
+                value={config.terms_text || ''}
                 onChange={(e) => setConfig({ ...config, terms_text: e.target.value })}
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 resize-none"
               />
@@ -836,7 +838,7 @@ export default function DepositPortalSettings() {
             <label className="block text-sm text-white/60 mb-2">Success Message</label>
             <textarea
               rows={2}
-              value={config.success_message}
+              value={config.success_message || ''}
               onChange={(e) => setConfig({ ...config, success_message: e.target.value })}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 resize-none"
             />
@@ -847,7 +849,7 @@ export default function DepositPortalSettings() {
             <input
               type="url"
               placeholder="https://yourwebsite.com/thank-you"
-              value={config.success_redirect_url}
+              value={config.success_redirect_url || ''}
               onChange={(e) => setConfig({ ...config, success_redirect_url: e.target.value })}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
             />
@@ -879,7 +881,7 @@ export default function DepositPortalSettings() {
               <label className="block text-sm text-white/60 mb-2">Confirmation SMS Template</label>
               <textarea
                 rows={3}
-                value={config.confirmation_sms_template}
+                value={config.confirmation_sms_template || ''}
                 onChange={(e) => setConfig({ ...config, confirmation_sms_template: e.target.value })}
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 resize-none font-mono text-sm"
               />
