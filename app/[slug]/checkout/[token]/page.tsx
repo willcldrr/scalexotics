@@ -32,9 +32,10 @@ interface BusinessBranding {
   require_insurance_upload: boolean
 }
 
-export default function CheckoutPage() {
+export default function SlugCheckoutPage() {
   const params = useParams()
   const token = params.token as string
+  const slug = params.slug as string
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

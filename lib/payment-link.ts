@@ -23,6 +23,8 @@ export interface PaymentLinkData {
   stripeSecretKey?: string
   // Custom payment domain (e.g., "exoticrentals.com" - defaults to rentalcapture.xyz)
   paymentDomain?: string
+  // Company slug for URL (e.g., "velocity-exotics" -> rentalcapture.xyz/velocity-exotics/TOKEN)
+  companySlug?: string
   // Business reference for multi-tenant
   businessId?: string
 }
@@ -51,19 +53,33 @@ interface StoredPaymentLink extends PaymentLinkData {
 }
 
 // Default payment domain
-const DEFAULT_PAYMENT_DOMAIN = "https://rentalcapture.xyz/checkout"
+const DEFAULT_PAYMENT_DOMAIN = "https://rentalcapture.xyz"
 
 /**
- * Get the payment link domain
+ * Get the payment link URL base
  * Priority: custom domain > env variable > default (rentalcapture.xyz)
+ * When using default domain, includes company slug if provided
+ *
+ * URL structure:
+ * - Custom domain: https://custom.domain.com/{token}
+ * - Default with slug: https://rentalcapture.xyz/{slug}/checkout/{token}
+ * - Default without slug: https://rentalcapture.xyz/checkout/{token}
  */
-function getPaymentDomain(customDomain?: string): string {
+function getPaymentUrl(customDomain?: string, companySlug?: string): string {
   if (customDomain) {
-    // Normalize the custom domain
+    // Normalize the custom domain - no slug needed for custom domains
     const domain = customDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")
-    return `https://${domain}/checkout`
+    return `https://${domain}`
   }
-  return process.env.PAYMENT_LINK_DOMAIN || DEFAULT_PAYMENT_DOMAIN
+
+  const baseDomain = process.env.PAYMENT_LINK_DOMAIN || DEFAULT_PAYMENT_DOMAIN
+
+  // Include company slug in path for default domain
+  if (companySlug) {
+    return `${baseDomain}/${companySlug}/checkout`
+  }
+
+  return `${baseDomain}/checkout`
 }
 
 /**
@@ -108,7 +124,7 @@ function getSupabaseClient() {
  * @returns Full payment URL with short token (e.g., /checkout/ABC1234-XYZ5678-12345)
  */
 export async function generateSecurePaymentLink(data: PaymentLinkData): Promise<string> {
-  const domain = getPaymentDomain(data.paymentDomain)
+  const baseUrl = getPaymentUrl(data.paymentDomain, data.companySlug)
   const shortToken = generateShortToken()
 
   // Calculate expiration
@@ -138,8 +154,9 @@ export async function generateSecurePaymentLink(data: PaymentLinkData): Promise<
       // Store Stripe keys for multi-tenant checkout
       stripe_publishable_key: data.stripePublishableKey || null,
       stripe_secret_key: data.stripeSecretKey || null,
-      // Store custom payment domain
+      // Store custom payment domain and company slug
       payment_domain: data.paymentDomain || null,
+      company_slug: data.companySlug || null,
     })
 
     if (error) {
@@ -147,7 +164,7 @@ export async function generateSecurePaymentLink(data: PaymentLinkData): Promise<
       throw new Error("Failed to create payment link")
     }
 
-    return `${domain}/${shortToken}`
+    return `${baseUrl}/${shortToken}`
   } catch (error) {
     console.error("Payment link generation error:", error)
     throw error
@@ -159,7 +176,7 @@ export async function generateSecurePaymentLink(data: PaymentLinkData): Promise<
  * Used as fallback if DB is unavailable
  */
 export function generateSecurePaymentLinkSync(data: PaymentLinkData): string {
-  const domain = getPaymentDomain()
+  const baseUrl = getPaymentUrl(data.paymentDomain, data.companySlug)
   const shortToken = generateShortToken()
 
   // For sync version, encode minimal data in token itself
@@ -171,7 +188,7 @@ export function generateSecurePaymentLinkSync(data: PaymentLinkData): string {
     exp: Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000,
   })).toString("base64url")
 
-  return `${domain}/${shortToken}?d=${payload}`
+  return `${baseUrl}/${shortToken}?d=${payload}`
 }
 
 /**
@@ -223,6 +240,7 @@ export async function lookupPaymentToken(shortToken: string): Promise<PaymentLin
       stripePublishableKey: data.stripe_publishable_key || undefined,
       stripeSecretKey: data.stripe_secret_key || undefined,
       paymentDomain: data.payment_domain || undefined,
+      companySlug: data.company_slug || undefined,
       businessId: data.business_id || undefined,
     }
   } catch (error) {

@@ -27,6 +27,8 @@ interface AISettings {
   stripe_publishable_key: string
   stripe_secret_key: string
   vehicle_gallery_url: string
+  custom_domain: string
+  company_slug: string
 }
 
 interface Vehicle {
@@ -114,6 +116,8 @@ export default function ChatbotTestPanel({ userId, initialSettings, initialVehic
     stripe_publishable_key: "",
     stripe_secret_key: "",
     vehicle_gallery_url: "",
+    custom_domain: "",
+    company_slug: "",
   })
 
   // Stripe state
@@ -121,13 +125,13 @@ export default function ChatbotTestPanel({ userId, initialSettings, initialVehic
   const [savingStripeKeys, setSavingStripeKeys] = useState(false)
   const [stripeKeysSaved, setStripeKeysSaved] = useState(false)
 
-  // Load Stripe keys on mount
+  // Load payment settings on mount
   useEffect(() => {
-    const loadStripeKeys = async () => {
+    const loadPaymentSettings = async () => {
       if (!userId) return
       const { data } = await supabase
         .from("deposit_portal_config")
-        .select("stripe_publishable_key, stripe_secret_key")
+        .select("stripe_publishable_key, stripe_secret_key, custom_domain, company_slug")
         .eq("user_id", userId)
         .single()
       if (data) {
@@ -135,10 +139,12 @@ export default function ChatbotTestPanel({ userId, initialSettings, initialVehic
           ...prev,
           stripe_publishable_key: data.stripe_publishable_key || "",
           stripe_secret_key: data.stripe_secret_key || "",
+          custom_domain: data.custom_domain || "",
+          company_slug: data.company_slug || "",
         }))
       }
     }
-    loadStripeKeys()
+    loadPaymentSettings()
   }, [userId, supabase])
 
   const saveStripeKeys = async () => {

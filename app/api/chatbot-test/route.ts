@@ -37,17 +37,8 @@ interface LeadData {
 }
 
 export async function POST(request: NextRequest) {
-  console.log("[Chatbot Test] POST request received")
-  console.log("[Chatbot Test] ANTHROPIC_API_KEY present:", !!process.env.ANTHROPIC_API_KEY)
-  console.log("[Chatbot Test] ANTHROPIC_API_KEY length:", process.env.ANTHROPIC_API_KEY?.length || 0)
-
   try {
     const body = await request.json()
-    console.log("[Chatbot Test] Request body parsed, model:", body.model)
-    console.log("[Chatbot Test] Request body KEYS:", Object.keys(body))
-    console.log("[Chatbot Test] leadData received:", JSON.stringify(body.leadData, null, 2))
-    console.log("[Chatbot Test] vehicles count:", body.vehicles?.length)
-    console.log("[Chatbot Test] settings keys:", body.settings ? Object.keys(body.settings) : "no settings")
     const { messages, systemPrompt, model, forceModel, autoEscalate, vehicles, leadData, settings, userId } = body
 
     if (!process.env.ANTHROPIC_API_KEY) {
@@ -205,7 +196,9 @@ export async function POST(request: NextRequest) {
               stripePublishableKey: settings?.stripe_publishable_key || undefined,
               stripeSecretKey: settings?.stripe_secret_key || undefined,
               // Include custom payment domain (defaults to rentalcapture.xyz)
-              paymentDomain: settings?.payment_domain || undefined,
+              paymentDomain: settings?.payment_domain || settings?.custom_domain || undefined,
+              // Include company slug for URL path on default domain
+              companySlug: settings?.company_slug || undefined,
             }
 
             const paymentLink = await generateSecurePaymentLink(paymentData)
