@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { toast } from "sonner"
 import {
   CreditCard,
   Loader2,
@@ -20,7 +21,13 @@ import {
   Check,
   Shield,
   Palette,
+  HelpCircle,
+  Globe,
+  AlertCircle,
+  CheckCircle2,
+  RefreshCw,
 } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface DepositPortalConfig {
   id?: string
@@ -76,7 +83,10 @@ export default function DepositPortalSettings() {
   const [showSecretKey, setShowSecretKey] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [activeSection, setActiveSection] = useState<'stripe' | 'deposit' | 'branding' | 'terms' | 'notifications'>('stripe')
+  const [copiedDns, setCopiedDns] = useState<string | null>(null)
+  const [activeSection, setActiveSection] = useState<'stripe' | 'deposit' | 'branding' | 'domain' | 'terms' | 'notifications'>('stripe')
+  const [verifyingDomain, setVerifyingDomain] = useState(false)
+  const [domainStatus, setDomainStatus] = useState<'unconfigured' | 'pending' | 'active' | 'error'>('unconfigured')
 
   useEffect(() => {
     fetchConfig()
@@ -113,6 +123,28 @@ export default function DepositPortalSettings() {
       return
     }
 
+    // If custom domain is set, add it to Vercel
+    if (config.custom_domain) {
+      try {
+        const domainResponse = await fetch('/api/domain/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ domain: config.custom_domain }),
+        })
+        const domainData = await domainResponse.json()
+
+        if (domainData.manualSetup) {
+          toast.info("Domain saved - manual Vercel setup may be required")
+        } else if (!domainData.success && !domainData.alreadyExists) {
+          toast.error("Failed to add domain to hosting", {
+            description: domainData.error || "Please check your domain settings"
+          })
+        }
+      } catch (err) {
+        console.error("Domain add error:", err)
+      }
+    }
+
     const { error } = await supabase
       .from("deposit_portal_config")
       .upsert({
@@ -121,7 +153,9 @@ export default function DepositPortalSettings() {
       }, { onConflict: 'user_id' })
 
     if (error) {
-      alert("Failed to save settings. Please try again.")
+      toast.error("Failed to save settings", { description: "Please try again" })
+    } else {
+      toast.success("Settings saved successfully")
     }
     setSaving(false)
   }
@@ -158,7 +192,7 @@ export default function DepositPortalSettings() {
         setConfig({ ...config, logo_url: publicUrl })
       }
     } catch (err) {
-      alert('Failed to upload logo.')
+      toast.error("Failed to upload logo", { description: "Please try a different image" })
     }
     setUploadingLogo(false)
   }
@@ -169,6 +203,50 @@ export default function DepositPortalSettings() {
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
+
+  const copyDnsValue = (value: string, type: string) => {
+    navigator.clipboard.writeText(value)
+    setCopiedDns(type)
+    setTimeout(() => setCopiedDns(null), 2000)
+  }
+
+  const verifyDomain = async () => {
+    if (!config.custom_domain) return
+    setVerifyingDomain(true)
+
+    try {
+      const response = await fetch('/api/domain/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain: config.custom_domain }),
+      })
+      const data = await response.json()
+
+      if (data.verified) {
+        setDomainStatus('active')
+        toast.success('Domain verified successfully!')
+      } else {
+        setDomainStatus('pending')
+        toast.error('Domain not yet configured', {
+          description: 'DNS changes can take up to 48 hours to propagate'
+        })
+      }
+    } catch (error) {
+      setDomainStatus('error')
+      toast.error('Failed to verify domain')
+    }
+
+    setVerifyingDomain(false)
+  }
+
+  // Check domain status when custom_domain changes
+  useEffect(() => {
+    if (config.custom_domain) {
+      setDomainStatus('pending')
+    } else {
+      setDomainStatus('unconfigured')
+    }
+  }, [config.custom_domain])
 
   if (loading) {
     return (
@@ -227,6 +305,7 @@ export default function DepositPortalSettings() {
           { id: 'stripe', label: 'Stripe', icon: CreditCard },
           { id: 'deposit', label: 'Deposit Settings', icon: DollarSign },
           { id: 'branding', label: 'Branding', icon: Palette },
+          { id: 'domain', label: 'Custom Domain', icon: Globe },
           { id: 'terms', label: 'Terms & Success', icon: FileText },
           { id: 'notifications', label: 'Notifications', icon: MessageSquare },
         ].map((section) => (
@@ -265,7 +344,19 @@ export default function DepositPortalSettings() {
 
           <div className="grid gap-4">
             <div>
-              <label className="block text-sm text-white/60 mb-2">Publishable Key</label>
+              <div className="flex items-center gap-2 mb-2">
+                <label className="text-sm text-white/60">Publishable Key</label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="text-white/30 hover:text-white/50 transition-colors">
+                      <HelpCircle className="w-3.5 h-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-xs">
+                    This key is safe to expose in frontend code. It starts with "pk_live_" for production or "pk_test_" for testing.
+                  </TooltipContent>
+                </Tooltip>
+              </div>
               <input
                 type="text"
                 placeholder="pk_live_..."
@@ -276,7 +367,19 @@ export default function DepositPortalSettings() {
             </div>
 
             <div>
-              <label className="block text-sm text-white/60 mb-2">Secret Key</label>
+              <div className="flex items-center gap-2 mb-2">
+                <label className="text-sm text-white/60">Secret Key</label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="text-white/30 hover:text-white/50 transition-colors">
+                      <HelpCircle className="w-3.5 h-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-xs">
+                    Keep this key private. It starts with "sk_live_" for production. Never share this key publicly.
+                  </TooltipContent>
+                </Tooltip>
+              </div>
               <div className="relative">
                 <input
                   type={showSecretKey ? "text" : "password"}
@@ -501,22 +604,203 @@ export default function DepositPortalSettings() {
             </div>
           </div>
 
+        </div>
+      )}
+
+      {/* Custom Domain */}
+      {activeSection === 'domain' && (
+        <div className="space-y-6">
+          {/* Info Banner */}
+          <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+            <div className="flex items-start gap-3">
+              <Globe className="w-5 h-5 text-blue-400 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-blue-400">Use Your Own Domain</p>
+                <p className="text-xs text-blue-400/70 mt-1">
+                  Payment links will use your custom domain (e.g., pay.yourcompany.com) instead of the default rentalcapture.xyz
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Domain Input */}
           <div>
-            <label className="block text-sm text-white/60 mb-2">Custom Domain (optional)</label>
+            <label className="block text-sm text-white/60 mb-2">Custom Domain</label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">https://</span>
               <input
                 type="text"
                 placeholder="pay.yourcompany.com"
                 value={config.custom_domain}
-                onChange={(e) => setConfig({ ...config, custom_domain: e.target.value })}
+                onChange={(e) => setConfig({ ...config, custom_domain: e.target.value.toLowerCase().replace(/^https?:\/\//, '')})}
                 className="w-full pl-20 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
               />
             </div>
-            <p className="text-xs text-white/40 mt-2">
-              Default: rentalcapture.xyz • Contact support to set up a custom domain
-            </p>
           </div>
+
+          {/* DNS Instructions */}
+          {config.custom_domain && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08]">
+                <h3 className="font-medium mb-3 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-white/60" />
+                  DNS Configuration Required
+                </h3>
+                <p className="text-sm text-white/50 mb-4">
+                  Add the following DNS record to your domain provider (GoDaddy, Namecheap, Cloudflare, etc.):
+                </p>
+
+                {/* DNS Record Table */}
+                <div className="rounded-lg overflow-hidden border border-white/[0.08]">
+                  <div className="grid grid-cols-3 gap-4 p-3 bg-white/[0.05] text-xs font-medium text-white/60">
+                    <span>Type</span>
+                    <span>Name/Host</span>
+                    <span>Value/Target</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 p-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono">CNAME</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-emerald-400">
+                        {config.custom_domain.split('.')[0]}
+                      </span>
+                      <button
+                        onClick={() => copyDnsValue(config.custom_domain.split('.')[0], 'name')}
+                        className="p-1 rounded hover:bg-white/10 transition-colors"
+                      >
+                        {copiedDns === 'name' ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5 text-white/40" />
+                        )}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-emerald-400">cname.vercel-dns.com</span>
+                      <button
+                        onClick={() => copyDnsValue('cname.vercel-dns.com', 'value')}
+                        className="p-1 rounded hover:bg-white/10 transition-colors"
+                      >
+                        {copiedDns === 'value' ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5 text-white/40" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-xs text-white/40 mt-3">
+                  TTL: Set to Auto or 3600 (1 hour)
+                </p>
+              </div>
+
+              {/* Verification Status */}
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08]">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {domainStatus === 'active' && (
+                      <>
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-emerald-400">Domain Verified</p>
+                          <p className="text-xs text-white/50">Your custom domain is active and ready to use</p>
+                        </div>
+                      </>
+                    )}
+                    {domainStatus === 'pending' && (
+                      <>
+                        <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
+                          <AlertCircle className="w-4 h-4 text-amber-400" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-amber-400">Pending Verification</p>
+                          <p className="text-xs text-white/50">DNS changes can take up to 48 hours to propagate</p>
+                        </div>
+                      </>
+                    )}
+                    {domainStatus === 'error' && (
+                      <>
+                        <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
+                          <AlertCircle className="w-4 h-4 text-red-400" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-red-400">Verification Failed</p>
+                          <p className="text-xs text-white/50">Please check your DNS settings and try again</p>
+                        </div>
+                      </>
+                    )}
+                    {domainStatus === 'unconfigured' && (
+                      <>
+                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                          <Globe className="w-4 h-4 text-white/40" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Not Configured</p>
+                          <p className="text-xs text-white/50">Enter a domain above to get started</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {config.custom_domain && domainStatus !== 'active' && (
+                    <button
+                      onClick={verifyDomain}
+                      disabled={verifyingDomain}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition-colors disabled:opacity-50"
+                    >
+                      {verifyingDomain ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4" />
+                      )}
+                      Verify Domain
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Step by Step Guide */}
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08]">
+                <h3 className="font-medium mb-3">Step-by-Step Guide</h3>
+                <ol className="space-y-3 text-sm text-white/70">
+                  <li className="flex gap-3">
+                    <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-medium shrink-0">1</span>
+                    <span>Log in to your domain provider (GoDaddy, Namecheap, Cloudflare, etc.)</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-medium shrink-0">2</span>
+                    <span>Navigate to DNS settings or DNS management for your domain</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-medium shrink-0">3</span>
+                    <span>Add a new CNAME record with the values shown above</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-medium shrink-0">4</span>
+                    <span>Save your changes and click "Verify Domain" (may take a few minutes)</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-medium shrink-0">5</span>
+                    <span>Don't forget to click "Save Changes" at the top of this page</span>
+                  </li>
+                </ol>
+              </div>
+            </div>
+          )}
+
+          {/* Default Domain Info */}
+          {!config.custom_domain && (
+            <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08]">
+              <p className="text-sm text-white/50">
+                Without a custom domain, your payment links will use: <span className="font-mono text-white">rentalcapture.xyz/deposit/[token]</span>
+              </p>
+            </div>
+          )}
         </div>
       )}
 
