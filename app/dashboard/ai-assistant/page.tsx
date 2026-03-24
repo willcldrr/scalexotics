@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { toast } from "sonner"
 import {
   Bot,
   Settings,
@@ -27,7 +28,9 @@ import {
   Sparkles,
   Instagram,
   FlaskConical,
+  HelpCircle,
 } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import ChatbotTestPanel from "./chatbot-test-panel"
 
 interface AISettings {
@@ -284,44 +287,14 @@ export default function AIAssistantPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        {/* Hero Card Skeleton */}
-        <div className="rounded-2xl bg-white/[0.02] border border-white/[0.08] p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-white/10" />
-              <div className="space-y-2">
-                <div className="h-6 w-40 bg-white/10 rounded" />
-                <div className="h-4 w-56 bg-white/5 rounded" />
-              </div>
-            </div>
-            <div className="h-10 w-28 bg-white/10 rounded-xl" />
-          </div>
-        </div>
-        {/* Tabs Skeleton */}
-        <div className="flex gap-2">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-10 w-28 bg-white/5 rounded-xl" />
-          ))}
-        </div>
-        {/* Content Grid Skeleton */}
-        <div className="grid lg:grid-cols-2 gap-6">
-          <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] p-5 h-72">
-            <div className="h-5 w-32 bg-white/10 rounded mb-4" />
-            <div className="space-y-3">
-              <div className="h-10 bg-white/5 rounded-lg" />
-              <div className="h-10 bg-white/5 rounded-lg" />
-              <div className="h-10 bg-white/5 rounded-lg" />
-            </div>
-          </div>
-          <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] p-5 h-72">
-            <div className="h-5 w-32 bg-white/10 rounded mb-4" />
-            <div className="space-y-3">
-              <div className="h-10 bg-white/5 rounded-lg" />
-              <div className="h-10 bg-white/5 rounded-lg" />
-              <div className="h-10 bg-white/5 rounded-lg" />
-            </div>
-          </div>
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="flex gap-1 h-[60px] items-end">
+          <div className="w-1.5 h-10 bg-gradient-to-b from-transparent via-white to-transparent rounded-sm animate-matrix-fall" />
+          <div className="w-1.5 h-14 bg-gradient-to-b from-transparent via-white to-transparent rounded-sm animate-matrix-fall [animation-delay:200ms]" />
+          <div className="w-1.5 h-9 bg-gradient-to-b from-transparent via-white to-transparent rounded-sm animate-matrix-fall [animation-delay:400ms]" />
+          <div className="w-1.5 h-12 bg-gradient-to-b from-transparent via-white to-transparent rounded-sm animate-matrix-fall [animation-delay:100ms]" />
+          <div className="w-1.5 h-11 bg-gradient-to-b from-transparent via-white to-transparent rounded-sm animate-matrix-fall [animation-delay:300ms]" />
+          <div className="w-1.5 h-8 bg-gradient-to-b from-transparent via-white to-transparent rounded-sm animate-matrix-fall [animation-delay:500ms]" />
         </div>
       </div>
     )
@@ -538,7 +511,19 @@ export default function AIAssistantPage() {
                 {/* Response Settings Grid */}
                 <div className="grid sm:grid-cols-2 gap-4 pt-2">
                   <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                    <span className="text-sm text-white/80">Auto-respond</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm text-white/80">Auto-respond</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button className="text-white/30 hover:text-white/50 transition-colors">
+                            <HelpCircle className="w-3 h-3" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          When enabled, the AI will automatically reply to incoming SMS messages. Disable to respond manually.
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                     <button
                       onClick={() => setSettings({ ...settings, auto_respond: !settings.auto_respond })}
                       className={`relative w-10 h-5 rounded-full transition-all ${
@@ -552,7 +537,19 @@ export default function AIAssistantPage() {
                   </div>
 
                   <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                    <span className="text-sm text-white/80">Response delay</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm text-white/80">Response delay</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button className="text-white/30 hover:text-white/50 transition-colors">
+                            <HelpCircle className="w-3 h-3" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          Wait time before the AI responds. A small delay makes responses feel more natural and human-like.
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                     <div className="flex items-center gap-2">
                       <input
                         type="number"
@@ -567,7 +564,19 @@ export default function AIAssistantPage() {
                   </div>
 
                   <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                    <span className="text-sm text-white/80">Follow-ups</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm text-white/80">Follow-ups</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button className="text-white/30 hover:text-white/50 transition-colors">
+                            <HelpCircle className="w-3 h-3" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          Automatically send a follow-up message if a lead doesn't respond within the configured time.
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setSettings({ ...settings, follow_up_enabled: !settings.follow_up_enabled })}
@@ -1152,7 +1161,7 @@ export default function AIAssistantPage() {
             greeting_message: settings.greeting_message,
             booking_process: settings.booking_process,
             pricing_info: settings.pricing_info,
-            tone: settings.tone as "friendly" | "professional" | "luxury" | "energetic",
+            personality: (settings.tone === "energetic" ? "enthusiast" : settings.tone) as "friendly" | "professional" | "luxury" | "enthusiast",
             require_deposit: settings.require_deposit,
             deposit_percentage: settings.deposit_percentage,
             custom_system_prompt: settings.custom_system_prompt,

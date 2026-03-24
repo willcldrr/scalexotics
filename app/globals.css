@@ -158,6 +158,21 @@
   }
 }
 
+@keyframes matrix-fall {
+  0%, 100% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-matrix-fall {
+  animation: matrix-fall 1s ease-in-out infinite;
+}
+
 @keyframes fade-out {
   from {
     opacity: 1;
