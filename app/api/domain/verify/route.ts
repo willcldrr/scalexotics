@@ -1,8 +1,4 @@
 import { NextResponse } from "next/server"
-import dns from "dns"
-import { promisify } from "util"
-
-const resolveCname = promisify(dns.resolveCname)
 
 export async function POST(request: Request) {
   try {
@@ -16,41 +12,67 @@ export async function POST(request: Request) {
     const cleanDomain = domain.replace(/^https?:\/\//, '').toLowerCase()
 
     try {
-      // Try to resolve CNAME record
-      const records = await resolveCname(cleanDomain)
-
-      // Check if any CNAME points to Vercel
-      const isVerified = records.some(
-        (record) => record.toLowerCase().includes('vercel') ||
-                    record.toLowerCase().includes('vercel-dns.com')
+      // Use Google's DNS-over-HTTPS API for reliable, uncached lookups
+      const dnsResponse = await fetch(
+        `https://dns.google/resolve?name=${encodeURIComponent(cleanDomain)}&type=CNAME`,
+        { cache: 'no-store' }
       )
 
-      if (isVerified) {
-        return NextResponse.json({
-          verified: true,
-          message: "Domain is correctly configured",
-          records
-        })
-      } else {
-        return NextResponse.json({
-          verified: false,
-          message: "CNAME record found but not pointing to Vercel",
-          records
-        })
+      const dnsData = await dnsResponse.json()
+
+      // Check if we got CNAME records
+      if (dnsData.Answer && dnsData.Answer.length > 0) {
+        const cnameRecords = dnsData.Answer
+          .filter((record: { type: number }) => record.type === 5) // Type 5 = CNAME
+          .map((record: { data: string }) => record.data.replace(/\.$/, '')) // Remove trailing dot
+
+        // Check if any CNAME points to Vercel
+        const isVerified = cnameRecords.some(
+          (record: string) => record.toLowerCase().includes('vercel') ||
+                      record.toLowerCase().includes('vercel-dns.com')
+        )
+
+        if (isVerified) {
+          return NextResponse.json({
+            verified: true,
+            message: "Domain is correctly configured",
+            records: cnameRecords
+          })
+        } else {
+          return NextResponse.json({
+            verified: false,
+            message: "CNAME record found but not pointing to Vercel",
+            records: cnameRecords
+          })
+        }
       }
-    } catch (dnsError: unknown) {
-      // DNS lookup failed - domain not configured yet
-      const errorCode = (dnsError as { code?: string })?.code
-      if (errorCode === 'ENOTFOUND' || errorCode === 'ENODATA') {
+
+      // No CNAME records found - check if there's an A record (might be using root domain)
+      const aResponse = await fetch(
+        `https://dns.google/resolve?name=${encodeURIComponent(cleanDomain)}&type=A`,
+        { cache: 'no-store' }
+      )
+      const aData = await aResponse.json()
+
+      if (aData.Answer && aData.Answer.length > 0) {
+        // Has A records but no CNAME - might be configured differently
         return NextResponse.json({
           verified: false,
-          message: "No CNAME record found. Please add the DNS record and wait for propagation."
+          message: "Domain has A records but no CNAME. For subdomains, use a CNAME pointing to cname.vercel-dns.com",
+          records: aData.Answer.map((r: { data: string }) => r.data)
         })
       }
 
       return NextResponse.json({
         verified: false,
-        message: "DNS lookup failed. The domain may not exist or DNS hasn't propagated yet."
+        message: "No DNS records found. Please add the CNAME record and wait for propagation."
+      })
+
+    } catch (dnsError) {
+      console.error("DNS lookup error:", dnsError)
+      return NextResponse.json({
+        verified: false,
+        message: "DNS lookup failed. Please try again."
       })
     }
   } catch (error) {
