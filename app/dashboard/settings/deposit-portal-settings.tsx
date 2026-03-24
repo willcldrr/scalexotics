@@ -199,7 +199,7 @@ export default function DepositPortalSettings() {
 
   const copyPortalLink = () => {
     const domain = config.custom_domain || 'rentalcapture.xyz'
-    navigator.clipboard.writeText(`https://${domain}/deposit`)
+    navigator.clipboard.writeText(`https://${domain}/checkout`)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -286,7 +286,7 @@ export default function DepositPortalSettings() {
           <div>
             <p className="text-sm text-white/50 mb-1">Your deposit portal link</p>
             <p className="text-sm font-mono text-white">
-              https://{config.custom_domain || 'rentalcapture.xyz'}/deposit/[token]
+              https://{config.custom_domain || 'rentalcapture.xyz'}/checkout/[token]
             </p>
           </div>
           <button
@@ -797,7 +797,7 @@ export default function DepositPortalSettings() {
           {!config.custom_domain && (
             <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08]">
               <p className="text-sm text-white/50">
-                Without a custom domain, your payment links will use: <span className="font-mono text-white">rentalcapture.xyz/deposit/[token]</span>
+                Without a custom domain, your payment links will use: <span className="font-mono text-white">rentalcapture.xyz/checkout/[token]</span>
               </p>
             </div>
           )}
