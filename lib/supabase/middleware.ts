@@ -74,69 +74,56 @@ export async function updateSession(request: NextRequest) {
 
   // For authenticated users, check business approval status
   if (user) {
-    // Check business approval for dashboard routes
-    if (pathname.startsWith('/dashboard')) {
-      // Use service role to bypass RLS for reliable checks
-      const { data: profile } = await serviceSupabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single()
+    const needsAuthCheck = pathname.startsWith('/dashboard') || pathname === '/login' || pathname === '/signup'
 
-      // Admins always have access
-      if (profile?.is_admin) {
-        // But protect admin routes - only allow admins
-        return supabaseResponse
+    if (needsAuthCheck) {
+      // Fetch profile and business in PARALLEL (saves ~150-200ms)
+      const [profileResult, businessResult] = await Promise.all([
+        serviceSupabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', user.id)
+          .single(),
+        serviceSupabase
+          .from('businesses')
+          .select('status')
+          .eq('owner_user_id', user.id)
+          .single()
+      ])
+
+      const profile = profileResult.data
+      const business = businessResult.data
+      const isAdmin = profile?.is_admin
+      const hasActiveBusiness = business?.status === 'active'
+
+      // Handle dashboard routes
+      if (pathname.startsWith('/dashboard')) {
+        // Admins always have access
+        if (isAdmin) {
+          return supabaseResponse
+        }
+
+        // SECURITY: Protect admin routes - only allow admins
+        if (pathname.startsWith('/dashboard/admin')) {
+          const url = request.nextUrl.clone()
+          url.pathname = '/dashboard'
+          return NextResponse.redirect(url)
+        }
+
+        // Non-admin users need an active business
+        if (!hasActiveBusiness) {
+          const url = request.nextUrl.clone()
+          url.pathname = '/pending-approval'
+          return NextResponse.redirect(url)
+        }
       }
 
-      // SECURITY: Protect admin routes - only allow admins
-      if (pathname.startsWith('/dashboard/admin')) {
+      // Redirect logged in users away from auth pages (login/signup)
+      if (pathname === '/login' || pathname === '/signup') {
         const url = request.nextUrl.clone()
-        url.pathname = '/dashboard'
+        url.pathname = (isAdmin || hasActiveBusiness) ? '/dashboard' : '/pending-approval'
         return NextResponse.redirect(url)
       }
-
-      // Non-admin users need an active business
-      const { data: business } = await serviceSupabase
-        .from('businesses')
-        .select('status')
-        .eq('owner_user_id', user.id)
-        .single()
-
-      // If business is not active, redirect to pending-approval
-      if (!business || business.status !== 'active') {
-        const url = request.nextUrl.clone()
-        url.pathname = '/pending-approval'
-        return NextResponse.redirect(url)
-      }
-    }
-
-    // Redirect logged in users away from auth pages (login/signup)
-    if (pathname === '/login' || pathname === '/signup') {
-      // Use service role to bypass RLS
-      const { data: profile } = await serviceSupabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single()
-
-      // Admins go to dashboard
-      if (profile?.is_admin) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/dashboard'
-        return NextResponse.redirect(url)
-      }
-
-      // Check business status for non-admins
-      const { data: business } = await serviceSupabase
-        .from('businesses')
-        .select('status')
-        .eq('owner_user_id', user.id)
-        .single()
-
-      const url = request.nextUrl.clone()
-      url.pathname = business?.status === 'active' ? '/dashboard' : '/pending-approval'
-      return NextResponse.redirect(url)
     }
   }
 

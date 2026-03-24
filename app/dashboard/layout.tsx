@@ -1,9 +1,9 @@
 import type { Metadata } from "next"
 import DashboardShell from "./dashboard-shell"
 import { BrandingProvider } from "@/lib/branding-context"
+import { Toaster } from "sonner"
 
-// Force dynamic rendering to prevent SSR cache issues
-export const dynamic = 'force-dynamic'
+// Allow Next.js to optimize rendering while cache provider handles data freshness
 
 // Prevent search engines from indexing dashboard pages
 export const metadata: Metadata = {
@@ -29,6 +29,17 @@ export default function DashboardLayout({
   return (
     <BrandingProvider>
       <DashboardShell>{children}</DashboardShell>
+      <Toaster
+        position="top-right"
+        theme="dark"
+        toastOptions={{
+          style: {
+            background: '#1a1a1a',
+            border: '1px solid rgba(255,255,255,0.1)',
+            color: '#fff',
+          },
+        }}
+      />
     </BrandingProvider>
   )
 }

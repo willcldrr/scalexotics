@@ -92,6 +92,19 @@ export default function DashboardLayout({
     }
   }, [])
 
+  // Prefetch all dashboard routes on mount for faster navigation
+  useEffect(() => {
+    const routesToPrefetch = [
+      "/dashboard",
+      "/dashboard/leads",
+      "/dashboard/vehicles",
+      "/dashboard/bookings",
+      "/dashboard/ai-assistant",
+      "/dashboard/settings",
+    ]
+    routesToPrefetch.forEach(route => router.prefetch(route))
+  }, [router])
+
   // Filter nav items based on settings
   const navItems = allNavItems.filter(item =>
     item.alwaysVisible || sidebarSettings[item.key] === true
