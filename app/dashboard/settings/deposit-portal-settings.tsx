@@ -631,7 +631,7 @@ export default function DepositPortalSettings() {
               <input
                 type="text"
                 placeholder="pay.yourcompany.com"
-                value={config.custom_domain}
+                value={config.custom_domain || ''}
                 onChange={(e) => setConfig({ ...config, custom_domain: e.target.value.toLowerCase().replace(/^https?:\/\//, '')})}
                 className="w-full pl-20 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
               />
