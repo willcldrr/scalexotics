@@ -158,20 +158,50 @@
   }
 }
 
-@keyframes matrix-fall {
-  0%, 100% {
+/* ============================================
+   Matrix Rain Loader - Hardware Accelerated
+   ============================================ */
+@keyframes matrix-rain-drop {
+  0% {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(-8px) scaleY(0.8);
   }
-  50% {
+  20% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scaleY(1);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(8px) scaleY(0.8);
   }
 }
 
-.animate-matrix-fall {
-  animation: matrix-fall 1s ease-in-out infinite;
+.animate-matrix-rain-drop {
+  animation: matrix-rain-drop 1.2s ease-in-out infinite;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
+
+/* Matrix Rain Drop Delays */
+.matrix-drop-1 { animation-delay: 0s; }
+.matrix-drop-2 { animation-delay: 0.15s; }
+.matrix-drop-3 { animation-delay: 0.3s; }
+.matrix-drop-4 { animation-delay: 0.1s; }
+.matrix-drop-5 { animation-delay: 0.25s; }
+.matrix-drop-6 { animation-delay: 0.4s; }
+
+/* Matrix bar heights */
+.matrix-h-1 { height: 40px; }
+.matrix-h-2 { height: 56px; }
+.matrix-h-3 { height: 32px; }
+.matrix-h-4 { height: 48px; }
+.matrix-h-5 { height: 44px; }
+.matrix-h-6 { height: 36px; }
 
 @keyframes fade-out {
   from {
@@ -206,7 +236,8 @@
   .animate-pulse,
   .animate-spin,
   .animate-fade-in,
-  .animate-fade-out {
+  .animate-fade-out,
+  .animate-matrix-rain-drop {
     animation: none !important;
   }
 }
