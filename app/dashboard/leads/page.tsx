@@ -222,8 +222,42 @@ export default function LeadsPage() {
       )
       .subscribe()
 
+    // Set up real-time subscription for messages
+    const messagesChannel = supabase
+      .channel("messages-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        (payload) => {
+          const newMessage = payload.new as Message
+          console.log("[Realtime] New message received", newMessage.lead_id)
+          // Add message to current conversation if viewing that lead
+          setMessages((current) => {
+            // Check if this message is for the currently selected lead
+            // We'll update regardless and let the component handle filtering
+            return [...current, newMessage]
+          })
+          // Update lead's last message info and mark as unread if inbound
+          setLeads((current) =>
+            current.map((lead) =>
+              lead.id === newMessage.lead_id
+                ? {
+                    ...lead,
+                    last_message: newMessage.content,
+                    last_message_time: newMessage.created_at,
+                    last_message_direction: newMessage.direction,
+                    unread: newMessage.direction === "inbound",
+                  }
+                : lead
+            )
+          )
+        }
+      )
+      .subscribe()
+
     return () => {
       supabase.removeChannel(channel)
+      supabase.removeChannel(messagesChannel)
     }
   }, [])
 

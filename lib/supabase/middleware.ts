@@ -94,7 +94,19 @@ export async function updateSession(request: NextRequest) {
       const profile = profileResult.data
       const business = businessResult.data
       const isAdmin = profile?.is_admin
-      const hasActiveBusiness = business?.status === 'active'
+      const businessStatus = business?.status
+      const hasActiveBusiness = businessStatus === 'active'
+      const isSuspended = businessStatus === 'suspended'
+
+      // Handle suspended account page - only suspended users can access
+      if (pathname === '/account-suspended') {
+        if (!isSuspended) {
+          const url = request.nextUrl.clone()
+          url.pathname = '/dashboard'
+          return NextResponse.redirect(url)
+        }
+        return supabaseResponse
+      }
 
       // Handle dashboard routes
       if (pathname.startsWith('/dashboard')) {
@@ -107,6 +119,13 @@ export async function updateSession(request: NextRequest) {
         if (pathname.startsWith('/dashboard/admin')) {
           const url = request.nextUrl.clone()
           url.pathname = '/dashboard'
+          return NextResponse.redirect(url)
+        }
+
+        // Suspended users go to suspended page
+        if (isSuspended) {
+          const url = request.nextUrl.clone()
+          url.pathname = '/account-suspended'
           return NextResponse.redirect(url)
         }
 

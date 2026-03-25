@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { toast } from "sonner"
 import {
   Users,
@@ -185,6 +186,123 @@ export default function AdminPage() {
     checkAdminAndFetch()
   }, [])
 
+  // ============================================
+  // REAL-TIME SUBSCRIPTIONS (Admin sees ALL changes, no user_id filter)
+  // ============================================
+
+  // Profiles real-time
+  useRealtimeSubscription<UserProfile>({
+    table: "profiles",
+    onInsert: useCallback((payload: any) => {
+      console.log("[Realtime] Profile inserted")
+      setUsers(prev => [{ ...payload.new, business: null }, ...prev])
+    }, []),
+    onUpdate: useCallback((payload: any) => {
+      console.log("[Realtime] Profile updated")
+      setUsers(prev => prev.map(u =>
+        u.id === payload.new.id ? { ...u, ...payload.new } : u
+      ))
+    }, []),
+    onDelete: useCallback((payload: any) => {
+      console.log("[Realtime] Profile deleted")
+      setUsers(prev => prev.filter(u => u.id !== payload.old.id))
+    }, []),
+    enabled: isAdmin,
+  })
+
+  // Businesses real-time (for user business status)
+  useRealtimeSubscription({
+    table: "businesses",
+    onInsert: useCallback((payload: any) => {
+      console.log("[Realtime] Business inserted")
+      // Update the user who owns this business
+      if (payload.new.owner_user_id) {
+        setUsers(prev => prev.map(u =>
+          u.id === payload.new.owner_user_id
+            ? { ...u, business: payload.new }
+            : u
+        ))
+      }
+    }, []),
+    onUpdate: useCallback((payload: any) => {
+      console.log("[Realtime] Business updated")
+      setUsers(prev => prev.map(u =>
+        u.business?.id === payload.new.id
+          ? { ...u, business: { ...u.business, ...payload.new } }
+          : u
+      ))
+    }, []),
+    onDelete: useCallback((payload: any) => {
+      console.log("[Realtime] Business deleted")
+      setUsers(prev => prev.map(u =>
+        u.business?.id === payload.old.id
+          ? { ...u, business: null }
+          : u
+      ))
+    }, []),
+    enabled: isAdmin,
+  })
+
+  // Do Not Rent real-time
+  useRealtimeSubscription<DoNotRentEntry>({
+    table: "do_not_rent_list",
+    onInsert: useCallback((payload: any) => {
+      console.log("[Realtime] DNR entry inserted")
+      setDnrEntries(prev => [payload.new, ...prev])
+    }, []),
+    onUpdate: useCallback((payload: any) => {
+      console.log("[Realtime] DNR entry updated")
+      setDnrEntries(prev => prev.map(e =>
+        e.id === payload.new.id ? { ...e, ...payload.new } : e
+      ))
+    }, []),
+    onDelete: useCallback((payload: any) => {
+      console.log("[Realtime] DNR entry deleted")
+      setDnrEntries(prev => prev.filter(e => e.id !== payload.old.id))
+    }, []),
+    enabled: isAdmin,
+  })
+
+  // Invoices real-time
+  useRealtimeSubscription<Invoice>({
+    table: "invoices",
+    onInsert: useCallback((payload: any) => {
+      console.log("[Realtime] Invoice inserted")
+      setInvoices(prev => [payload.new, ...prev])
+    }, []),
+    onUpdate: useCallback((payload: any) => {
+      console.log("[Realtime] Invoice updated")
+      setInvoices(prev => prev.map(i =>
+        i.id === payload.new.id ? { ...i, ...payload.new } : i
+      ))
+    }, []),
+    onDelete: useCallback((payload: any) => {
+      console.log("[Realtime] Invoice deleted")
+      setInvoices(prev => prev.filter(i => i.id !== payload.old.id))
+    }, []),
+    enabled: isAdmin,
+  })
+
+  // Custom Domains real-time
+  useRealtimeSubscription<CustomDomain>({
+    table: "custom_domains",
+    onInsert: useCallback((payload: any) => {
+      console.log("[Realtime] Domain inserted")
+      setDomains(prev => [payload.new, ...prev])
+    }, []),
+    onUpdate: useCallback((payload: any) => {
+      console.log("[Realtime] Domain updated")
+      setDomains(prev => prev.map(d =>
+        d.id === payload.new.id ? { ...d, ...payload.new } : d
+      ))
+    }, []),
+    onDelete: useCallback((payload: any) => {
+      console.log("[Realtime] Domain deleted")
+      setDomains(prev => prev.filter(d => d.id !== payload.old.id))
+    }, []),
+    enabled: isAdmin,
+  })
+
   const checkAdminAndFetch = async () => {
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -271,6 +389,22 @@ export default function AdminPage() {
       setMessage({ type: "error", text: "Failed to deny business" })
     } else {
       setMessage({ type: "success", text: "Business denied" })
+      fetchUsers()
+    }
+    setSaving(false)
+  }
+
+  const handleUnsuspend = async (businessId: string) => {
+    setSaving(true)
+    const { error } = await supabase
+      .from("businesses")
+      .update({ status: "active" })
+      .eq("id", businessId)
+
+    if (error) {
+      setMessage({ type: "error", text: "Failed to unsuspend business" })
+    } else {
+      setMessage({ type: "success", text: "Account unsuspended successfully!" })
       fetchUsers()
     }
     setSaving(false)
@@ -401,12 +535,13 @@ export default function AdminPage() {
     })
   }
 
-  // Users with pending businesses
+  // Sort users: pending first, then active, then suspended at bottom
   const pendingUsers = users.filter(u => u.business?.status === "pending")
-  // Other users
-  const otherUsers = users.filter(u => u.business?.status !== "pending")
+  const activeUsers = users.filter(u => u.business?.status === "active")
+  const suspendedUsers = users.filter(u => u.business?.status === "suspended")
+  const otherUsers = users.filter(u => !u.business || !["pending", "active", "suspended"].includes(u.business.status))
 
-  const filteredUsers = [...pendingUsers, ...otherUsers].filter(u =>
+  const filteredUsers = [...pendingUsers, ...activeUsers, ...otherUsers, ...suspendedUsers].filter(u =>
     u.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
     u.email?.toLowerCase().includes(userSearch.toLowerCase()) ||
     u.company_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
@@ -970,83 +1105,124 @@ export default function AdminPage() {
               </div>
             ) : (
               <div className="divide-y divide-white/[0.04]">
-                {filteredUsers.map((user) => (
-                  <div key={user.id} className="p-4 hover:bg-white/[0.02] transition-colors flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                        user.is_admin ? "bg-purple-500/20" :
-                        user.business?.status === "pending" ? "bg-amber-500/20" :
-                        user.business?.status === "active" ? "bg-green-500/20" :
-                        "bg-white/10"
-                      }`}>
-                        <User className={`w-6 h-6 ${
-                          user.is_admin ? "text-purple-400" :
-                          user.business?.status === "pending" ? "text-amber-400" :
-                          user.business?.status === "active" ? "text-green-400" :
-                          "text-white/60"
-                        }`} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold">{user.full_name || user.email?.split("@")[0] || "Unknown"}</p>
-                          {user.is_admin && (
-                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">
-                              Admin
-                            </span>
+                {filteredUsers.map((user) => {
+                  const isSuspended = user.business?.status === "suspended"
+                  return (
+                    <div
+                      key={user.id}
+                      className={`p-4 transition-colors flex items-center justify-between ${
+                        isSuspended
+                          ? "bg-red-500/5 opacity-60"
+                          : "hover:bg-white/[0.02]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                          user.is_admin ? "bg-purple-500/20" :
+                          user.business?.status === "pending" ? "bg-amber-500/20" :
+                          user.business?.status === "active" ? "bg-green-500/20" :
+                          isSuspended ? "bg-red-500/20" :
+                          "bg-white/10"
+                        }`}>
+                          <User className={`w-6 h-6 ${
+                            user.is_admin ? "text-purple-400" :
+                            user.business?.status === "pending" ? "text-amber-400" :
+                            user.business?.status === "active" ? "text-green-400" :
+                            isSuspended ? "text-red-400" :
+                            "text-white/60"
+                          }`} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className={`font-semibold ${isSuspended ? "line-through text-white/50" : ""}`}>
+                              {user.full_name || user.email?.split("@")[0] || "Unknown"}
+                            </p>
+                            {user.is_admin && (
+                              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">
+                                Admin
+                              </span>
+                            )}
+                            {user.business && (
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                user.business.status === "pending" ? "bg-amber-500/20 text-amber-400" :
+                                user.business.status === "active" ? "bg-green-500/20 text-green-400" :
+                                "bg-red-500/20 text-red-400"
+                              }`}>
+                                {user.business.status}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-white/50">{user.email}</p>
+                          {user.company_name && (
+                            <p className="text-xs text-white/30">{user.company_name}</p>
                           )}
-                          {user.business && (
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                              user.business.status === "pending" ? "bg-amber-500/20 text-amber-400" :
-                              user.business.status === "active" ? "bg-green-500/20 text-green-400" :
-                              "bg-red-500/20 text-red-400"
-                            }`}>
-                              {user.business.status}
-                            </span>
+                          {user.business?.payment_domain && (
+                            <p className="text-xs text-white/30">Domain: {user.business.payment_domain}</p>
                           )}
                         </div>
-                        <p className="text-sm text-white/50">{user.email}</p>
-                        {user.company_name && (
-                          <p className="text-xs text-white/30">{user.company_name}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {/* Quick approve/deny for pending users */}
+                        {user.business?.status === "pending" && (
+                          <>
+                            <button
+                              onClick={() => user.business && handleApprove(user.business.id)}
+                              disabled={saving}
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                              title="Approve"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                              <span className="hidden sm:inline">Approve</span>
+                            </button>
+                            <button
+                              onClick={() => user.business && handleDeny(user.business.id)}
+                              disabled={saving}
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                              title="Deny"
+                            >
+                              <XCircle className="w-4 h-4" />
+                              <span className="hidden sm:inline">Deny</span>
+                            </button>
+                          </>
                         )}
-                        {user.business?.payment_domain && (
-                          <p className="text-xs text-white/30">Domain: {user.business.payment_domain}</p>
+                        {/* Unsuspend and delete buttons for suspended users */}
+                        {isSuspended && (
+                          <>
+                            <button
+                              onClick={() => user.business && handleUnsuspend(user.business.id)}
+                              disabled={saving}
+                              className="p-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-400 transition-colors disabled:opacity-50"
+                              title="Unsuspend Account"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(user.id, user.business?.id)}
+                              disabled={saving}
+                              className="p-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-colors disabled:opacity-50"
+                              title="Delete Account Permanently"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </>
                         )}
+                        {/* Settings button - greyed out for suspended users */}
+                        <button
+                          onClick={() => !isSuspended && openUserSettings(user)}
+                          className={`p-2 rounded-lg transition-colors ${
+                            isSuspended
+                              ? "text-white/20 cursor-not-allowed"
+                              : "hover:bg-white/10 text-white/40 hover:text-white"
+                          }`}
+                          title={isSuspended ? "Account suspended" : "Manage User"}
+                          disabled={isSuspended}
+                        >
+                          <Settings className="w-5 h-5" />
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {/* Quick approve/deny for pending users */}
-                      {user.business?.status === "pending" && (
-                        <>
-                          <button
-                            onClick={() => user.business && handleApprove(user.business.id)}
-                            disabled={saving}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-                            title="Approve"
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                            <span className="hidden sm:inline">Approve</span>
-                          </button>
-                          <button
-                            onClick={() => user.business && handleDeny(user.business.id)}
-                            disabled={saving}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-                            title="Deny"
-                          >
-                            <XCircle className="w-4 h-4" />
-                            <span className="hidden sm:inline">Deny</span>
-                          </button>
-                        </>
-                      )}
-                      <button
-                        onClick={() => openUserSettings(user)}
-                        className="p-2 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-colors"
-                        title="Manage User"
-                      >
-                        <Settings className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
