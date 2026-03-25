@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { Save, Loader2, Check, AlertCircle, Lock, User, Building } from "lucide-react"
+import { Save, Loader2, Lock, User, Building, HelpCircle } from "lucide-react"
+import { toast } from "sonner"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 export default function AccountSettings() {
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [user, setUser] = useState<any>(null)
 
   const [profile, setProfile] = useState({
@@ -23,6 +24,7 @@ export default function AccountSettings() {
     confirm: "",
   })
   const [changingPassword, setChangingPassword] = useState(false)
+  const [verifyingPassword, setVerifyingPassword] = useState(false)
 
   useEffect(() => {
     fetchProfile()
@@ -55,7 +57,6 @@ export default function AccountSettings() {
     if (!user) return
 
     setSaving(true)
-    setMessage(null)
 
     const { error } = await supabase
       .from("profiles")
@@ -67,36 +68,55 @@ export default function AccountSettings() {
       .eq("id", user.id)
 
     if (error) {
-      setMessage({ type: "error", text: error.message })
+      toast.error("Failed to update profile", { description: error.message })
     } else {
-      setMessage({ type: "success", text: "Profile updated successfully" })
+      toast.success("Profile updated successfully")
     }
 
     setSaving(false)
   }
 
   const handleChangePassword = async () => {
+    if (!passwordData.current) {
+      toast.error("Current password required", { description: "Please enter your current password to continue" })
+      return
+    }
+
     if (passwordData.new !== passwordData.confirm) {
-      setMessage({ type: "error", text: "Passwords do not match" })
+      toast.error("Passwords do not match", { description: "New password and confirmation must be identical" })
       return
     }
 
     if (passwordData.new.length < 6) {
-      setMessage({ type: "error", text: "Password must be at least 6 characters" })
+      toast.error("Password too short", { description: "Password must be at least 6 characters" })
       return
     }
 
     setChangingPassword(true)
-    setMessage(null)
 
+    // First verify the current password by re-authenticating
+    setVerifyingPassword(true)
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user?.email,
+      password: passwordData.current,
+    })
+    setVerifyingPassword(false)
+
+    if (signInError) {
+      toast.error("Current password incorrect", { description: "Please verify your current password and try again" })
+      setChangingPassword(false)
+      return
+    }
+
+    // Now update the password
     const { error } = await supabase.auth.updateUser({
       password: passwordData.new,
     })
 
     if (error) {
-      setMessage({ type: "error", text: error.message })
+      toast.error("Failed to change password", { description: error.message })
     } else {
-      setMessage({ type: "success", text: "Password changed successfully" })
+      toast.success("Password changed successfully", { description: "Your password has been updated" })
       setPasswordData({ current: "", new: "", confirm: "" })
     }
 
@@ -113,24 +133,6 @@ export default function AccountSettings() {
 
   return (
     <div className="space-y-6">
-      {/* Message */}
-      {message && (
-        <div
-          className={`flex items-center gap-3 p-4 rounded-xl ${
-            message.type === "success"
-              ? "bg-green-500/10 border border-green-500/30 text-green-400"
-              : "bg-red-500/10 border border-red-500/30 text-red-400"
-          }`}
-        >
-          {message.type === "success" ? (
-            <Check className="w-5 h-5" />
-          ) : (
-            <AlertCircle className="w-5 h-5" />
-          )}
-          <span>{message.text}</span>
-        </div>
-      )}
-
       {/* Profile Settings */}
       <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] p-6">
         <div className="flex items-center gap-3 mb-6">
@@ -206,9 +208,31 @@ export default function AccountSettings() {
         <div className="flex items-center gap-3 mb-6">
           <Lock className="w-5 h-5 text-white" />
           <h2 className="text-lg font-bold">Change Password</h2>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="text-white/40 hover:text-white/60 transition-colors">
+                <HelpCircle className="w-4 h-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="max-w-xs">
+              For security, you must verify your current password before setting a new one. Passwords must be at least 6 characters.
+            </TooltipContent>
+          </Tooltip>
         </div>
 
         <div className="space-y-5">
+          <div>
+            <label className="block text-sm text-white/60 mb-2">Current Password</label>
+            <input
+              type="password"
+              placeholder="Enter your current password"
+              value={passwordData.current}
+              onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })}
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+            />
+            <p className="text-xs text-white/40 mt-1">Required to verify your identity</p>
+          </div>
+
           <div>
             <label className="block text-sm text-white/60 mb-2">New Password</label>
             <input
@@ -218,6 +242,7 @@ export default function AccountSettings() {
               onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
             />
+            <p className="text-xs text-white/40 mt-1">Must be at least 6 characters</p>
           </div>
 
           <div>
@@ -233,7 +258,7 @@ export default function AccountSettings() {
 
           <button
             onClick={handleChangePassword}
-            disabled={changingPassword || !passwordData.new || !passwordData.confirm}
+            disabled={changingPassword || !passwordData.current || !passwordData.new || !passwordData.confirm}
             className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 disabled:opacity-50 text-white font-semibold rounded-xl transition-colors"
           >
             {changingPassword ? (
@@ -241,7 +266,7 @@ export default function AccountSettings() {
             ) : (
               <Lock className="w-4 h-4" />
             )}
-            {changingPassword ? "Changing..." : "Change Password"}
+            {changingPassword ? (verifyingPassword ? "Verifying..." : "Changing...") : "Change Password"}
           </button>
         </div>
       </div>

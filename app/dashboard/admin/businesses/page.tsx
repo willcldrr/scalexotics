@@ -1,7 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
+import { toast } from "sonner"
 import {
   Building2,
   Globe,
@@ -84,6 +86,31 @@ export default function AdminBusinessesPage() {
     fetchBusinesses()
   }, [])
 
+  // Real-time subscription for instant updates
+  const handleInsert = useCallback((payload: { new: Business }) => {
+    console.log("[Realtime] Business inserted")
+    setBusinesses(prev => [payload.new, ...prev])
+  }, [])
+
+  const handleUpdate = useCallback((payload: { new: Business }) => {
+    console.log("[Realtime] Business updated")
+    setBusinesses(prev =>
+      prev.map(b => b.id === payload.new.id ? { ...b, ...payload.new } : b)
+    )
+  }, [])
+
+  const handleDelete = useCallback((payload: { old: { id: string } }) => {
+    console.log("[Realtime] Business deleted")
+    setBusinesses(prev => prev.filter(b => b.id !== payload.old.id))
+  }, [])
+
+  useRealtimeSubscription<Business>({
+    table: "businesses",
+    onInsert: handleInsert as any,
+    onUpdate: handleUpdate as any,
+    onDelete: handleDelete as any,
+  })
+
   const fetchBusinesses = async () => {
     setLoading(true)
     const { data, error } = await supabase
@@ -125,8 +152,9 @@ export default function AdminBusinessesPage() {
 
     if (error) {
       console.error("Error updating business:", error)
-      alert("Failed to save: " + error.message)
+      toast.error("Failed to save", { description: error.message })
     } else {
+      toast.success("Business updated successfully")
       setEditingId(null)
       fetchBusinesses()
     }
@@ -135,7 +163,7 @@ export default function AdminBusinessesPage() {
 
   const handleAdd = async () => {
     if (!newBusiness.name || !newBusiness.slug) {
-      alert("Name and slug are required")
+      toast.error("Missing required fields", { description: "Name and slug are required" })
       return
     }
 
@@ -161,8 +189,9 @@ export default function AdminBusinessesPage() {
 
     if (error) {
       console.error("Error adding business:", error)
-      alert("Failed to add: " + error.message)
+      toast.error("Failed to add business", { description: error.message })
     } else {
+      toast.success("Business added successfully")
       setShowAddForm(false)
       setNewBusiness(emptyBusiness)
       fetchBusinesses()
@@ -178,8 +207,9 @@ export default function AdminBusinessesPage() {
 
     if (error) {
       console.error("Error approving business:", error)
-      alert("Failed to approve: " + error.message)
+      toast.error("Failed to approve", { description: error.message })
     } else {
+      toast.success("Business approved")
       fetchBusinesses()
     }
   }
@@ -196,8 +226,9 @@ export default function AdminBusinessesPage() {
 
     if (error) {
       console.error("Error denying business:", error)
-      alert("Failed to deny: " + error.message)
+      toast.error("Failed to deny", { description: error.message })
     } else {
+      toast.success("Application denied")
       fetchBusinesses()
     }
   }
@@ -211,8 +242,9 @@ export default function AdminBusinessesPage() {
 
     if (error) {
       console.error("Error deleting business:", error)
-      alert("Failed to delete: " + error.message)
+      toast.error("Failed to delete", { description: error.message })
     } else {
+      toast.success("Business deleted")
       fetchBusinesses()
     }
   }

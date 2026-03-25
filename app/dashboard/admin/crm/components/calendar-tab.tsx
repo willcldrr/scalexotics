@@ -96,7 +96,7 @@ export default function CalendarTab() {
       setLeads(leadsRes.data as CRMLead[])
     }
     // Check if Google is connected
-    setIsGoogleConnected(tokensRes.data && tokensRes.data.length > 0)
+    setIsGoogleConnected(!!(tokensRes.data && tokensRes.data.length > 0))
     setLoading(false)
   }
 

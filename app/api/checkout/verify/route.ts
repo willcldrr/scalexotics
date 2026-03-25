@@ -9,6 +9,25 @@ function getSupabase() {
   )
 }
 
+/**
+ * Look up Stripe secret key for a user from their deposit portal config
+ */
+async function getStripeKeyForUser(userId: string): Promise<string | null> {
+  const supabase = getSupabase()
+
+  const { data, error } = await supabase
+    .from("deposit_portal_config")
+    .select("stripe_secret_key")
+    .eq("user_id", userId)
+    .single()
+
+  if (error || !data?.stripe_secret_key) {
+    return null
+  }
+
+  return data.stripe_secret_key
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { sessionId } = await request.json()
@@ -39,12 +58,33 @@ export async function POST(request: NextRequest) {
     }
 
     // Booking doesn't exist - verify with Stripe and create it
-    // Try to get Stripe key from the payment_links table first
-    // Look up the session to get metadata, then find the corresponding payment link
+    // Look up the payment link by stripe_session_id to get the user_id
+    const { data: paymentLink } = await supabase
+      .from("payment_links")
+      .select("user_id")
+      .eq("stripe_session_id", sessionId)
+      .single()
 
-    // Use default Stripe key for verification
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: "2026-02-25.clover",
+    // Determine which Stripe key to use
+    let stripeSecretKey = process.env.STRIPE_SECRET_KEY
+
+    // If we found a user from payment link, try to use their key
+    if (paymentLink?.user_id) {
+      const userStripeKey = await getStripeKeyForUser(paymentLink.user_id)
+      if (userStripeKey) {
+        stripeSecretKey = userStripeKey
+      }
+    }
+
+    if (!stripeSecretKey) {
+      return NextResponse.json(
+        { error: "Stripe not configured" },
+        { status: 500 }
+      )
+    }
+
+    const stripe = new Stripe(stripeSecretKey, {
+      apiVersion: "2025-12-15.clover",
     })
 
     const session = await stripe.checkout.sessions.retrieve(sessionId)

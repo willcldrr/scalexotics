@@ -43,7 +43,7 @@ function getClientIP(request: NextRequest, headersList: Headers): string {
     headersList.get('x-real-ip') ||
     headersList.get('cf-connecting-ip') ||
     headersList.get('true-client-ip') ||
-    request.ip ||
+    (request as any).ip ||
     'Unknown'
   )
 }

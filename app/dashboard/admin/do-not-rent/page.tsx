@@ -1,7 +1,9 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
+import { toast } from "sonner"
 import {
   Upload,
   Search,
@@ -79,6 +81,31 @@ export default function DoNotRentPage() {
     fetchEntries()
   }, [])
 
+  // Real-time subscription for instant updates
+  const handleInsert = useCallback((payload: { new: DoNotRentEntry }) => {
+    console.log("[Realtime] Do Not Rent entry inserted")
+    setEntries(prev => [payload.new, ...prev])
+  }, [])
+
+  const handleUpdate = useCallback((payload: { new: DoNotRentEntry }) => {
+    console.log("[Realtime] Do Not Rent entry updated")
+    setEntries(prev =>
+      prev.map(e => e.id === payload.new.id ? { ...e, ...payload.new } : e)
+    )
+  }, [])
+
+  const handleDelete = useCallback((payload: { old: { id: string } }) => {
+    console.log("[Realtime] Do Not Rent entry deleted")
+    setEntries(prev => prev.filter(e => e.id !== payload.old.id))
+  }, [])
+
+  useRealtimeSubscription<DoNotRentEntry>({
+    table: "do_not_rent_list",
+    onInsert: handleInsert as any,
+    onUpdate: handleUpdate as any,
+    onDelete: handleDelete as any,
+  })
+
   const fetchEntries = async () => {
     setLoading(true)
     const { data, error } = await supabase
@@ -107,7 +134,7 @@ export default function DoNotRentPage() {
   const parseCSV = (text: string) => {
     const lines = text.split(/\r?\n/).filter(line => line.trim())
     if (lines.length < 2) {
-      alert("CSV file appears to be empty or has no data rows")
+      toast.error("Invalid CSV file", { description: "File appears to be empty or has no data rows" })
       return
     }
 
@@ -194,7 +221,7 @@ export default function DoNotRentPage() {
     }
 
     if (rows.length === 0) {
-      alert(`No valid entries found. Detected columns: ${rawHeaders.join(", ")}\n\nMake sure your CSV has a column for names (e.g., "Name", "Full Name", "Customer")`)
+      toast.error("No valid entries found", { description: `Detected columns: ${rawHeaders.join(", ")}. Make sure your CSV has a column for names.` })
       return
     }
 
@@ -212,7 +239,7 @@ export default function DoNotRentPage() {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      alert("You must be logged in to import entries")
+      toast.error("Authentication required", { description: "You must be logged in to import entries" })
       setImporting(false)
       return
     }
@@ -295,7 +322,9 @@ export default function DoNotRentPage() {
 
     if (errors > 0 && success === 0) {
       // All failed - show the error
-      alert(`Import failed: ${lastError}\n\nThis might be a permissions issue. Make sure you have admin access and the table exists in your database.`)
+      toast.error("Import failed", { description: `${lastError}. This might be a permissions issue.` })
+    } else if (success > 0) {
+      toast.success(`Imported ${success} entries`, { description: errors > 0 ? `${errors} entries failed` : undefined })
     }
 
     setImportResult({ success, errors })

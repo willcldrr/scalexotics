@@ -50,6 +50,7 @@ interface DepositPortalConfig {
   require_id_upload: boolean
   require_insurance_upload: boolean
   custom_domain: string
+  company_slug: string
 }
 
 const defaultConfig: DepositPortalConfig = {
@@ -72,6 +73,7 @@ const defaultConfig: DepositPortalConfig = {
   require_id_upload: false,
   require_insurance_upload: false,
   custom_domain: '',
+  company_slug: '',
 }
 
 export default function DepositPortalSettings() {
@@ -286,7 +288,7 @@ export default function DepositPortalSettings() {
           <div>
             <p className="text-sm text-white/50 mb-1">Your deposit portal link</p>
             <p className="text-sm font-mono text-white">
-              https://{config.custom_domain || 'rentalcapture.xyz'}/checkout/[token]
+              https://{config.custom_domain || 'rentalcapture.xyz'}/{!config.custom_domain && config.company_slug ? `${config.company_slug}/` : ''}[token]
             </p>
           </div>
           <button
@@ -518,6 +520,23 @@ export default function DepositPortalSettings() {
       {/* Branding */}
       {activeSection === 'branding' && (
         <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-white/60 mb-2">Company Slug</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">rentalcapture.xyz/</span>
+              <input
+                type="text"
+                placeholder="yourcompany"
+                value={config.company_slug || ''}
+                onChange={(e) => setConfig({ ...config, company_slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                className="w-full pl-40 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
+              />
+            </div>
+            <p className="text-xs text-white/40 mt-2">
+              Your unique URL identifier for payment links (letters, numbers, and dashes only)
+            </p>
+          </div>
+
           <div>
             <label className="block text-sm text-white/60 mb-2">Portal Title</label>
             <input

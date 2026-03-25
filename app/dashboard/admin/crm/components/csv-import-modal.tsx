@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { toast } from "sonner"
 import {
   X,
   Upload,
@@ -235,7 +236,7 @@ export default function CSVImportModal({ onClose, onImport }: CSVImportModalProp
     const notesCol = getColumn("notes")
 
     if (!companyCol) {
-      alert("Please map the Company Name column")
+      toast.error("Missing required field", { description: "Please map the Company Name column" })
       setImporting(false)
       return
     }

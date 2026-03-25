@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { toast } from "sonner"
 import {
   Link,
   Unlink,
@@ -317,8 +318,9 @@ export default function SettingsTab() {
     setDeletingStatusId(status.id)
     try {
       await deleteStatus(status.id)
+      toast.success("Status deleted")
     } catch (error: any) {
-      alert(error.message || "Failed to delete status")
+      toast.error("Failed to delete status", { description: error.message })
     } finally {
       setDeletingStatusId(null)
     }

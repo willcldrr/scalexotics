@@ -1,13 +1,48 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { z } from "zod"
-import { lookupPaymentToken, decodePaymentToken, markPaymentLinkUsed } from "@/lib/payment-link"
+import { createClient } from "@supabase/supabase-js"
+import { lookupPaymentToken, decodePaymentToken, claimPaymentLinkForCheckout } from "@/lib/payment-link"
 
 const checkoutSchema = z.object({
   token: z.string().min(1, "Payment token is required").max(500, "Invalid token"),
 })
 
 export const runtime = "nodejs"
+
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error("Supabase environment variables not configured")
+  }
+
+  return createClient(supabaseUrl, supabaseKey)
+}
+
+/**
+ * Look up Stripe keys from user's deposit portal config (NOT from payment link)
+ * This prevents storing sensitive keys in the payment_links table
+ */
+async function getStripeKeysForUser(userId: string): Promise<{ secretKey: string | null; publishableKey: string | null }> {
+  const supabase = getSupabaseClient()
+
+  const { data, error } = await supabase
+    .from("deposit_portal_config")
+    .select("stripe_secret_key, stripe_publishable_key")
+    .eq("user_id", userId)
+    .single()
+
+  if (error || !data) {
+    return { secretKey: null, publishableKey: null }
+  }
+
+  return {
+    secretKey: data.stripe_secret_key,
+    publishableKey: data.stripe_publishable_key,
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,8 +73,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Use Stripe keys from payment link (multi-tenant) or fall back to env vars
-    const stripeSecretKey = paymentData.stripeSecretKey || process.env.STRIPE_SECRET_KEY
+    // Look up Stripe keys from user's config (secure - not stored in payment link)
+    let stripeSecretKey = process.env.STRIPE_SECRET_KEY
+
+    if (paymentData.userId) {
+      const userStripeKeys = await getStripeKeysForUser(paymentData.userId)
+      if (userStripeKeys.secretKey) {
+        stripeSecretKey = userStripeKeys.secretKey
+      }
+    }
 
     if (!stripeSecretKey) {
       return NextResponse.json(
@@ -98,9 +140,17 @@ export async function POST(request: NextRequest) {
       cancel_url: cancelUrl,
     })
 
-    // Mark link as used (prevents reuse)
+    // Atomically claim the payment link (prevents double-spend)
     if (token.includes("-")) {
-      await markPaymentLinkUsed(token)
+      const claimed = await claimPaymentLinkForCheckout(token, session.id)
+      if (!claimed) {
+        // Link was already used - this is a race condition or replay attack
+        console.error("Payment link already used or not found:", token)
+        return NextResponse.json(
+          { error: "This payment link has already been used" },
+          { status: 400 }
+        )
+      }
     }
 
     return NextResponse.json({

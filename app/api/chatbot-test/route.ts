@@ -1,9 +1,43 @@
 import { NextRequest, NextResponse } from "next/server"
+import { createServerClient } from "@supabase/ssr"
+import { cookies } from "next/headers"
 import { generateResponse, ChatMessage, ModelId } from "@/lib/anthropic"
 import { generateSecurePaymentLink, PaymentLinkData } from "@/lib/payment-link"
 
 // Force Node.js runtime for Anthropic SDK compatibility
 export const runtime = "nodejs"
+
+/**
+ * Get authenticated user from session
+ * Returns null if not authenticated
+ */
+async function getAuthenticatedUser() {
+  const cookieStore = await cookies()
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error || !user) {
+    return null
+  }
+
+  return user
+}
 
 interface Vehicle {
   id: string
@@ -38,8 +72,20 @@ interface LeadData {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify user is authenticated - don't trust client-provided userId
+    const authenticatedUser = await getAuthenticatedUser()
+    if (!authenticatedUser) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
-    const { messages, systemPrompt, model, forceModel, autoEscalate, vehicles, leadData, settings, userId } = body
+    const { messages, systemPrompt, model, forceModel, autoEscalate, vehicles, leadData, settings } = body
+
+    // Use authenticated user's ID instead of client-provided userId
+    const userId = authenticatedUser.id
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
@@ -190,11 +236,10 @@ export async function POST(request: NextRequest) {
               customerName,
               customerPhone,
               businessName: settings?.business_name || "Velocity Exotics",
-              // Include user ID for booking creation
+              // Include user ID for booking creation and Stripe key lookup
               userId: userId || undefined,
-              // Include Stripe keys for multi-tenant checkout
-              stripePublishableKey: settings?.stripe_publishable_key || undefined,
-              stripeSecretKey: settings?.stripe_secret_key || undefined,
+              // NOTE: Stripe keys are NOT stored in payment links for security
+              // They are looked up from deposit_portal_config at checkout time
               // Include custom payment domain (defaults to rentalcapture.xyz)
               paymentDomain: settings?.payment_domain || settings?.custom_domain || undefined,
               // Include company slug for URL path on default domain

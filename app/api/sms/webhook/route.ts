@@ -21,6 +21,38 @@ function getSupabase() {
   )
 }
 
+/**
+ * Validate Twilio webhook signature to prevent spoofed requests
+ */
+function validateTwilioSignature(
+  request: NextRequest,
+  params: Record<string, string>
+): boolean {
+  const authToken = process.env.TWILIO_AUTH_TOKEN
+  if (!authToken) {
+    console.error("TWILIO_AUTH_TOKEN not configured")
+    return false
+  }
+
+  const signature = request.headers.get("x-twilio-signature")
+  if (!signature) {
+    console.error("Missing X-Twilio-Signature header")
+    return false
+  }
+
+  // Build the full URL that Twilio used to sign the request
+  const url = process.env.TWILIO_WEBHOOK_URL || `${process.env.NEXT_PUBLIC_APP_URL}/api/sms/webhook`
+
+  // Validate using Twilio's helper
+  const isValid = twilio.validateRequest(authToken, signature, url, params)
+
+  if (!isValid) {
+    console.error("Invalid Twilio signature - request may be spoofed")
+  }
+
+  return isValid
+}
+
 // Look up user by their configured Twilio phone number
 async function getUserIdByPhoneNumber(phoneNumber: string): Promise<string | null> {
   const supabase = getSupabase()
@@ -54,9 +86,20 @@ export async function POST(request: NextRequest) {
     const twilioClient = getTwilioClient()
     const formData = await request.formData()
 
-    const from = formData.get("From") as string
-    const to = formData.get("To") as string
-    const body = formData.get("Body") as string
+    // Convert FormData to plain object for signature validation
+    const params: Record<string, string> = {}
+    formData.forEach((value, key) => {
+      params[key] = value.toString()
+    })
+
+    // Validate Twilio signature to prevent spoofed requests
+    if (!validateTwilioSignature(request, params)) {
+      return new NextResponse("Invalid signature", { status: 403 })
+    }
+
+    const from = params.From
+    const to = params.To
+    const body = params.Body
 
     if (!from || !body || !to) {
       return new NextResponse("Missing required fields", { status: 400 })

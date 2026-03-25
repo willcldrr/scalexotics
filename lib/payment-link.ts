@@ -18,9 +18,8 @@ export interface PaymentLinkData {
   // Lead tracking - critical for webhook to update correct lead
   leadId?: string
   userId?: string
-  // Stripe keys for multi-tenant support
-  stripePublishableKey?: string
-  stripeSecretKey?: string
+  // NOTE: Stripe keys are NOT stored in payment links for security
+  // They are looked up from deposit_portal_config at checkout time using userId
   // Custom payment domain (e.g., "exoticrentals.com" - defaults to rentalcapture.xyz)
   paymentDomain?: string
   // Company slug for URL (e.g., "velocity-exotics" -> rentalcapture.xyz/velocity-exotics/TOKEN)
@@ -134,6 +133,8 @@ export async function generateSecurePaymentLink(data: PaymentLinkData): Promise<
     const supabase = getSupabaseClient()
 
     // Store payment link in database
+    // NOTE: Stripe secret keys are NOT stored here for security
+    // They are looked up from deposit_portal_config at checkout time
     const { error } = await supabase.from("payment_links").insert({
       short_token: shortToken,
       vehicle_id: data.vehicleId,
@@ -151,9 +152,6 @@ export async function generateSecurePaymentLink(data: PaymentLinkData): Promise<
       lead_id: data.leadId || null,
       user_id: data.userId || null,
       business_id: data.businessId || null,
-      // Store Stripe keys for multi-tenant checkout
-      stripe_publishable_key: data.stripePublishableKey || null,
-      stripe_secret_key: data.stripeSecretKey || null,
       // Store custom payment domain and company slug
       payment_domain: data.paymentDomain || null,
       company_slug: data.companySlug || null,
@@ -237,8 +235,7 @@ export async function lookupPaymentToken(shortToken: string): Promise<PaymentLin
       businessName: data.business_name,
       leadId: data.lead_id || undefined,
       userId: data.user_id || undefined,
-      stripePublishableKey: data.stripe_publishable_key || undefined,
-      stripeSecretKey: data.stripe_secret_key || undefined,
+      // NOTE: Stripe keys are NOT returned - they should be looked up from deposit_portal_config
       paymentDomain: data.payment_domain || undefined,
       companySlug: data.company_slug || undefined,
       businessId: data.business_id || undefined,
@@ -251,17 +248,51 @@ export async function lookupPaymentToken(shortToken: string): Promise<PaymentLin
 
 /**
  * Mark a payment link as used (after successful payment)
+ * Uses atomic update to prevent race conditions - only marks if not already used
  */
 export async function markPaymentLinkUsed(shortToken: string): Promise<boolean> {
   try {
     const supabase = getSupabaseClient()
 
-    const { error } = await supabase
+    // Atomic update: only mark as used if not already used
+    const { data, error } = await supabase
       .from("payment_links")
       .update({ used_at: new Date().toISOString() })
       .eq("short_token", shortToken.toUpperCase())
+      .is("used_at", null)
+      .select("id")
 
-    return !error
+    // Success only if we actually updated a row
+    return !error && data && data.length > 0
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Atomically claim a payment link for checkout (prevents double-spend)
+ * Returns true if successfully claimed, false if already used or not found
+ */
+export async function claimPaymentLinkForCheckout(
+  shortToken: string,
+  stripeSessionId: string
+): Promise<boolean> {
+  try {
+    const supabase = getSupabaseClient()
+
+    // Atomic update: only claim if not already used
+    const { data, error } = await supabase
+      .from("payment_links")
+      .update({
+        stripe_session_id: stripeSessionId,
+        used_at: new Date().toISOString(),
+      })
+      .eq("short_token", shortToken.toUpperCase())
+      .is("used_at", null)
+      .select("id")
+
+    // Success only if we actually updated a row
+    return !error && data && data.length > 0
   } catch {
     return false
   }

@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
-    ignoreBuildErrors: true,
+    // Set to false before production to catch type errors
+    ignoreBuildErrors: process.env.NODE_ENV === 'development',
   },
 
   // React Compiler disabled - requires babel-plugin-react-compiler

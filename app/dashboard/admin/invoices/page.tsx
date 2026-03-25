@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import {
   Plus,
   Copy,
@@ -72,6 +73,32 @@ export default function AdminInvoicesPage() {
   useEffect(() => {
     checkAdminAndFetch()
   }, [])
+
+  // Real-time subscription for instant updates
+  const handleInsert = useCallback((payload: { new: Invoice }) => {
+    console.log("[Realtime] Invoice inserted")
+    setInvoices(prev => [payload.new, ...prev])
+  }, [])
+
+  const handleUpdate = useCallback((payload: { new: Invoice }) => {
+    console.log("[Realtime] Invoice updated")
+    setInvoices(prev =>
+      prev.map(i => i.id === payload.new.id ? { ...i, ...payload.new } : i)
+    )
+  }, [])
+
+  const handleDelete = useCallback((payload: { old: { id: string } }) => {
+    console.log("[Realtime] Invoice deleted")
+    setInvoices(prev => prev.filter(i => i.id !== payload.old.id))
+  }, [])
+
+  useRealtimeSubscription<Invoice>({
+    table: "invoices",
+    onInsert: handleInsert as any,
+    onUpdate: handleUpdate as any,
+    onDelete: handleDelete as any,
+    enabled: isAdmin, // Only subscribe when admin
+  })
 
   const checkAdminAndFetch = async () => {
     const { data: { user } } = await supabase.auth.getUser()

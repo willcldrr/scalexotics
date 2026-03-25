@@ -14,9 +14,9 @@ export async function POST(request: NextRequest) {
 
     const submittedCode = code.trim().toUpperCase()
 
-    // Master code that always works (for admin access)
-    const MASTER_CODE = "FORTUNE1"
-    if (submittedCode === MASTER_CODE) {
+    // Master code from environment variable (optional, for admin access)
+    const masterCode = process.env.MASTER_ACCESS_CODE?.trim().toUpperCase()
+    if (masterCode && submittedCode === masterCode) {
       return NextResponse.json({ success: true })
     }
 

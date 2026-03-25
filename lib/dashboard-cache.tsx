@@ -78,7 +78,7 @@ interface DashboardCacheContextType {
   removeBooking: (id: string) => void
 }
 
-const CACHE_DURATION = 30000 // 30 seconds - data is considered fresh for this long
+const CACHE_DURATION = 300000 // 5 minutes - real-time handles updates, polling is just a fallback
 const LOCAL_CACHE_KEY = 'scale_exotics_dashboard_cache'
 const LOCAL_CACHE_MAX_AGE = 5 * 60 * 1000 // 5 minutes max age for localStorage cache
 
@@ -227,6 +227,159 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
     document.addEventListener("visibilitychange", handleVisibility)
     return () => document.removeEventListener("visibilitychange", handleVisibility)
   }, [fetchAllData])
+
+  // Real-time subscriptions for instant cross-tab updates
+  useEffect(() => {
+    let vehiclesChannel: ReturnType<typeof supabase.channel> | null = null
+    let bookingsChannel: ReturnType<typeof supabase.channel> | null = null
+    let leadsChannel: ReturnType<typeof supabase.channel> | null = null
+    let mounted = true
+
+    const setupRealtimeSubscriptions = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user || !mounted) return
+
+      const userId = user.id
+
+      // Vehicles subscription
+      vehiclesChannel = supabase
+        .channel("dashboard-vehicles-realtime")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "vehicles", filter: `user_id=eq.${userId}` },
+          (payload) => {
+            if (!mounted) return
+            console.log("[Realtime] Vehicle inserted")
+            setData(prev => ({
+              ...prev,
+              vehicles: [payload.new as Vehicle, ...prev.vehicles],
+            }))
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "vehicles", filter: `user_id=eq.${userId}` },
+          (payload) => {
+            if (!mounted) return
+            console.log("[Realtime] Vehicle updated")
+            setData(prev => ({
+              ...prev,
+              vehicles: prev.vehicles.map(v =>
+                v.id === (payload.new as Vehicle).id ? { ...v, ...payload.new as Vehicle } : v
+              ),
+            }))
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "DELETE", schema: "public", table: "vehicles", filter: `user_id=eq.${userId}` },
+          (payload) => {
+            if (!mounted) return
+            console.log("[Realtime] Vehicle deleted")
+            setData(prev => ({
+              ...prev,
+              vehicles: prev.vehicles.filter(v => v.id !== (payload.old as Vehicle).id),
+            }))
+          }
+        )
+        .subscribe()
+
+      // Bookings subscription
+      bookingsChannel = supabase
+        .channel("dashboard-bookings-realtime")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "bookings", filter: `user_id=eq.${userId}` },
+          (payload) => {
+            if (!mounted) return
+            console.log("[Realtime] Booking inserted")
+            setData(prev => ({
+              ...prev,
+              bookings: [payload.new as Booking, ...prev.bookings],
+            }))
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "bookings", filter: `user_id=eq.${userId}` },
+          (payload) => {
+            if (!mounted) return
+            console.log("[Realtime] Booking updated")
+            setData(prev => ({
+              ...prev,
+              bookings: prev.bookings.map(b =>
+                b.id === (payload.new as Booking).id ? { ...b, ...payload.new as Booking } : b
+              ),
+            }))
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "DELETE", schema: "public", table: "bookings", filter: `user_id=eq.${userId}` },
+          (payload) => {
+            if (!mounted) return
+            console.log("[Realtime] Booking deleted")
+            setData(prev => ({
+              ...prev,
+              bookings: prev.bookings.filter(b => b.id !== (payload.old as Booking).id),
+            }))
+          }
+        )
+        .subscribe()
+
+      // Leads subscription
+      leadsChannel = supabase
+        .channel("dashboard-leads-realtime")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "leads", filter: `user_id=eq.${userId}` },
+          (payload) => {
+            if (!mounted) return
+            console.log("[Realtime] Lead inserted")
+            setData(prev => ({
+              ...prev,
+              leads: [payload.new as Lead, ...prev.leads],
+            }))
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "leads", filter: `user_id=eq.${userId}` },
+          (payload) => {
+            if (!mounted) return
+            console.log("[Realtime] Lead updated")
+            setData(prev => ({
+              ...prev,
+              leads: prev.leads.map(l =>
+                l.id === (payload.new as Lead).id ? { ...l, ...payload.new as Lead } : l
+              ),
+            }))
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "DELETE", schema: "public", table: "leads", filter: `user_id=eq.${userId}` },
+          (payload) => {
+            if (!mounted) return
+            console.log("[Realtime] Lead deleted")
+            setData(prev => ({
+              ...prev,
+              leads: prev.leads.filter(l => l.id !== (payload.old as Lead).id),
+            }))
+          }
+        )
+        .subscribe()
+    }
+
+    setupRealtimeSubscriptions()
+
+    return () => {
+      mounted = false
+      if (vehiclesChannel) supabase.removeChannel(vehiclesChannel)
+      if (bookingsChannel) supabase.removeChannel(bookingsChannel)
+      if (leadsChannel) supabase.removeChannel(leadsChannel)
+    }
+  }, [supabase])
 
   const refreshData = useCallback(async () => {
     await fetchAllData(true)

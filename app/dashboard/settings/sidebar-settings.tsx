@@ -8,6 +8,7 @@ export interface SidebarSettings {
   overview?: boolean
   leads?: boolean
   vehicles?: boolean
+  bookings?: boolean
   "ai-assistant"?: boolean
   settings?: boolean
   [key: string]: boolean | SidebarDisplayMode | undefined
@@ -22,6 +23,7 @@ export function getDefaultSidebarSettings(): SidebarSettings {
     overview: true,
     leads: true,
     vehicles: true,
+    bookings: true,
     "ai-assistant": true,
     settings: true,
   }

@@ -161,7 +161,7 @@ export async function generateAIResponse(
   const chatMessages: ChatMessage[] = buildChatMessages(conversationHistory, incomingMessage)
 
   // Determine model to use
-  const requestedModel = options?.model || aiSettings.preferred_model || "claude-3-5-haiku-20241022"
+  const requestedModel = options?.model || aiSettings.preferred_model || "claude-haiku-4-5-20251001"
 
   // Generate response using Anthropic API with prompt caching
   const result: GenerateResult = await generateResponse(
