@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { toast } from "sonner"
 import { ConfirmModal } from "@/components/ui/confirm-modal"
 import {
@@ -223,170 +222,245 @@ export default function AdminPage() {
   }, [])
 
   // ============================================
-  // REAL-TIME SUBSCRIPTIONS (Admin sees ALL changes, no user_id filter)
+  // REAL-TIME SUBSCRIPTIONS (Direct setup after admin verification)
   // ============================================
 
   // Track pending businesses that arrive before their profile (race condition handling)
   const pendingBusinessesRef = useRef<Map<string, any>>(new Map())
 
-  // Profiles real-time
-  useRealtimeSubscription<UserProfile>({
-    table: "profiles",
-    onInsert: useCallback((payload: any) => {
-      console.log("[Realtime] Profile inserted:", payload.new.email)
+  // Set up real-time subscriptions when admin is verified
+  useEffect(() => {
+    if (!isAdmin) return
 
-      // Check if we have a pending business for this user
-      const pendingBusiness = pendingBusinessesRef.current.get(payload.new.id)
-      const newUser = {
-        ...payload.new,
-        business: pendingBusiness || null
-      }
+    let mounted = true
+    let profilesChannel: ReturnType<typeof supabase.channel> | null = null
+    let businessesChannel: ReturnType<typeof supabase.channel> | null = null
+    let dnrChannel: ReturnType<typeof supabase.channel> | null = null
+    let invoicesChannel: ReturnType<typeof supabase.channel> | null = null
+    let domainsChannel: ReturnType<typeof supabase.channel> | null = null
 
-      // Clear the pending business if it existed
-      if (pendingBusiness) {
-        pendingBusinessesRef.current.delete(payload.new.id)
-      }
+    console.log("[Admin Realtime] Setting up subscriptions...")
 
-      setUsers(prev => {
-        // Avoid duplicates
-        if (prev.some(u => u.id === payload.new.id)) return prev
-        return [newUser, ...prev]
-      })
+    // Profiles subscription - no filter means admin sees ALL profiles
+    profilesChannel = supabase
+      .channel("admin-profiles-realtime")
+      .on(
+        "postgres_changes" as any,
+        { event: "INSERT", schema: "public", table: "profiles" },
+        (payload: any) => {
+          if (!mounted) return
+          console.log("[Realtime] Profile INSERT received:", payload.new?.email)
 
-      // Show toast if this is a pending business (new sign-up awaiting approval)
-      if (pendingBusiness?.status === "pending") {
-        toast.info("New sign-up awaiting approval", {
-          description: payload.new.email || payload.new.full_name || "New user",
-        })
-      }
-    }, []),
-    onUpdate: useCallback((payload: any) => {
-      console.log("[Realtime] Profile updated")
-      setUsers(prev => prev.map(u =>
-        u.id === payload.new.id ? { ...u, ...payload.new } : u
-      ))
-    }, []),
-    onDelete: useCallback((payload: any) => {
-      console.log("[Realtime] Profile deleted")
-      setUsers(prev => prev.filter(u => u.id !== payload.old.id))
-    }, []),
-    enabled: isAdmin,
-  })
+          const pendingBusiness = pendingBusinessesRef.current.get(payload.new.id)
+          const newUser = { ...payload.new, business: pendingBusiness || null }
 
-  // Businesses real-time (for user business status)
-  useRealtimeSubscription({
-    table: "businesses",
-    onInsert: useCallback((payload: any) => {
-      console.log("[Realtime] Business inserted for user:", payload.new.owner_user_id)
-
-      if (!payload.new.owner_user_id) return
-
-      setUsers(prev => {
-        // Check if user exists in state
-        const userExists = prev.some(u => u.id === payload.new.owner_user_id)
-
-        if (userExists) {
-          // User exists, update their business
-          const updated = prev.map(u =>
-            u.id === payload.new.owner_user_id
-              ? { ...u, business: payload.new }
-              : u
-          )
-
-          // Show toast for new pending business
-          if (payload.new.status === "pending") {
-            const user = prev.find(u => u.id === payload.new.owner_user_id)
-            toast.info("New sign-up awaiting approval", {
-              description: user?.email || payload.new.name || "New business",
-            })
+          if (pendingBusiness) {
+            pendingBusinessesRef.current.delete(payload.new.id)
           }
 
-          return updated
-        } else {
-          // User doesn't exist yet (race condition), store business for later
-          pendingBusinessesRef.current.set(payload.new.owner_user_id, payload.new)
-          return prev
+          setUsers(prev => {
+            if (prev.some(u => u.id === payload.new.id)) return prev
+            return [newUser, ...prev]
+          })
+
+          if (pendingBusiness?.status === "pending") {
+            toast.info("New sign-up awaiting approval", {
+              description: payload.new.email || payload.new.full_name || "New user",
+            })
+          }
+        }
+      )
+      .on(
+        "postgres_changes" as any,
+        { event: "UPDATE", schema: "public", table: "profiles" },
+        (payload: any) => {
+          if (!mounted) return
+          console.log("[Realtime] Profile UPDATE received")
+          setUsers(prev => prev.map(u =>
+            u.id === payload.new.id ? { ...u, ...payload.new } : u
+          ))
+        }
+      )
+      .on(
+        "postgres_changes" as any,
+        { event: "DELETE", schema: "public", table: "profiles" },
+        (payload: any) => {
+          if (!mounted) return
+          console.log("[Realtime] Profile DELETE received")
+          setUsers(prev => prev.filter(u => u.id !== payload.old.id))
+        }
+      )
+      .subscribe((status) => {
+        console.log("[Admin Realtime] Profiles channel status:", status)
+        if (status === "SUBSCRIBED") {
+          toast.success("Real-time connected", { description: "Profiles", duration: 2000 })
         }
       })
-    }, []),
-    onUpdate: useCallback((payload: any) => {
-      console.log("[Realtime] Business updated:", payload.new.status)
-      setUsers(prev => prev.map(u =>
-        u.business?.id === payload.new.id
-          ? { ...u, business: { ...u.business, ...payload.new } }
-          : u
-      ))
-    }, []),
-    onDelete: useCallback((payload: any) => {
-      console.log("[Realtime] Business deleted")
-      setUsers(prev => prev.map(u =>
-        u.business?.id === payload.old.id
-          ? { ...u, business: null }
-          : u
-      ))
-    }, []),
-    enabled: isAdmin,
-  })
 
-  // Do Not Rent real-time
-  useRealtimeSubscription<DoNotRentEntry>({
-    table: "do_not_rent_list",
-    onInsert: useCallback((payload: any) => {
-      console.log("[Realtime] DNR entry inserted")
-      setDnrEntries(prev => [payload.new, ...prev])
-    }, []),
-    onUpdate: useCallback((payload: any) => {
-      console.log("[Realtime] DNR entry updated")
-      setDnrEntries(prev => prev.map(e =>
-        e.id === payload.new.id ? { ...e, ...payload.new } : e
-      ))
-    }, []),
-    onDelete: useCallback((payload: any) => {
-      console.log("[Realtime] DNR entry deleted")
-      setDnrEntries(prev => prev.filter(e => e.id !== payload.old.id))
-    }, []),
-    enabled: isAdmin,
-  })
+    // Businesses subscription - for pending approvals
+    businessesChannel = supabase
+      .channel("admin-businesses-realtime")
+      .on(
+        "postgres_changes" as any,
+        { event: "INSERT", schema: "public", table: "businesses" },
+        (payload: any) => {
+          if (!mounted) return
+          console.log("[Realtime] Business INSERT received:", payload.new?.name, "status:", payload.new?.status)
 
-  // Invoices real-time
-  useRealtimeSubscription<Invoice>({
-    table: "invoices",
-    onInsert: useCallback((payload: any) => {
-      console.log("[Realtime] Invoice inserted")
-      setInvoices(prev => [payload.new, ...prev])
-    }, []),
-    onUpdate: useCallback((payload: any) => {
-      console.log("[Realtime] Invoice updated")
-      setInvoices(prev => prev.map(i =>
-        i.id === payload.new.id ? { ...i, ...payload.new } : i
-      ))
-    }, []),
-    onDelete: useCallback((payload: any) => {
-      console.log("[Realtime] Invoice deleted")
-      setInvoices(prev => prev.filter(i => i.id !== payload.old.id))
-    }, []),
-    enabled: isAdmin,
-  })
+          if (!payload.new.owner_user_id) return
 
-  // Custom Domains real-time
-  useRealtimeSubscription<CustomDomain>({
-    table: "custom_domains",
-    onInsert: useCallback((payload: any) => {
-      console.log("[Realtime] Domain inserted")
-      setDomains(prev => [payload.new, ...prev])
-    }, []),
-    onUpdate: useCallback((payload: any) => {
-      console.log("[Realtime] Domain updated")
-      setDomains(prev => prev.map(d =>
-        d.id === payload.new.id ? { ...d, ...payload.new } : d
-      ))
-    }, []),
-    onDelete: useCallback((payload: any) => {
-      console.log("[Realtime] Domain deleted")
-      setDomains(prev => prev.filter(d => d.id !== payload.old.id))
-    }, []),
-    enabled: isAdmin,
-  })
+          setUsers(prev => {
+            const userExists = prev.some(u => u.id === payload.new.owner_user_id)
+
+            if (userExists) {
+              if (payload.new.status === "pending") {
+                const user = prev.find(u => u.id === payload.new.owner_user_id)
+                toast.info("New sign-up awaiting approval", {
+                  description: user?.email || payload.new.name || "New business",
+                })
+              }
+              return prev.map(u =>
+                u.id === payload.new.owner_user_id ? { ...u, business: payload.new } : u
+              )
+            } else {
+              pendingBusinessesRef.current.set(payload.new.owner_user_id, payload.new)
+              return prev
+            }
+          })
+        }
+      )
+      .on(
+        "postgres_changes" as any,
+        { event: "UPDATE", schema: "public", table: "businesses" },
+        (payload: any) => {
+          if (!mounted) return
+          console.log("[Realtime] Business UPDATE received:", payload.new?.status)
+          setUsers(prev => prev.map(u =>
+            u.business?.id === payload.new.id
+              ? { ...u, business: { ...u.business, ...payload.new } }
+              : u
+          ))
+        }
+      )
+      .on(
+        "postgres_changes" as any,
+        { event: "DELETE", schema: "public", table: "businesses" },
+        (payload: any) => {
+          if (!mounted) return
+          console.log("[Realtime] Business DELETE received")
+          setUsers(prev => prev.map(u =>
+            u.business?.id === payload.old.id ? { ...u, business: null } : u
+          ))
+        }
+      )
+      .subscribe((status) => {
+        console.log("[Admin Realtime] Businesses channel status:", status)
+      })
+
+    // Do Not Rent subscription
+    dnrChannel = supabase
+      .channel("admin-dnr-realtime")
+      .on(
+        "postgres_changes" as any,
+        { event: "INSERT", schema: "public", table: "do_not_rent_list" },
+        (payload: any) => {
+          if (!mounted) return
+          setDnrEntries(prev => [payload.new, ...prev])
+        }
+      )
+      .on(
+        "postgres_changes" as any,
+        { event: "UPDATE", schema: "public", table: "do_not_rent_list" },
+        (payload: any) => {
+          if (!mounted) return
+          setDnrEntries(prev => prev.map(e =>
+            e.id === payload.new.id ? { ...e, ...payload.new } : e
+          ))
+        }
+      )
+      .on(
+        "postgres_changes" as any,
+        { event: "DELETE", schema: "public", table: "do_not_rent_list" },
+        (payload: any) => {
+          if (!mounted) return
+          setDnrEntries(prev => prev.filter(e => e.id !== payload.old.id))
+        }
+      )
+      .subscribe()
+
+    // Invoices subscription
+    invoicesChannel = supabase
+      .channel("admin-invoices-realtime")
+      .on(
+        "postgres_changes" as any,
+        { event: "INSERT", schema: "public", table: "client_invoices" },
+        (payload: any) => {
+          if (!mounted) return
+          setInvoices(prev => [payload.new, ...prev])
+        }
+      )
+      .on(
+        "postgres_changes" as any,
+        { event: "UPDATE", schema: "public", table: "client_invoices" },
+        (payload: any) => {
+          if (!mounted) return
+          setInvoices(prev => prev.map(i =>
+            i.id === payload.new.id ? { ...i, ...payload.new } : i
+          ))
+        }
+      )
+      .on(
+        "postgres_changes" as any,
+        { event: "DELETE", schema: "public", table: "client_invoices" },
+        (payload: any) => {
+          if (!mounted) return
+          setInvoices(prev => prev.filter(i => i.id !== payload.old.id))
+        }
+      )
+      .subscribe()
+
+    // Domains subscription
+    domainsChannel = supabase
+      .channel("admin-domains-realtime")
+      .on(
+        "postgres_changes" as any,
+        { event: "INSERT", schema: "public", table: "custom_domains" },
+        (payload: any) => {
+          if (!mounted) return
+          setDomains(prev => [payload.new, ...prev])
+        }
+      )
+      .on(
+        "postgres_changes" as any,
+        { event: "UPDATE", schema: "public", table: "custom_domains" },
+        (payload: any) => {
+          if (!mounted) return
+          setDomains(prev => prev.map(d =>
+            d.id === payload.new.id ? { ...d, ...payload.new } : d
+          ))
+        }
+      )
+      .on(
+        "postgres_changes" as any,
+        { event: "DELETE", schema: "public", table: "custom_domains" },
+        (payload: any) => {
+          if (!mounted) return
+          setDomains(prev => prev.filter(d => d.id !== payload.old.id))
+        }
+      )
+      .subscribe()
+
+    // Cleanup
+    return () => {
+      console.log("[Admin Realtime] Cleaning up subscriptions...")
+      mounted = false
+      if (profilesChannel) supabase.removeChannel(profilesChannel)
+      if (businessesChannel) supabase.removeChannel(businessesChannel)
+      if (dnrChannel) supabase.removeChannel(dnrChannel)
+      if (invoicesChannel) supabase.removeChannel(invoicesChannel)
+      if (domainsChannel) supabase.removeChannel(domainsChannel)
+    }
+  }, [isAdmin, supabase])
 
   const checkAdminAndFetch = async () => {
     const { data: { user } } = await supabase.auth.getUser()
