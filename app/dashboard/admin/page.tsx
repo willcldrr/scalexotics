@@ -226,12 +226,39 @@ export default function AdminPage() {
   // REAL-TIME SUBSCRIPTIONS (Admin sees ALL changes, no user_id filter)
   // ============================================
 
+  // Track pending businesses that arrive before their profile (race condition handling)
+  const pendingBusinessesRef = useRef<Map<string, any>>(new Map())
+
   // Profiles real-time
   useRealtimeSubscription<UserProfile>({
     table: "profiles",
     onInsert: useCallback((payload: any) => {
-      console.log("[Realtime] Profile inserted")
-      setUsers(prev => [{ ...payload.new, business: null }, ...prev])
+      console.log("[Realtime] Profile inserted:", payload.new.email)
+
+      // Check if we have a pending business for this user
+      const pendingBusiness = pendingBusinessesRef.current.get(payload.new.id)
+      const newUser = {
+        ...payload.new,
+        business: pendingBusiness || null
+      }
+
+      // Clear the pending business if it existed
+      if (pendingBusiness) {
+        pendingBusinessesRef.current.delete(payload.new.id)
+      }
+
+      setUsers(prev => {
+        // Avoid duplicates
+        if (prev.some(u => u.id === payload.new.id)) return prev
+        return [newUser, ...prev]
+      })
+
+      // Show toast if this is a pending business (new sign-up awaiting approval)
+      if (pendingBusiness?.status === "pending") {
+        toast.info("New sign-up awaiting approval", {
+          description: payload.new.email || payload.new.full_name || "New user",
+        })
+      }
     }, []),
     onUpdate: useCallback((payload: any) => {
       console.log("[Realtime] Profile updated")
@@ -250,18 +277,40 @@ export default function AdminPage() {
   useRealtimeSubscription({
     table: "businesses",
     onInsert: useCallback((payload: any) => {
-      console.log("[Realtime] Business inserted")
-      // Update the user who owns this business
-      if (payload.new.owner_user_id) {
-        setUsers(prev => prev.map(u =>
-          u.id === payload.new.owner_user_id
-            ? { ...u, business: payload.new }
-            : u
-        ))
-      }
+      console.log("[Realtime] Business inserted for user:", payload.new.owner_user_id)
+
+      if (!payload.new.owner_user_id) return
+
+      setUsers(prev => {
+        // Check if user exists in state
+        const userExists = prev.some(u => u.id === payload.new.owner_user_id)
+
+        if (userExists) {
+          // User exists, update their business
+          const updated = prev.map(u =>
+            u.id === payload.new.owner_user_id
+              ? { ...u, business: payload.new }
+              : u
+          )
+
+          // Show toast for new pending business
+          if (payload.new.status === "pending") {
+            const user = prev.find(u => u.id === payload.new.owner_user_id)
+            toast.info("New sign-up awaiting approval", {
+              description: user?.email || payload.new.name || "New business",
+            })
+          }
+
+          return updated
+        } else {
+          // User doesn't exist yet (race condition), store business for later
+          pendingBusinessesRef.current.set(payload.new.owner_user_id, payload.new)
+          return prev
+        }
+      })
     }, []),
     onUpdate: useCallback((payload: any) => {
-      console.log("[Realtime] Business updated")
+      console.log("[Realtime] Business updated:", payload.new.status)
       setUsers(prev => prev.map(u =>
         u.business?.id === payload.new.id
           ? { ...u, business: { ...u.business, ...payload.new } }
