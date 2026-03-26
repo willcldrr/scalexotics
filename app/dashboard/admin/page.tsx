@@ -473,37 +473,25 @@ export default function AdminPage() {
 
   const checkAdminAndFetch = async () => {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      // Use the auth status API which uses service role (bypasses RLS)
+      const authStatusRes = await fetch("/api/auth/status")
 
-      if (userError) {
-        console.error("[Admin] Auth error:", userError)
+      if (!authStatusRes.ok) {
+        console.error("[Admin] Auth status API error:", authStatusRes.status)
         setLoading(false)
         return
       }
 
-      if (!user) {
-        console.log("[Admin] No user found")
+      const authStatus = await authStatusRes.json()
+      console.log("[Admin] Auth status:", authStatus)
+
+      if (!authStatus.authenticated) {
+        console.log("[Admin] Not authenticated")
         setLoading(false)
         return
       }
 
-      console.log("[Admin] Checking admin status for:", user.id)
-
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", user.id)
-        .single()
-
-      if (profileError) {
-        console.error("[Admin] Profile fetch error:", profileError)
-        setLoading(false)
-        return
-      }
-
-      console.log("[Admin] Profile data:", profile)
-
-      if (!profile?.is_admin) {
+      if (!authStatus.isAdmin) {
         console.log("[Admin] User is not admin")
         setLoading(false)
         return
