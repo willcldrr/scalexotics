@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { toast } from "sonner"
@@ -114,27 +113,22 @@ export default function AdminBusinessesPage() {
     closeConfirm()
   }
 
-  const supabase = createClient()
-
   useEffect(() => {
     fetchBusinesses()
   }, [])
 
   // Real-time subscription for instant updates
   const handleInsert = useCallback((payload: { new: Business }) => {
-    console.log("[Realtime] Business inserted")
     setBusinesses(prev => [payload.new, ...prev])
   }, [])
 
   const handleUpdate = useCallback((payload: { new: Business }) => {
-    console.log("[Realtime] Business updated")
     setBusinesses(prev =>
       prev.map(b => b.id === payload.new.id ? { ...b, ...payload.new } : b)
     )
   }, [])
 
   const handleRealtimeDelete = useCallback((payload: { old: { id: string } }) => {
-    console.log("[Realtime] Business deleted")
     setBusinesses(prev => prev.filter(b => b.id !== payload.old.id))
   }, [])
 
@@ -147,50 +141,58 @@ export default function AdminBusinessesPage() {
 
   const fetchBusinesses = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from("businesses")
-      .select("*")
-      .order("created_at", { ascending: false })
-
-    if (error) {
-      console.error("Error fetching businesses:", error)
-    } else {
-      setBusinesses(data || [])
+    try {
+      const response = await fetch("/api/admin/businesses")
+      if (response.ok) {
+        const data = await response.json()
+        setBusinesses(data.businesses || [])
+      } else {
+        toast.error("Failed to load businesses")
+      }
+    } catch (err) {
+      console.error("Error fetching businesses:", err)
+      toast.error("Failed to load businesses")
     }
     setLoading(false)
   }
 
   const handleSave = async (business: Partial<Business>) => {
     setSaving(true)
-    const { error } = await supabase
-      .from("businesses")
-      .update({
-        name: business.name,
-        slug: business.slug,
-        payment_domain: business.payment_domain || null,
-        domain_status: business.domain_status,
-        stripe_publishable_key: business.stripe_publishable_key || null,
-        stripe_secret_key: business.stripe_secret_key || null,
-        stripe_connected: !!(business.stripe_publishable_key && business.stripe_secret_key),
-        logo_url: business.logo_url || null,
-        primary_color: business.primary_color,
-        secondary_color: business.secondary_color,
-        phone: business.phone || null,
-        email: business.email || null,
-        address: business.address || null,
-        business_hours: business.business_hours || null,
-        deposit_percentage: business.deposit_percentage,
-        status: business.status,
+    try {
+      const response = await fetch("/api/admin/businesses", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessId: business.id,
+          name: business.name,
+          slug: business.slug,
+          payment_domain: business.payment_domain || null,
+          domain_status: business.domain_status,
+          stripe_publishable_key: business.stripe_publishable_key || null,
+          stripe_secret_key: business.stripe_secret_key || null,
+          stripe_connected: !!(business.stripe_publishable_key && business.stripe_secret_key),
+          logo_url: business.logo_url || null,
+          primary_color: business.primary_color,
+          secondary_color: business.secondary_color,
+          phone: business.phone || null,
+          email: business.email || null,
+          address: business.address || null,
+          business_hours: business.business_hours || null,
+          deposit_percentage: business.deposit_percentage,
+          status: business.status,
+        }),
       })
-      .eq("id", business.id)
 
-    if (error) {
-      console.error("Error updating business:", error)
-      toast.error("Failed to save", { description: error.message })
-    } else {
-      toast.success("Business updated successfully")
-      setEditingId(null)
-      fetchBusinesses()
+      if (!response.ok) {
+        const data = await response.json()
+        toast.error("Failed to save", { description: data.error })
+      } else {
+        toast.success("Business updated successfully")
+        setEditingId(null)
+        fetchBusinesses()
+      }
+    } catch (err) {
+      toast.error("Failed to save business")
     }
     setSaving(false)
   }
@@ -202,49 +204,61 @@ export default function AdminBusinessesPage() {
     }
 
     setSaving(true)
-    const { error } = await supabase.from("businesses").insert({
-      name: newBusiness.name,
-      slug: newBusiness.slug,
-      payment_domain: newBusiness.payment_domain || null,
-      domain_status: newBusiness.domain_status || "pending",
-      stripe_publishable_key: newBusiness.stripe_publishable_key || null,
-      stripe_secret_key: newBusiness.stripe_secret_key || null,
-      stripe_connected: !!(newBusiness.stripe_publishable_key && newBusiness.stripe_secret_key),
-      logo_url: newBusiness.logo_url || null,
-      primary_color: newBusiness.primary_color || "#FFFFFF",
-      secondary_color: newBusiness.secondary_color || "#000000",
-      phone: newBusiness.phone || null,
-      email: newBusiness.email || null,
-      address: newBusiness.address || null,
-      business_hours: newBusiness.business_hours || null,
-      deposit_percentage: newBusiness.deposit_percentage || 25,
-      status: "active",
-    })
+    try {
+      const response = await fetch("/api/admin/businesses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newBusiness.name,
+          slug: newBusiness.slug,
+          payment_domain: newBusiness.payment_domain || null,
+          domain_status: newBusiness.domain_status || "pending",
+          stripe_publishable_key: newBusiness.stripe_publishable_key || null,
+          stripe_secret_key: newBusiness.stripe_secret_key || null,
+          logo_url: newBusiness.logo_url || null,
+          primary_color: newBusiness.primary_color || "#FFFFFF",
+          secondary_color: newBusiness.secondary_color || "#000000",
+          phone: newBusiness.phone || null,
+          email: newBusiness.email || null,
+          address: newBusiness.address || null,
+          business_hours: newBusiness.business_hours || null,
+          deposit_percentage: newBusiness.deposit_percentage || 25,
+          status: "active",
+        }),
+      })
 
-    if (error) {
-      console.error("Error adding business:", error)
-      toast.error("Failed to add business", { description: error.message })
-    } else {
-      toast.success("Business added successfully")
-      setShowAddForm(false)
-      setNewBusiness(emptyBusiness)
-      fetchBusinesses()
+      if (!response.ok) {
+        const data = await response.json()
+        toast.error("Failed to add business", { description: data.error })
+      } else {
+        toast.success("Business added successfully")
+        setShowAddForm(false)
+        setNewBusiness(emptyBusiness)
+        fetchBusinesses()
+      }
+    } catch (err) {
+      toast.error("Failed to add business")
     }
     setSaving(false)
   }
 
   const handleApprove = async (id: string) => {
-    const { error } = await supabase
-      .from("businesses")
-      .update({ status: "active" })
-      .eq("id", id)
+    try {
+      const response = await fetch("/api/admin/businesses", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId: id, status: "active" }),
+      })
 
-    if (error) {
-      console.error("Error approving business:", error)
-      toast.error("Failed to approve", { description: error.message })
-    } else {
-      toast.success("Business approved")
-      fetchBusinesses()
+      if (!response.ok) {
+        const data = await response.json()
+        toast.error("Failed to approve", { description: data.error })
+      } else {
+        toast.success("Business approved")
+        fetchBusinesses()
+      }
+    } catch (err) {
+      toast.error("Failed to approve business")
     }
   }
 
@@ -256,17 +270,22 @@ export default function AdminBusinessesPage() {
       variant: "danger",
       icon: "suspend",
       onConfirm: async () => {
-        const { error } = await supabase
-          .from("businesses")
-          .update({ status: "suspended" })
-          .eq("id", id)
+        try {
+          const response = await fetch("/api/admin/businesses", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ businessId: id, status: "suspended" }),
+          })
 
-        if (error) {
-          console.error("Error denying business:", error)
-          toast.error("Failed to deny", { description: error.message })
-        } else {
-          toast.success("Application denied")
-          fetchBusinesses()
+          if (!response.ok) {
+            const data = await response.json()
+            toast.error("Failed to deny", { description: data.error })
+          } else {
+            toast.success("Application denied")
+            fetchBusinesses()
+          }
+        } catch (err) {
+          toast.error("Failed to deny application")
         }
       },
     })
@@ -280,14 +299,20 @@ export default function AdminBusinessesPage() {
       variant: "danger",
       icon: "delete",
       onConfirm: async () => {
-        const { error } = await supabase.from("businesses").delete().eq("id", id)
+        try {
+          const response = await fetch(`/api/admin/businesses?id=${id}`, {
+            method: "DELETE",
+          })
 
-        if (error) {
-          console.error("Error deleting business:", error)
-          toast.error("Failed to delete", { description: error.message })
-        } else {
-          toast.success("Business deleted")
-          fetchBusinesses()
+          if (!response.ok) {
+            const data = await response.json()
+            toast.error("Failed to delete", { description: data.error })
+          } else {
+            toast.success("Business deleted")
+            fetchBusinesses()
+          }
+        } catch (err) {
+          toast.error("Failed to delete business")
         }
       },
     })
@@ -391,6 +416,26 @@ export default function AdminBusinessesPage() {
               placeholder="(555) 123-4567"
             />
           </div>
+          <div className="md:col-span-2">
+            <label className="block text-xs text-white/40 mb-1">Address</label>
+            <input
+              type="text"
+              value={business.address || ""}
+              onChange={(e) => onChange({ ...business, address: e.target.value })}
+              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:border-white/30 focus:outline-none"
+              placeholder="123 Main St, Miami, FL 33101"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-xs text-white/40 mb-1">Business Hours</label>
+            <input
+              type="text"
+              value={business.business_hours || ""}
+              onChange={(e) => onChange({ ...business, business_hours: e.target.value })}
+              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:border-white/30 focus:outline-none"
+              placeholder="9 AM - 8 PM, 7 days a week"
+            />
+          </div>
         </div>
 
         {/* Domain & Stripe */}
@@ -479,6 +524,23 @@ export default function AdminBusinessesPage() {
               type="text"
               value={business.primary_color || "#FFFFFF"}
               onChange={(e) => onChange({ ...business, primary_color: e.target.value })}
+              className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm font-mono focus:border-white/30 focus:outline-none"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs text-white/40 mb-1">Secondary Color</label>
+          <div className="flex gap-2">
+            <input
+              type="color"
+              value={business.secondary_color || "#000000"}
+              onChange={(e) => onChange({ ...business, secondary_color: e.target.value })}
+              className="w-10 h-10 rounded cursor-pointer"
+            />
+            <input
+              type="text"
+              value={business.secondary_color || "#000000"}
+              onChange={(e) => onChange({ ...business, secondary_color: e.target.value })}
               className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm font-mono focus:border-white/30 focus:outline-none"
             />
           </div>
