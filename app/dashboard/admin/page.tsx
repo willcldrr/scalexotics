@@ -239,7 +239,9 @@ export default function AdminPage() {
     let invoicesChannel: ReturnType<typeof supabase.channel> | null = null
     let domainsChannel: ReturnType<typeof supabase.channel> | null = null
 
-    console.log("[Admin Realtime] Setting up subscriptions...")
+    const setupSubscriptions = () => {
+      try {
+        console.log("[Admin Realtime] Setting up subscriptions...")
 
     // Profiles subscription - no filter means admin sees ALL profiles
     profilesChannel = supabase
@@ -450,6 +452,13 @@ export default function AdminPage() {
       )
       .subscribe()
 
+      } catch (err) {
+        console.error("[Admin Realtime] Error setting up subscriptions:", err)
+      }
+    }
+
+    setupSubscriptions()
+
     // Cleanup
     return () => {
       console.log("[Admin Realtime] Cleaning up subscriptions...")
@@ -463,33 +472,58 @@ export default function AdminPage() {
   }, [isAdmin, supabase])
 
   const checkAdminAndFetch = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
 
-    if (!user) {
+      if (userError) {
+        console.error("[Admin] Auth error:", userError)
+        setLoading(false)
+        return
+      }
+
+      if (!user) {
+        console.log("[Admin] No user found")
+        setLoading(false)
+        return
+      }
+
+      console.log("[Admin] Checking admin status for:", user.id)
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single()
+
+      if (profileError) {
+        console.error("[Admin] Profile fetch error:", profileError)
+        setLoading(false)
+        return
+      }
+
+      console.log("[Admin] Profile data:", profile)
+
+      if (!profile?.is_admin) {
+        console.log("[Admin] User is not admin")
+        setLoading(false)
+        return
+      }
+
+      console.log("[Admin] User is admin, fetching data...")
+      setIsAdmin(true)
+
+      await Promise.all([
+        fetchUsers(),
+        fetchDnrEntries(),
+        fetchInvoices(),
+        fetchDomains(),
+        fetchDomainUsers(),
+      ])
       setLoading(false)
-      return
-    }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", user.id)
-      .single()
-
-    if (!profile?.is_admin) {
+    } catch (err) {
+      console.error("[Admin] Unexpected error:", err)
       setLoading(false)
-      return
     }
-
-    setIsAdmin(true)
-    await Promise.all([
-      fetchUsers(),
-      fetchDnrEntries(),
-      fetchInvoices(),
-      fetchDomains(),
-      fetchDomainUsers(),
-    ])
-    setLoading(false)
   }
 
   // ============================================
