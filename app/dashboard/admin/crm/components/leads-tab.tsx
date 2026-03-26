@@ -139,37 +139,35 @@ export default function LeadsTab() {
     }
   }, [message])
 
-  // Server-side paginated fetch - only loads current page for fast mobile performance
+  // Server-side paginated fetch using admin API (bypasses RLS)
   const fetchLeads = async (page = currentPage, searchQuery = search, status = statusFilter) => {
     setLoading(true)
-    const from = (page - 1) * leadsPerPage
-    const to = from + leadsPerPage - 1
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: leadsPerPage.toString(),
+        search: searchQuery,
+        status: status,
+        sortField: sortField,
+        sortDirection: sortDirection,
+      })
 
-    // Build query with filters
-    let query = supabase
-      .from("crm_leads")
-      .select("*", { count: "exact" })
+      const response = await fetch(`/api/admin/crm/leads?${params}`)
 
-    // Apply search filter server-side
-    if (searchQuery.trim()) {
-      query = query.or(`company_name.ilike.%${searchQuery}%,contact_name.ilike.%${searchQuery}%,contact_email.ilike.%${searchQuery}%,location.ilike.%${searchQuery}%`)
-    }
-
-    // Apply status filter
-    if (status !== "all") {
-      query = query.eq("status", status)
-    }
-
-    // Apply sorting and pagination
-    const { data, error, count } = await query
-      .order(sortField, { ascending: sortDirection === "asc" })
-      .range(from, to)
-
-    if (error) {
+      if (!response.ok) {
+        setMessage({ type: "error", text: "Failed to load leads" })
+        setLeads([])
+        setTotalCount(0)
+      } else {
+        const data = await response.json()
+        setLeads(data.leads || [])
+        setTotalCount(data.count || 0)
+      }
+    } catch (err) {
+      console.error("Error fetching leads:", err)
       setMessage({ type: "error", text: "Failed to load leads" })
-    } else {
-      setLeads(data || [])
-      setTotalCount(count || 0)
+      setLeads([])
+      setTotalCount(0)
     }
     setLoading(false)
   }
@@ -179,9 +177,18 @@ export default function LeadsTab() {
     setLeads(leads.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l)))
     setInlineStatusId(null)
 
-    const { error } = await supabase.from("crm_leads").update({ status: newStatus }).eq("id", leadId)
-    if (error) {
-      fetchLeads(currentPage, debouncedSearch, statusFilter) // Revert on error
+    try {
+      const response = await fetch("/api/admin/crm/leads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: leadId, status: newStatus }),
+      })
+      if (!response.ok) {
+        fetchLeads(currentPage, debouncedSearch, statusFilter) // Revert on error
+        setMessage({ type: "error", text: "Failed to update status" })
+      }
+    } catch (err) {
+      fetchLeads(currentPage, debouncedSearch, statusFilter)
       setMessage({ type: "error", text: "Failed to update status" })
     }
   }
@@ -198,8 +205,13 @@ export default function LeadsTab() {
     setLeads(leads.filter((l) => l.id !== id))
     setTotalCount(prev => prev - 1)
 
-    const { error } = await supabase.from("crm_leads").delete().eq("id", id)
-    if (error) {
+    try {
+      const response = await fetch(`/api/admin/crm/leads?id=${id}`, { method: "DELETE" })
+      if (!response.ok) {
+        fetchLeads(currentPage, debouncedSearch, statusFilter)
+        setMessage({ type: "error", text: "Failed to delete" })
+      }
+    } catch (err) {
       fetchLeads(currentPage, debouncedSearch, statusFilter)
       setMessage({ type: "error", text: "Failed to delete" })
     }
@@ -241,14 +253,23 @@ export default function LeadsTab() {
     setSelectedIds(new Set())
     setShowBulkStatusMenu(false)
 
-    const { error } = await supabase.from("crm_leads").update({ status: newStatus }).in("id", idsToUpdate)
-    if (error) {
+    try {
+      const response = await fetch("/api/admin/crm/leads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: idsToUpdate, status: newStatus }),
+      })
+      if (!response.ok) {
+        fetchLeads(currentPage, debouncedSearch, statusFilter)
+        setMessage({ type: "error", text: "Failed to update" })
+      } else {
+        setMessage({ type: "success", text: `${count} leads → ${getStatusLabel(newStatus)}` })
+        // Refetch to get accurate data after bulk update
+        fetchLeads(currentPage, debouncedSearch, statusFilter)
+      }
+    } catch (err) {
       fetchLeads(currentPage, debouncedSearch, statusFilter)
       setMessage({ type: "error", text: "Failed to update" })
-    } else {
-      setMessage({ type: "success", text: `${count} leads → ${getStatusLabel(newStatus)}` })
-      // Refetch to get accurate data after bulk update
-      fetchLeads(currentPage, debouncedSearch, statusFilter)
     }
   }
 

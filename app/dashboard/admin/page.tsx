@@ -537,16 +537,21 @@ export default function AdminPage() {
 
   const handleApprove = async (businessId: string) => {
     setSaving(true)
-    const { error } = await supabase
-      .from("businesses")
-      .update({ status: "active" })
-      .eq("id", businessId)
+    try {
+      const response = await fetch("/api/admin/businesses", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId, status: "active" }),
+      })
 
-    if (error) {
+      if (!response.ok) {
+        setMessage({ type: "error", text: "Failed to approve business" })
+      } else {
+        setMessage({ type: "success", text: "Business approved successfully!" })
+        fetchUsers()
+      }
+    } catch (err) {
       setMessage({ type: "error", text: "Failed to approve business" })
-    } else {
-      setMessage({ type: "success", text: "Business approved successfully!" })
-      fetchUsers()
     }
     setSaving(false)
   }
@@ -560,16 +565,21 @@ export default function AdminPage() {
       icon: "suspend",
       onConfirm: async () => {
         setSaving(true)
-        const { error } = await supabase
-          .from("businesses")
-          .update({ status: "suspended" })
-          .eq("id", businessId)
+        try {
+          const response = await fetch("/api/admin/businesses", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ businessId, status: "suspended" }),
+          })
 
-        if (error) {
+          if (!response.ok) {
+            setMessage({ type: "error", text: "Failed to deny business" })
+          } else {
+            setMessage({ type: "success", text: "Business denied" })
+            fetchUsers()
+          }
+        } catch (err) {
           setMessage({ type: "error", text: "Failed to deny business" })
-        } else {
-          setMessage({ type: "success", text: "Business denied" })
-          fetchUsers()
         }
         setSaving(false)
       },
@@ -578,16 +588,21 @@ export default function AdminPage() {
 
   const handleUnsuspend = async (businessId: string) => {
     setSaving(true)
-    const { error } = await supabase
-      .from("businesses")
-      .update({ status: "active" })
-      .eq("id", businessId)
+    try {
+      const response = await fetch("/api/admin/businesses", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId, status: "active" }),
+      })
 
-    if (error) {
+      if (!response.ok) {
+        setMessage({ type: "error", text: "Failed to unsuspend business" })
+      } else {
+        setMessage({ type: "success", text: "Account unsuspended successfully!" })
+        fetchUsers()
+      }
+    } catch (err) {
       setMessage({ type: "error", text: "Failed to unsuspend business" })
-    } else {
-      setMessage({ type: "success", text: "Account unsuspended successfully!" })
-      fetchUsers()
     }
     setSaving(false)
   }
