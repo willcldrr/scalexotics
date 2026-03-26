@@ -17,8 +17,8 @@ export default function PendingApprovalPage() {
 
   useEffect(() => {
     checkApprovalStatus()
-    // Poll for approval every 10 seconds
-    const interval = setInterval(checkApprovalStatus, 10000)
+    // Poll for approval every 3 seconds for instant feedback
+    const interval = setInterval(checkApprovalStatus, 3000)
     return () => clearInterval(interval)
   }, [])
 
