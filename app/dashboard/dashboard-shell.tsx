@@ -69,12 +69,32 @@ export default function DashboardLayout({
       setUser(user)
 
       if (user) {
+        // Fetch profile using anon client for basic info
         const { data: profile } = await supabase
           .from("profiles")
-          .select("*")
+          .select("full_name, email, company_name, phone, created_at")
           .eq("id", user.id)
           .single()
-        setProfile(profile)
+
+        // Fetch admin status from API (uses service role, bypasses RLS)
+        try {
+          const authStatusRes = await fetch("/api/auth/status")
+          if (authStatusRes.ok) {
+            const authStatus = await authStatusRes.json()
+            // Merge admin status with profile data
+            setProfile({
+              ...profile,
+              id: user.id,
+              is_admin: authStatus.isAdmin === true,
+            })
+          } else {
+            // Fallback: set profile without admin status
+            setProfile({ ...profile, id: user.id, is_admin: false })
+          }
+        } catch (err) {
+          console.error("[Dashboard] Error fetching auth status:", err)
+          setProfile({ ...profile, id: user.id, is_admin: false })
+        }
       }
     }
     getUser()
