@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { MessageCircle, Copy, Check, RefreshCw, Unlink, ExternalLink } from "lucide-react"
+import { ConfirmModal } from "@/components/ui/confirm-modal"
 
 interface TelegramStatus {
   connected: boolean
@@ -17,6 +18,16 @@ export default function TelegramSettings() {
   const [generating, setGenerating] = useState(false)
   const [copied, setCopied] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean
+    title: string
+    message: string
+    onConfirm: () => void
+  }>({ open: false, title: "", message: "", onConfirm: () => {} })
+
+  const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmModal({ open: true, title, message, onConfirm })
+  }
 
   useEffect(() => {
     fetchStatus()
@@ -60,21 +71,25 @@ export default function TelegramSettings() {
     }
   }
 
-  const disconnect = async () => {
-    if (!confirm("Are you sure you want to disconnect Telegram?")) return
-
-    setDisconnecting(true)
-    try {
-      const res = await fetch("/api/telegram/link-code", { method: "DELETE" })
-      if (res.ok) {
-        setStatus({ connected: false, username: null, linkedAt: null })
-        setLinkCode(null)
+  const disconnect = () => {
+    showConfirm(
+      "Disconnect Telegram",
+      "Are you sure you want to disconnect Telegram?",
+      async () => {
+        setDisconnecting(true)
+        try {
+          const res = await fetch("/api/telegram/link-code", { method: "DELETE" })
+          if (res.ok) {
+            setStatus({ connected: false, username: null, linkedAt: null })
+            setLinkCode(null)
+          }
+        } catch (error) {
+          console.error("Error disconnecting:", error)
+        } finally {
+          setDisconnecting(false)
+        }
       }
-    } catch (error) {
-      console.error("Error disconnecting:", error)
-    } finally {
-      setDisconnecting(false)
-    }
+    )
   }
 
   const formatDate = (dateStr: string) => {
@@ -228,6 +243,16 @@ export default function TelegramSettings() {
           )}
         </div>
       )}
+
+      <ConfirmModal
+        open={confirmModal.open}
+        onOpenChange={(open) => setConfirmModal((prev) => ({ ...prev, open }))}
+        title={confirmModal.title}
+        description={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmText="Disconnect"
+        variant="destructive"
+      />
     </div>
   )
 }

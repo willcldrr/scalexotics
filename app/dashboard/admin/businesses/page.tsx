@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { toast } from "sonner"
 import {
@@ -79,6 +80,39 @@ export default function AdminBusinessesPage() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [newBusiness, setNewBusiness] = useState<Partial<Business>>(emptyBusiness)
   const [saving, setSaving] = useState(false)
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean
+    title: string
+    description: string
+    confirmText: string
+    variant: "danger" | "warning" | "info"
+    icon: "delete" | "suspend" | "warning" | "logout" | "info"
+    onConfirm: () => void
+    loading: boolean
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    confirmText: "Confirm",
+    variant: "danger",
+    icon: "warning",
+    onConfirm: () => {},
+    loading: false,
+  })
+
+  const showConfirm = (config: Omit<typeof confirmModal, "open" | "loading">) => {
+    setConfirmModal({ ...config, open: true, loading: false })
+  }
+
+  const closeConfirm = () => {
+    setConfirmModal(prev => ({ ...prev, open: false, loading: false }))
+  }
+
+  const handleConfirm = async () => {
+    setConfirmModal(prev => ({ ...prev, loading: true }))
+    await confirmModal.onConfirm()
+    closeConfirm()
+  }
 
   const supabase = createClient()
 
@@ -214,39 +248,49 @@ export default function AdminBusinessesPage() {
     }
   }
 
-  const handleDeny = async (id: string) => {
-    if (!confirm("Are you sure you want to deny this application? The user will not be able to access the dashboard.")) {
-      return
-    }
+  const handleDeny = (id: string) => {
+    showConfirm({
+      title: "Deny Application",
+      description: "Are you sure you want to deny this application? The user will not be able to access the dashboard.",
+      confirmText: "Deny",
+      variant: "danger",
+      icon: "suspend",
+      onConfirm: async () => {
+        const { error } = await supabase
+          .from("businesses")
+          .update({ status: "suspended" })
+          .eq("id", id)
 
-    const { error } = await supabase
-      .from("businesses")
-      .update({ status: "suspended" })
-      .eq("id", id)
-
-    if (error) {
-      console.error("Error denying business:", error)
-      toast.error("Failed to deny", { description: error.message })
-    } else {
-      toast.success("Application denied")
-      fetchBusinesses()
-    }
+        if (error) {
+          console.error("Error denying business:", error)
+          toast.error("Failed to deny", { description: error.message })
+        } else {
+          toast.success("Application denied")
+          fetchBusinesses()
+        }
+      },
+    })
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this business? This cannot be undone.")) {
-      return
-    }
+  const handleDelete = (id: string) => {
+    showConfirm({
+      title: "Delete Business",
+      description: "Are you sure you want to delete this business? This cannot be undone.",
+      confirmText: "Delete",
+      variant: "danger",
+      icon: "delete",
+      onConfirm: async () => {
+        const { error } = await supabase.from("businesses").delete().eq("id", id)
 
-    const { error } = await supabase.from("businesses").delete().eq("id", id)
-
-    if (error) {
-      console.error("Error deleting business:", error)
-      toast.error("Failed to delete", { description: error.message })
-    } else {
-      toast.success("Business deleted")
-      fetchBusinesses()
-    }
+        if (error) {
+          console.error("Error deleting business:", error)
+          toast.error("Failed to delete", { description: error.message })
+        } else {
+          toast.success("Business deleted")
+          fetchBusinesses()
+        }
+      },
+    })
   }
 
   const copyToClipboard = (text: string) => {
@@ -815,6 +859,20 @@ export default function AdminBusinessesPage() {
           ))
         )}
       </div>
+
+      <ConfirmModal
+        open={confirmModal.open}
+        onOpenChange={(open) => {
+          if (!open) closeConfirm()
+        }}
+        title={confirmModal.title}
+        description={confirmModal.description}
+        confirmText={confirmModal.confirmText}
+        variant={confirmModal.variant}
+        icon={confirmModal.icon}
+        onConfirm={handleConfirm}
+        loading={confirmModal.loading}
+      />
     </div>
   )
 }

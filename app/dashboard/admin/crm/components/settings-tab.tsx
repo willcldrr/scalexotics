@@ -27,6 +27,7 @@ import {
 } from "lucide-react"
 import { leadSourceOptions } from "../lib/crm-status"
 import { useCRMStatuses, type CRMStatus } from "../hooks/use-crm-statuses"
+import { useConfirmModal } from "@/components/ui/confirm-modal"
 
 interface OAuthToken {
   id: string
@@ -88,6 +89,7 @@ const defaultStatusForm: StatusFormData = {
 
 export default function SettingsTab() {
   const supabase = createClient()
+  const { confirm: showConfirm, Modal: ConfirmModal } = useConfirmModal()
   const [loading, setLoading] = useState(true)
   const [oauthTokens, setOauthTokens] = useState<OAuthToken[]>([])
   const [oauthConfig, setOauthConfig] = useState<OAuthConfig | null>(null)
@@ -121,6 +123,50 @@ export default function SettingsTab() {
   useEffect(() => {
     fetchData()
   }, [])
+
+  // Real-time subscriptions for crm_statuses, oauth_tokens, and oauth_configs
+  useEffect(() => {
+    const channel = supabase
+      .channel("settings-tab-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "crm_statuses",
+        },
+        () => {
+          refetchStatuses()
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "crm_oauth_tokens",
+        },
+        () => {
+          fetchData()
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "crm_oauth_config",
+        },
+        () => {
+          fetchData()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [supabase, refetchStatuses])
 
   const fetchData = async () => {
     const [tokensRes, configRes, leadsRes, notesRes, eventsRes] = await Promise.all([
@@ -203,7 +249,14 @@ export default function SettingsTab() {
   }
 
   const handleDisconnect = async (provider: string) => {
-    if (!confirm(`Are you sure you want to disconnect ${provider}?`)) return
+    const confirmed = await showConfirm({
+      title: "Disconnect Account",
+      description: `Are you sure you want to disconnect ${provider}? You will need to reconnect to use calendar sync features.`,
+      confirmText: "Disconnect",
+      variant: "warning",
+      icon: "logout",
+    })
+    if (!confirmed) return
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -218,7 +271,14 @@ export default function SettingsTab() {
   }
 
   const handleDeleteConfig = async () => {
-    if (!confirm("Are you sure you want to remove the Google OAuth configuration? This will also disconnect any connected accounts.")) return
+    const confirmed = await showConfirm({
+      title: "Remove OAuth Configuration",
+      description: "Are you sure you want to remove the Google OAuth configuration? This will also disconnect any connected accounts.",
+      confirmText: "Remove",
+      variant: "danger",
+      icon: "delete",
+    })
+    if (!confirmed) return
 
     if (oauthConfig) {
       await supabase.from("crm_oauth_tokens").delete().eq("provider", "google")
@@ -313,7 +373,14 @@ export default function SettingsTab() {
   }
 
   const handleDeleteStatus = async (status: CRMStatus) => {
-    if (!confirm(`Are you sure you want to delete "${status.label}"? Leads with this status will keep the status value but it won't appear in dropdowns.`)) return
+    const confirmed = await showConfirm({
+      title: "Delete Status",
+      description: `Are you sure you want to delete "${status.label}"? Leads with this status will keep the status value but it won't appear in dropdowns.`,
+      confirmText: "Delete",
+      variant: "danger",
+      icon: "delete",
+    })
+    if (!confirmed) return
 
     setDeletingStatusId(status.id)
     try {
@@ -957,6 +1024,8 @@ export default function SettingsTab() {
           </div>
         </div>
       </div>
+
+      <ConfirmModal />
     </div>
   )
 }

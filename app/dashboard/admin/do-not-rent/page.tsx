@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { toast } from "sonner"
+import { ConfirmModal } from "@/components/ui/confirm-modal"
 import {
   Upload,
   Search,
@@ -76,6 +77,40 @@ export default function DoNotRentPage() {
     email: "",
     reason: "",
   })
+
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean
+    title: string
+    description: string
+    confirmText: string
+    variant: "danger" | "warning" | "info"
+    icon: "delete" | "suspend" | "warning" | "logout" | "info"
+    onConfirm: () => void
+    loading: boolean
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    confirmText: "Confirm",
+    variant: "danger",
+    icon: "warning",
+    onConfirm: () => {},
+    loading: false,
+  })
+
+  const showConfirm = (config: Omit<typeof confirmModal, "open" | "loading">) => {
+    setConfirmModal({ ...config, open: true, loading: false })
+  }
+
+  const closeConfirm = () => {
+    setConfirmModal(prev => ({ ...prev, open: false, loading: false }))
+  }
+
+  const handleConfirm = async () => {
+    setConfirmModal(prev => ({ ...prev, loading: true }))
+    await confirmModal.onConfirm()
+    closeConfirm()
+  }
 
   useEffect(() => {
     fetchEntries()
@@ -366,19 +401,32 @@ export default function DoNotRentPage() {
     fetchEntries()
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to remove this person from the Do Not Rent list?")) return
-
-    await supabase.from("do_not_rent_list").delete().eq("id", id)
-    fetchEntries()
+  const handleDelete = (id: string) => {
+    showConfirm({
+      title: "Remove Entry",
+      description: "Are you sure you want to remove this person from the Do Not Rent list?",
+      confirmText: "Remove",
+      variant: "danger",
+      icon: "delete",
+      onConfirm: async () => {
+        await supabase.from("do_not_rent_list").delete().eq("id", id)
+        fetchEntries()
+      },
+    })
   }
 
-  const handleClearAll = async () => {
-    if (!confirm("Are you sure you want to clear the ENTIRE Do Not Rent list? This cannot be undone.")) return
-    if (!confirm("This will delete ALL entries. Are you absolutely sure?")) return
-
-    await supabase.from("do_not_rent_list").delete().neq("id", "00000000-0000-0000-0000-000000000000")
-    fetchEntries()
+  const handleClearAll = () => {
+    showConfirm({
+      title: "Clear Entire List",
+      description: "Are you sure you want to clear the ENTIRE Do Not Rent list? This will delete ALL entries and cannot be undone.",
+      confirmText: "Clear All",
+      variant: "danger",
+      icon: "delete",
+      onConfirm: async () => {
+        await supabase.from("do_not_rent_list").delete().neq("id", "00000000-0000-0000-0000-000000000000")
+        fetchEntries()
+      },
+    })
   }
 
   const resetForm = () => {
@@ -839,6 +887,20 @@ export default function DoNotRentPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={confirmModal.open}
+        onOpenChange={(open) => {
+          if (!open) closeConfirm()
+        }}
+        title={confirmModal.title}
+        description={confirmModal.description}
+        confirmText={confirmModal.confirmText}
+        variant={confirmModal.variant}
+        icon={confirmModal.icon}
+        onConfirm={handleConfirm}
+        loading={confirmModal.loading}
+      />
     </div>
   )
 }

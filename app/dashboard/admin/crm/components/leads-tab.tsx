@@ -26,6 +26,7 @@ import { useCRMStatuses } from "../hooks/use-crm-statuses"
 import LeadDetailModal from "./lead-detail-modal"
 import LeadFormModal from "./lead-form-modal"
 import CSVImportModal from "./csv-import-modal"
+import { useConfirmModal } from "@/components/ui/confirm-modal"
 
 export interface CRMLead {
   id: string
@@ -58,6 +59,7 @@ type SortDirection = "asc" | "desc"
 export default function LeadsTab() {
   const supabase = createClient()
   const { statusOptions, getStatusColor, getStatusLabel, lostStatuses, wonStatuses } = useCRMStatuses()
+  const { confirm: showConfirm, Modal: ConfirmModal } = useConfirmModal()
   const [leads, setLeads] = useState<CRMLead[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -185,7 +187,14 @@ export default function LeadsTab() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this lead?")) return
+    const confirmed = await showConfirm({
+      title: "Delete Lead",
+      description: "Are you sure you want to delete this lead? This action cannot be undone.",
+      confirmText: "Delete",
+      variant: "danger",
+      icon: "delete",
+    })
+    if (!confirmed) return
     setLeads(leads.filter((l) => l.id !== id))
     setTotalCount(prev => prev - 1)
 
@@ -245,7 +254,14 @@ export default function LeadsTab() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return
-    if (!confirm(`Delete ${selectedIds.size} leads?`)) return
+    const confirmed = await showConfirm({
+      title: "Delete Multiple Leads",
+      description: `Are you sure you want to delete ${selectedIds.size} leads? This action cannot be undone.`,
+      confirmText: "Delete All",
+      variant: "danger",
+      icon: "delete",
+    })
+    if (!confirmed) return
 
     const idsToDelete = Array.from(selectedIds)
     const count = idsToDelete.length
@@ -687,6 +703,8 @@ export default function LeadsTab() {
           onImport={(count) => { fetchLeads(1, "", "all"); setCurrentPage(1); setSearch(""); setStatusFilter("all"); setMessage({ type: "success", text: `Imported ${count} leads` }) }}
         />
       )}
+
+      <ConfirmModal />
     </div>
   )
 }

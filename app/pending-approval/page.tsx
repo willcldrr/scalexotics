@@ -70,8 +70,8 @@ export default function PendingApprovalPage() {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center px-4">
         <div className="max-w-md w-full text-center">
-          <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-10 h-10 text-green-400" />
+          <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-6 ring-2 ring-white/20">
+            <CheckCircle className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-3xl font-bold mb-3" style={{ fontFamily: 'var(--font-display)' }}>
             You're Approved!
@@ -88,7 +88,7 @@ export default function PendingApprovalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black text-white flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center">
         <Link href="/" className="inline-block mb-8">
           <Image
@@ -101,60 +101,66 @@ export default function PendingApprovalPage() {
           />
         </Link>
 
-        <div className="w-20 h-20 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-6">
-          <Clock className="w-10 h-10 text-amber-400" />
+        {/* Clock icon with gradient ring */}
+        <div className="relative w-24 h-24 mx-auto mb-6">
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-white/5" />
+          <div className="absolute inset-[2px] rounded-full bg-black flex items-center justify-center">
+            <Clock className="w-10 h-10 text-white/80" />
+          </div>
         </div>
 
-        <h1 className="text-3xl font-bold mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+        <h1 className="text-3xl font-bold mb-3 bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent" style={{ fontFamily: 'var(--font-display)' }}>
           Pending Approval
         </h1>
 
-        <p className="text-lg text-white/60 mb-8">
+        <p className="text-lg text-white/50 mb-8">
           Your account is being reviewed by our team. You'll receive access once approved.
         </p>
 
-        <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 mb-8 text-left">
-          <h2 className="font-semibold mb-4">Account Details</h2>
+        <div className="bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 rounded-2xl p-6 mb-8 text-left backdrop-blur-sm">
+          <h2 className="font-semibold mb-4 text-white/90">Account Details</h2>
           <div className="space-y-3">
             {businessName && (
               <div className="flex justify-between">
-                <span className="text-white/50">Business</span>
-                <span>{businessName}</span>
+                <span className="text-white/40">Business</span>
+                <span className="text-white/80">{businessName}</span>
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-white/50">Email</span>
-              <span>{userEmail}</span>
+              <span className="text-white/40">Email</span>
+              <span className="text-white/80">{userEmail}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-white/50">Status</span>
-              <span className="text-amber-400 flex items-center gap-1">
-                <Clock className="w-4 h-4" />
+              <span className="text-white/40">Status</span>
+              <span className="text-white/70 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-white/50 animate-pulse" />
                 Pending Review
               </span>
             </div>
           </div>
         </div>
 
-        <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-8">
+        <div className="bg-gradient-to-br from-white/[0.06] to-transparent border border-white/10 rounded-xl p-4 mb-8">
           <div className="flex items-start gap-3">
-            <Mail className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+              <Mail className="w-4 h-4 text-white/70" />
+            </div>
             <div className="text-left">
-              <p className="text-sm text-blue-400 font-medium">What happens next?</p>
-              <p className="text-sm text-white/60 mt-1">
+              <p className="text-sm text-white/80 font-medium">What happens next?</p>
+              <p className="text-sm text-white/40 mt-1">
                 Our team typically reviews accounts within 24 hours. You'll be notified by email once your account is approved.
               </p>
             </div>
           </div>
         </div>
 
-        <p className="text-sm text-white/40 mb-6">
+        <p className="text-sm text-white/30 mb-6">
           This page will automatically update when your account is approved.
         </p>
 
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-2 mx-auto text-white/50 hover:text-white transition-colors"
+          className="flex items-center gap-2 mx-auto text-white/40 hover:text-white/80 transition-colors"
         >
           <LogOut className="w-4 h-4" />
           Sign out

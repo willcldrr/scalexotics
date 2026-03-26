@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import { toast } from "sonner"
+import { ConfirmModal } from "@/components/ui/confirm-modal"
 import {
   Users,
   Shield,
@@ -181,6 +182,41 @@ export default function AdminPage() {
   // Shared state
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean
+    title: string
+    description: string
+    confirmText: string
+    variant: "danger" | "warning" | "info"
+    icon: "delete" | "suspend" | "warning" | "logout" | "info"
+    onConfirm: () => void
+    loading: boolean
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    confirmText: "Confirm",
+    variant: "danger",
+    icon: "warning",
+    onConfirm: () => {},
+    loading: false,
+  })
+
+  const showConfirm = (config: Omit<typeof confirmModal, "open" | "loading">) => {
+    setConfirmModal({ ...config, open: true, loading: false })
+  }
+
+  const closeConfirm = () => {
+    setConfirmModal(prev => ({ ...prev, open: false, loading: false }))
+  }
+
+  const handleConfirm = async () => {
+    setConfirmModal(prev => ({ ...prev, loading: true }))
+    await confirmModal.onConfirm()
+    closeConfirm()
+  }
 
   useEffect(() => {
     checkAdminAndFetch()
@@ -377,21 +413,28 @@ export default function AdminPage() {
   }
 
   const handleDeny = async (businessId: string) => {
-    if (!confirm("Are you sure you want to deny this business? This will mark them as suspended.")) return
+    showConfirm({
+      title: "Suspend Business",
+      description: "Are you sure you want to deny this business? This will mark them as suspended and they will lose access to their dashboard.",
+      confirmText: "Suspend",
+      variant: "danger",
+      icon: "suspend",
+      onConfirm: async () => {
+        setSaving(true)
+        const { error } = await supabase
+          .from("businesses")
+          .update({ status: "suspended" })
+          .eq("id", businessId)
 
-    setSaving(true)
-    const { error } = await supabase
-      .from("businesses")
-      .update({ status: "suspended" })
-      .eq("id", businessId)
-
-    if (error) {
-      setMessage({ type: "error", text: "Failed to deny business" })
-    } else {
-      setMessage({ type: "success", text: "Business denied" })
-      fetchUsers()
-    }
-    setSaving(false)
+        if (error) {
+          setMessage({ type: "error", text: "Failed to deny business" })
+        } else {
+          setMessage({ type: "success", text: "Business denied" })
+          fetchUsers()
+        }
+        setSaving(false)
+      },
+    })
   }
 
   const handleUnsuspend = async (businessId: string) => {
@@ -411,22 +454,29 @@ export default function AdminPage() {
   }
 
   const handleDeleteUser = async (userId: string, businessId?: string) => {
-    if (!confirm("Are you sure you want to delete this user? This cannot be undone.")) return
+    showConfirm({
+      title: "Delete User",
+      description: "Are you sure you want to delete this user? This will permanently remove their account, business, and all associated data. This action cannot be undone.",
+      confirmText: "Delete User",
+      variant: "danger",
+      icon: "delete",
+      onConfirm: async () => {
+        // Delete business if exists
+        if (businessId) {
+          await supabase.from("businesses").delete().eq("id", businessId)
+        }
 
-    // Delete business if exists
-    if (businessId) {
-      await supabase.from("businesses").delete().eq("id", businessId)
-    }
+        // Note: We can't delete from auth.users via client, only from profiles
+        const { error } = await supabase.from("profiles").delete().eq("id", userId)
 
-    // Note: We can't delete from auth.users via client, only from profiles
-    const { error } = await supabase.from("profiles").delete().eq("id", userId)
-
-    if (error) {
-      setMessage({ type: "error", text: "Failed to delete user" })
-    } else {
-      setMessage({ type: "success", text: "User deleted" })
-      fetchUsers()
-    }
+        if (error) {
+          setMessage({ type: "error", text: "Failed to delete user" })
+        } else {
+          setMessage({ type: "success", text: "User deleted" })
+          fetchUsers()
+        }
+      },
+    })
   }
 
   const toggleAdmin = async (userId: string, currentlyAdmin: boolean) => {
@@ -478,51 +528,58 @@ export default function AdminPage() {
   }
 
   const handleImpersonate = async (userId: string) => {
-    if (!confirm("You are about to log in as this user. Continue?")) return
+    showConfirm({
+      title: "Impersonate User",
+      description: "You are about to log in as this user. You will be able to see and access their account as if you were them. Your admin session will be saved so you can return.",
+      confirmText: "Log In As User",
+      variant: "warning",
+      icon: "logout",
+      onConfirm: async () => {
+        setImpersonating(true)
+        try {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (!session?.access_token) {
+            setMessage({ type: "error", text: "Not authenticated" })
+            setImpersonating(false)
+            return
+          }
 
-    setImpersonating(true)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.access_token) {
-        setMessage({ type: "error", text: "Not authenticated" })
-        setImpersonating(false)
-        return
-      }
+          const response = await fetch("/api/admin/impersonate", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ userId }),
+          })
 
-      const response = await fetch("/api/admin/impersonate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ userId }),
-      })
+          const data = await response.json()
 
-      const data = await response.json()
+          if (!response.ok) {
+            setMessage({ type: "error", text: data.error || "Failed to impersonate user" })
+            setImpersonating(false)
+            return
+          }
 
-      if (!response.ok) {
-        setMessage({ type: "error", text: data.error || "Failed to impersonate user" })
-        setImpersonating(false)
-        return
-      }
+          // Store original admin session for returning later
+          localStorage.setItem("admin_return_token", session.access_token)
 
-      // Store original admin session for returning later
-      localStorage.setItem("admin_return_token", session.access_token)
+          // Set the new session
+          await supabase.auth.setSession({
+            access_token: data.access_token,
+            refresh_token: data.refresh_token,
+          })
 
-      // Set the new session
-      await supabase.auth.setSession({
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
-      })
-
-      // Redirect to dashboard
-      toast.success(`Now logged in as ${selectedUser?.full_name || selectedUser?.email}`)
-      window.location.href = "/dashboard"
-    } catch (error) {
-      console.error("Impersonation error:", error)
-      setMessage({ type: "error", text: "Failed to impersonate user" })
-      setImpersonating(false)
-    }
+          // Redirect to dashboard
+          toast.success(`Now logged in as ${selectedUser?.full_name || selectedUser?.email}`)
+          window.location.href = "/dashboard"
+        } catch (error) {
+          console.error("Impersonation error:", error)
+          setMessage({ type: "error", text: "Failed to impersonate user" })
+          setImpersonating(false)
+        }
+      },
+    })
   }
 
   const openUserSettings = (user: UserProfile) => {
@@ -595,9 +652,17 @@ export default function AdminPage() {
   }
 
   const handleDnrDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to remove this person from the Do Not Rent list?")) return
-    await supabase.from("do_not_rent_list").delete().eq("id", id)
-    fetchDnrEntries()
+    showConfirm({
+      title: "Remove Entry",
+      description: "Are you sure you want to remove this person from the Do Not Rent list?",
+      confirmText: "Remove",
+      variant: "danger",
+      icon: "delete",
+      onConfirm: async () => {
+        await supabase.from("do_not_rent_list").delete().eq("id", id)
+        fetchDnrEntries()
+      },
+    })
   }
 
   const resetDnrForm = () => {
@@ -833,14 +898,22 @@ export default function AdminPage() {
   }
 
   const deleteInvoice = async (invoiceId: string) => {
-    if (!confirm("Are you sure you want to delete this invoice?")) return
-    const { error } = await supabase.from("client_invoices").delete().eq("id", invoiceId)
-    if (error) {
-      setMessage({ type: "error", text: "Failed to delete invoice" })
-    } else {
-      setMessage({ type: "success", text: "Invoice deleted" })
-      fetchInvoices()
-    }
+    showConfirm({
+      title: "Delete Invoice",
+      description: "Are you sure you want to delete this invoice? This action cannot be undone.",
+      confirmText: "Delete Invoice",
+      variant: "danger",
+      icon: "delete",
+      onConfirm: async () => {
+        const { error } = await supabase.from("client_invoices").delete().eq("id", invoiceId)
+        if (error) {
+          setMessage({ type: "error", text: "Failed to delete invoice" })
+        } else {
+          setMessage({ type: "success", text: "Invoice deleted" })
+          fetchInvoices()
+        }
+      },
+    })
   }
 
   const invoiceStats = {
@@ -921,26 +994,33 @@ export default function AdminPage() {
   }
 
   const deleteDomain = async (domainId: string, domainName: string) => {
-    if (!confirm(`Are you sure you want to delete ${domainName}?`)) return
+    showConfirm({
+      title: "Delete Domain",
+      description: `Are you sure you want to delete ${domainName}? This will also remove it from Vercel and the domain will no longer work.`,
+      confirmText: "Delete Domain",
+      variant: "danger",
+      icon: "delete",
+      onConfirm: async () => {
+        setDeletingDomain(domainId)
+        const { data: { session } } = await supabase.auth.getSession()
 
-    setDeletingDomain(domainId)
-    const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.access_token) {
+          setDeletingDomain(null)
+          return
+        }
 
-    if (!session?.access_token) {
-      setDeletingDomain(null)
-      return
-    }
+        const response = await fetch(`/api/admin/domains?id=${domainId}&domain=${domainName}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
 
-    const response = await fetch(`/api/admin/domains?id=${domainId}&domain=${domainName}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${session.access_token}` },
+        if (response.ok) {
+          setDomains(domains.filter(d => d.id !== domainId))
+        }
+
+        setDeletingDomain(null)
+      },
     })
-
-    if (response.ok) {
-      setDomains(domains.filter(d => d.id !== domainId))
-    }
-
-    setDeletingDomain(null)
   }
 
   const copyDomainToken = (token: string) => {
@@ -2259,6 +2339,19 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        open={confirmModal.open}
+        onClose={closeConfirm}
+        onConfirm={handleConfirm}
+        title={confirmModal.title}
+        description={confirmModal.description}
+        confirmText={confirmModal.confirmText}
+        variant={confirmModal.variant}
+        icon={confirmModal.icon}
+        loading={confirmModal.loading}
+      />
     </div>
   )
 }

@@ -36,6 +36,7 @@ import {
 } from "date-fns"
 import { eventTypeOptions, getEventTypeColor, type CRMEventType } from "../lib/crm-status"
 import type { CRMLead } from "./leads-tab"
+import { useConfirmModal } from "@/components/ui/confirm-modal"
 
 interface CRMEvent {
   id: string
@@ -55,6 +56,7 @@ interface CRMEvent {
 
 export default function CalendarTab() {
   const supabase = createClient()
+  const { confirm: showConfirm, Modal: ConfirmModal } = useConfirmModal()
   const [events, setEvents] = useState<CRMEvent[]>([])
   const [leads, setLeads] = useState<CRMLead[]>([])
   const [loading, setLoading] = useState(true)
@@ -132,7 +134,14 @@ export default function CalendarTab() {
   }
 
   const handleDeleteEvent = async (eventId: string) => {
-    if (!confirm("Are you sure you want to delete this event?")) return
+    const confirmed = await showConfirm({
+      title: "Delete Event",
+      description: "Are you sure you want to delete this event? This action cannot be undone.",
+      confirmText: "Delete",
+      variant: "danger",
+      icon: "delete",
+    })
+    if (!confirmed) return
 
     await supabase.from("crm_events").delete().eq("id", eventId)
     setEvents((prev) => prev.filter((e) => e.id !== eventId))
@@ -299,6 +308,8 @@ export default function CalendarTab() {
             isGoogleConnected={isGoogleConnected}
           />
         )}
+
+        <ConfirmModal />
       </div>
     )
   }
@@ -447,6 +458,8 @@ export default function CalendarTab() {
           isGoogleConnected={isGoogleConnected}
         />
       )}
+
+      <ConfirmModal />
     </div>
   )
 }

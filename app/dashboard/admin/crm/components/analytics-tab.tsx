@@ -34,6 +34,26 @@ export default function AnalyticsTab() {
     fetchData()
   }, [])
 
+  // Real-time subscriptions for crm_leads, crm_notes, and crm_events
+  useEffect(() => {
+    const channel = supabase
+      .channel("crm-analytics-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "crm_leads" }, () => {
+        fetchData()
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "crm_notes" }, () => {
+        fetchData()
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "crm_events" }, () => {
+        fetchData()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
   const fetchData = async () => {
     // Supabase has a 1000 row default limit, so we need to fetch leads in batches
     const batchSize = 1000

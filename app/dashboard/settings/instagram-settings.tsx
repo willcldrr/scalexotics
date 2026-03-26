@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Instagram, Unlink, CheckCircle, AlertCircle, ArrowRight } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { ConfirmModal } from "@/components/ui/confirm-modal"
 
 interface InstagramConnection {
   id: string
@@ -20,6 +21,16 @@ export default function InstagramSettings() {
   const [disconnecting, setDisconnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean
+    title: string
+    message: string
+    onConfirm: () => void
+  }>({ open: false, title: "", message: "", onConfirm: () => {} })
+
+  const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmModal({ open: true, title, message, onConfirm })
+  }
 
   const supabase = createClient()
 
@@ -67,25 +78,29 @@ export default function InstagramSettings() {
     }
   }
 
-  const disconnect = async () => {
-    if (!confirm("Disconnect Instagram? Your AI will stop responding to DMs.")) return
+  const disconnect = () => {
+    showConfirm(
+      "Disconnect Instagram",
+      "Your AI will stop responding to DMs. Are you sure?",
+      async () => {
+        setDisconnecting(true)
+        try {
+          const { data: { user } } = await supabase.auth.getUser()
+          if (!user) return
 
-    setDisconnecting(true)
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+          await supabase
+            .from("instagram_connections")
+            .update({ is_active: false })
+            .eq("user_id", user.id)
 
-      await supabase
-        .from("instagram_connections")
-        .update({ is_active: false })
-        .eq("user_id", user.id)
-
-      setConnection(null)
-    } catch (err) {
-      console.error("Error disconnecting:", err)
-    } finally {
-      setDisconnecting(false)
-    }
+          setConnection(null)
+        } catch (err) {
+          console.error("Error disconnecting:", err)
+        } finally {
+          setDisconnecting(false)
+        }
+      }
+    )
   }
 
   if (loading) {
@@ -232,6 +247,16 @@ export default function InstagramSettings() {
           </p>
         </div>
       )}
+
+      <ConfirmModal
+        open={confirmModal.open}
+        onOpenChange={(open) => setConfirmModal((prev) => ({ ...prev, open }))}
+        title={confirmModal.title}
+        description={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmText="Disconnect"
+        variant="destructive"
+      />
     </div>
   )
 }

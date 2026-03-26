@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { createClient } from "@/lib/supabase/client"
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import {
@@ -50,6 +51,14 @@ export default function AdminInvoicesPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean
+    invoiceId: string
+  }>({ open: false, invoiceId: "" })
+
+  const showConfirm = (invoiceId: string) => {
+    setConfirmModal({ open: true, invoiceId })
+  }
 
   // New invoice state - B2B focused
   const [newInvoice, setNewInvoice] = useState({
@@ -226,8 +235,6 @@ export default function AdminInvoicesPage() {
   }
 
   const deleteInvoice = async (invoiceId: string) => {
-    if (!confirm("Are you sure you want to delete this invoice?")) return
-
     const { error } = await supabase
       .from("client_invoices")
       .delete()
@@ -453,7 +460,7 @@ export default function AdminInvoicesPage() {
                           </button>
                         )}
                         <button
-                          onClick={() => deleteInvoice(invoice.id)}
+                          onClick={() => showConfirm(invoice.id)}
                           className="p-2 text-white/50 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                           title="Delete invoice"
                         >
@@ -710,6 +717,22 @@ export default function AdminInvoicesPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        open={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, invoiceId: "" })}
+        onConfirm={() => {
+          deleteInvoice(confirmModal.invoiceId)
+          setConfirmModal({ open: false, invoiceId: "" })
+        }}
+        title="Delete Invoice"
+        description="Are you sure you want to delete this invoice?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        icon="delete"
+      />
 
       {/* Custom slider styles */}
       <style jsx>{`

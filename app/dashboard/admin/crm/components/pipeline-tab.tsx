@@ -11,6 +11,7 @@ import { type CRMLeadStatus } from "../lib/crm-status"
 import { useCRMStatuses, type CRMStatusOption } from "../hooks/use-crm-statuses"
 import type { CRMLead } from "./leads-tab"
 import LeadDetailModal from "./lead-detail-modal"
+import { useConfirmModal } from "@/components/ui/confirm-modal"
 
 // Pipeline Column Component - Memoized to prevent re-renders
 const PipelineColumn = memo(function PipelineColumn({
@@ -169,6 +170,7 @@ const PipelineCard = memo(function PipelineCard({
 export default function PipelineTab() {
   const supabase = createClient()
   const { statusOptions, pipelineStatuses, getStatusLabel, lostStatuses, wonStatuses } = useCRMStatuses()
+  const { confirm: showConfirm, Modal: ConfirmModal } = useConfirmModal()
   const [leads, setLeads] = useState<CRMLead[]>([])
   const [loading, setLoading] = useState(true)
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -293,7 +295,14 @@ export default function PipelineTab() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this lead?")) return
+    const confirmed = await showConfirm({
+      title: "Delete Lead",
+      description: "Are you sure you want to delete this lead? This action cannot be undone.",
+      confirmText: "Delete",
+      variant: "danger",
+      icon: "delete",
+    })
+    if (!confirmed) return
 
     await supabase.from("crm_leads").delete().eq("id", id)
     setLeads((prev) => prev.filter((l) => l.id !== id))
@@ -396,6 +405,8 @@ export default function PipelineTab() {
           onUpdate={fetchLeads}
         />
       )}
+
+      <ConfirmModal />
     </div>
   )
 }

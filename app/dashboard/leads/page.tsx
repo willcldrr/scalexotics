@@ -40,6 +40,7 @@ import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns"
 import { leadStatusOptions, getStatusColor, getStatusLabel, defaultLeadStatus } from "@/lib/lead-status"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import MatrixRainLoader from "@/app/components/matrix-rain-loader"
+import { ConfirmModal } from "@/components/ui/confirm-modal"
 
 interface Lead {
   id: string
@@ -155,6 +156,16 @@ export default function LeadsPage() {
   const [sendingPaymentLink, setSendingPaymentLink] = useState(false)
   const [paymentLinkSent, setPaymentLinkSent] = useState(false)
   const [paymentLinkError, setPaymentLinkError] = useState<string | null>(null)
+
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean
+    leadId: string | null
+  }>({ open: false, leadId: null })
+
+  const showConfirm = (leadId: string) => {
+    setConfirmModal({ open: true, leadId })
+  }
 
   // Check if a lead is on the do not rent list
   const isOnDoNotRentList = (lead: Lead): boolean => {
@@ -461,12 +472,17 @@ export default function LeadsPage() {
     fetchData()
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this lead?")) return
-    await supabase.from("leads").delete().eq("id", id)
-    if (selectedLead?.id === id) {
+  const handleDelete = (id: string) => {
+    showConfirm(id)
+  }
+
+  const confirmDelete = async () => {
+    if (!confirmModal.leadId) return
+    await supabase.from("leads").delete().eq("id", confirmModal.leadId)
+    if (selectedLead?.id === confirmModal.leadId) {
       setSelectedLead(null)
     }
+    setConfirmModal({ open: false, leadId: null })
     fetchData()
   }
 
@@ -2135,6 +2151,19 @@ export default function LeadsPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        open={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, leadId: null })}
+        onConfirm={confirmDelete}
+        title="Delete Lead"
+        description="Are you sure you want to delete this lead?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        icon="delete"
+      />
     </div>
   )
 }

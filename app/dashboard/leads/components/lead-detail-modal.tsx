@@ -16,6 +16,7 @@ import {
   ExternalLink,
 } from "lucide-react"
 import { leadStatusOptions, LeadStatus, getStatusColor, getStatusLabel } from "@/lib/lead-status"
+import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { formatDistanceToNow, format } from "date-fns"
 
 interface Lead {
@@ -59,6 +60,7 @@ export default function LeadDetailModal({
   const [notes, setNotes] = useState(lead.notes || "")
   const [savingNotes, setSavingNotes] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   useEffect(() => {
     fetchMessages()
@@ -97,11 +99,11 @@ export default function LeadDetailModal({
     setSavingNotes(false)
   }
 
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this lead? This cannot be undone.")) {
-      return
-    }
+  const handleDelete = () => {
+    setShowDeleteConfirm(true)
+  }
 
+  const confirmDelete = async () => {
     setDeleting(true)
     const { error } = await supabase.from("leads").delete().eq("id", lead.id)
 
@@ -109,6 +111,7 @@ export default function LeadDetailModal({
       onDelete(lead.id)
     }
     setDeleting(false)
+    setShowDeleteConfirm(false)
   }
 
   const initials = lead.name
@@ -348,6 +351,20 @@ export default function LeadDetailModal({
           </a>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Delete Lead"
+        description="Are you sure you want to delete this lead? This cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        icon="delete"
+        loading={deleting}
+      />
     </div>
   )
 }

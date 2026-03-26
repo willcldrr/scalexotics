@@ -1,7 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { createClient } from "@/lib/supabase/client"
+import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription"
 import {
   Globe,
   Search,
@@ -57,6 +59,51 @@ export default function AdminDomainsPage() {
   const [deleting, setDeleting] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copiedToken, setCopiedToken] = useState(false)
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean
+    domainId: string
+    domainName: string
+  }>({ open: false, domainId: "", domainName: "" })
+
+  const showConfirm = (domainId: string, domainName: string) => {
+    setConfirmModal({ open: true, domainId, domainName })
+  }
+
+  // Real-time subscription handlers
+  const handleDomainInsert = useCallback((payload: { new: CustomDomain }) => {
+    setDomains((prev) => {
+      // Check if domain already exists to prevent duplicates
+      if (prev.some((d) => d.id === payload.new.id)) {
+        return prev
+      }
+      return [payload.new, ...prev]
+    })
+  }, [])
+
+  const handleDomainUpdate = useCallback((payload: { new: CustomDomain }) => {
+    setDomains((prev) =>
+      prev.map((d) => (d.id === payload.new.id ? { ...d, ...payload.new } : d))
+    )
+    // Update selected domain if it's currently being viewed
+    setSelectedDomain((prev) =>
+      prev?.id === payload.new.id ? { ...prev, ...payload.new } : prev
+    )
+  }, [])
+
+  const handleDomainDelete = useCallback((payload: { old: { id: string } }) => {
+    setDomains((prev) => prev.filter((d) => d.id !== payload.old.id))
+    // Close modal if the deleted domain was selected
+    setSelectedDomain((prev) => (prev?.id === payload.old.id ? null : prev))
+  }, [])
+
+  // Subscribe to real-time updates for custom_domains table
+  useRealtimeSubscription<CustomDomain>({
+    table: "custom_domains",
+    enabled: isAdmin,
+    onInsert: handleDomainInsert,
+    onUpdate: handleDomainUpdate,
+    onDelete: handleDomainDelete,
+  })
 
   useEffect(() => {
     checkAdminAndFetch()
@@ -160,10 +207,6 @@ export default function AdminDomainsPage() {
   }
 
   const deleteDomain = async (domainId: string, domainName: string) => {
-    if (!confirm(`Are you sure you want to delete ${domainName}? This will also remove it from Vercel.`)) {
-      return
-    }
-
     setDeleting(domainId)
 
     const { data: { session } } = await supabase.auth.getSession()
@@ -377,7 +420,7 @@ export default function AdminDomainsPage() {
                         <ExternalLink className="w-5 h-5" />
                       </button>
                       <button
-                        onClick={() => deleteDomain(domain.id, domain.domain)}
+                        onClick={() => showConfirm(domain.id, domain.domain)}
                         disabled={deleting === domain.id}
                         className="p-2 rounded-lg hover:bg-red-500/20 text-white/60 hover:text-red-400 transition-colors"
                         title="Delete Domain"
@@ -499,6 +542,22 @@ export default function AdminDomainsPage() {
         </div>
       )}
 
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        open={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, domainId: "", domainName: "" })}
+        onConfirm={() => {
+          deleteDomain(confirmModal.domainId, confirmModal.domainName)
+          setConfirmModal({ open: false, domainId: "", domainName: "" })
+        }}
+        title="Delete Domain"
+        description={`Are you sure you want to delete ${confirmModal.domainName}? This will also remove it from Vercel.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        icon="delete"
+      />
+
       {/* Domain Details Modal */}
       {selectedDomain && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
@@ -589,7 +648,7 @@ export default function AdminDomainsPage() {
             </div>
             <div className="p-6 border-t border-white/10 flex justify-between">
               <button
-                onClick={() => deleteDomain(selectedDomain.id, selectedDomain.domain)}
+                onClick={() => showConfirm(selectedDomain.id, selectedDomain.domain)}
                 disabled={deleting === selectedDomain.id}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-red-400 hover:bg-red-500/20 transition-colors"
               >
