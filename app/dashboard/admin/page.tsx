@@ -241,9 +241,7 @@ export default function AdminPage() {
 
     const setupSubscriptions = () => {
       try {
-        console.log("[Admin Realtime] Setting up subscriptions...")
-
-    // Profiles subscription - no filter means admin sees ALL profiles
+    // Profiles subscription - backup for polling
     profilesChannel = supabase
       .channel("admin-profiles-realtime")
       .on(
@@ -251,25 +249,13 @@ export default function AdminPage() {
         { event: "INSERT", schema: "public", table: "profiles" },
         (payload: any) => {
           if (!mounted) return
-          console.log("[Realtime] Profile INSERT received:", payload.new?.email)
-
           const pendingBusiness = pendingBusinessesRef.current.get(payload.new.id)
           const newUser = { ...payload.new, business: pendingBusiness || null }
-
-          if (pendingBusiness) {
-            pendingBusinessesRef.current.delete(payload.new.id)
-          }
-
+          if (pendingBusiness) pendingBusinessesRef.current.delete(payload.new.id)
           setUsers(prev => {
             if (prev.some(u => u.id === payload.new.id)) return prev
             return [newUser, ...prev]
           })
-
-          if (pendingBusiness?.status === "pending") {
-            toast.info("New sign-up awaiting approval", {
-              description: payload.new.email || payload.new.full_name || "New user",
-            })
-          }
         }
       )
       .on(
@@ -277,7 +263,6 @@ export default function AdminPage() {
         { event: "UPDATE", schema: "public", table: "profiles" },
         (payload: any) => {
           if (!mounted) return
-          console.log("[Realtime] Profile UPDATE received")
           setUsers(prev => prev.map(u =>
             u.id === payload.new.id ? { ...u, ...payload.new } : u
           ))
@@ -288,16 +273,10 @@ export default function AdminPage() {
         { event: "DELETE", schema: "public", table: "profiles" },
         (payload: any) => {
           if (!mounted) return
-          console.log("[Realtime] Profile DELETE received")
           setUsers(prev => prev.filter(u => u.id !== payload.old.id))
         }
       )
-      .subscribe((status) => {
-        console.log("[Admin Realtime] Profiles channel status:", status)
-        if (status === "SUBSCRIBED") {
-          toast.success("Real-time connected", { description: "Profiles", duration: 2000 })
-        }
-      })
+      .subscribe()
 
     // Businesses subscription - for pending approvals
     businessesChannel = supabase
@@ -307,20 +286,10 @@ export default function AdminPage() {
         { event: "INSERT", schema: "public", table: "businesses" },
         (payload: any) => {
           if (!mounted) return
-          console.log("[Realtime] Business INSERT received:", payload.new?.name, "status:", payload.new?.status)
-
           if (!payload.new.owner_user_id) return
-
           setUsers(prev => {
             const userExists = prev.some(u => u.id === payload.new.owner_user_id)
-
             if (userExists) {
-              if (payload.new.status === "pending") {
-                const user = prev.find(u => u.id === payload.new.owner_user_id)
-                toast.info("New sign-up awaiting approval", {
-                  description: user?.email || payload.new.name || "New business",
-                })
-              }
               return prev.map(u =>
                 u.id === payload.new.owner_user_id ? { ...u, business: payload.new } : u
               )
@@ -336,7 +305,6 @@ export default function AdminPage() {
         { event: "UPDATE", schema: "public", table: "businesses" },
         (payload: any) => {
           if (!mounted) return
-          console.log("[Realtime] Business UPDATE received:", payload.new?.status)
           setUsers(prev => prev.map(u =>
             u.business?.id === payload.new.id
               ? { ...u, business: { ...u.business, ...payload.new } }
@@ -349,15 +317,12 @@ export default function AdminPage() {
         { event: "DELETE", schema: "public", table: "businesses" },
         (payload: any) => {
           if (!mounted) return
-          console.log("[Realtime] Business DELETE received")
           setUsers(prev => prev.map(u =>
             u.business?.id === payload.old.id ? { ...u, business: null } : u
           ))
         }
       )
-      .subscribe((status) => {
-        console.log("[Admin Realtime] Businesses channel status:", status)
-      })
+      .subscribe()
 
     // Do Not Rent subscription
     dnrChannel = supabase
@@ -453,7 +418,7 @@ export default function AdminPage() {
       .subscribe()
 
       } catch (err) {
-        console.error("[Admin Realtime] Error setting up subscriptions:", err)
+        // Silent fail - polling handles updates reliably
       }
     }
 
@@ -461,7 +426,6 @@ export default function AdminPage() {
 
     // Cleanup
     return () => {
-      console.log("[Admin Realtime] Cleaning up subscriptions...")
       mounted = false
       if (profilesChannel) supabase.removeChannel(profilesChannel)
       if (businessesChannel) supabase.removeChannel(businessesChannel)
@@ -471,33 +435,72 @@ export default function AdminPage() {
     }
   }, [isAdmin, supabase])
 
+  // ============================================
+  // POLLING FOR NEW USERS (Reliable fallback for realtime)
+  // ============================================
+  const seenUserIdsRef = useRef<Set<string>>(new Set())
+  const initialLoadRef = useRef(true)
+
+  useEffect(() => {
+    if (!isAdmin) return
+
+    // Initialize seen users with current users
+    if (users.length > 0 && initialLoadRef.current) {
+      seenUserIdsRef.current = new Set(users.map(u => u.id))
+      initialLoadRef.current = false
+    }
+
+    // Poll for new users every 3 seconds
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch("/api/admin/users")
+        if (!response.ok) return
+
+        const data = await response.json()
+        const freshUsers = data.users || []
+
+        // Check for new pending signups
+        for (const user of freshUsers) {
+          if (!seenUserIdsRef.current.has(user.id)) {
+            seenUserIdsRef.current.add(user.id)
+
+            // Show notification for new pending signups
+            if (user.business?.status === "pending") {
+              toast.info("New sign-up awaiting approval", {
+                description: user.email || user.company_name || "New user",
+                duration: 10000,
+              })
+            }
+          }
+        }
+
+        // Update users state
+        setUsers(freshUsers)
+      } catch (err) {
+        // Silent fail for polling
+      }
+    }, 3000)
+
+    return () => clearInterval(pollInterval)
+  }, [isAdmin, users.length])
+
   const checkAdminAndFetch = async () => {
     try {
       // Use the auth status API which uses service role (bypasses RLS)
       const authStatusRes = await fetch("/api/auth/status")
 
       if (!authStatusRes.ok) {
-        console.error("[Admin] Auth status API error:", authStatusRes.status)
         setLoading(false)
         return
       }
 
       const authStatus = await authStatusRes.json()
-      console.log("[Admin] Auth status:", authStatus)
 
-      if (!authStatus.authenticated) {
-        console.log("[Admin] Not authenticated")
+      if (!authStatus.authenticated || !authStatus.isAdmin) {
         setLoading(false)
         return
       }
 
-      if (!authStatus.isAdmin) {
-        console.log("[Admin] User is not admin")
-        setLoading(false)
-        return
-      }
-
-      console.log("[Admin] User is admin, fetching data...")
       setIsAdmin(true)
 
       await Promise.all([
@@ -509,7 +512,6 @@ export default function AdminPage() {
       ])
       setLoading(false)
     } catch (err) {
-      console.error("[Admin] Unexpected error:", err)
       setLoading(false)
     }
   }
@@ -523,15 +525,20 @@ export default function AdminPage() {
       // Use admin API which uses service role (bypasses RLS)
       const response = await fetch("/api/admin/users")
 
-      if (!response.ok) {
-        console.error("[Admin] Failed to fetch users:", response.status)
-        return
-      }
+      if (!response.ok) return
 
       const data = await response.json()
-      setUsers(data.users || [])
+      const freshUsers = data.users || []
+
+      // Initialize seen users on first fetch
+      if (initialLoadRef.current && freshUsers.length > 0) {
+        seenUserIdsRef.current = new Set(freshUsers.map((u: UserProfile) => u.id))
+        initialLoadRef.current = false
+      }
+
+      setUsers(freshUsers)
     } catch (err) {
-      console.error("[Admin] Error fetching users:", err)
+      // Silent fail
     }
   }
 
