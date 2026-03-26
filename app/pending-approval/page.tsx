@@ -23,31 +23,39 @@ export default function PendingApprovalPage() {
   }, [])
 
   const checkApprovalStatus = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+      // Use API endpoint with service role to bypass RLS
+      const response = await fetch("/api/business/status")
 
-    if (!user) {
-      router.push("/login")
-      return
-    }
+      if (!response.ok) {
+        if (response.status === 401) {
+          router.push("/login")
+          return
+        }
+        setChecking(false)
+        return
+      }
 
-    setUserEmail(user.email || "")
+      const data = await response.json()
 
-    // Check if user has an approved business
-    const { data: business } = await supabase
-      .from("businesses")
-      .select("name, status")
-      .eq("owner_user_id", user.id)
-      .single()
+      if (!data.business) {
+        // No business found, might need to complete signup
+        setChecking(false)
+        return
+      }
 
-    if (business) {
-      setBusinessName(business.name)
-      if (business.status === "active") {
+      setUserEmail(data.email || "")
+      setBusinessName(data.business.name)
+
+      if (data.business.status === "active") {
         setApproved(true)
         // Redirect to dashboard after a short delay to show success message
         setTimeout(() => {
           router.push("/dashboard")
         }, 2000)
       }
+    } catch (err) {
+      // Silent fail, will retry on next poll
     }
 
     setChecking(false)
