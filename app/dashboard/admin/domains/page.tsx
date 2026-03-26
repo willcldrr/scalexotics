@@ -100,9 +100,9 @@ export default function AdminDomainsPage() {
   useRealtimeSubscription<CustomDomain>({
     table: "custom_domains",
     enabled: isAdmin,
-    onInsert: handleDomainInsert,
-    onUpdate: handleDomainUpdate,
-    onDelete: handleDomainDelete,
+    onInsert: handleDomainInsert as any,
+    onUpdate: handleDomainUpdate as any,
+    onDelete: handleDomainDelete as any,
   })
 
   useEffect(() => {

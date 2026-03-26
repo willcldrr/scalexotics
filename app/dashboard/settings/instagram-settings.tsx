@@ -250,12 +250,12 @@ export default function InstagramSettings() {
 
       <ConfirmModal
         open={confirmModal.open}
-        onOpenChange={(open) => setConfirmModal((prev) => ({ ...prev, open }))}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, open: false }))}
         title={confirmModal.title}
         description={confirmModal.message}
         onConfirm={confirmModal.onConfirm}
         confirmText="Disconnect"
-        variant="destructive"
+        variant="danger"
       />
     </div>
   )

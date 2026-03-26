@@ -30,6 +30,9 @@ interface Vehicle {
   status: string
   daily_rate: number
   image_url: string | null
+  notes: string | null
+  turo_ical_url: string | null
+  last_turo_sync: string | null
   created_at: string
   user_id: string
 }
@@ -39,7 +42,7 @@ interface Booking {
   vehicle_id: string
   customer_name: string
   customer_email: string | null
-  customer_phone: string
+  customer_phone: string | null
   start_date: string
   end_date: string
   status: string
@@ -47,6 +50,7 @@ interface Booking {
   deposit_amount: number | null
   deposit_paid: boolean
   notes: string | null
+  lead_id: string | null
   created_at: string
   user_id: string
   vehicles?: Vehicle
@@ -164,12 +168,12 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
           .limit(500),
         supabase
           .from("vehicles")
-          .select("id, name, make, model, year, vin, license_plate, color, type, status, daily_rate, image_url, created_at, user_id")
+          .select("id, name, make, model, year, vin, license_plate, color, type, status, daily_rate, image_url, notes, turo_ical_url, last_turo_sync, created_at, user_id")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         supabase
           .from("bookings")
-          .select("id, vehicle_id, customer_name, customer_email, customer_phone, start_date, end_date, status, total_amount, deposit_amount, deposit_paid, notes, created_at, user_id, vehicles(id, name, make, model, year, image_url, daily_rate)")
+          .select("id, vehicle_id, customer_name, customer_email, customer_phone, start_date, end_date, status, total_amount, deposit_amount, deposit_paid, notes, lead_id, created_at, user_id, vehicles(id, name, make, model, year, image_url, daily_rate)")
           .eq("user_id", user.id)
           .order("start_date", { ascending: false })
           .limit(500),

@@ -129,7 +129,7 @@ export default function DoNotRentPage() {
     )
   }, [])
 
-  const handleDelete = useCallback((payload: { old: { id: string } }) => {
+  const handleRealtimeDelete = useCallback((payload: { old: { id: string } }) => {
     console.log("[Realtime] Do Not Rent entry deleted")
     setEntries(prev => prev.filter(e => e.id !== payload.old.id))
   }, [])
@@ -138,7 +138,7 @@ export default function DoNotRentPage() {
     table: "do_not_rent_list",
     onInsert: handleInsert as any,
     onUpdate: handleUpdate as any,
-    onDelete: handleDelete as any,
+    onDelete: handleRealtimeDelete as any,
   })
 
   const fetchEntries = async () => {
@@ -890,9 +890,7 @@ export default function DoNotRentPage() {
 
       <ConfirmModal
         open={confirmModal.open}
-        onOpenChange={(open) => {
-          if (!open) closeConfirm()
-        }}
+        onClose={closeConfirm}
         title={confirmModal.title}
         description={confirmModal.description}
         confirmText={confirmModal.confirmText}

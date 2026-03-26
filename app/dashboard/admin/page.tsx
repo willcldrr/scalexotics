@@ -564,6 +564,13 @@ export default function AdminPage() {
           // Store original admin session for returning later
           localStorage.setItem("admin_return_token", session.access_token)
 
+          // Store impersonated user info for the blue indicator bar
+          localStorage.setItem("impersonating_user", JSON.stringify({
+            id: data.user.id,
+            email: data.user.email,
+            name: selectedUser?.full_name || selectedUser?.email || data.user.email,
+          }))
+
           // Set the new session
           await supabase.auth.setSession({
             access_token: data.access_token,

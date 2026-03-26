@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useDashboardCache } from "@/lib/dashboard-cache"
 import { toast } from "sonner"
 import {
   Calendar as CalendarIcon,
@@ -152,10 +153,14 @@ const bookingStatusOptions = [
 
 export default function BookingsPage() {
   const supabase = createClient()
-  const [bookings, setBookings] = useState<Booking[]>([])
-  const [vehicles, setVehicles] = useState<Vehicle[]>([])
-  const [leads, setLeads] = useState<Lead[]>([])
-  const [loading, setLoading] = useState(true)
+
+  // Use the shared cache with real-time updates
+  const { data: cacheData, updateBooking, updateLead } = useDashboardCache()
+  const bookings = cacheData.bookings as Booking[]
+  const vehicles = cacheData.vehicles as Vehicle[]
+  const leads = cacheData.leads as Lead[]
+  const loading = cacheData.isLoading
+
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
 
@@ -188,41 +193,12 @@ export default function BookingsPage() {
     return map
   }, [vehicles])
 
-  useEffect(() => {
-    fetchData()
-  }, [])
-
+  // Fetch calendar events when vehicles load
   useEffect(() => {
     if (vehicles.length > 0) {
       fetchCalendarEvents()
     }
   }, [vehicles])
-
-  const fetchData = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const [bookingsRes, vehiclesRes, leadsRes] = await Promise.all([
-      supabase
-        .from("bookings")
-        .select("*, vehicles(*)")
-        .eq("user_id", user.id)
-        .order("start_date", { ascending: false }),
-      supabase
-        .from("vehicles")
-        .select("id, name, make, model, year, daily_rate, image_url")
-        .eq("user_id", user.id),
-      supabase
-        .from("leads")
-        .select("*")
-        .eq("user_id", user.id),
-    ])
-
-    if (bookingsRes.data) setBookings(bookingsRes.data)
-    if (vehiclesRes.data) setVehicles(vehiclesRes.data)
-    if (leadsRes.data) setLeads(leadsRes.data)
-    setLoading(false)
-  }
 
   const fetchCalendarEvents = async () => {
     setLoadingEvents(true)
@@ -316,7 +292,7 @@ export default function BookingsPage() {
   }
 
   // Update booking status
-  const updateBookingStatus = async (newStatus: string) => {
+  const updateBookingStatusHandler = async (newStatus: string) => {
     if (!selectedRental?.booking) return
     setUpdatingBooking(true)
 
@@ -330,16 +306,15 @@ export default function BookingsPage() {
         ...selectedRental,
         booking: { ...selectedRental.booking, status: newStatus as Booking["status"] }
       })
-      setBookings(bookings.map(b =>
-        b.id === selectedRental.booking!.id ? { ...b, status: newStatus as Booking["status"] } : b
-      ))
+      // Update via cache for real-time sync across tabs
+      updateBooking(selectedRental.booking.id, { status: newStatus as Booking["status"] })
     }
     setUpdatingBooking(false)
     setShowBookingStatusDropdown(false)
   }
 
   // Update lead status
-  const updateLeadStatus = async (newStatus: string) => {
+  const updateLeadStatusHandler = async (newStatus: string) => {
     if (!matchedLead) return
     setUpdatingLead(true)
 
@@ -350,9 +325,8 @@ export default function BookingsPage() {
 
     if (!error) {
       setMatchedLead({ ...matchedLead, status: newStatus })
-      setLeads(leads.map(l =>
-        l.id === matchedLead.id ? { ...l, status: newStatus } : l
-      ))
+      // Update via cache for real-time sync across tabs
+      updateLead(matchedLead.id, { status: newStatus })
     }
     setUpdatingLead(false)
     setShowLeadStatusDropdown(false)
@@ -373,9 +347,8 @@ export default function BookingsPage() {
         ...selectedRental,
         booking: { ...selectedRental.booking, deposit_paid: newValue }
       })
-      setBookings(bookings.map(b =>
-        b.id === selectedRental.booking!.id ? { ...b, deposit_paid: newValue } : b
-      ))
+      // Update via cache for real-time sync across tabs
+      updateBooking(selectedRental.booking.id, { deposit_paid: newValue })
     }
   }
 
@@ -825,7 +798,7 @@ export default function BookingsPage() {
                             {bookingStatusOptions.map((status) => (
                               <button
                                 key={status.value}
-                                onClick={() => updateBookingStatus(status.value)}
+                                onClick={() => updateBookingStatusHandler(status.value)}
                                 className={`w-full px-3 py-2 text-left text-xs hover:bg-white/5 transition-colors flex items-center gap-2 ${
                                   selectedRental.booking?.status === status.value ? "bg-white/5" : ""
                                 }`}
@@ -913,7 +886,7 @@ export default function BookingsPage() {
                               {leadStatusOptions.map((status) => (
                                 <button
                                   key={status.value}
-                                  onClick={() => updateLeadStatus(status.value)}
+                                  onClick={() => updateLeadStatusHandler(status.value)}
                                   className={`w-full px-3 py-2 text-left text-sm hover:bg-white/5 transition-colors flex items-center gap-2 ${
                                     matchedLead.status === status.value ? "bg-white/5" : ""
                                   }`}

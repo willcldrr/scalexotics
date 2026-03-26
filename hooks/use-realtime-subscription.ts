@@ -6,7 +6,7 @@ import type { RealtimeChannel, RealtimePostgresChangesPayload } from "@supabase/
 
 type PostgresChangeEvent = "INSERT" | "UPDATE" | "DELETE" | "*"
 
-interface UseRealtimeSubscriptionOptions<T extends Record<string, unknown>> {
+interface UseRealtimeSubscriptionOptions<T extends object> {
   /** The database table to subscribe to */
   table: string
   /** Database schema (defaults to "public") */
@@ -45,7 +45,7 @@ interface UseRealtimeSubscriptionOptions<T extends Record<string, unknown>> {
  * })
  * ```
  */
-export function useRealtimeSubscription<T extends Record<string, unknown>>({
+export function useRealtimeSubscription<T extends object>({
   table,
   schema = "public",
   event = "*",
@@ -122,9 +122,9 @@ export function useRealtimeSubscription<T extends Record<string, unknown>>({
     const channel = supabase
       .channel(channelName)
       .on(
-        "postgres_changes",
-        channelConfig,
-        handleChange as (payload: RealtimePostgresChangesPayload<{ [key: string]: unknown }>) => void
+        "postgres_changes" as any,
+        channelConfig as any,
+        handleChange as any
       )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {

@@ -58,6 +58,7 @@ export default function DashboardLayout({
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
   const [sidebarSettings, setSidebarSettings] = useState<SidebarSettings>(getDefaultSidebarSettings())
+  const [impersonatingUser, setImpersonatingUser] = useState<{ id: string; email: string; name: string } | null>(null)
 
   // Sidebar is always collapsed on desktop, expanded on mobile
   const isExpanded = false
@@ -80,6 +81,16 @@ export default function DashboardLayout({
 
     // Load sidebar settings
     setSidebarSettings(getSidebarSettings())
+
+    // Check if we're impersonating a user
+    const impersonatingData = localStorage.getItem("impersonating_user")
+    if (impersonatingData) {
+      try {
+        setImpersonatingUser(JSON.parse(impersonatingData))
+      } catch {
+        // Invalid data, ignore
+      }
+    }
 
     // Listen for settings changes
     const handleSettingsChange = (e: CustomEvent<SidebarSettings>) => {
@@ -185,10 +196,32 @@ export default function DashboardLayout({
 
   const handleSignOut = useCallback(async () => {
     localStorage.removeItem(SESSION_TOKEN_KEY)
+    localStorage.removeItem("impersonating_user")
+    localStorage.removeItem("admin_return_token")
     await supabase.auth.signOut()
     router.push("/login")
     router.refresh()
   }, [supabase, router])
+
+  const exitImpersonation = useCallback(async () => {
+    const adminToken = localStorage.getItem("admin_return_token")
+    if (!adminToken) {
+      // No admin token, just sign out
+      handleSignOut()
+      return
+    }
+
+    // Clear impersonation data
+    localStorage.removeItem("impersonating_user")
+    localStorage.removeItem("admin_return_token")
+
+    // Sign out current session and redirect to admin page
+    await supabase.auth.signOut()
+
+    // Redirect to login - admin will need to log back in
+    // (A more seamless approach would require storing the full admin session)
+    window.location.href = "/login"
+  }, [supabase, handleSignOut])
 
   // Prefetch critical routes on mount for faster navigation
   useEffect(() => {
@@ -230,7 +263,22 @@ export default function DashboardLayout({
   // This can be enabled in a future release by creating sessions on login and validating them here
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className={`min-h-screen bg-black text-white ${impersonatingUser ? "ring-4 ring-inset ring-blue-500" : ""}`}>
+      {/* Admin impersonation indicator bar */}
+      {impersonatingUser && (
+        <div className="fixed top-0 left-0 right-0 z-[100] bg-blue-600 text-white text-center py-1.5 px-4 flex items-center justify-center gap-3">
+          <span className="text-sm font-medium">
+            Logged in as: <span className="font-bold">{impersonatingUser.name}</span>
+          </span>
+          <button
+            onClick={exitImpersonation}
+            className="px-3 py-0.5 bg-white/20 hover:bg-white/30 rounded text-xs font-medium transition-colors"
+          >
+            Exit
+          </button>
+        </div>
+      )}
+
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div

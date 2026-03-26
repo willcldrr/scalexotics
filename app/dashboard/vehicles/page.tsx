@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useDashboardCache } from "@/lib/dashboard-cache"
 import { toast } from "sonner"
 import {
   Plus,
@@ -59,8 +60,12 @@ const statusOptions = [
 export default function VehiclesPage() {
   const supabase = createClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [vehicles, setVehicles] = useState<Vehicle[]>([])
-  const [loading, setLoading] = useState(true)
+
+  // Use the shared cache with real-time updates
+  const { data: cacheData, addVehicle, updateVehicle, removeVehicle } = useDashboardCache()
+  const vehicles = cacheData.vehicles as Vehicle[]
+  const loading = cacheData.isLoading
+
   const [search, setSearch] = useState("")
   const [showModal, setShowModal] = useState(false)
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null)
@@ -84,30 +89,14 @@ export default function VehiclesPage() {
     turo_ical_url: "",
   })
 
+  // Get user ID on mount
   useEffect(() => {
-    fetchVehicles()
-  }, [])
-
-  const fetchVehicles = async () => {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      setLoading(false)
-      return
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) setUserId(user.id)
     }
-    setUserId(user.id)
-
-    const { data, error } = await supabase
-      .from("vehicles")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-
-    if (!error && data) {
-      setVehicles(data)
-    }
-    setLoading(false)
-  }
+    getUser()
+  }, [supabase])
 
   const filteredVehicles = vehicles.filter((vehicle) => {
     return vehicle.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -173,12 +162,14 @@ export default function VehiclesPage() {
     if (editingVehicle) {
       const { error } = await supabase.from("vehicles").update(vehicleData).eq("id", editingVehicle.id)
       if (!error) {
-        setVehicles(vehicles.map((v) => v.id === editingVehicle.id ? { ...v, ...vehicleData } : v))
+        // Optimistic update via cache - real-time will also update across tabs
+        updateVehicle(editingVehicle.id, vehicleData as any)
       }
     } else {
       const { data, error } = await supabase.from("vehicles").insert(vehicleData).select().single()
       if (!error && data) {
-        setVehicles([data, ...vehicles])
+        // Optimistic update via cache - real-time will also update across tabs
+        addVehicle(data as any)
       }
     }
     setSaving(false)
@@ -189,7 +180,8 @@ export default function VehiclesPage() {
     setDeleting(id)
     const { error } = await supabase.from("vehicles").delete().eq("id", id)
     if (!error) {
-      setVehicles(vehicles.filter((v) => v.id !== id))
+      // Optimistic update via cache - real-time will also update across tabs
+      removeVehicle(id)
     }
     setDeleting(null)
     setDeleteConfirm(null)
@@ -209,7 +201,8 @@ export default function VehiclesPage() {
       })
       const data = await res.json()
       if (data.success) {
-        setVehicles(vehicles.map(v => v.id === vehicleId ? { ...v, last_turo_sync: new Date().toISOString() } : v))
+        // Update via cache for real-time sync
+        updateVehicle(vehicleId, { last_turo_sync: new Date().toISOString() } as any)
       }
     } catch (error) {
       console.error("Sync error:", error)

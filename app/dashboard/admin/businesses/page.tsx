@@ -133,7 +133,7 @@ export default function AdminBusinessesPage() {
     )
   }, [])
 
-  const handleDelete = useCallback((payload: { old: { id: string } }) => {
+  const handleRealtimeDelete = useCallback((payload: { old: { id: string } }) => {
     console.log("[Realtime] Business deleted")
     setBusinesses(prev => prev.filter(b => b.id !== payload.old.id))
   }, [])
@@ -142,7 +142,7 @@ export default function AdminBusinessesPage() {
     table: "businesses",
     onInsert: handleInsert as any,
     onUpdate: handleUpdate as any,
-    onDelete: handleDelete as any,
+    onDelete: handleRealtimeDelete as any,
   })
 
   const fetchBusinesses = async () => {
@@ -862,9 +862,7 @@ export default function AdminBusinessesPage() {
 
       <ConfirmModal
         open={confirmModal.open}
-        onOpenChange={(open) => {
-          if (!open) closeConfirm()
-        }}
+        onClose={closeConfirm}
         title={confirmModal.title}
         description={confirmModal.description}
         confirmText={confirmModal.confirmText}
