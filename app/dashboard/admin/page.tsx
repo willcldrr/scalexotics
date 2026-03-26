@@ -1038,12 +1038,12 @@ export default function AdminPage() {
 
   const getDomainStatusBadge = (domain: CustomDomain) => {
     if (domain.verified && domain.ssl_status === "active") {
-      return { icon: CheckCircle, label: "Active", color: "bg-green-500/20 text-green-400" }
+      return { icon: CheckCircle, label: "Active", color: "bg-white/10 text-white/70" }
     }
     if (domain.ssl_status === "added_to_vercel") {
-      return { icon: Clock, label: "Pending DNS", color: "bg-yellow-500/20 text-yellow-400" }
+      return { icon: Clock, label: "Pending DNS", color: "bg-white/10 text-white/60" }
     }
-    return { icon: AlertCircle, label: "Pending", color: "bg-orange-500/20 text-orange-400" }
+    return { icon: AlertCircle, label: "Pending", color: "bg-white/10 text-white/50" }
   }
 
   const filteredDomains = domains.filter(domain =>
@@ -1152,21 +1152,21 @@ export default function AdminPage() {
         <div className="space-y-6">
           {/* Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-              <div className="text-white/50 text-sm">Total Users</div>
+            <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-4">
+              <div className="text-white/40 text-sm">Total Users</div>
               <div className="text-2xl font-bold mt-1">{users.length}</div>
             </div>
-            <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-              <div className="text-white/50 text-sm">Pending Approval</div>
-              <div className="text-2xl font-bold mt-1 text-amber-400">{pendingUsers.length}</div>
+            <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-4">
+              <div className="text-white/40 text-sm">Pending Approval</div>
+              <div className="text-2xl font-bold mt-1">{pendingUsers.length}</div>
             </div>
-            <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-              <div className="text-white/50 text-sm">Active</div>
-              <div className="text-2xl font-bold mt-1 text-green-400">{users.filter(u => u.business?.status === "active").length}</div>
+            <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-4">
+              <div className="text-white/40 text-sm">Active</div>
+              <div className="text-2xl font-bold mt-1">{users.filter(u => u.business?.status === "active").length}</div>
             </div>
-            <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-              <div className="text-white/50 text-sm">Admins</div>
-              <div className="text-2xl font-bold mt-1 text-purple-400">{users.filter(u => u.is_admin).length}</div>
+            <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-4">
+              <div className="text-white/40 text-sm">Admins</div>
+              <div className="text-2xl font-bold mt-1">{users.filter(u => u.is_admin).length}</div>
             </div>
           </div>
 
@@ -1199,25 +1199,15 @@ export default function AdminPage() {
                       key={user.id}
                       className={`p-4 transition-colors flex items-center justify-between ${
                         isSuspended
-                          ? "bg-red-500/5 opacity-60"
+                          ? "bg-white/[0.01] opacity-50"
                           : "hover:bg-white/[0.02]"
                       }`}
                     >
                       <div className="flex items-center gap-4">
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                          user.is_admin ? "bg-purple-500/20" :
-                          user.business?.status === "pending" ? "bg-amber-500/20" :
-                          user.business?.status === "active" ? "bg-green-500/20" :
-                          isSuspended ? "bg-red-500/20" :
-                          "bg-white/10"
+                          isSuspended ? "bg-white/5" : "bg-white/10"
                         }`}>
-                          <User className={`w-6 h-6 ${
-                            user.is_admin ? "text-purple-400" :
-                            user.business?.status === "pending" ? "text-amber-400" :
-                            user.business?.status === "active" ? "text-green-400" :
-                            isSuspended ? "text-red-400" :
-                            "text-white/60"
-                          }`} />
+                          <User className={`w-6 h-6 ${isSuspended ? "text-white/30" : "text-white/60"}`} />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
@@ -1225,15 +1215,15 @@ export default function AdminPage() {
                               {user.full_name || user.email?.split("@")[0] || "Unknown"}
                             </p>
                             {user.is_admin && (
-                              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">
+                              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-white/10 text-white/70">
                                 Admin
                               </span>
                             )}
                             {user.business && (
                               <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                user.business.status === "pending" ? "bg-amber-500/20 text-amber-400" :
-                                user.business.status === "active" ? "bg-green-500/20 text-green-400" :
-                                "bg-red-500/20 text-red-400"
+                                user.business.status === "pending" ? "bg-white/10 text-white/70" :
+                                user.business.status === "active" ? "bg-white/10 text-white/70" :
+                                "bg-white/5 text-white/40"
                               }`}>
                                 {user.business.status}
                               </span>
@@ -1255,19 +1245,19 @@ export default function AdminPage() {
                             <button
                               onClick={() => user.business && handleApprove(user.business.id)}
                               disabled={saving}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                              className="flex items-center gap-1.5 px-2.5 py-1 bg-green-500 hover:bg-green-400 text-white text-xs font-medium rounded-md transition-all disabled:opacity-50 shadow-[0_0_12px_rgba(34,197,94,0.5)] hover:shadow-[0_0_20px_rgba(34,197,94,0.7)]"
                               title="Approve"
                             >
-                              <CheckCircle className="w-4 h-4" />
+                              <CheckCircle className="w-3.5 h-3.5" />
                               <span className="hidden sm:inline">Approve</span>
                             </button>
                             <button
                               onClick={() => user.business && handleDeny(user.business.id)}
                               disabled={saving}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                              className="flex items-center gap-1.5 px-2.5 py-1 bg-red-500 hover:bg-red-400 text-white text-xs font-medium rounded-md transition-all disabled:opacity-50 shadow-[0_0_12px_rgba(239,68,68,0.5)] hover:shadow-[0_0_20px_rgba(239,68,68,0.7)]"
                               title="Deny"
                             >
-                              <XCircle className="w-4 h-4" />
+                              <XCircle className="w-3.5 h-3.5" />
                               <span className="hidden sm:inline">Deny</span>
                             </button>
                           </>
@@ -1278,18 +1268,18 @@ export default function AdminPage() {
                             <button
                               onClick={() => user.business && handleUnsuspend(user.business.id)}
                               disabled={saving}
-                              className="p-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-400 transition-colors disabled:opacity-50"
+                              className="p-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white/70 transition-colors disabled:opacity-50"
                               title="Unsuspend Account"
                             >
-                              <Check className="w-4 h-4" />
+                              <Check className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeleteUser(user.id, user.business?.id)}
                               disabled={saving}
-                              className="p-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-colors disabled:opacity-50"
+                              className="p-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white/70 transition-colors disabled:opacity-50"
                               title="Delete Account Permanently"
                             >
-                              <X className="w-4 h-4" />
+                              <X className="w-3.5 h-3.5" />
                             </button>
                           </>
                         )}
@@ -1322,8 +1312,8 @@ export default function AdminPage() {
           {/* Header with actions */}
           <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center">
-                <Shield className="w-6 h-6 text-red-400" />
+              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
+                <Shield className="w-6 h-6 text-white/70" />
               </div>
               <div>
                 <p className="text-sm text-white/50">Total Entries</p>
@@ -1340,7 +1330,7 @@ export default function AdminPage() {
               />
               <button
                 onClick={() => dnrFileInputRef.current?.click()}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white font-medium rounded-xl transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-white font-medium rounded-xl transition-colors"
               >
                 <Upload className="w-4 h-4" />
                 Import CSV
@@ -1351,7 +1341,7 @@ export default function AdminPage() {
                   setEditingDnrEntry(null)
                   setShowDnrAddModal(true)
                 }}
-                className="flex items-center gap-2 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-white/90 text-black font-semibold rounded-xl transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Add Entry
@@ -1367,12 +1357,12 @@ export default function AdminPage() {
               placeholder="Search by name, state, or ID..."
               value={dnrSearch}
               onChange={(e) => setDnrSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/40 focus:outline-none focus:border-red-500/50 transition-colors"
+              className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white placeholder:text-white/40 focus:outline-none focus:border-white/20 transition-colors"
             />
           </div>
 
           {/* Entries list */}
-          <div className="bg-black rounded-2xl border border-white/[0.08] shadow-[0_0_15px_rgba(255,255,255,0.03)] overflow-hidden">
+          <div className="bg-black rounded-2xl border border-white/[0.06] overflow-hidden">
             {filteredDnrEntries.length === 0 ? (
               <div className="py-16 text-center">
                 <AlertTriangle className="w-12 h-12 text-white/20 mx-auto mb-4" />
@@ -1401,10 +1391,10 @@ export default function AdminPage() {
                       <tr key={entry.id} className="hover:bg-white/[0.02] transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-red-500/20 flex items-center justify-center">
-                              <User className="w-4 h-4 text-red-400" />
+                            <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
+                              <User className="w-4 h-4 text-white/60" />
                             </div>
-                            <span className="font-medium text-red-400">{entry.full_name}</span>
+                            <span className="font-medium">{entry.full_name}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-white/60">
@@ -1456,26 +1446,26 @@ export default function AdminPage() {
 
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-              <div className="text-white/50 text-sm">Total Invoices</div>
+            <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-4">
+              <div className="text-white/40 text-sm">Total Invoices</div>
               <div className="text-2xl font-bold mt-1">{invoiceStats.total}</div>
             </div>
-            <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-              <div className="text-white/50 text-sm">Pending</div>
-              <div className="text-2xl font-bold mt-1 text-yellow-400">{invoiceStats.pending}</div>
+            <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-4">
+              <div className="text-white/40 text-sm">Pending</div>
+              <div className="text-2xl font-bold mt-1">{invoiceStats.pending}</div>
             </div>
-            <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-              <div className="text-white/50 text-sm">Paid</div>
-              <div className="text-2xl font-bold mt-1 text-green-400">{invoiceStats.paid}</div>
+            <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-4">
+              <div className="text-white/40 text-sm">Paid</div>
+              <div className="text-2xl font-bold mt-1">{invoiceStats.paid}</div>
             </div>
-            <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-              <div className="text-white/50 text-sm">Total Revenue</div>
-              <div className="text-2xl font-bold mt-1 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">{formatCurrency(invoiceStats.revenue)}</div>
+            <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] p-4">
+              <div className="text-white/40 text-sm">Total Revenue</div>
+              <div className="text-2xl font-bold mt-1">{formatCurrency(invoiceStats.revenue)}</div>
             </div>
           </div>
 
           {/* Invoices List */}
-          <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+          <div className="bg-white/[0.02] rounded-xl border border-white/[0.06] overflow-hidden">
             {invoices.length === 0 ? (
               <div className="text-center py-12 text-white/50">
                 <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -1505,9 +1495,9 @@ export default function AdminPage() {
                         <td className="px-4 py-3 font-medium">{formatCurrency(invoice.total_amount)}</td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                            invoice.status === "paid" ? "bg-green-500/20 text-green-400" :
-                            invoice.status === "cancelled" ? "bg-red-500/20 text-red-400" :
-                            "bg-yellow-500/20 text-yellow-400"
+                            invoice.status === "paid" ? "bg-white/10 text-white/70" :
+                            invoice.status === "cancelled" ? "bg-white/5 text-white/40" :
+                            "bg-white/10 text-white/70"
                           }`}>
                             {invoice.status === "paid" && <CheckCircle className="w-3 h-3" />}
                             {invoice.status === "cancelled" && <XCircle className="w-3 h-3" />}
@@ -1523,7 +1513,7 @@ export default function AdminPage() {
                               className="p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                               title="Copy payment link"
                             >
-                              {copiedInvoiceId === invoice.id ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                              {copiedInvoiceId === invoice.id ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4" />}
                             </button>
                             <a
                               href={`/pay/${invoice.id}`}
@@ -1536,7 +1526,7 @@ export default function AdminPage() {
                             {invoice.status === "pending" && (
                               <button
                                 onClick={() => updateInvoiceStatus(invoice.id, "paid")}
-                                className="p-2 text-white/50 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-colors"
+                                className="p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                                 title="Mark as paid"
                               >
                                 <CheckCircle className="w-4 h-4" />
@@ -1544,7 +1534,7 @@ export default function AdminPage() {
                             )}
                             <button
                               onClick={() => deleteInvoice(invoice.id)}
-                              className="p-2 text-white/50 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                              className="p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -1577,35 +1567,35 @@ export default function AdminPage() {
 
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white/5 rounded-2xl border border-white/10 p-5">
+            <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] p-5">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                  <Globe className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                  <Globe className="w-5 h-5 text-white/70" />
                 </div>
                 <div>
-                  <p className="text-sm text-white/50">Total Domains</p>
+                  <p className="text-sm text-white/40">Total Domains</p>
                   <p className="text-2xl font-bold">{domains.length}</p>
                 </div>
               </div>
             </div>
-            <div className="bg-white/5 rounded-2xl border border-white/10 p-5">
+            <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] p-5">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-white/70" />
                 </div>
                 <div>
-                  <p className="text-sm text-white/50">Active</p>
+                  <p className="text-sm text-white/40">Active</p>
                   <p className="text-2xl font-bold">{domains.filter(d => d.verified && d.ssl_status === "active").length}</p>
                 </div>
               </div>
             </div>
-            <div className="bg-white/5 rounded-2xl border border-white/10 p-5">
+            <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] p-5">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-yellow-400" />
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-white/70" />
                 </div>
                 <div>
-                  <p className="text-sm text-white/50">Pending Setup</p>
+                  <p className="text-sm text-white/40">Pending Setup</p>
                   <p className="text-2xl font-bold">{domains.filter(d => !d.verified || d.ssl_status !== "active").length}</p>
                 </div>
               </div>
@@ -1620,12 +1610,12 @@ export default function AdminPage() {
               placeholder="Search domains..."
               value={domainSearch}
               onChange={(e) => setDomainSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white placeholder:text-white/30 focus:outline-none focus:border-white/20"
             />
           </div>
 
           {/* Domain List */}
-          <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+          <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] overflow-hidden">
             {filteredDomains.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-white/40">
                 <Globe className="w-12 h-12 mb-3" />
@@ -1636,10 +1626,10 @@ export default function AdminPage() {
                 {filteredDomains.map((domain) => {
                   const status = getDomainStatusBadge(domain)
                   return (
-                    <div key={domain.id} className="p-4 hover:bg-white/5 transition-colors">
+                    <div key={domain.id} className="p-4 hover:bg-white/[0.03] transition-colors">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                          <Globe className="w-6 h-6 text-white" />
+                        <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                          <Globe className="w-6 h-6 text-white/70" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
