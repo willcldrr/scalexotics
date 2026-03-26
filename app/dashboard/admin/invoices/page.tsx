@@ -110,27 +110,29 @@ export default function AdminInvoicesPage() {
   })
 
   const checkAdminAndFetch = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+      // Use the auth status API which uses service role (bypasses RLS)
+      const authStatusRes = await fetch("/api/auth/status")
 
-    if (!user) {
+      if (!authStatusRes.ok) {
+        setLoading(false)
+        return
+      }
+
+      const authStatus = await authStatusRes.json()
+
+      if (!authStatus.authenticated || !authStatus.isAdmin) {
+        setLoading(false)
+        return
+      }
+
+      setIsAdmin(true)
+      await fetchInvoices()
       setLoading(false)
-      return
-    }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", user.id)
-      .single()
-
-    if (!profile?.is_admin) {
+    } catch (err) {
+      console.error("[Invoices] Error checking admin status:", err)
       setLoading(false)
-      return
     }
-
-    setIsAdmin(true)
-    await fetchInvoices()
-    setLoading(false)
   }
 
   const fetchInvoices = async () => {

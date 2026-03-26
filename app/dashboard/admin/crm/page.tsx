@@ -68,23 +68,25 @@ export default function AdminCRMPage() {
   }, [])
 
   const checkAdmin = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+      // Use the auth status API which uses service role (bypasses RLS)
+      const authStatusRes = await fetch("/api/auth/status")
 
-    if (!user) {
+      if (!authStatusRes.ok) {
+        setLoading(false)
+        return
+      }
+
+      const authStatus = await authStatusRes.json()
+
+      if (authStatus.authenticated && authStatus.isAdmin) {
+        setIsAdmin(true)
+      }
       setLoading(false)
-      return
+    } catch (err) {
+      console.error("[CRM] Error checking admin status:", err)
+      setLoading(false)
     }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", user.id)
-      .single()
-
-    if (profile?.is_admin) {
-      setIsAdmin(true)
-    }
-    setLoading(false)
   }
 
   if (loading) {

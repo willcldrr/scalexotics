@@ -519,25 +519,19 @@ export default function AdminPage() {
   // ============================================
 
   const fetchUsers = async () => {
-    // Fetch all profiles (users)
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false })
+    try {
+      // Use admin API which uses service role (bypasses RLS)
+      const response = await fetch("/api/admin/users")
 
-    if (profiles) {
-      // Fetch businesses to join with profiles
-      const { data: businesses } = await supabase
-        .from("businesses")
-        .select("id, name, status, payment_domain, stripe_connected, owner_user_id")
+      if (!response.ok) {
+        console.error("[Admin] Failed to fetch users:", response.status)
+        return
+      }
 
-      // Map profiles with their business info
-      const usersWithBusiness = profiles.map(profile => ({
-        ...profile,
-        business: businesses?.find(b => b.owner_user_id === profile.id) || null
-      }))
-
-      setUsers(usersWithBusiness)
+      const data = await response.json()
+      setUsers(data.users || [])
+    } catch (err) {
+      console.error("[Admin] Error fetching users:", err)
     }
   }
 
@@ -1097,13 +1091,26 @@ export default function AdminPage() {
   }
 
   const fetchDomainUsers = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, company_name, email, full_name")
-      .order("company_name", { ascending: true })
+    try {
+      // Use admin API which uses service role (bypasses RLS)
+      const response = await fetch("/api/admin/users")
 
-    if (data) {
-      setDomainUsers(data)
+      if (!response.ok) {
+        console.error("[Admin] Failed to fetch domain users:", response.status)
+        return
+      }
+
+      const data = await response.json()
+      // Extract just the fields needed for domain users dropdown
+      const users = (data.users || []).map((u: any) => ({
+        id: u.id,
+        company_name: u.company_name,
+        email: u.email,
+        full_name: u.full_name,
+      }))
+      setDomainUsers(users)
+    } catch (err) {
+      console.error("[Admin] Error fetching domain users:", err)
     }
   }
 
