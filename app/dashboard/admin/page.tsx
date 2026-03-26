@@ -785,34 +785,52 @@ export default function AdminPage() {
   }
 
   const handleDnrSave = async () => {
-    if (!dnrFormData.full_name.trim()) return
+    if (!dnrFormData.full_name.trim()) {
+      toast.error("Name is required")
+      return
+    }
     setSaving(true)
 
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
 
-    const entryData = {
-      full_name: dnrFormData.full_name.trim(),
-      date_of_birth: dnrFormData.date_of_birth || null,
-      expiration_date: dnrFormData.expiration_date || null,
-      issuing_state: dnrFormData.issuing_state || null,
-      id_number: dnrFormData.id_number || null,
-      phone: dnrFormData.phone || null,
-      email: dnrFormData.email || null,
-      reason: dnrFormData.reason || null,
-      added_by: user?.id,
+      const entryData = {
+        full_name: dnrFormData.full_name.trim(),
+        date_of_birth: dnrFormData.date_of_birth || null,
+        expiration_date: dnrFormData.expiration_date || null,
+        issuing_state: dnrFormData.issuing_state || null,
+        id_number: dnrFormData.id_number || null,
+        phone: dnrFormData.phone || null,
+        email: dnrFormData.email || null,
+        reason: dnrFormData.reason || null,
+        added_by: user?.id,
+      }
+
+      let error
+      if (editingDnrEntry) {
+        const result = await supabase.from("do_not_rent_list").update(entryData).eq("id", editingDnrEntry.id)
+        error = result.error
+      } else {
+        const result = await supabase.from("do_not_rent_list").insert(entryData)
+        error = result.error
+      }
+
+      if (error) {
+        toast.error("Failed to save entry", { description: error.message })
+        setSaving(false)
+        return
+      }
+
+      toast.success(editingDnrEntry ? "Entry updated" : "Entry added to Do Not Rent list")
+      setSaving(false)
+      setShowDnrAddModal(false)
+      setEditingDnrEntry(null)
+      resetDnrForm()
+      fetchDnrEntries()
+    } catch (err) {
+      toast.error("Failed to save entry")
+      setSaving(false)
     }
-
-    if (editingDnrEntry) {
-      await supabase.from("do_not_rent_list").update(entryData).eq("id", editingDnrEntry.id)
-    } else {
-      await supabase.from("do_not_rent_list").insert(entryData)
-    }
-
-    setSaving(false)
-    setShowDnrAddModal(false)
-    setEditingDnrEntry(null)
-    resetDnrForm()
-    fetchDnrEntries()
   }
 
   const handleDnrDelete = async (id: string) => {
@@ -823,8 +841,13 @@ export default function AdminPage() {
       variant: "danger",
       icon: "delete",
       onConfirm: async () => {
-        await supabase.from("do_not_rent_list").delete().eq("id", id)
-        fetchDnrEntries()
+        const { error } = await supabase.from("do_not_rent_list").delete().eq("id", id)
+        if (error) {
+          toast.error("Failed to remove entry")
+        } else {
+          toast.success("Entry removed from Do Not Rent list")
+          fetchDnrEntries()
+        }
       },
     })
   }
@@ -1665,9 +1688,9 @@ export default function AdminPage() {
                         <td className="px-4 py-3 font-medium">{formatCurrency(invoice.total_amount)}</td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                            invoice.status === "paid" ? "bg-white/10 text-white/70" :
+                            invoice.status === "paid" ? "bg-emerald-500/20 text-emerald-400" :
                             invoice.status === "cancelled" ? "bg-white/5 text-white/40" :
-                            "bg-white/10 text-white/70"
+                            "bg-amber-500/20 text-amber-400"
                           }`}>
                             {invoice.status === "paid" && <CheckCircle className="w-3 h-3" />}
                             {invoice.status === "cancelled" && <XCircle className="w-3 h-3" />}

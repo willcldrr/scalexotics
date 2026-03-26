@@ -241,7 +241,6 @@ export default function LeadsPage() {
         { event: "INSERT", schema: "public", table: "messages" },
         (payload) => {
           const newMessage = payload.new as Message
-          console.log("[Realtime] New message received", newMessage.lead_id)
           // Add message to current conversation if viewing that lead
           setMessages((current) => {
             // Check if this message is for the currently selected lead

@@ -205,7 +205,7 @@ export default function VehiclesPage() {
         updateVehicle(vehicleId, { last_turo_sync: new Date().toISOString() } as any)
       }
     } catch (error) {
-      console.error("Sync error:", error)
+      toast.error("Sync failed", { description: "Could not sync calendar. Please try again." })
     }
     setSyncing(null)
   }
