@@ -283,7 +283,7 @@ export default function DashboardLayout({
   // This can be enabled in a future release by creating sessions on login and validating them here
 
   return (
-    <div className={`min-h-screen bg-black text-white ${impersonatingUser ? "ring-4 ring-inset ring-blue-500" : ""}`}>
+    <div className="min-h-screen bg-black text-white">
       {/* Admin impersonation indicator bar */}
       {impersonatingUser && (
         <div className="fixed top-0 left-0 right-0 z-[100] bg-blue-600 text-white text-center py-1.5 px-4 flex items-center justify-center gap-3">
