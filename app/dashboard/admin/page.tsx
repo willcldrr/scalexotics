@@ -715,10 +715,13 @@ export default function AdminPage() {
             return
           }
 
-          // Store original admin session for returning later
-          localStorage.setItem("admin_return_token", session.access_token)
+          // Store original admin session for returning later (need both tokens to restore)
+          localStorage.setItem("admin_return_session", JSON.stringify({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+          }))
 
-          // Store impersonated user info for the blue indicator bar
+          // Store impersonated user info for the top indicator bar
           localStorage.setItem("impersonating_user", JSON.stringify({
             id: data.user.id,
             email: data.user.email,

@@ -224,23 +224,61 @@ export default function DashboardLayout({
   }, [supabase, router])
 
   const exitImpersonation = useCallback(async () => {
-    const adminToken = localStorage.getItem("admin_return_token")
-    if (!adminToken) {
-      // No admin token, just sign out
+    try {
+      // Try to restore from new session storage format (both tokens)
+      const adminSessionStr = localStorage.getItem("admin_return_session")
+      let adminSession: { access_token: string; refresh_token: string } | null = null
+
+      if (adminSessionStr) {
+        try {
+          adminSession = JSON.parse(adminSessionStr)
+        } catch {
+          // Invalid JSON, ignore
+        }
+      }
+
+      // Fallback to old format (just access token)
+      if (!adminSession) {
+        const adminToken = localStorage.getItem("admin_return_token")
+        if (adminToken) {
+          adminSession = { access_token: adminToken, refresh_token: "" }
+        }
+      }
+
+      if (!adminSession?.access_token) {
+        // No admin token stored, just sign out completely
+        handleSignOut()
+        return
+      }
+
+      // Clear impersonation data first
+      localStorage.removeItem("impersonating_user")
+      localStorage.removeItem("admin_return_token")
+      localStorage.removeItem("admin_return_session")
+
+      // Sign out the impersonated user session
+      await supabase.auth.signOut()
+
+      // Restore the admin session
+      const { error } = await supabase.auth.setSession({
+        access_token: adminSession.access_token,
+        refresh_token: adminSession.refresh_token,
+      })
+
+      if (error) {
+        console.error("Failed to restore admin session:", error)
+        // Token likely expired, redirect to login
+        window.location.href = "/login"
+        return
+      }
+
+      // Redirect to admin dashboard
+      window.location.href = "/dashboard/admin"
+    } catch (error) {
+      console.error("Error exiting impersonation:", error)
+      // On error, just sign out and redirect to login
       handleSignOut()
-      return
     }
-
-    // Clear impersonation data
-    localStorage.removeItem("impersonating_user")
-    localStorage.removeItem("admin_return_token")
-
-    // Sign out current session and redirect to admin page
-    await supabase.auth.signOut()
-
-    // Redirect to login - admin will need to log back in
-    // (A more seamless approach would require storing the full admin session)
-    window.location.href = "/login"
   }, [supabase, handleSignOut])
 
   // Prefetch critical routes on mount for faster navigation

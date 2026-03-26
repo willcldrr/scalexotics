@@ -194,40 +194,23 @@ export default function PipelineTab() {
   }, [])
 
   const fetchLeads = async () => {
-    // Supabase has a 1000 row default limit, so we need to fetch in batches
-    const batchSize = 1000
-    const maxLeads = 20000
-    let allLeads: CRMLead[] = []
+    try {
+      // Use admin API to fetch all leads (bypasses RLS)
+      const response = await fetch("/api/admin/crm/leads?limit=10000")
 
-    // First, get the total count
-    const { count } = await supabase
-      .from("crm_leads")
-      .select("*", { count: "exact", head: true })
-
-    const totalCount = count || 0
-    const batches = Math.ceil(Math.min(totalCount, maxLeads) / batchSize)
-
-    for (let i = 0; i < batches; i++) {
-      const from = i * batchSize
-      const to = from + batchSize - 1
-
-      const { data, error } = await supabase
-        .from("crm_leads")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range(from, to)
-
-      if (error) {
-        console.error("Failed to fetch leads batch:", error)
-        break
+      if (!response.ok) {
+        console.error("Failed to fetch leads")
+        setLeads([])
+        setLoading(false)
+        return
       }
 
-      if (data) {
-        allLeads = [...allLeads, ...data]
-      }
+      const data = await response.json()
+      setLeads(data.leads || [])
+    } catch (err) {
+      console.error("Error fetching leads:", err)
+      setLeads([])
     }
-
-    setLeads(allLeads)
     setLoading(false)
   }
 
@@ -252,26 +235,21 @@ export default function PipelineTab() {
       prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
     )
 
-    // Update in database
-    const { error } = await supabase
-      .from("crm_leads")
-      .update({ status: newStatus })
-      .eq("id", leadId)
-
-    if (error) {
-      fetchLeads()
-      console.error("Failed to update lead status:", error)
-    } else {
-      // Add status change note
-      const { data: { user } } = await supabase.auth.getUser()
-      await supabase.from("crm_notes").insert({
-        lead_id: leadId,
-        user_id: user?.id,
-        content: `Status changed from ${getStatusLabel(lead.status)} to ${getStatusLabel(newStatus)}`,
-        note_type: "status_change",
-        old_status: lead.status,
-        new_status: newStatus,
+    // Update in database via API
+    try {
+      const response = await fetch("/api/admin/crm/leads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: leadId, status: newStatus }),
       })
+
+      if (!response.ok) {
+        fetchLeads()
+        console.error("Failed to update lead status")
+      }
+    } catch (err) {
+      fetchLeads()
+      console.error("Failed to update lead status:", err)
     }
   }
 
@@ -284,10 +262,15 @@ export default function PipelineTab() {
       prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
     )
 
-    await supabase
-      .from("crm_leads")
-      .update({ status: newStatus })
-      .eq("id", leadId)
+    try {
+      await fetch("/api/admin/crm/leads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: leadId, status: newStatus }),
+      })
+    } catch (err) {
+      console.error("Failed to update status:", err)
+    }
 
     if (selectedLead?.id === leadId) {
       setSelectedLead((prev) => prev ? { ...prev, status: newStatus } : null)
@@ -304,9 +287,13 @@ export default function PipelineTab() {
     })
     if (!confirmed) return
 
-    await supabase.from("crm_leads").delete().eq("id", id)
-    setLeads((prev) => prev.filter((l) => l.id !== id))
-    setSelectedLead(null)
+    try {
+      await fetch(`/api/admin/crm/leads?id=${id}`, { method: "DELETE" })
+      setLeads((prev) => prev.filter((l) => l.id !== id))
+      setSelectedLead(null)
+    } catch (err) {
+      console.error("Failed to delete lead:", err)
+    }
   }
 
   // Group leads by status for pipeline view
