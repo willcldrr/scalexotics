@@ -232,11 +232,10 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
     return () => document.removeEventListener("visibilitychange", handleVisibility)
   }, [fetchAllData])
 
-  // Real-time subscriptions for instant cross-tab updates
+  // Real-time subscriptions for cross-tab sync (UPDATE and DELETE only)
+  // INSERT is handled by optimistic updates in addVehicle/addBooking/addLead
   useEffect(() => {
-    let vehiclesChannel: ReturnType<typeof supabase.channel> | null = null
-    let bookingsChannel: ReturnType<typeof supabase.channel> | null = null
-    let leadsChannel: ReturnType<typeof supabase.channel> | null = null
+    let realtimeChannel: ReturnType<typeof supabase.channel> | null = null
     let mounted = true
 
     const setupRealtimeSubscriptions = async () => {
@@ -245,27 +244,15 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
 
       const userId = user.id
 
-      // Vehicles subscription
-      vehiclesChannel = supabase
-        .channel("dashboard-vehicles-realtime")
-        .on(
-          "postgres_changes",
-          { event: "INSERT", schema: "public", table: "vehicles", filter: `user_id=eq.${userId}` },
-          (payload) => {
-            if (!mounted) return
-            console.log("[Realtime] Vehicle inserted")
-            setData(prev => ({
-              ...prev,
-              vehicles: [payload.new as Vehicle, ...prev.vehicles],
-            }))
-          }
-        )
+      // Single channel for all tables - only UPDATE and DELETE events
+      realtimeChannel = supabase
+        .channel("dashboard-realtime-sync")
+        // Vehicles - UPDATE only (INSERT handled by optimistic update)
         .on(
           "postgres_changes",
           { event: "UPDATE", schema: "public", table: "vehicles", filter: `user_id=eq.${userId}` },
           (payload) => {
             if (!mounted) return
-            console.log("[Realtime] Vehicle updated")
             setData(prev => ({
               ...prev,
               vehicles: prev.vehicles.map(v =>
@@ -279,36 +266,18 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
           { event: "DELETE", schema: "public", table: "vehicles", filter: `user_id=eq.${userId}` },
           (payload) => {
             if (!mounted) return
-            console.log("[Realtime] Vehicle deleted")
             setData(prev => ({
               ...prev,
               vehicles: prev.vehicles.filter(v => v.id !== (payload.old as Vehicle).id),
             }))
           }
         )
-        .subscribe()
-
-      // Bookings subscription
-      bookingsChannel = supabase
-        .channel("dashboard-bookings-realtime")
-        .on(
-          "postgres_changes",
-          { event: "INSERT", schema: "public", table: "bookings", filter: `user_id=eq.${userId}` },
-          (payload) => {
-            if (!mounted) return
-            console.log("[Realtime] Booking inserted")
-            setData(prev => ({
-              ...prev,
-              bookings: [payload.new as Booking, ...prev.bookings],
-            }))
-          }
-        )
+        // Bookings - UPDATE only
         .on(
           "postgres_changes",
           { event: "UPDATE", schema: "public", table: "bookings", filter: `user_id=eq.${userId}` },
           (payload) => {
             if (!mounted) return
-            console.log("[Realtime] Booking updated")
             setData(prev => ({
               ...prev,
               bookings: prev.bookings.map(b =>
@@ -322,36 +291,18 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
           { event: "DELETE", schema: "public", table: "bookings", filter: `user_id=eq.${userId}` },
           (payload) => {
             if (!mounted) return
-            console.log("[Realtime] Booking deleted")
             setData(prev => ({
               ...prev,
               bookings: prev.bookings.filter(b => b.id !== (payload.old as Booking).id),
             }))
           }
         )
-        .subscribe()
-
-      // Leads subscription
-      leadsChannel = supabase
-        .channel("dashboard-leads-realtime")
-        .on(
-          "postgres_changes",
-          { event: "INSERT", schema: "public", table: "leads", filter: `user_id=eq.${userId}` },
-          (payload) => {
-            if (!mounted) return
-            console.log("[Realtime] Lead inserted")
-            setData(prev => ({
-              ...prev,
-              leads: [payload.new as Lead, ...prev.leads],
-            }))
-          }
-        )
+        // Leads - UPDATE only
         .on(
           "postgres_changes",
           { event: "UPDATE", schema: "public", table: "leads", filter: `user_id=eq.${userId}` },
           (payload) => {
             if (!mounted) return
-            console.log("[Realtime] Lead updated")
             setData(prev => ({
               ...prev,
               leads: prev.leads.map(l =>
@@ -365,7 +316,6 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
           { event: "DELETE", schema: "public", table: "leads", filter: `user_id=eq.${userId}` },
           (payload) => {
             if (!mounted) return
-            console.log("[Realtime] Lead deleted")
             setData(prev => ({
               ...prev,
               leads: prev.leads.filter(l => l.id !== (payload.old as Lead).id),
@@ -379,9 +329,7 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false
-      if (vehiclesChannel) supabase.removeChannel(vehiclesChannel)
-      if (bookingsChannel) supabase.removeChannel(bookingsChannel)
-      if (leadsChannel) supabase.removeChannel(leadsChannel)
+      if (realtimeChannel) supabase.removeChannel(realtimeChannel)
     }
   }, [supabase])
 
