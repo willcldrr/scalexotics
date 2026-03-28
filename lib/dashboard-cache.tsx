@@ -145,6 +145,8 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
   const fetchAllData = useCallback(async (force = false) => {
     // Skip if data is fresh and not forced (use ref to avoid dependency)
     if (!force && lastFetchedRef.current && Date.now() - lastFetchedRef.current < CACHE_DURATION) {
+      // Still ensure loading is false when using cached data
+      setData(prev => prev.isLoading ? { ...prev, isLoading: false } : prev)
       return
     }
 
@@ -158,7 +160,6 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
 
     try {
       // Fetch all data in parallel for speed
-      // OPTIMIZED: Only select columns actually needed for dashboard
       const [leadsRes, vehiclesRes, bookingsRes] = await Promise.all([
         supabase
           .from("leads")
@@ -179,6 +180,17 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
           .limit(500),
       ])
 
+      // Check for RLS or other errors
+      if (vehiclesRes.error) {
+        console.error("Vehicles fetch error:", vehiclesRes.error)
+      }
+      if (bookingsRes.error) {
+        console.error("Bookings fetch error:", bookingsRes.error)
+      }
+      if (leadsRes.error) {
+        console.error("Leads fetch error:", leadsRes.error)
+      }
+
       const now = Date.now()
       lastFetchedRef.current = now
       const newData: DashboardData = {
@@ -193,10 +205,13 @@ export function DashboardCacheProvider({ children }: { children: ReactNode }) {
         error: null,
       }
       setData(newData)
-      // Persist to localStorage for instant future loads
       saveCachedData(newData)
     } catch (err) {
       console.error("Error fetching dashboard data:", err)
+      // Clear corrupted cache on error
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(LOCAL_CACHE_KEY)
+      }
       setData(prev => ({
         ...prev,
         isLoading: false,
