@@ -251,25 +251,42 @@ export default function DashboardLayout({
         return
       }
 
-      // Clear impersonation data first
+      // Clear ALL impersonation and cache data
       localStorage.removeItem("impersonating_user")
       localStorage.removeItem("admin_return_token")
       localStorage.removeItem("admin_return_session")
+      localStorage.removeItem("scale_exotics_dashboard_cache")
 
       // Sign out the impersonated user session
       await supabase.auth.signOut()
 
-      // Restore the admin session
-      const { error } = await supabase.auth.setSession({
-        access_token: adminSession.access_token,
-        refresh_token: adminSession.refresh_token,
-      })
+      // Restore the admin session using refresh token first (more reliable)
+      let sessionRestored = false
 
-      if (error) {
-        console.error("Failed to restore admin session:", error)
-        // Token likely expired, redirect to login
-        window.location.href = "/login"
-        return
+      if (adminSession.refresh_token) {
+        const { error: refreshError } = await supabase.auth.setSession({
+          access_token: adminSession.access_token,
+          refresh_token: adminSession.refresh_token,
+        })
+
+        if (!refreshError) {
+          sessionRestored = true
+        }
+      }
+
+      // If refresh didn't work, try just the access token
+      if (!sessionRestored) {
+        const { error } = await supabase.auth.setSession({
+          access_token: adminSession.access_token,
+          refresh_token: adminSession.refresh_token || "",
+        })
+
+        if (error) {
+          console.error("Failed to restore admin session:", error)
+          // Token expired - redirect to login with message
+          window.location.href = "/login?message=session_expired"
+          return
+        }
       }
 
       // Redirect to admin dashboard

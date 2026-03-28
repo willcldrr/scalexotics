@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import jwt from "jsonwebtoken"
 
 // Service role client for admin operations
 const supabase = createClient(
@@ -45,53 +46,65 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Cannot impersonate yourself" }, { status: 400 })
     }
 
-    // Get target user's email from auth
+    // Get target user from auth
     const { data: targetUser, error: targetError } = await supabase.auth.admin.getUserById(userId)
 
     if (targetError || !targetUser.user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    // Generate a magic link for the target user
-    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-      type: "magiclink",
-      email: targetUser.user.email!,
-      options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard`,
+    // Create a custom JWT for impersonation
+    // This does NOT invalidate the user's existing sessions
+    const jwtSecret = process.env.SUPABASE_JWT_SECRET
+    if (!jwtSecret) {
+      console.error("SUPABASE_JWT_SECRET not configured")
+      return NextResponse.json({ error: "Server configuration error" }, { status: 500 })
+    }
+
+    const now = Math.floor(Date.now() / 1000)
+    const expiresIn = 3600 // 1 hour
+
+    // Create access token with same structure as Supabase
+    const accessToken = jwt.sign(
+      {
+        aud: "authenticated",
+        exp: now + expiresIn,
+        iat: now,
+        iss: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1`,
+        sub: targetUser.user.id,
+        email: targetUser.user.email,
+        phone: targetUser.user.phone || "",
+        app_metadata: targetUser.user.app_metadata || {},
+        user_metadata: targetUser.user.user_metadata || {},
+        role: "authenticated",
+        aal: "aal1",
+        amr: [{ method: "admin_impersonate", timestamp: now }],
+        session_id: `impersonate_${adminUser.id}_${Date.now()}`,
       },
-    })
+      jwtSecret,
+      { algorithm: "HS256" }
+    )
 
-    if (linkError || !linkData) {
-      console.error("Failed to generate magic link:", linkError)
-      return NextResponse.json({ error: "Failed to create session" }, { status: 500 })
-    }
-
-    // Extract the token from the magic link
-    // The link format is: {baseUrl}/auth/v1/verify?token={token}&type=magiclink&...
-    const url = new URL(linkData.properties.action_link)
-    const tokenHash = url.searchParams.get("token")
-
-    if (!tokenHash) {
-      return NextResponse.json({ error: "Failed to extract session token" }, { status: 500 })
-    }
-
-    // Verify the OTP to get a session
-    const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
-      token_hash: tokenHash,
-      type: "magiclink",
-    })
-
-    if (sessionError || !sessionData.session) {
-      console.error("Failed to verify OTP:", sessionError)
-      return NextResponse.json({ error: "Failed to create session" }, { status: 500 })
-    }
+    // Create a refresh token (simple version for impersonation)
+    const refreshToken = jwt.sign(
+      {
+        aud: "authenticated",
+        exp: now + (expiresIn * 24), // 24 hours
+        iat: now,
+        iss: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1`,
+        sub: targetUser.user.id,
+        session_id: `impersonate_${adminUser.id}_${Date.now()}`,
+      },
+      jwtSecret,
+      { algorithm: "HS256" }
+    )
 
     return NextResponse.json({
-      access_token: sessionData.session.access_token,
-      refresh_token: sessionData.session.refresh_token,
+      access_token: accessToken,
+      refresh_token: refreshToken,
       user: {
-        id: sessionData.user?.id,
-        email: sessionData.user?.email,
+        id: targetUser.user.id,
+        email: targetUser.user.email,
       },
     })
   } catch (error) {

@@ -735,6 +735,9 @@ export default function AdminPage() {
             name: selectedUser?.full_name || selectedUser?.email || data.user.email,
           }))
 
+          // IMPORTANT: Clear dashboard cache so fresh data loads for impersonated user
+          localStorage.removeItem("scale_exotics_dashboard_cache")
+
           // Set the new session
           await supabase.auth.setSession({
             access_token: data.access_token,
