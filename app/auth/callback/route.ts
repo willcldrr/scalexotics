@@ -48,9 +48,13 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${origin}/dashboard`)
       } else if (business?.status === 'suspended') {
         return NextResponse.redirect(`${origin}/login?error=account_suspended`)
-      } else {
-        // Pending or no business - go to pending approval
+      } else if (business?.status === 'pending') {
+        // Has pending business - go to pending approval
         return NextResponse.redirect(`${origin}/pending-approval`)
+      } else {
+        // No business record - this is a new Google OAuth user
+        // Redirect to setup business page
+        return NextResponse.redirect(`${origin}/setup-business`)
       }
     }
   }
