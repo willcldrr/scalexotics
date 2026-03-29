@@ -38,13 +38,20 @@ export default function PendingApprovalPage() {
 
       const data = await response.json()
 
-      if (!data.business) {
-        // No business found, might need to complete signup
-        setChecking(false)
+      // Always set email if available
+      if (data.email) {
+        setUserEmail(data.email)
+      } else if (!userEmail) {
+        // No email and no prior email - invalid session, redirect to login
+        router.push("/login")
         return
       }
 
-      setUserEmail(data.email || "")
+      if (!data.business) {
+        // No business found, redirect to complete signup
+        router.push("/setup-business")
+        return
+      }
       setBusinessName(data.business.name)
 
       if (data.business.status === "active") {

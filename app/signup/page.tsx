@@ -65,7 +65,7 @@ export default function SignUpPage() {
     }
 
     // Sign up the user - this will send a verification email with OTP
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -73,13 +73,46 @@ export default function SignUpPage() {
           full_name: fullName,
           phone: phone.replace(/(?!^\+)[^\d]/g, ''), // Store cleaned phone
         },
-        // Don't auto-confirm, require email verification
-        emailRedirectTo: undefined,
       },
     })
 
+    // Handle "User already registered" - resend OTP if unconfirmed
+    if (signUpError?.message?.includes("already registered")) {
+      // Try to resend verification email
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+      })
+
+      if (resendError) {
+        // User might be confirmed already - direct them to login
+        setError("This email is already registered. Please sign in instead.")
+        setLoading(false)
+        return
+      }
+
+      // OTP resent successfully
+      setStep('verify')
+      setLoading(false)
+      return
+    }
+
     if (signUpError) {
       setError(signUpError.message)
+      setLoading(false)
+      return
+    }
+
+    // Check if user was created but needs confirmation
+    if (data?.user && !data.user.confirmed_at) {
+      setStep('verify')
+      setLoading(false)
+      return
+    }
+
+    // If user is already confirmed (shouldn't happen normally)
+    if (data?.user?.confirmed_at) {
+      setError("This email is already registered. Please sign in instead.")
       setLoading(false)
       return
     }
