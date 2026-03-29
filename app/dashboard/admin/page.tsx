@@ -622,19 +622,24 @@ export default function AdminPage() {
       variant: "danger",
       icon: "delete",
       onConfirm: async () => {
-        // Delete business if exists
-        if (businessId) {
-          await supabase.from("businesses").delete().eq("id", businessId)
-        }
+        try {
+          const response = await fetch("/api/admin/users/delete", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, businessId }),
+          })
 
-        // Note: We can't delete from auth.users via client, only from profiles
-        const { error } = await supabase.from("profiles").delete().eq("id", userId)
+          const data = await response.json()
 
-        if (error) {
+          if (!response.ok) {
+            setMessage({ type: "error", text: data.error || "Failed to delete user" })
+          } else {
+            setMessage({ type: "success", text: "User deleted successfully" })
+            fetchUsers()
+          }
+        } catch (error) {
+          console.error("Delete user error:", error)
           setMessage({ type: "error", text: "Failed to delete user" })
-        } else {
-          setMessage({ type: "success", text: "User deleted" })
-          fetchUsers()
         }
       },
     })
