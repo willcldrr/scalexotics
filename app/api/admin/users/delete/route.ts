@@ -79,6 +79,47 @@ export async function DELETE(request: NextRequest) {
     // Delete custom domains
     await serviceSupabase.from("custom_domains").delete().eq("user_id", userId)
 
+    // Delete user sessions
+    await serviceSupabase.from("user_sessions").delete().eq("user_id", userId)
+
+    // Delete calendar syncs
+    await serviceSupabase.from("calendar_syncs").delete().eq("user_id", userId)
+
+    // Delete telegram data
+    await serviceSupabase.from("telegram_link_codes").delete().eq("user_id", userId)
+    await serviceSupabase.from("telegram_bot_logs").delete().eq("user_id", userId)
+
+    // Delete instagram connections
+    await serviceSupabase.from("instagram_connections").delete().eq("user_id", userId)
+
+    // Delete agreements and inspections
+    await serviceSupabase.from("agreements").delete().eq("user_id", userId)
+    await serviceSupabase.from("inspections").delete().eq("user_id", userId)
+    await serviceSupabase.from("deliveries").delete().eq("user_id", userId)
+
+    // Delete reactivation data
+    await serviceSupabase.from("reactivation_campaign_messages").delete().eq("user_id", userId)
+    await serviceSupabase.from("reactivation_campaigns").delete().eq("user_id", userId)
+    await serviceSupabase.from("reactivation_contacts").delete().eq("user_id", userId)
+    await serviceSupabase.from("reactivation_templates").delete().eq("user_id", userId)
+    await serviceSupabase.from("reactivation_settings").delete().eq("user_id", userId)
+
+    // Clear references to this profile in other tables (these don't cascade)
+    await serviceSupabase.from("access_codes").update({ used_by: null }).eq("used_by", userId)
+    await serviceSupabase.from("client_invoices").update({ created_by: null }).eq("created_by", userId)
+
+    // Delete CRM data that references this user
+    await serviceSupabase.from("crm_oauth_tokens").delete().eq("user_id", userId)
+    await serviceSupabase.from("crm_notes").delete().eq("user_id", userId)
+    await serviceSupabase.from("crm_events").delete().eq("user_id", userId)
+    await serviceSupabase.from("crm_activity_log").delete().eq("user_id", userId)
+
+    // Delete payment links
+    await serviceSupabase.from("payment_links").delete().eq("user_id", userId)
+
+    // Delete integration requests
+    await serviceSupabase.from("integration_requests").delete().eq("user_id", userId)
+
     // Delete profile
     const { error: profileError } = await serviceSupabase
       .from("profiles")
