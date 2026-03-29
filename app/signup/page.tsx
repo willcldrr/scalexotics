@@ -76,29 +76,64 @@ export default function SignUpPage() {
       },
     })
 
-    // Handle "User already registered" - resend OTP if unconfirmed
-    if (signUpError?.message?.includes("already registered")) {
-      // Try to resend verification email
+    // Check for "already registered" error (case-insensitive)
+    const isAlreadyRegistered = signUpError?.message?.toLowerCase().includes("already registered") ||
+                                 signUpError?.message?.toLowerCase().includes("already been registered")
+
+    if (isAlreadyRegistered) {
+      // User exists - try to resend OTP for unconfirmed users
       const { error: resendError } = await supabase.auth.resend({
         type: 'signup',
         email,
       })
 
       if (resendError) {
-        // User might be confirmed already - direct them to login
-        setError("This email is already registered. Please sign in instead.")
+        console.log("Resend error:", resendError.message)
+
+        // Check if it's a rate limit
+        if (resendError.message?.toLowerCase().includes("rate") ||
+            resendError.message?.toLowerCase().includes("limit") ||
+            resendError.message?.toLowerCase().includes("seconds")) {
+          setError("Please wait a moment before requesting another code.")
+          setLoading(false)
+          return
+        }
+
+        // User is likely already confirmed - try signing in with provided password
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+
+        if (!signInError) {
+          // Sign in worked! Redirect to dashboard or pending approval
+          router.push("/dashboard")
+          return
+        }
+
+        // Sign in failed - wrong password or other issue
+        setError("This email is already registered. Please sign in with your existing password, or use 'Forgot password' to reset it.")
         setLoading(false)
         return
       }
 
-      // OTP resent successfully
+      // OTP resent successfully - proceed to verification
       setStep('verify')
       setLoading(false)
       return
     }
 
+    // Handle other signup errors
     if (signUpError) {
       setError(signUpError.message)
+      setLoading(false)
+      return
+    }
+
+    // Supabase returns user with empty identities array for existing confirmed users (security feature)
+    // Check if this is a "fake" success response
+    if (data?.user?.identities?.length === 0) {
+      setError("This email is already registered. Please sign in instead.")
       setLoading(false)
       return
     }
@@ -110,14 +145,14 @@ export default function SignUpPage() {
       return
     }
 
-    // If user is already confirmed (shouldn't happen normally)
+    // If user is already confirmed (edge case)
     if (data?.user?.confirmed_at) {
-      setError("This email is already registered. Please sign in instead.")
-      setLoading(false)
+      // Try signing them in
+      router.push("/dashboard")
       return
     }
 
-    // Move to OTP verification step
+    // Default: Move to OTP verification step
     setStep('verify')
     setLoading(false)
   }
