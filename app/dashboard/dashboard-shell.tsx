@@ -400,7 +400,7 @@ export default function DashboardLayout({
                   }`}
                   style={isActive ? { backgroundColor: "rgba(255,255,255,0.15)" } : undefined}
                 >
-                  <item.icon className="w-5 h-5 flex-shrink-0" />
+                  <item.icon className="w-5 h-5 flex-shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.5)]" />
                   {/* Mobile: always show text */}
                   <span className="font-medium lg:hidden">{item.name}</span>
                   {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
@@ -439,7 +439,7 @@ export default function DashboardLayout({
                       }`}
                       style={isActive ? { backgroundColor: "rgba(255,255,255,0.15)" } : undefined}
                     >
-                      <item.icon className="w-5 h-5 flex-shrink-0" />
+                      <item.icon className="w-5 h-5 flex-shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.5)]" />
                       {/* Mobile: always show text */}
                       <span className="font-medium lg:hidden">{item.name}</span>
                       {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
@@ -468,7 +468,7 @@ export default function DashboardLayout({
                   }`}
                   style={isActive ? { backgroundColor: "rgba(255,255,255,0.15)" } : undefined}
                 >
-                  <settingsItem.icon className="w-5 h-5 flex-shrink-0" />
+                  <settingsItem.icon className="w-5 h-5 flex-shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.5)]" />
                   {/* Mobile: always show text */}
                   <span className="font-medium lg:hidden">{settingsItem.name}</span>
                   {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
@@ -508,7 +508,7 @@ export default function DashboardLayout({
               onClick={handleSignOut}
               className="group relative flex items-center py-3 w-full rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center"
             >
-              <LogOut className="w-5 h-5 flex-shrink-0" />
+              <LogOut className="w-5 h-5 flex-shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.5)]" />
               <span className="font-medium lg:hidden">Sign Out</span>
               {/* Desktop: tooltip on hover */}
               <div className="hidden lg:flex absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[60] shadow-xl items-center">
