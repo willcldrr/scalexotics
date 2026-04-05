@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { applyRateLimit } from "@/lib/api-rate-limit"
+import { encrypt } from "@/lib/crypto"
 
 function getSupabase() {
   return createClient(
@@ -185,6 +186,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 5: Upsert the connection
+    // LB-6 dual-write: encrypt and keep plaintext populated until the
+    // drop migration runs.
+    // TODO(LB-6 cutover): remove plaintext write after drop migration
+    const encToken = encrypt(finalToken)
     const { error: upsertError } = await supabase
       .from("instagram_connections")
       .upsert(
@@ -194,6 +199,9 @@ export async function POST(request: NextRequest) {
           instagram_username: instagramUsername,
           page_name: pageName,
           access_token: finalToken,
+          encrypted_access_token: encToken.ciphertext,
+          access_token_iv: encToken.iv,
+          access_token_tag: encToken.tag,
           token_expires_at: finalExpiry.toISOString(),
           connected_at: new Date().toISOString(),
           is_active: true,

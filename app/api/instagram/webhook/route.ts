@@ -15,6 +15,7 @@ import {
 } from "@/lib/sms-ai"
 import { findOrCreateInstagramLead, isInstagramAIEnabled } from "@/lib/instagram-leads"
 import { applyRateLimit } from "@/lib/api-rate-limit"
+import { decrypt } from "@/lib/crypto"
 
 function getSupabase() {
   return createClient(
@@ -38,20 +39,45 @@ async function getConnectionByInstagramAccount(instagramAccountId: string): Prom
   const supabase = getSupabase()
 
   // First, try to look up in instagram_connections table (OAuth-based connections)
+  // LB-6 dual-read: prefer encrypted trio, fall back to legacy plaintext.
   const { data: connection } = await supabase
     .from("instagram_connections")
-    .select("user_id, instagram_account_id, access_token")
+    .select(
+      "user_id, instagram_account_id, access_token, encrypted_access_token, access_token_iv, access_token_tag"
+    )
     .eq("instagram_account_id", instagramAccountId)
     .eq("is_active", true)
     .single()
 
   if (connection) {
-    return {
-      userId: connection.user_id,
-      credentials: {
-        accessToken: connection.access_token,
-        accountId: connection.instagram_account_id,
-      },
+    let accessToken: string | null = null
+    if (
+      connection.encrypted_access_token &&
+      connection.access_token_iv &&
+      connection.access_token_tag
+    ) {
+      try {
+        accessToken = decrypt({
+          ciphertext: connection.encrypted_access_token,
+          iv: connection.access_token_iv,
+          tag: connection.access_token_tag,
+        })
+      } catch (err) {
+        console.error("[instagram/webhook] Failed to decrypt access token")
+      }
+    }
+    if (!accessToken) {
+      accessToken = connection.access_token
+    }
+
+    if (accessToken) {
+      return {
+        userId: connection.user_id,
+        credentials: {
+          accessToken,
+          accountId: connection.instagram_account_id,
+        },
+      }
     }
   }
 

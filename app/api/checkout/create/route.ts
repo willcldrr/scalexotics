@@ -4,6 +4,7 @@ import { z } from "zod"
 import { createClient } from "@supabase/supabase-js"
 import { lookupPaymentToken, decodePaymentToken, claimPaymentLinkForCheckout } from "@/lib/payment-link"
 import { applyRateLimit } from "@/lib/api-rate-limit"
+import { decrypt } from "@/lib/crypto"
 
 const checkoutSchema = z.object({
   token: z.string().min(1, "Payment token is required").max(500, "Invalid token"),
@@ -29,9 +30,12 @@ function getSupabaseClient() {
 async function getStripeKeysForUser(userId: string): Promise<{ secretKey: string | null; publishableKey: string | null }> {
   const supabase = getSupabaseClient()
 
+  // LB-6 dual-read: prefer encrypted trio, fall back to legacy plaintext.
   const { data, error } = await supabase
     .from("deposit_portal_config")
-    .select("stripe_secret_key, stripe_publishable_key")
+    .select(
+      "stripe_secret_key, stripe_publishable_key, encrypted_stripe_secret_key, stripe_secret_key_iv, stripe_secret_key_tag"
+    )
     .eq("user_id", userId)
     .single()
 
@@ -39,8 +43,28 @@ async function getStripeKeysForUser(userId: string): Promise<{ secretKey: string
     return { secretKey: null, publishableKey: null }
   }
 
+  let secretKey: string | null = null
+  if (
+    data.encrypted_stripe_secret_key &&
+    data.stripe_secret_key_iv &&
+    data.stripe_secret_key_tag
+  ) {
+    try {
+      secretKey = decrypt({
+        ciphertext: data.encrypted_stripe_secret_key,
+        iv: data.stripe_secret_key_iv,
+        tag: data.stripe_secret_key_tag,
+      })
+    } catch (err) {
+      console.error("[checkout/create] Failed to decrypt tenant Stripe key")
+    }
+  }
+  if (!secretKey) {
+    secretKey = data.stripe_secret_key ?? null
+  }
+
   return {
-    secretKey: data.stripe_secret_key,
+    secretKey,
     publishableKey: data.stripe_publishable_key,
   }
 }

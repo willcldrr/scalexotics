@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { applyRateLimit } from "@/lib/api-rate-limit"
+import { encrypt, decrypt } from "@/lib/crypto"
 
 /**
  * Cron job to refresh Instagram tokens before they expire
@@ -42,9 +43,13 @@ export async function GET(request: NextRequest) {
   const sevenDaysFromNow = new Date()
   sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7)
 
+  // LB-6 dual-read: select both plaintext and encrypted trio so we can
+  // refresh tokens written either way.
   const { data: expiringConnections } = await supabase
     .from("instagram_connections")
-    .select("id, user_id, instagram_username, access_token, token_expires_at")
+    .select(
+      "id, user_id, instagram_username, access_token, token_expires_at, encrypted_access_token, access_token_iv, access_token_tag"
+    )
     .eq("is_active", true)
     .lt("token_expires_at", sevenDaysFromNow.toISOString())
 
@@ -55,13 +60,38 @@ export async function GET(request: NextRequest) {
   // Refresh each expiring token
   for (const connection of expiringConnections) {
     try {
+      // LB-6 dual-read: prefer encrypted trio, fall back to legacy plaintext.
+      let currentToken: string | null = null
+      if (
+        connection.encrypted_access_token &&
+        connection.access_token_iv &&
+        connection.access_token_tag
+      ) {
+        try {
+          currentToken = decrypt({
+            ciphertext: connection.encrypted_access_token,
+            iv: connection.access_token_iv,
+            tag: connection.access_token_tag,
+          })
+        } catch (err) {
+          console.error(`[Token Refresh] Decrypt failed for ${connection.instagram_username}`)
+        }
+      }
+      if (!currentToken) {
+        currentToken = connection.access_token
+      }
+      if (!currentToken) {
+        results.failed.push(connection.instagram_username || connection.id)
+        continue
+      }
+
       const refreshResponse = await fetch(
         `https://graph.facebook.com/v19.0/oauth/access_token?` +
         new URLSearchParams({
           grant_type: "fb_exchange_token",
           client_id: process.env.META_APP_ID!,
           client_secret: process.env.META_APP_SECRET!,
-          fb_exchange_token: connection.access_token,
+          fb_exchange_token: currentToken,
         }).toString()
       )
 
@@ -83,11 +113,17 @@ export async function GET(request: NextRequest) {
       const tokenData = await refreshResponse.json()
       const newExpiresAt = new Date(Date.now() + (tokenData.expires_in || 5184000) * 1000)
 
-      // Update the token
+      // LB-6 dual-write: store encrypted trio and keep plaintext column
+      // populated until the drop migration runs.
+      // TODO(LB-6 cutover): remove plaintext write after drop migration
+      const enc = encrypt(tokenData.access_token)
       await supabase
         .from("instagram_connections")
         .update({
           access_token: tokenData.access_token,
+          encrypted_access_token: enc.ciphertext,
+          access_token_iv: enc.iv,
+          access_token_tag: enc.tag,
           token_expires_at: newExpiresAt.toISOString(),
         })
         .eq("id", connection.id)
