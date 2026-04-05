@@ -151,3 +151,85 @@ Test runner: `vitest` (node env). Setup file at `tests/setup.ts` stubs env vars,
 - **LB-9 / `lib/safe-fetch.ts:123`** — IPv6 bracketed literals (`http://[::1]/x`, `http://[fc00::1]/x`) bypass the literal-IP guard because `URL.hostname` returns the hostname with brackets (`"[::1]"`) and `isIP("[::1]")` returns `0`. The literal rejection branch at `validateUrl()` is dead code for IPv6 literals; they fall through to DNS resolution, which typically fails with `ENOTFOUND` — but that is the wrong failure mode for an SSRF test that should be a same-process literal reject. Fix is a one-line strip of `^\[|\]$` on `parsed.hostname` before `isIP(...)`. Test `tests/lib/safe-fetch.test.ts` documents the fall-through behavior and marks it `BLOCKED`.
 
 - **LB-12 currency (W2-B).** Neither `businesses` nor `bookings` had a `currency` column before this wave — confirmed by grep over `supabase/migrations/*.sql` (zero matches). Migration `20260405140100_businesses_currency.sql` adds `currency TEXT NOT NULL DEFAULT 'USD'` with an ISO-4217 regex CHECK to both tables. Until that migration is applied, the 4 checkout routes fall back to `process.env.DEFAULT_CURRENCY || 'USD'` via `lib/currency.ts` `DEFAULT_CURRENCY`. `app/api/payments/create-checkout` and `app/api/checkout/create` and `app/api/create-checkout` also now attempt to `SELECT businesses.currency WHERE owner_user_id = ?` (wrapped in try/catch so pre-migration deploys don't crash on unknown-column errors). `app/api/bookings/checkout` reads an optional `currency` field off the `bookings` row. All 4 routes lowercase the code for Stripe and validate against `SUPPORTED_CURRENCIES`, logging and falling back to `usd` on anything unsupported.
+
+---
+
+## Post-remediation session (2026-04-05, turn 2) — human action items
+
+### Item 1 — retroactive SQL idempotency review ✓
+
+Scanned all 21 `20260405120{200..220}_retroactive_*.sql` files. The prior Wave 1-B summary undercounted the non-idempotent cases. Full per-file findings:
+
+**Fully idempotent (safe to re-apply) — 7 files:**
+- `20260405120202_retroactive_agreements_table.sql` — `CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, bare `CREATE POLICY` ×5 (see policy note below)
+- `20260405120203_retroactive_bookings_stripe_columns.sql` — `ADD COLUMN IF NOT EXISTS` ×2, `CREATE INDEX IF NOT EXISTS` ×2
+- `20260405120211_retroactive_fix_profiles_rls.sql` — `DROP POLICY IF EXISTS` guards every `CREATE POLICY`
+- `20260405120214_retroactive_invoices_stripe_columns.sql` — `ADD COLUMN IF NOT EXISTS` ×2, `CREATE INDEX IF NOT EXISTS` ×2
+- `20260405120216_retroactive_payment_links_stripe_columns.sql` — `ADD COLUMN IF NOT EXISTS` ×3
+- `20260405120217_retroactive_performance_indexes.sql` — `CREATE INDEX IF NOT EXISTS` ×8
+- `20260405120220_retroactive_user_sessions.sql` — `DROP POLICY IF EXISTS` guards every `CREATE POLICY`
+
+**⚠ NON-IDEMPOTENT at DDL level (bare CREATE TABLE / ADD COLUMN / CREATE INDEX without guards) — 5 files:**
+
+| File | Issue |
+|---|---|
+| `20260405120200_retroactive_access_codes.sql` | bare `CREATE TABLE access_codes` (L10); bare `CREATE INDEX` ×2 |
+| `20260405120201_retroactive_add_admin_field.sql` | bare `ADD COLUMN` ×1 (profile admin field) |
+| `20260405120205_retroactive_client_invoices.sql` | bare `CREATE TABLE client_invoices`; bare `CREATE INDEX` ×2; also bare `CREATE TRIGGER` |
+| `20260405120206_retroactive_crm_oauth_config.sql` | bare `ADD COLUMN` ×1 |
+| `20260405120215_retroactive_otp_codes.sql` | bare `CREATE INDEX` ×2 |
+
+Re-applying any of these against a DB where the object already exists will fail loudly with `ERROR: relation "..." already exists` or `ERROR: column "..." already exists`.
+
+**⚠ NON-IDEMPOTENT at policy/trigger level (bare CREATE POLICY / CREATE TRIGGER without DROP IF EXISTS) — 13 files:**
+
+Postgres < 16 has no `CREATE POLICY IF NOT EXISTS`, and `CREATE TRIGGER` has no `IF NOT EXISTS`. Without a preceding `DROP ... IF EXISTS`, re-applying fails with `policy "..." for table "..." already exists` or `trigger "..." for relation "..." already exists`.
+
+- `20260405120200_retroactive_access_codes.sql` (2 policies)
+- `20260405120202_retroactive_agreements_table.sql` (5 policies)
+- `20260405120204_retroactive_business_branding_table.sql` (4 policies)
+- `20260405120205_retroactive_client_invoices.sql` (2 policies + 1 trigger)
+- `20260405120206_retroactive_crm_oauth_config.sql` (4 policies + 1 trigger)
+- `20260405120207_retroactive_crm_statuses.sql` (4 policies + 1 trigger)
+- `20260405120208_retroactive_crm_tables.sql` (9 policies + 3 triggers)
+- `20260405120209_retroactive_custom_domains_table.sql` (5 policies)
+- `20260405120210_retroactive_deliveries_table.sql` (4 policies)
+- `20260405120212_retroactive_inspections_table.sql` (5 policies)
+- `20260405120213_retroactive_integration_requests.sql` (3 policies)
+- `20260405120218_retroactive_reactivation_tables.sql` (19 policies + 5 triggers)
+- `20260405120219_retroactive_security_fixes.sql` (5 policies, 3 drop-guards — partially protected, 2 unguarded)
+
+**Interpretation.** The provenance header on each file says "if this DDL has already been applied to production by hand, the new pipeline apply will no-op (IF NOT EXISTS) or fail loudly on re-apply." That header is **correct** — the non-idempotent files are expected to fail on re-apply **if and only if** the original ad-hoc DDL was actually run against the target DB in the past. If the target DB is a fresh clone, they all apply cleanly.
+
+**Decision required from user** (not auto-fixed by this session): for each non-idempotent file, either (a) patch it to wrap policies/triggers in `DROP ... IF EXISTS` / wrap CREATE TABLE in `IF NOT EXISTS` before applying, or (b) skip applying that specific file on the assumption the object already exists in prod, or (c) apply it and let it fail if the object already exists, then manually reconcile.
+
+### Item 2 — ENCRYPTION_KEY ✓
+
+- Generated via `openssl rand -hex 32`, written to `/var/www/velocity/.env.local` (new file, `600` perms, verified gitignored via `.gitignore:12 .env*.local`).
+- `docs/RUNBOOK.md §12.1` documents how to read the generated value and paste it into Vercel env vars (Production + Preview + Development).
+
+### Item 5 — ENABLE_SESSION_RESTORE ✓
+
+- `ENABLE_SESSION_RESTORE=false` added to `.env.local` alongside `ENCRYPTION_KEY`.
+- `docs/RUNBOOK.md §12.2` documents the Vercel click-through for paste.
+
+### Item 6 — RUNBOOK Vercel instructions ✓
+
+- `docs/RUNBOOK.md §12` added as a single consolidated "pre-deploy checklist" section with step-by-step click-through for:
+  - 12.1 `ENCRYPTION_KEY` Vercel paste
+  - 12.2 `ENABLE_SESSION_RESTORE` Vercel paste
+  - 12.3 Upstash signup + `UPSTASH_REDIS_REST_URL` / `_TOKEN` Vercel paste
+  - 12.4 Stripe dashboard dual-webhook verification + test replay procedure
+  - 12.5 GitHub branch protection with required status checks
+  - 12.6 Final pre-deploy sanity pass
+  - 12.7 Deferred items not in the checklist (encryption backfill, migration apply)
+
+### Items 3 (apply migrations) and 4 (encryption backfill) — STOPPED, awaiting human decision
+
+Both items would execute SQL against a live database. The original plan (Option A) was explicit: **disk only, human applies**. Executing from this session requires:
+
+1. Confirmation of which database to target (prod vs staging vs fresh dev clone). The only credentials available are in `/var/www/velocity/.env` which this session is told not to touch, and which the audit confirmed contains live production values.
+2. A decision on each of the 5+13 non-idempotent retroactive files from Item 1 above: fix-in-place, skip, or apply-and-reconcile.
+3. Explicit authorization for destructive DB writes (the encryption backfill in Item 4 rewrites every row with a plaintext key in 3 tables).
+
+These will remain `[~] STOPPED — awaiting human` until explicit sign-off arrives.
