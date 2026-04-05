@@ -1,0 +1,21 @@
+{
+  "name": "Velocity Labs",
+  "short_name": "Velocity Labs",
+  "description": "AI-powered lead capture and booking platform for exotic car rental fleets",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#375DEE",
+  "icons": [
+    {
+      "src": "/vector.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/vector.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

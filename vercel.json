@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/reactivation/cron/process",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/refresh-instagram-tokens",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}
