@@ -1,8 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { applyRateLimit } from '@/lib/api-rate-limit'
 
 // GET - Validate if a session token is still active
 export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 60, window: 60 })
+  if (limited) return limited
+
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()

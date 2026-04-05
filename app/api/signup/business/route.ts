@@ -1,30 +1,43 @@
-import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { NextRequest, NextResponse } from "next/server"
+import { createClient as createServiceClient } from "@supabase/supabase-js"
+import { createClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { log } from "@/lib/log"
 
 // Use service role to bypass RLS
-function getSupabase() {
-  return createClient(
+function getSupabaseService() {
+  return createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 }
 
-export async function POST(request: Request) {
-  try {
-    const body = await request.json()
-    const { userId, companyName, email, phone, fullName } = body
+export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 5, window: 60 })
+  if (limited) return limited
 
-    if (!userId || !companyName) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { companyName, email, phone, fullName } = body
+
+    if (!companyName) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       )
     }
 
-    const supabase = getSupabase()
+    const userId = user.id
+    const supabaseService = getSupabaseService()
 
     // Ensure profile exists (upsert to handle potential race conditions)
-    const { error: profileError } = await supabase
+    const { error: profileError } = await supabaseService
       .from("profiles")
       .upsert({
         id: userId,
@@ -39,7 +52,7 @@ export async function POST(request: Request) {
       })
 
     if (profileError) {
-      console.error("Profile creation error:", profileError)
+      log.error("Profile creation error:", profileError)
       // Continue anyway - profile might already exist from auth trigger
     }
 
@@ -50,7 +63,7 @@ export async function POST(request: Request) {
       .replace(/^-|-$/g, "") + "-" + Date.now().toString(36)
 
     // Check if business already exists for this user
-    const { data: existingBusiness } = await supabase
+    const { data: existingBusiness } = await supabaseService
       .from("businesses")
       .select("id")
       .eq("owner_user_id", userId)
@@ -61,7 +74,7 @@ export async function POST(request: Request) {
     }
 
     // Create the business record
-    const { data: business, error: businessError } = await supabase
+    const { data: business, error: businessError } = await supabaseService
       .from("businesses")
       .insert({
         name: companyName,
@@ -76,7 +89,7 @@ export async function POST(request: Request) {
       .single()
 
     if (businessError) {
-      console.error("Business creation error:", businessError)
+      log.error("Business creation error:", businessError)
       return NextResponse.json(
         { error: "Failed to create business" },
         { status: 500 }
@@ -85,7 +98,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, businessId: business.id })
   } catch (error) {
-    console.error("Signup business API error:", error)
+    log.error("Signup business API error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

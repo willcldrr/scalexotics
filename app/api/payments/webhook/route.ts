@@ -1,20 +1,28 @@
+// LB-4: uses namespaced idempotency ledger key "stripe:payments" so this
+// route cannot race the booking-deposit route (app/api/stripe-webhook) on
+// the same Stripe event_id. This route owns the Instagram/SMS payment flow
+// (lead → checkout → bookings row created here).
+// NOTE: the Stripe dashboard must be configured to deliver to BOTH endpoint
+// URLs — that is a human operator step.
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createClient } from "@supabase/supabase-js"
-import { convertedStatus } from "@/lib/lead-status"
 import { generateResponse, ChatMessage } from "@/lib/anthropic"
 import { sendInstagramMessage } from "@/lib/instagram"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { claimWebhookEvent, markWebhookEventProcessed } from "@/lib/webhook-idempotency"
+import { log } from "@/lib/log"
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2025-12-15.clover",
+    apiVersion: "2026-02-25.clover",
   })
 }
 
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 }
 
@@ -77,13 +85,16 @@ DO NOT include any [EXTRACTED] blocks or special markers. Just write the natural
 
     return result.content
   } catch (error) {
-    console.error("Error generating AI response:", error)
+    log.error("[payments.webhook] ai confirmation generation failed", error, { route: "payments.webhook" })
     // Fallback to a standard message if AI fails
     return `Your deposit of $${depositAmount} has been confirmed! Your ${vehicleName} is reserved for ${startDate} to ${endDate}. We'll be in touch with pickup details soon. Thanks for booking with us!`
   }
 }
 
 export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 100, window: 60 })
+  if (limited) return limited
+
   const stripe = getStripe()
   const supabase = getSupabase()
 
@@ -103,20 +114,29 @@ export async function POST(request: NextRequest) {
       process.env.STRIPE_WEBHOOK_SECRET!
     )
   } catch (err: any) {
-    console.error("Webhook signature verification failed:", err.message)
+    log.error("[payments.webhook] signature verification failed", err, { route: "payments.webhook" })
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 })
+  }
+
+  // LB-4: namespaced ledger key so this route's claim cannot starve
+  // stripe-webhook's claim (or vice versa) for the same Stripe event_id.
+  const claim = await claimWebhookEvent("stripe:payments", event.id, event.type)
+  if (!claim.claimed) {
+    return NextResponse.json({ received: true, duplicate: true })
   }
 
   // Handle the event
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session
 
-    console.log("Payment successful for session:", session.id)
+    log.info("[payments.webhook] checkout session completed", { sessionId: session.id, route: "payments.webhook" })
 
     const metadata = session.metadata
     if (!metadata) {
-      console.error("No metadata in session")
-      return NextResponse.json({ received: true })
+      // LB-8: terminal — nothing to process. Mark the ledger so we never retry.
+      log.error("[payments.webhook] no metadata in session", new Error("no_metadata"), { sessionId: session.id, route: "payments.webhook" })
+      await markWebhookEventProcessed(claim.rowId, "processed", "no_metadata")
+      return NextResponse.json({ received: true, terminal: "no_metadata" })
     }
 
     const leadId = metadata.lead_id
@@ -131,8 +151,10 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!vehicleId || !startDate || !endDate) {
-      console.error("Missing required metadata fields:", { vehicleId, startDate, endDate })
-      return NextResponse.json({ received: true })
+      // LB-8: terminal — malformed metadata cannot be salvaged by retry.
+      log.error("[payments.webhook] missing metadata fields", new Error("missing_metadata"), { hasVehicleId: !!vehicleId, hasStartDate: !!startDate, hasEndDate: !!endDate, route: "payments.webhook" })
+      await markWebhookEventProcessed(claim.rowId, "processed", "missing_metadata")
+      return NextResponse.json({ received: true, terminal: "missing_metadata" })
     }
 
     try {
@@ -179,103 +201,143 @@ export async function POST(request: NextRequest) {
       }
 
       if (!userId) {
-        console.error("Could not determine user_id for booking")
-        return NextResponse.json({ received: true })
+        // LB-8: terminal — we cannot route this payment to any tenant.
+        log.error("[payments.webhook] could not determine user_id", new Error("no_user_id"), { sessionId: session.id, route: "payments.webhook" })
+        await markWebhookEventProcessed(claim.rowId, "processed", "no_user_id")
+        return NextResponse.json({ received: true, terminal: "no_user_id" })
       }
 
-      console.log("Creating booking with userId:", userId, "vehicleId:", vehicleId)
+      log.info("[payments.webhook] creating booking", { route: "payments.webhook" })
 
-      // Update lead status to converted (if we have a lead)
-      if (lead && lead.id) {
-        await supabase
-          .from("leads")
-          .update({
-            status: convertedStatus,
-            notes: `Deposit paid: $${depositAmount} via Stripe`,
-          })
-          .eq("id", lead.id)
+      // Verify the paid amount matches the expected deposit
+      const paidAmountCents = session.amount_total || 0
+      const expectedDepositCents = Math.round(depositAmount * 100)
+      if (Math.abs(paidAmountCents - expectedDepositCents) > 1) {
+        // LB-8: terminal — amount mismatch is not fixable by retry.
+        log.error("[payments.webhook] amount mismatch", new Error("amount_mismatch"), { paidCents: paidAmountCents, expectedCents: expectedDepositCents, route: "payments.webhook" })
+        await markWebhookEventProcessed(claim.rowId, "processed", "amount_mismatch")
+        return NextResponse.json({ received: true, terminal: "amount_mismatch" })
       }
 
-      // Create a booking
-      const { data: booking, error: bookingError } = await supabase
-        .from("bookings")
-        .insert({
-          user_id: userId,
-          vehicle_id: vehicleId,
-          customer_name: customerName || lead?.name || "Customer",
-          customer_phone: customerPhone || lead?.phone || null,
-          customer_email: session.customer_email || lead?.email || null,
-          start_date: startDate,
-          end_date: endDate,
-          total_amount: totalAmount,
-          deposit_amount: depositAmount,
-          deposit_paid: true,
-          status: "confirmed",
-          stripe_session_id: session.id,
-          stripe_payment_intent: session.payment_intent as string,
-          lead_id: lead?.id || leadId || null,
-        })
-        .select()
-        .single()
-
-      if (bookingError) {
-        console.error("Error creating booking:", bookingError)
-      } else {
-        console.log("Booking created:", booking?.id)
-      }
-
-      // Send AI-powered confirmation via the appropriate channel (Instagram or SMS)
+      // LB-5b: pre-compute the confirmation message BEFORE the atomic write
+      // so the RPC can persist it in the same transaction as the booking +
+      // lead update. AI failure falls back to a canned string inside
+      // generateDepositConfirmationResponse.
+      let vehicleNameForMessage = "your vehicle"
+      let businessNameForMessage = "our exotic car rental"
+      let toneForMessage = "friendly"
+      let isInstagramLeadForSend = false
       try {
-        // Get vehicle info
         const { data: vehicle } = await supabase
           .from("vehicles")
           .select("make, model, year")
           .eq("id", vehicleId)
           .single()
-
-        const vehicleName = vehicle
-          ? `${vehicle.year} ${vehicle.make} ${vehicle.model}`
-          : "your vehicle"
-
-        // Get AI settings for the business
+        if (vehicle) {
+          vehicleNameForMessage = `${vehicle.year} ${vehicle.make} ${vehicle.model}`
+        }
         const { data: aiSettings } = await supabase
           .from("ai_settings")
           .select("business_name, tone")
           .eq("user_id", userId)
           .single()
+        if (aiSettings) {
+          businessNameForMessage = aiSettings.business_name || businessNameForMessage
+          toneForMessage = aiSettings.tone || toneForMessage
+        }
+        isInstagramLeadForSend = !!lead?.instagram_user_id
+      } catch (lookupErr) {
+        // Non-fatal — message will use fallback names. Let the RPC proceed.
+        log.error("[payments.webhook] vehicle/ai_settings lookup failed (non-fatal)", lookupErr, { route: "payments.webhook" })
+      }
 
-        const businessName = aiSettings?.business_name || "our exotic car rental"
-        const tone = aiSettings?.tone || "friendly"
+      const channel: "sms" | "instagram" = isInstagramLeadForSend ? "instagram" : "sms"
+      const confirmationMessage = await generateDepositConfirmationResponse(
+        businessNameForMessage,
+        customerName || lead?.name || "Customer",
+        vehicleNameForMessage,
+        startDate,
+        endDate,
+        depositAmount,
+        toneForMessage,
+        channel
+      )
 
-        // Determine channel based on lead's instagram_user_id
-        const isInstagramLead = !!lead?.instagram_user_id
-        const channel = isInstagramLead ? "instagram" : "sms"
+      // LB-5b: single atomic RPC replaces the previous sequential
+      //   1. UPDATE leads
+      //   2. INSERT bookings
+      //   3. INSERT messages
+      // chain. Supabase-js has no multi-statement txn; the Postgres function
+      // `confirm_booking_and_lead` (migration 20260405140000) wraps all
+      // three in one transaction and catches 23P01 from the LB-5a overlap
+      // constraint, re-raising as `booking_conflict: ...`.
+      // LB-12: prefer the currency that the checkout route stamped into
+      // metadata (create-checkout does this). Fall back to env default.
+      const metadataCurrency = (metadata.currency || "").toString().toUpperCase()
+      const resolvedCurrency =
+        metadataCurrency || (process.env.DEFAULT_CURRENCY || "USD").toUpperCase()
+      const { data: rpcBookingId, error: rpcError } = await supabase.rpc(
+        "confirm_booking_and_lead",
+        {
+          p_lead_id: lead?.id || leadId || null,
+          p_user_id: userId,
+          p_vehicle_id: vehicleId,
+          p_start_date: startDate,
+          p_end_date: endDate,
+          p_total_amount: totalAmount,
+          p_deposit_amount: depositAmount,
+          p_currency: resolvedCurrency,
+          p_stripe_session_id: session.id,
+          p_stripe_payment_intent: (session.payment_intent as string) || null,
+          p_customer_name: customerName || lead?.name || "Customer",
+          p_customer_email: session.customer_email || lead?.email || null,
+          p_customer_phone: customerPhone || lead?.phone || null,
+          p_confirmation_message: confirmationMessage,
+          p_lead_notes: `Deposit paid: $${depositAmount} via Stripe`,
+        }
+      )
 
-        // Generate AI response
-        const confirmationMessage = await generateDepositConfirmationResponse(
-          businessName,
-          customerName || lead?.name || "Customer",
-          vehicleName,
-          startDate,
-          endDate,
-          depositAmount,
-          tone,
-          channel as "sms" | "instagram"
-        )
+      if (rpcError) {
+        const msg = (rpcError as { message?: string }).message || String(rpcError)
+        // LB-5b: surface the LB-5a overlap violation as a 409 terminal state.
+        // Stripe has already charged the customer; retrying will never succeed
+        // because the date range is taken. Ops must refund out-of-band.
+        // TODO(HP-2): queue a pending_notifications row so the refund + apology
+        // SMS can be dispatched from a cron instead of being dropped here.
+        if (msg.includes("booking_conflict")) {
+          log.error("[payments.webhook] booking_conflict (LB-5a)", rpcError, { sessionId: session.id, route: "payments.webhook" })
+          await markWebhookEventProcessed(claim.rowId, "processed", "booking_conflict")
+          return NextResponse.json(
+            { error: "booking_conflict", message: "vehicle already booked for those dates" },
+            { status: 409 }
+          )
+        }
+        // Anything else is transient — let the outer catch turn it into a 500.
+        throw rpcError
+      }
 
-        console.log(`Sending ${channel} confirmation:`, confirmationMessage)
+      log.info("[payments.webhook] booking created", { bookingId: rpcBookingId, route: "payments.webhook" })
 
-        // Send via the appropriate channel
-        if (isInstagramLead && lead?.instagram_user_id) {
-          // Send via Instagram DM
+      // LB-5b: Twilio/Instagram confirmation send stays AFTER the RPC. If the
+      // provider is down the RPC already committed (customer is paid + booked
+      // + message row stored), which is the right semantics — we'd rather
+      // retry the physical send than roll back a successful booking.
+      // TODO(HP-2): write a `pending_notifications` row on send failure and
+      // retry from a cron so the customer always eventually hears back.
+      try {
+        log.info("[payments.webhook] sending confirmation", { channel, route: "payments.webhook" })
+
+        // Send via the appropriate channel. The message row was ALREADY
+        // persisted inside the LB-5b RPC; this block only does the physical
+        // provider send.
+        if (isInstagramLeadForSend && lead?.instagram_user_id) {
           const result = await sendInstagramMessage(lead.instagram_user_id, confirmationMessage)
           if (result.success) {
-            console.log("Instagram confirmation sent successfully, messageId:", result.messageId)
+            log.info("[payments.webhook] instagram confirmation sent", { route: "payments.webhook" })
           } else {
-            console.error("Failed to send Instagram confirmation:", result.error)
+            log.error("[payments.webhook] instagram confirmation send failed", new Error(result.error || "unknown"), { route: "payments.webhook" })
           }
         } else if (customerPhone || lead?.phone) {
-          // Send via SMS
           const twilio = await import("twilio")
           const twilioClient = twilio.default(
             process.env.TWILIO_ACCOUNT_SID,
@@ -288,28 +350,26 @@ export async function POST(request: NextRequest) {
             to: customerPhone || lead?.phone,
           })
 
-          console.log("SMS confirmation sent successfully")
+          log.info("[payments.webhook] sms confirmation sent", { route: "payments.webhook" })
         }
-
-        // Save the confirmation message to the database (only if we have a lead)
-        if (lead?.id) {
-          await supabase.from("messages").insert({
-            user_id: userId,
-            lead_id: lead.id,
-            content: confirmationMessage,
-            direction: "outbound",
-          })
-          console.log("Confirmation message saved to database")
-        }
-
       } catch (confirmationError) {
-        console.error("Error sending AI confirmation:", confirmationError)
+        // LB-5b: send failure is non-fatal — booking is already committed.
+        // TODO(HP-2): enqueue pending_notifications row for cron retry.
+        log.error("[payments.webhook] confirmation send failed (non-fatal)", confirmationError, { route: "payments.webhook" })
       }
 
     } catch (error) {
-      console.error("Error processing successful payment:", error)
+      // LB-8: previously returned 200 { received: true } which told Stripe
+      // to stop retrying on transient Supabase/network errors. Now we ledger
+      // as "failed" and return 500 so Stripe redelivers, unless we already
+      // returned early above with a terminal reason.
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      log.error("[payments.webhook] internal error", error, { eventId: event.id, route: "payments.webhook" })
+      await markWebhookEventProcessed(claim.rowId, "failed", errorMessage)
+      return NextResponse.json({ error: "internal" }, { status: 500 })
     }
   }
 
+  await markWebhookEventProcessed(claim.rowId, "processed")
   return NextResponse.json({ received: true })
 }

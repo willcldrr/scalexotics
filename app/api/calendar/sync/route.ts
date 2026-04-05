@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { fetchAndParseIcal, filterRelevantEvents } from "@/lib/ical-parser"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { log } from "@/lib/log"
 
 interface SyncResult {
   vehicleId: string
@@ -16,6 +18,9 @@ interface SyncResult {
  * Manually trigger calendar sync for a specific vehicle or all vehicles
  */
 export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   try {
     const supabase = await createClient()
 
@@ -44,7 +49,7 @@ export async function POST(request: NextRequest) {
     const { data: vehicles, error: vehiclesError } = await query
 
     if (vehiclesError) {
-      console.error("Error fetching vehicles:", vehiclesError)
+      log.error("Error fetching vehicles:", vehiclesError)
       return NextResponse.json({ error: "Failed to fetch vehicles" }, { status: 500 })
     }
 
@@ -107,7 +112,7 @@ export async function POST(request: NextRequest) {
         result.success = true
       } catch (err) {
         result.error = err instanceof Error ? err.message : "Unknown error"
-        console.error(`Sync error for vehicle ${vehicle.id}:`, err)
+        log.error(`Sync error for vehicle ${vehicle.id}:`, err)
       }
 
       results.push(result)
@@ -119,7 +124,7 @@ export async function POST(request: NextRequest) {
       results,
     })
   } catch (error) {
-    console.error("Calendar sync error:", error)
+    log.error("Calendar sync error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -129,6 +134,9 @@ export async function POST(request: NextRequest) {
  * Get sync status for vehicles
  */
 export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   try {
     const supabase = await createClient()
 
@@ -171,7 +179,7 @@ export async function GET(request: NextRequest) {
       })),
     })
   } catch (error) {
-    console.error("Get sync status error:", error)
+    log.error("Get sync status error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

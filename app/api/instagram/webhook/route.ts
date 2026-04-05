@@ -13,7 +13,11 @@ import {
   generateAIResponse,
   saveMessage,
 } from "@/lib/sms-ai"
-import { findOrCreateInstagramLead } from "@/lib/instagram-leads"
+import { findOrCreateInstagramLead, isInstagramAIEnabled } from "@/lib/instagram-leads"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { decrypt } from "@/lib/crypto"
+import { claimWebhookEvent } from "@/lib/webhook-idempotency"
+import { log } from "@/lib/log"
 
 function getSupabase() {
   return createClient(
@@ -37,20 +41,45 @@ async function getConnectionByInstagramAccount(instagramAccountId: string): Prom
   const supabase = getSupabase()
 
   // First, try to look up in instagram_connections table (OAuth-based connections)
+  // LB-6 dual-read: prefer encrypted trio, fall back to legacy plaintext.
   const { data: connection } = await supabase
     .from("instagram_connections")
-    .select("user_id, instagram_account_id, access_token")
+    .select(
+      "user_id, instagram_account_id, access_token, encrypted_access_token, access_token_iv, access_token_tag"
+    )
     .eq("instagram_account_id", instagramAccountId)
     .eq("is_active", true)
     .single()
 
   if (connection) {
-    return {
-      userId: connection.user_id,
-      credentials: {
-        accessToken: connection.access_token,
-        accountId: connection.instagram_account_id,
-      },
+    let accessToken: string | null = null
+    if (
+      connection.encrypted_access_token &&
+      connection.access_token_iv &&
+      connection.access_token_tag
+    ) {
+      try {
+        accessToken = decrypt({
+          ciphertext: connection.encrypted_access_token,
+          iv: connection.access_token_iv,
+          tag: connection.access_token_tag,
+        })
+      } catch (err) {
+        log.error("[instagram/webhook] Failed to decrypt access token", undefined)
+      }
+    }
+    if (!accessToken) {
+      accessToken = connection.access_token
+    }
+
+    if (accessToken) {
+      return {
+        userId: connection.user_id,
+        credentials: {
+          accessToken,
+          accountId: connection.instagram_account_id,
+        },
+      }
     }
   }
 
@@ -84,6 +113,9 @@ async function getConnectionByInstagramAccount(instagramAccountId: string): Prom
  * Meta sends a verification request when you configure the webhook
  */
 export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 100, window: 60 })
+  if (limited) return limited
+
   const searchParams = request.nextUrl.searchParams
 
   const mode = searchParams.get("hub.mode")
@@ -105,6 +137,9 @@ export async function GET(request: NextRequest) {
  * Meta sends webhook events here when users message the Instagram account
  */
 export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 100, window: 60 })
+  if (limited) return limited
+
   try {
     // Get raw body for signature verification
     const rawBody = await request.text()
@@ -112,7 +147,7 @@ export async function POST(request: NextRequest) {
 
     // Always verify the request is from Meta
     if (!verifyWebhookSignature(signature, rawBody)) {
-      console.error("[Instagram Webhook] Signature verification failed")
+      log.error("[Instagram Webhook] Signature verification failed", undefined)
       return new NextResponse("Invalid signature", { status: 401 })
     }
 
@@ -122,13 +157,13 @@ export async function POST(request: NextRequest) {
     // Meta expects a 200 OK response quickly to avoid retries
     // Process the message asynchronously
     processInstagramMessage(body).catch((error) => {
-      console.error("[Instagram Webhook] Processing error")
+      log.error("[Instagram Webhook] Processing error", undefined)
     })
 
     // Return 200 immediately (Meta best practice)
     return new NextResponse("EVENT_RECEIVED", { status: 200 })
   } catch (error) {
-    console.error("[Instagram Webhook] Error")
+    log.error("[Instagram Webhook] Error", undefined)
     // Still return 200 to prevent Meta retries
     return new NextResponse("EVENT_RECEIVED", { status: 200 })
   }
@@ -145,16 +180,40 @@ async function processInstagramMessage(webhookBody: any): Promise<void> {
     return
   }
 
+  // LB-4 / R-2: idempotency. Meta retries on non-2xx AND on timeout, and
+  // because this handler is detached from the HTTP response with
+  // `.catch(() => {})`, a retry can overlap the original run and cause
+  // duplicate leads, duplicate AI cost, and duplicate replies. `message.mid`
+  // is globally unique per Instagram message. Short-circuit on !claimed.
+  // We pass the raw webhook body as fallback so R-15's hash-dedupe kicks in
+  // on the rare payload shapes that lack a `mid` (e.g. reactions).
+  const claim = await claimWebhookEvent(
+    "instagram",
+    message.messageId || "",
+    "dm.inbound",
+    JSON.stringify(webhookBody)
+  )
+  if (!claim.claimed) {
+    return
+  }
+
   // Look up user and credentials by Instagram account (multi-tenant support)
   const recipientId = message.recipientId || process.env.INSTAGRAM_ACCOUNT_ID
   const connection = await getConnectionByInstagramAccount(recipientId || "")
 
   if (!connection) {
-    console.error("[Instagram] No user configured for this Instagram account")
+    log.error("[Instagram] No user configured for this Instagram account", undefined)
     return
   }
 
   const { userId, credentials } = connection
+
+  // Check if Instagram AI is enabled for this user
+  const instagramEnabled = await isInstagramAIEnabled(userId)
+  if (!instagramEnabled) {
+    log.info("[Instagram] AI responses disabled for user", { v0: userId })
+    return
+  }
 
   // Skip if no text content (e.g., media-only message)
   if (!message.text) {
@@ -181,12 +240,25 @@ async function processInstagramMessage(webhookBody: any): Promise<void> {
   )
 
   if (!lead) {
-    console.error("[Instagram] Could not find or create lead")
+    log.error("[Instagram] Could not find or create lead", undefined)
     return
   }
 
   // Save the incoming message
   await saveMessage(userId, lead.id, message.text, "inbound")
+
+  // Check if AI is disabled for this lead (human takeover)
+  const supabase = getSupabase()
+  const { data: leadData } = await supabase
+    .from("leads")
+    .select("ai_disabled")
+    .eq("id", lead.id)
+    .single()
+
+  if (leadData?.ai_disabled) {
+    // AI is paused — business owner is handling this conversation manually
+    return
+  }
 
   // Show typing indicator while generating response
   await sendTypingIndicator(message.senderId, true, credentials)
@@ -212,10 +284,10 @@ async function processInstagramMessage(webhookBody: any): Promise<void> {
     const sendResult = await sendInstagramMessage(message.senderId, aiResult.response, credentials)
 
     if (!sendResult.success) {
-      console.error("[Instagram] Failed to send response")
+      log.error("[Instagram] Failed to send response", undefined)
     }
   } catch (error) {
-    console.error("[Instagram] AI response error")
+    log.error("[Instagram] AI response error", undefined)
     await sendTypingIndicator(message.senderId, false, credentials)
 
     // Send fallback message

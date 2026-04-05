@@ -1,5 +1,6 @@
 import crypto from "crypto"
 import { createClient } from "@supabase/supabase-js"
+import { log } from "@/lib/log"
 
 const EXPIRATION_HOURS = 24
 
@@ -34,7 +35,6 @@ export interface BusinessInfo {
   slug: string
   payment_domain: string | null
   stripe_publishable_key: string | null
-  stripe_secret_key: string | null
   logo_url: string | null
   primary_color: string
   secondary_color: string
@@ -158,13 +158,13 @@ export async function generateSecurePaymentLink(data: PaymentLinkData): Promise<
     })
 
     if (error) {
-      console.error("Failed to store payment link:", error)
+      log.error("Failed to store payment link:", error)
       throw new Error("Failed to create payment link")
     }
 
     return `${baseUrl}/${shortToken}`
   } catch (error) {
-    console.error("Payment link generation error:", error)
+    log.error("Payment link generation error:", error)
     throw error
   }
 }
@@ -179,7 +179,7 @@ export function generateSecurePaymentLinkSync(data: PaymentLinkData): string {
 
   // For sync version, encode minimal data in token itself
   // This is a fallback and won't persist
-  console.warn("Using sync payment link generation - link data will not be persisted")
+  log.warn("Using sync payment link generation - link data will not be persisted")
 
   const payload = Buffer.from(JSON.stringify({
     ...data,
@@ -206,19 +206,19 @@ export async function lookupPaymentToken(shortToken: string): Promise<PaymentLin
       .single()
 
     if (error || !data) {
-      console.error("Payment link not found:", error)
+      log.error("Payment link not found:", error)
       return null
     }
 
     // Check expiration
     if (new Date(data.expires_at) < new Date()) {
-      console.error("Payment link expired")
+      log.error("Payment link expired", undefined)
       return null
     }
 
     // Check if already used
     if (data.used_at) {
-      console.error("Payment link already used")
+      log.error("Payment link already used", undefined)
       return null
     }
 
@@ -241,7 +241,7 @@ export async function lookupPaymentToken(shortToken: string): Promise<PaymentLin
       businessId: data.business_id || undefined,
     }
   } catch (error) {
-    console.error("Failed to lookup payment token:", error)
+    log.error("Failed to lookup payment token:", error)
     return null
   }
 }
@@ -310,20 +310,20 @@ export async function lookupBusinessByDomain(domain: string): Promise<BusinessIn
 
     const { data, error } = await supabase
       .from("businesses")
-      .select("id, name, slug, payment_domain, stripe_publishable_key, stripe_secret_key, logo_url, primary_color, secondary_color, phone, email, deposit_percentage")
+      .select("id, name, slug, payment_domain, stripe_publishable_key, logo_url, primary_color, secondary_color, phone, email, deposit_percentage")
       .eq("payment_domain", normalizedDomain)
       .eq("domain_status", "active")
       .eq("status", "active")
       .single()
 
     if (error || !data) {
-      console.error("Business not found for domain:", normalizedDomain, error)
+      log.error("Business not found for domain:", normalizedDomain, { v0: error })
       return null
     }
 
     return data as BusinessInfo
   } catch (error) {
-    console.error("Failed to lookup business:", error)
+    log.error("Failed to lookup business:", error)
     return null
   }
 }
@@ -337,19 +337,19 @@ export async function lookupBusinessById(businessId: string): Promise<BusinessIn
 
     const { data, error } = await supabase
       .from("businesses")
-      .select("id, name, slug, payment_domain, stripe_publishable_key, stripe_secret_key, logo_url, primary_color, secondary_color, phone, email, deposit_percentage")
+      .select("id, name, slug, payment_domain, stripe_publishable_key, logo_url, primary_color, secondary_color, phone, email, deposit_percentage")
       .eq("id", businessId)
       .eq("status", "active")
       .single()
 
     if (error || !data) {
-      console.error("Business not found:", businessId, error)
+      log.error("Business not found:", businessId, { v0: error })
       return null
     }
 
     return data as BusinessInfo
   } catch (error) {
-    console.error("Failed to lookup business:", error)
+    log.error("Failed to lookup business:", error)
     return null
   }
 }

@@ -11,7 +11,8 @@ export default function Demo() {
   const [isAnimating, setIsAnimating] = useState(false)
   const [slideDirection, setSlideDirection] = useState<'next' | 'prev'>('next')
 
-  const CORRECT_PASSWORD = "calder123"
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const LOGO_URL = "https://imagedelivery.net/CVEJyzst_6io-ETn1V_PSw/3bdba65e-fb1a-4a3e-ff6f-1aa89b081f00/public"
 
   const slides = [
@@ -339,13 +340,27 @@ export default function Demo() {
   const sections = ["intro", "clarity", "solution", "comparison", "demo", "faq", "guarantee", "bonuses", "close"]
   const currentSection = slides[currentSlide].section
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password === CORRECT_PASSWORD) {
-      setIsAuthenticated(true)
-      setError("")
-    } else {
-      setError("Incorrect password")
+    setIsSubmitting(true)
+    setError("")
+    try {
+      const res = await fetch('/api/demo/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      })
+      const data = await res.json()
+      if (data.valid) {
+        setIsAuthenticated(true)
+        setError("")
+      } else {
+        setError(data.error || "Incorrect password")
+      }
+    } catch {
+      setError("Something went wrong. Please try again.")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -2174,7 +2189,7 @@ export default function Demo() {
             <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
               className={`w-full px-5 py-4 rounded-xl bg-white/5 border ${error ? 'border-red-500' : 'border-white/20'} text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-[#375DEE] transition-colors`} />
             {error && <p className="text-red-400">{error}</p>}
-            <button type="submit" className="w-full py-4 bg-[#375DEE] hover:opacity-90 text-white text-lg font-semibold rounded-xl transition-colors" style={{ fontFamily: 'var(--font-display)' }}>Enter</button>
+            <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-[#375DEE] hover:opacity-90 disabled:opacity-50 text-white text-lg font-semibold rounded-xl transition-colors" style={{ fontFamily: 'var(--font-display)' }}>{isSubmitting ? 'Verifying...' : 'Enter'}</button>
           </form>
         </div>
       </div>

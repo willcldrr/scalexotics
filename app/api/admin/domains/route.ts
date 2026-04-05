@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { safeFetch } from "@/lib/safe-fetch"
+import { log } from "@/lib/log"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,6 +15,9 @@ const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID
 
 // GET - List all domains with their owners
 export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   // Verify admin
   const authHeader = request.headers.get("authorization")
   if (!authHeader) {
@@ -57,6 +63,9 @@ export async function GET(request: NextRequest) {
 
 // POST - Add a domain to Vercel and database
 export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   // Verify admin
   const authHeader = request.headers.get("authorization")
   if (!authHeader) {
@@ -119,13 +128,14 @@ export async function POST(request: NextRequest) {
         ? `https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/domains?teamId=${VERCEL_TEAM_ID}`
         : `https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/domains`
 
-      const vercelResponse = await fetch(vercelUrl, {
+      const vercelResponse = await safeFetch(vercelUrl, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${VERCEL_API_TOKEN}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ name: cleanDomain }),
+        timeoutMs: 10_000,
       })
 
       const vercelData = await vercelResponse.json()
@@ -133,11 +143,11 @@ export async function POST(request: NextRequest) {
       if (vercelResponse.ok) {
         vercelStatus = "added_to_vercel"
       } else {
-        console.error("Vercel API error:", vercelData)
+        log.error("Vercel API error:", vercelData)
         // Continue anyway - domain can be added to Vercel manually
       }
     } catch (err) {
-      console.error("Vercel API error:", err)
+      log.error("Vercel API error:", err)
     }
   }
 
@@ -167,6 +177,9 @@ export async function POST(request: NextRequest) {
 
 // DELETE - Remove a domain
 export async function DELETE(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   // Verify admin
   const authHeader = request.headers.get("authorization")
   if (!authHeader) {
@@ -206,14 +219,15 @@ export async function DELETE(request: NextRequest) {
         ? `https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}/domains/${domainName}?teamId=${VERCEL_TEAM_ID}`
         : `https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}/domains/${domainName}`
 
-      await fetch(vercelUrl, {
+      await safeFetch(vercelUrl, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${VERCEL_API_TOKEN}`,
         },
+        timeoutMs: 10_000,
       })
     } catch (err) {
-      console.error("Vercel API error:", err)
+      log.error("Vercel API error:", err)
     }
   }
 

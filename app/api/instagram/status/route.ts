@@ -1,9 +1,21 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { createClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { safeFetch } from "@/lib/safe-fetch"
 
 /**
  * Check if Instagram API is configured
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN
   const accountId = process.env.INSTAGRAM_ACCOUNT_ID
   const verifyToken = process.env.INSTAGRAM_VERIFY_TOKEN
@@ -27,8 +39,9 @@ export async function GET() {
 
   // Optionally verify the token is valid by making a test API call
   try {
-    const response = await fetch(
-      `https://graph.facebook.com/v19.0/${accountId}?fields=id,username&access_token=${accessToken}`
+    const response = await safeFetch(
+      `https://graph.facebook.com/v19.0/${accountId}?fields=id,username&access_token=${accessToken}`,
+      { timeoutMs: 10_000 }
     )
 
     if (response.ok) {

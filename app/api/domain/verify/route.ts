@@ -1,7 +1,20 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { createClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { safeFetch } from "@/lib/safe-fetch"
+import { log } from "@/lib/log"
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 20, window: 60 })
+  if (limited) return limited
+
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const { domain } = await request.json()
 
     if (!domain) {
@@ -22,11 +35,12 @@ export async function POST(request: Request) {
           ? `https://api.vercel.com/v9/projects/${projectId}/domains/${cleanDomain}?teamId=${teamId}`
           : `https://api.vercel.com/v9/projects/${projectId}/domains/${cleanDomain}`
 
-        const vercelResponse = await fetch(vercelUrl, {
+        const vercelResponse = await safeFetch(vercelUrl, {
           headers: {
             Authorization: `Bearer ${vercelToken}`,
           },
-          cache: 'no-store'
+          cache: 'no-store',
+          timeoutMs: 10_000,
         })
 
         if (vercelResponse.ok) {
@@ -57,16 +71,16 @@ export async function POST(request: Request) {
           })
         }
       } catch (vercelError) {
-        console.error("Vercel API error:", vercelError)
+        log.error("Vercel API error:", vercelError)
       }
     }
 
     // Fallback: Use DNS check if Vercel API not configured or failed
     try {
       // Use Google's DNS-over-HTTPS API
-      const dnsResponse = await fetch(
+      const dnsResponse = await safeFetch(
         `https://dns.google/resolve?name=${encodeURIComponent(cleanDomain)}&type=CNAME`,
-        { cache: 'no-store' }
+        { cache: 'no-store', timeoutMs: 10_000 }
       )
 
       const dnsData = await dnsResponse.json()
@@ -96,9 +110,9 @@ export async function POST(request: Request) {
       }
 
       // Check A records for apex domains
-      const aResponse = await fetch(
+      const aResponse = await safeFetch(
         `https://dns.google/resolve?name=${encodeURIComponent(cleanDomain)}&type=A`,
-        { cache: 'no-store' }
+        { cache: 'no-store', timeoutMs: 10_000 }
       )
       const aData = await aResponse.json()
 
@@ -133,14 +147,14 @@ export async function POST(request: Request) {
       })
 
     } catch (dnsError) {
-      console.error("DNS lookup error:", dnsError)
+      log.error("DNS lookup error:", dnsError)
       return NextResponse.json({
         verified: false,
         message: "DNS lookup failed. Please try again."
       })
     }
   } catch (error) {
-    console.error("Domain verification error:", error)
+    log.error("Domain verification error:", error)
     return NextResponse.json(
       { error: "Failed to verify domain" },
       { status: 500 }

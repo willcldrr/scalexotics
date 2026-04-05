@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { log } from "@/lib/log"
 
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 }
 
@@ -23,6 +25,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   try {
     const supabase = getSupabase()
     const { slug } = await params
@@ -39,22 +44,6 @@ export async function GET(
       return NextResponse.json(
         { error: "Survey not found" },
         { status: 404, headers: corsHeaders }
-      )
-    }
-
-    // Get the user's active API key to include in response
-    const { data: apiKeyData } = await supabase
-      .from("api_keys")
-      .select("key")
-      .eq("user_id", config.user_id)
-      .eq("is_active", true)
-      .limit(1)
-      .single()
-
-    if (!apiKeyData) {
-      return NextResponse.json(
-        { error: "No active API key found for this survey" },
-        { status: 500, headers: corsHeaders }
       )
     }
 
@@ -84,9 +73,12 @@ export async function GET(
       availability = bookings || []
     }
 
+    // Do NOT return any api_key here. The hosted survey page authenticates
+    // submissions by echoing this slug back via the X-Survey-Slug header,
+    // which the capture endpoint resolves server-side. Exposing a real
+    // api_key to the browser leaked full-scope business credentials.
     return NextResponse.json(
       {
-        api_key: apiKeyData.key,
         config: {
           business_name: config.business_name,
           logo_url: config.logo_url,
@@ -114,7 +106,7 @@ export async function GET(
     )
 
   } catch (error) {
-    console.error("Survey config error:", error)
+    log.error("Survey config error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500, headers: corsHeaders }

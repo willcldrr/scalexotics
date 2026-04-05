@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Instagram, Unlink, CheckCircle, AlertCircle, ArrowRight } from "lucide-react"
+import { Instagram, Unlink, CheckCircle, AlertCircle, ArrowRight, Key, ExternalLink, Loader2, ChevronDown, ChevronUp } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { ConfirmModal } from "@/components/ui/confirm-modal"
 
@@ -28,6 +28,11 @@ export default function InstagramSettings() {
     onConfirm: () => void
   }>({ open: false, title: "", message: "", onConfirm: () => {} })
 
+  // Manual connect state
+  const [showManualConnect, setShowManualConnect] = useState(false)
+  const [manualToken, setManualToken] = useState("")
+  const [connecting, setConnecting] = useState(false)
+
   const showConfirm = (title: string, message: string, onConfirm: () => void) => {
     setConfirmModal({ open: true, title, message, onConfirm })
   }
@@ -37,7 +42,6 @@ export default function InstagramSettings() {
   useEffect(() => {
     fetchConnection()
 
-    // Check for URL params (success/error from OAuth)
     const params = new URLSearchParams(window.location.search)
     let successTimeout: ReturnType<typeof setTimeout> | undefined
 
@@ -72,9 +76,49 @@ export default function InstagramSettings() {
         setConnection(data)
       }
     } catch (err) {
-      // No connection found - that's fine
+      // No connection found
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleManualConnect = async () => {
+    if (!manualToken.trim()) return
+    setConnecting(true)
+    setError(null)
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setError("Not authenticated. Please refresh and try again.")
+        return
+      }
+
+      const res = await fetch("/api/instagram/connect-manual", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ accessToken: manualToken.trim() }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error + (data.hint ? ` — ${data.hint}` : ""))
+        return
+      }
+
+      setSuccess(true)
+      setManualToken("")
+      setShowManualConnect(false)
+      fetchConnection()
+      setTimeout(() => setSuccess(false), 5000)
+    } catch (err) {
+      setError("Failed to connect. Please check the token and try again.")
+    } finally {
+      setConnecting(false)
     }
   }
 
@@ -105,7 +149,7 @@ export default function InstagramSettings() {
 
   if (loading) {
     return (
-      <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] p-8">
+      <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] shadow-[0_2px_20px_rgba(0,0,0,0.3),0_0_15px_rgba(255,255,255,0.03)] transition-all duration-300 hover:border-white/[0.12] p-8">
         <div className="animate-pulse flex items-center gap-4">
           <div className="w-12 h-12 bg-white/10 rounded-xl" />
           <div className="space-y-2">
@@ -118,7 +162,7 @@ export default function InstagramSettings() {
   }
 
   return (
-    <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] p-8">
+    <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] shadow-[0_2px_20px_rgba(0,0,0,0.3),0_0_15px_rgba(255,255,255,0.03)] transition-all duration-300 hover:border-white/[0.12] p-8">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 flex items-center justify-center">
@@ -162,13 +206,14 @@ export default function InstagramSettings() {
                 <p className="font-semibold text-emerald-400">Connected</p>
                 <p className="text-white/60">
                   @{connection.instagram_username || "your account"}
+                  {connection.page_name && <span className="text-white/40"> via {connection.page_name}</span>}
                 </p>
               </div>
             </div>
             <button
               onClick={disconnect}
               disabled={disconnecting}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-all duration-300 disabled:opacity-50"
             >
               <Unlink className="w-4 h-4" />
               {disconnecting ? "Disconnecting..." : "Disconnect"}
@@ -204,33 +249,90 @@ export default function InstagramSettings() {
             Connect your Instagram to let your AI assistant handle DMs. When customers message you, the AI responds instantly with info about your vehicles and helps them book.
           </p>
 
-          {/* Connect Button */}
-          <a
-            href="/api/instagram/auth"
-            className="flex items-center justify-center gap-3 w-full px-6 py-4 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 hover:opacity-90 text-white rounded-xl transition-opacity font-semibold text-lg"
-          >
-            <Instagram className="w-6 h-6" />
-            Connect Instagram
-            <ArrowRight className="w-5 h-5" />
-          </a>
+          {/* Connect with Token */}
+          <div className="space-y-4">
+            <button
+              onClick={() => setShowManualConnect(!showManualConnect)}
+              className="flex items-center justify-center gap-3 w-full px-6 py-4 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 hover:opacity-90 text-white rounded-xl font-semibold text-lg shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+            >
+              <Instagram className="w-6 h-6" />
+              Connect Instagram
+              {showManualConnect ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </button>
 
-          {/* Simple Steps */}
-          <div className="p-5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-            <p className="text-sm text-white/50 mb-4">When you click Connect:</p>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-sm font-medium">1</div>
-                <p className="text-white/70">Log in to Facebook (if not already)</p>
+            {showManualConnect && (
+              <div className="space-y-4 p-5 rounded-xl bg-white/[0.03] border border-white/[0.08]">
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-white/80">How to get your access token:</p>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5">1</div>
+                      <div className="text-sm text-white/60">
+                        Open the{" "}
+                        <a
+                          href="https://developers.facebook.com/tools/explorer/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:underline inline-flex items-center gap-1"
+                        >
+                          Graph API Explorer <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5">2</div>
+                      <p className="text-sm text-white/60">
+                        Select your Meta app from the dropdown at the top
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5">3</div>
+                      <p className="text-sm text-white/60">
+                        Click <span className="text-white/80 font-medium">Generate Access Token</span> and approve all permissions
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5">4</div>
+                      <p className="text-sm text-white/60">
+                        Copy the token and paste it below
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 space-y-3">
+                    <p className="text-xs text-white/40">Make sure these permissions are selected: <span className="text-white/60">pages_show_list, instagram_basic, instagram_manage_messages, pages_messaging, pages_manage_metadata</span></p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="relative flex-1">
+                    <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                    <input
+                      type="password"
+                      placeholder="Paste your access token here..."
+                      value={manualToken}
+                      onChange={(e) => setManualToken(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleManualConnect()}
+                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/20 focus:bg-white/[0.06] transition-all duration-300"
+                    />
+                  </div>
+                  <button
+                    onClick={handleManualConnect}
+                    disabled={connecting || !manualToken.trim()}
+                    className="px-6 py-3 bg-white text-black rounded-xl font-semibold hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center gap-2 shadow-[0_0_15px_rgba(255,255,255,0.15)]"
+                  >
+                    {connecting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Connecting...
+                      </>
+                    ) : (
+                      "Connect"
+                    )}
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-sm font-medium">2</div>
-                <p className="text-white/70">Select your Instagram Business account</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-sm font-medium">3</div>
-                <p className="text-white/70">Click Allow to connect</p>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Requirements Note */}

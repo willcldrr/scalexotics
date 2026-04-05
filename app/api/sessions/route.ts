@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
+import { applyRateLimit } from '@/lib/api-rate-limit'
 
 function parseUserAgent(ua: string): { device: string; browser: string; os: string } {
   let device = 'Desktop'
@@ -50,6 +51,9 @@ function getClientIP(request: NextRequest, headersList: Headers): string {
 
 // GET - List user's sessions
 export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -82,6 +86,9 @@ export async function GET(request: NextRequest) {
 
 // POST - Record or update a session for this device
 export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -216,6 +223,9 @@ export async function POST(request: NextRequest) {
 
 // DELETE - Revoke a session
 export async function DELETE(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()

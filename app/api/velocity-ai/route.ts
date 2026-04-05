@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { generateResponse, ChatMessage, ModelId } from "@/lib/anthropic"
 import { createClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { log } from "@/lib/log"
 
 export const runtime = "nodejs"
 
 export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -15,7 +20,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { messages, systemPrompt, model = "claude-sonnet-4-6" } = body
+    const { messages, model = "claude-sonnet-4-6" } = body
+    const systemPrompt = "You are Velocity AI, a helpful assistant for managing an exotic car rental business dashboard. Help the user with questions about their leads, bookings, vehicles, and analytics."
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
@@ -48,9 +54,10 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error("Velocity AI error:", error)
+    // F-13: never return raw error messages to the client; log server-side.
+    log.error("[velocity-ai] unhandled error", error, { route: "velocity-ai" })
     return NextResponse.json(
-      { error: "Internal server error", details: error?.message },
+      { error: "Internal server error" },
       { status: 500 }
     )
   }

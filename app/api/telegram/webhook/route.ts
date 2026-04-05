@@ -5,6 +5,10 @@ import {
   verifyLinkCode,
   getUserByChatId,
 } from "@/lib/telegram-bot-ai"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { claimWebhookEvent } from "@/lib/webhook-idempotency"
+import { safeFetch } from "@/lib/safe-fetch"
+import { log } from "@/lib/log"
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 
@@ -14,11 +18,8 @@ function verifyTelegramRequest(request: NextRequest): boolean {
   // If TELEGRAM_WEBHOOK_SECRET is set, verify the header
   const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET
   if (!webhookSecret) {
-    // No secret configured - allow (but log warning in production)
-    if (process.env.NODE_ENV === "production") {
-      console.warn("[Telegram] TELEGRAM_WEBHOOK_SECRET not set - webhook requests are not verified")
-    }
-    return true
+    log.error("[telegram.webhook] TELEGRAM_WEBHOOK_SECRET not set", new Error("missing_secret"), { route: "telegram.webhook" })
+    return false
   }
 
   const secretHeader = request.headers.get("x-telegram-bot-api-secret-token")
@@ -49,12 +50,12 @@ interface TelegramUpdate {
 // Send message via Telegram API
 async function sendTelegramMessage(chatId: string | number, text: string) {
   if (!TELEGRAM_BOT_TOKEN) {
-    console.error("TELEGRAM_BOT_TOKEN not configured")
+    log.error("[telegram.webhook] TELEGRAM_BOT_TOKEN not configured", new Error("missing_bot_token"), { route: "telegram.webhook" })
     return
   }
 
   try {
-    const response = await fetch(
+    const response = await safeFetch(
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
       {
         method: "POST",
@@ -64,27 +65,45 @@ async function sendTelegramMessage(chatId: string | number, text: string) {
           text,
           parse_mode: "Markdown",
         }),
+        timeoutMs: 10_000,
       }
     )
 
     if (!response.ok) {
-      const error = await response.text()
-      console.error("Telegram API error:", error)
+      // Do not log raw Telegram error body (may echo chat ids / usernames).
+      await response.text().catch(() => null)
+      log.error("[telegram.webhook] api error", new Error("telegram_api_error"), { status: response.status, route: "telegram.webhook" })
     }
   } catch (error) {
-    console.error("Error sending Telegram message:", error)
+    log.error("[telegram.webhook] send failed", error, { route: "telegram.webhook" })
   }
 }
 
 export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 100, window: 60 })
+  if (limited) return limited
+
   // Verify the request is from Telegram
   if (!verifyTelegramRequest(request)) {
-    console.error("[Telegram] Invalid webhook secret")
+    log.warn("[telegram.webhook] invalid webhook secret", { route: "telegram.webhook" })
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
     const update: TelegramUpdate = await request.json()
+
+    // LB-4 / R-3: idempotency. Telegram retries on timeout, and without a
+    // claim the bot will run its AI tool-calls (update_vehicle_status,
+    // create_booking, …) twice on every redelivery. `update_id` is
+    // monotonically increasing and unique per bot.
+    const claim = await claimWebhookEvent(
+      "telegram",
+      String(update.update_id),
+      update.message ? "message" : "other"
+    )
+    if (!claim.claimed) {
+      return NextResponse.json({ ok: true, duplicate: true })
+    }
 
     // Only process text messages
     if (!update.message?.text) {
@@ -137,12 +156,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    console.error("Telegram webhook error:", error)
+    log.error("[telegram.webhook] unhandled error", error, { route: "telegram.webhook" })
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
 // Telegram sends GET request to verify webhook
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 100, window: 60 })
+  if (limited) return limited
+
   return NextResponse.json({ status: "Telegram webhook is active" })
 }

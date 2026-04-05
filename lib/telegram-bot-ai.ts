@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk"
 import { createClient } from "@supabase/supabase-js"
+import { log } from "@/lib/log"
 
 // Initialize Supabase with service role for bot operations
 const supabase = createClient(
@@ -123,7 +124,7 @@ const tools: Anthropic.Tool[] = [
       properties: {
         status: {
           type: "string",
-          enum: ["new", "contacted", "qualified", "negotiating", "booked", "lost", "all"],
+          enum: ["new", "qualified", "pending", "booked", "lost", "cancelled", "followup", "all"],
           description: "Filter by lead status (default: all)",
         },
         limit: {
@@ -146,7 +147,7 @@ const tools: Anthropic.Tool[] = [
         },
         status: {
           type: "string",
-          enum: ["new", "contacted", "qualified", "negotiating", "booked", "lost"],
+          enum: ["new", "qualified", "pending", "booked", "lost", "cancelled", "followup"],
           description: "The new status for the lead",
         },
       },
@@ -439,7 +440,7 @@ LEADS (last 7 days):
         return `Unknown tool: ${toolName}`
     }
   } catch (error: any) {
-    console.error(`Tool execution error (${toolName}):`, error)
+    log.error(`Tool execution error (${toolName}):`, error)
     return `Error executing ${toolName}: ${error.message}`
   }
 }
@@ -544,7 +545,7 @@ export async function processMessage(
       success: true,
     }
   } catch (error: any) {
-    console.error("Telegram bot AI error:", error)
+    log.error("Telegram bot AI error:", error)
     return {
       message: "Sorry, I encountered an error processing your request. Please try again.",
       success: false,
@@ -602,7 +603,7 @@ export async function verifyLinkCode(
       userId: linkCode.user_id,
     }
   } catch (error: any) {
-    console.error("Link verification error:", error)
+    log.error("Link verification error:", error)
     return { success: false, message: "An error occurred while linking your account." }
   }
 }

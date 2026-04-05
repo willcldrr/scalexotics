@@ -3,6 +3,10 @@ import Stripe from "stripe"
 import { z } from "zod"
 import { createClient } from "@supabase/supabase-js"
 import { lookupPaymentToken, decodePaymentToken, claimPaymentLinkForCheckout } from "@/lib/payment-link"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { decrypt } from "@/lib/crypto"
+import { SUPPORTED_CURRENCIES, DEFAULT_CURRENCY } from "@/lib/currency"
+import { log } from "@/lib/log"
 
 const checkoutSchema = z.object({
   token: z.string().min(1, "Payment token is required").max(500, "Invalid token"),
@@ -28,9 +32,12 @@ function getSupabaseClient() {
 async function getStripeKeysForUser(userId: string): Promise<{ secretKey: string | null; publishableKey: string | null }> {
   const supabase = getSupabaseClient()
 
+  // LB-6 dual-read: prefer encrypted trio, fall back to legacy plaintext.
   const { data, error } = await supabase
     .from("deposit_portal_config")
-    .select("stripe_secret_key, stripe_publishable_key")
+    .select(
+      "stripe_secret_key, stripe_publishable_key, encrypted_stripe_secret_key, stripe_secret_key_iv, stripe_secret_key_tag"
+    )
     .eq("user_id", userId)
     .single()
 
@@ -38,13 +45,36 @@ async function getStripeKeysForUser(userId: string): Promise<{ secretKey: string
     return { secretKey: null, publishableKey: null }
   }
 
+  let secretKey: string | null = null
+  if (
+    data.encrypted_stripe_secret_key &&
+    data.stripe_secret_key_iv &&
+    data.stripe_secret_key_tag
+  ) {
+    try {
+      secretKey = decrypt({
+        ciphertext: data.encrypted_stripe_secret_key,
+        iv: data.stripe_secret_key_iv,
+        tag: data.stripe_secret_key_tag,
+      })
+    } catch (err) {
+      log.error("[checkout/create] Failed to decrypt tenant Stripe key", undefined)
+    }
+  }
+  if (!secretKey) {
+    secretKey = data.stripe_secret_key ?? null
+  }
+
   return {
-    secretKey: data.stripe_secret_key,
+    secretKey,
     publishableKey: data.stripe_publishable_key,
   }
 }
 
 export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 10, window: 60 })
+  if (limited) return limited
+
   try {
     const body = await request.json()
 
@@ -92,13 +122,40 @@ export async function POST(request: NextRequest) {
 
     // Create Stripe instance with the appropriate key
     const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: "2025-12-15.clover",
+      apiVersion: "2026-02-25.clover",
     })
 
     // Build success and cancel URLs
     const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
     const successUrl = `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`
     const cancelUrl = `${origin}/checkout/${token}`
+
+    // LB-12: resolve currency from the tenant's business row. Falls back to
+    // env default if the businesses.currency column isn't live yet.
+    let businessCurrencyRaw: string | undefined
+    if (paymentData.userId) {
+      try {
+        const supabase = getSupabaseClient()
+        const { data: bizRow } = await supabase
+          .from("businesses")
+          .select("currency")
+          .eq("owner_user_id", paymentData.userId)
+          .maybeSingle()
+        businessCurrencyRaw = (bizRow as { currency?: string } | null)?.currency
+      } catch {
+        // Column may not exist yet — use env fallback.
+      }
+    }
+    const envDefault = (process.env.DEFAULT_CURRENCY || DEFAULT_CURRENCY).toUpperCase()
+    let resolvedCurrency = (businessCurrencyRaw || envDefault).toUpperCase()
+    if (!SUPPORTED_CURRENCIES[resolvedCurrency]) {
+      log.warn("[checkout] unsupported currency, falling back to usd", { v0: {
+        businessId: paymentData.userId,
+        currency: resolvedCurrency,
+      } })
+      resolvedCurrency = "USD"
+    }
+    const stripeCurrency = resolvedCurrency.toLowerCase()
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
@@ -108,7 +165,7 @@ export async function POST(request: NextRequest) {
       line_items: [
         {
           price_data: {
-            currency: "usd",
+            currency: stripeCurrency,
             product_data: {
               name: `${paymentData.vehicleName} Rental Deposit`,
               description: `${paymentData.startDate} to ${paymentData.endDate} | Total rental: $${paymentData.totalAmount.toLocaleString()}`,
@@ -130,6 +187,8 @@ export async function POST(request: NextRequest) {
         customer_name: paymentData.customerName,
         total_amount: paymentData.totalAmount.toString(),
         deposit_amount: paymentData.depositAmount.toString(),
+        // LB-12: propagate to payments/webhook for bookings.currency.
+        currency: resolvedCurrency,
         // Additional fields for reference
         paymentToken: token,
         vehicleName: paymentData.vehicleName,
@@ -145,7 +204,7 @@ export async function POST(request: NextRequest) {
       const claimed = await claimPaymentLinkForCheckout(token, session.id)
       if (!claimed) {
         // Link was already used - this is a race condition or replay attack
-        console.error("Payment link already used or not found:", token)
+        log.error("Payment link already used or not found:", token)
         return NextResponse.json(
           { error: "This payment link has already been used" },
           { status: 400 }
@@ -158,7 +217,7 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
     })
   } catch (error: any) {
-    console.error("Stripe checkout error:", error)
+    log.error("Stripe checkout error:", error)
     return NextResponse.json(
       { error: error.message || "Failed to create checkout session" },
       { status: 500 }

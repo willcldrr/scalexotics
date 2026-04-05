@@ -64,7 +64,6 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
   const [underAge, setUnderAge] = useState(false)
 
   const [config, setConfig] = useState<SurveyConfig | null>(null)
-  const [apiKey, setApiKey] = useState<string | null>(null)
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [availability, setAvailability] = useState<Availability[]>([])
 
@@ -101,7 +100,6 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
 
       const data = await response.json()
       setConfig(data.config)
-      setApiKey(data.api_key)
       setVehicles(data.vehicles || [])
       setAvailability(data.availability || [])
       setLoading(false)
@@ -241,7 +239,7 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
   }
 
   const handleSubmit = async () => {
-    if (!apiKey) {
+    if (!slug) {
       setError("Configuration error. Please try again later.")
       return
     }
@@ -274,7 +272,7 @@ export default function LeadCapturePage({ params }: { params: Promise<{ slug: st
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": apiKey,
+          "X-Survey-Slug": slug,
         },
         body: JSON.stringify(payload),
       })

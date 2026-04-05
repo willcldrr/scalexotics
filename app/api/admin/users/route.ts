@@ -1,17 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { log } from "@/lib/log"
 
-// Service role client bypasses RLS
-const serviceSupabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
-// GET - List all users with their business info
+// GET - List all users with their business info + auth metadata
 export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   try {
-    // Get the current user from cookies
     const supabase = await createServerClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -19,7 +24,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Check if user is admin using service role
+    const serviceSupabase = getSupabase()
+
     const { data: profile } = await serviceSupabase
       .from("profiles")
       .select("is_admin")
@@ -30,36 +36,46 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 })
     }
 
-    // Fetch all profiles
-    const { data: profiles, error: profilesError } = await serviceSupabase
-      .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false })
+    // Fetch profiles, businesses, and auth users in parallel
+    const [profilesResult, businessesResult, authUsersResult] = await Promise.all([
+      serviceSupabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      serviceSupabase
+        .from("businesses")
+        .select("id, name, status, payment_domain, stripe_connected, owner_user_id, created_at"),
+      serviceSupabase.auth.admin.listUsers({ perPage: 1000 }),
+    ])
 
-    if (profilesError) {
-      console.error("Error fetching profiles:", profilesError)
-      return NextResponse.json({ error: profilesError.message }, { status: 500 })
+    if (profilesResult.error) {
+      return NextResponse.json({ error: profilesResult.error.message }, { status: 500 })
     }
 
-    // Fetch all businesses
-    const { data: businesses, error: businessesError } = await serviceSupabase
-      .from("businesses")
-      .select("id, name, status, payment_domain, stripe_connected, owner_user_id")
+    const profiles = profilesResult.data || []
+    const businesses = businessesResult.data || []
+    const authUsers = authUsersResult.data?.users || []
 
-    if (businessesError) {
-      console.error("Error fetching businesses:", businessesError)
-      return NextResponse.json({ error: businessesError.message }, { status: 500 })
-    }
+    // Build a map of auth user data for quick lookup
+    const authUserMap = new Map(
+      authUsers.map(u => [u.id, {
+        email_confirmed_at: u.email_confirmed_at,
+        last_sign_in_at: u.last_sign_in_at,
+        created_at: u.created_at,
+        providers: u.app_metadata?.providers || [],
+      }])
+    )
 
-    // Map profiles with their business info
-    const usersWithBusiness = profiles.map(profile => ({
-      ...profile,
-      business: businesses?.find(b => b.owner_user_id === profile.id) || null
+    // Merge all data
+    const usersWithBusiness = profiles.map(p => ({
+      ...p,
+      business: businesses.find(b => b.owner_user_id === p.id) || null,
+      auth: authUserMap.get(p.id) || null,
     }))
 
     return NextResponse.json({ users: usersWithBusiness })
   } catch (err) {
-    console.error("Admin users API error:", err)
+    log.error("Admin users API error:", err)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

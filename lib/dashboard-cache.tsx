@@ -13,7 +13,6 @@ interface Lead {
   vehicle_interest: string | null
   notes: string | null
   created_at: string
-  updated_at: string
   user_id: string
 }
 
@@ -23,9 +22,6 @@ interface Vehicle {
   make: string
   model: string
   year: number
-  vin: string | null
-  license_plate: string | null
-  color: string | null
   type: string
   status: string
   daily_rate: number
@@ -33,6 +29,7 @@ interface Vehicle {
   notes: string | null
   turo_ical_url: string | null
   last_turo_sync: string | null
+  color: string | null
   created_at: string
   user_id: string
 }
@@ -82,405 +79,302 @@ interface DashboardCacheContextType {
   removeBooking: (id: string) => void
 }
 
-const CACHE_DURATION = 300000 // 5 minutes - real-time handles updates, polling is just a fallback
-const LOCAL_CACHE_KEY = 'scale_exotics_dashboard_cache'
-const LOCAL_CACHE_MAX_AGE = 5 * 60 * 1000 // 5 minutes max age for localStorage cache
+const POLL_INTERVAL = 30000 // 30 seconds
+const LOCAL_CACHE_KEY_PREFIX = 'velocity_dashboard_'
 
 const DashboardCacheContext = createContext<DashboardCacheContextType | null>(null)
 
-// Load cached data from localStorage for instant first render
-const loadCachedData = (): DashboardData | null => {
+const getCacheKey = (userId: string) => `${LOCAL_CACHE_KEY_PREFIX}${userId}`
+
+const loadCachedData = (userId: string): DashboardData | null => {
   if (typeof window === 'undefined') return null
   try {
-    const cached = localStorage.getItem(LOCAL_CACHE_KEY)
+    const cached = sessionStorage.getItem(getCacheKey(userId))
     if (!cached) return null
     const parsed = JSON.parse(cached)
-    // Only use cache if it's less than 5 minutes old
-    if (parsed.lastFetched && Date.now() - parsed.lastFetched < LOCAL_CACHE_MAX_AGE) {
-      return { ...parsed, isLoading: true } // Still show loading while we revalidate
+    if (parsed.lastFetched && Date.now() - parsed.lastFetched < 30000) {
+      return { ...parsed, isLoading: false, error: null }
     }
-  } catch {
-    // Invalid cache, ignore
-  }
+  } catch { /* ignore */ }
   return null
 }
 
-// Save data to localStorage for future instant loads
-const saveCachedData = (data: DashboardData) => {
+const saveCachedData = (userId: string, data: DashboardData) => {
   if (typeof window === 'undefined') return
   try {
-    // Only cache essential fields, not the full data to save space
-    const toCache = {
-      leads: data.leads.slice(0, 100), // Only cache first 100 items
+    sessionStorage.setItem(getCacheKey(userId), JSON.stringify({
+      leads: data.leads.slice(0, 100),
       vehicles: data.vehicles.slice(0, 50),
       bookings: data.bookings.slice(0, 100),
       lastFetched: data.lastFetched,
+    }))
+  } catch { /* quota */ }
+}
+
+const clearAllCaches = () => {
+  if (typeof window === 'undefined') return
+  for (const key of Object.keys(sessionStorage)) {
+    if (key.startsWith(LOCAL_CACHE_KEY_PREFIX) || key === 'velocity_labs_dashboard_cache') {
+      sessionStorage.removeItem(key)
     }
-    localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(toCache))
-  } catch {
-    // Quota exceeded or other error, ignore
+  }
+  // Backwards compat: also clear any old data from localStorage
+  for (const key of Object.keys(localStorage)) {
+    if (key.startsWith(LOCAL_CACHE_KEY_PREFIX) || key === 'velocity_labs_dashboard_cache') {
+      localStorage.removeItem(key)
+    }
   }
 }
 
 export function DashboardCacheProvider({ children }: { children: ReactNode }) {
   const supabase = createClient()
-  // Track last fetch time in a ref to avoid dependency issues
-  const lastFetchedRef = useRef<number | null>(null)
-  // Initialize with cached data if available for instant first render
-  const [data, setData] = useState<DashboardData>(() => {
-    const cached = loadCachedData()
-    if (cached?.lastFetched) {
-      lastFetchedRef.current = cached.lastFetched
-    }
-    return cached || {
-      leads: [],
-      vehicles: [],
-      bookings: [],
-      lastFetched: null,
-      isLoading: true,
-      error: null,
-    }
+  const [data, setData] = useState<DashboardData>({
+    leads: [], vehicles: [], bookings: [],
+    lastFetched: null, isLoading: true, error: null,
   })
+  const currentUserIdRef = useRef<string | null>(null)
+  const mountedRef = useRef(true)
+  const isFetchingRef = useRef(false)
+  const initialLoadDoneRef = useRef(false)
 
-  const fetchAllData = useCallback(async (force = false) => {
-    // Skip if data is fresh and not forced (use ref to avoid dependency)
-    if (!force && lastFetchedRef.current && Date.now() - lastFetchedRef.current < CACHE_DURATION) {
-      // Still ensure loading is false when using cached data
-      setData(prev => prev.isLoading ? { ...prev, isLoading: false } : prev)
-      return
-    }
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      setData(prev => ({ ...prev, isLoading: false, error: "Not authenticated" }))
-      return
-    }
-
-    setData(prev => ({ ...prev, isLoading: true, error: null }))
+  const fetchAllData = useCallback(async () => {
+    // Prevent concurrent fetches
+    if (isFetchingRef.current) return
+    isFetchingRef.current = true
 
     try {
-      // Fetch all data in parallel for speed
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!mountedRef.current) { isFetchingRef.current = false; return }
+      if (!user) {
+        setData(prev => ({ ...prev, isLoading: false, error: "Not authenticated" }))
+        isFetchingRef.current = false
+        return
+      }
+
+      // Detect user change (impersonation) — clear stale data
+      if (currentUserIdRef.current && currentUserIdRef.current !== user.id) {
+        clearAllCaches()
+      }
+      currentUserIdRef.current = user.id
+
       const [leadsRes, vehiclesRes, bookingsRes] = await Promise.all([
         supabase
           .from("leads")
-          .select("id, name, email, phone, status, source, vehicle_interest, notes, created_at, updated_at, user_id")
+          .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(500),
         supabase
           .from("vehicles")
-          .select("id, name, make, model, year, vin, license_plate, color, type, status, daily_rate, image_url, notes, turo_ical_url, last_turo_sync, created_at, user_id")
+          .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         supabase
           .from("bookings")
-          .select("id, vehicle_id, customer_name, customer_email, customer_phone, start_date, end_date, status, total_amount, deposit_amount, deposit_paid, notes, lead_id, created_at, user_id, vehicles(id, name, make, model, year, image_url, daily_rate)")
+          .select("*, vehicles(*)")
           .eq("user_id", user.id)
           .order("start_date", { ascending: false })
           .limit(500),
       ])
 
-      // Check for RLS or other errors
-      if (vehiclesRes.error) {
-        console.error("Vehicles fetch error:", vehiclesRes.error)
-      }
-      if (bookingsRes.error) {
-        console.error("Bookings fetch error:", bookingsRes.error)
-      }
-      if (leadsRes.error) {
-        console.error("Leads fetch error:", leadsRes.error)
-      }
+      if (!mountedRef.current) { isFetchingRef.current = false; return }
 
       const now = Date.now()
-      lastFetchedRef.current = now
-      const newData: DashboardData = {
-        leads: (leadsRes.data || []) as Lead[],
-        vehicles: (vehiclesRes.data || []) as Vehicle[],
-        bookings: (bookingsRes.data || []).map((b: any) => ({
-          ...b,
-          vehicles: Array.isArray(b.vehicles) ? b.vehicles[0] : b.vehicles,
-        })) as Booking[],
-        lastFetched: now,
-        isLoading: false,
-        error: null,
-      }
-      setData(newData)
-      saveCachedData(newData)
+      const newLeads = (leadsRes.data || []) as Lead[]
+      const newVehicles = (vehiclesRes.data || []) as Vehicle[]
+      const newBookings = (bookingsRes.data || []).map((b: any) => ({
+        ...b,
+        vehicles: Array.isArray(b.vehicles) ? b.vehicles[0] : b.vehicles,
+      })) as Booking[]
+
+      // Only update state if data actually changed (prevents re-renders on background polls)
+      setData(prev => {
+        const leadsChanged = JSON.stringify(prev.leads.map(l => l.id + l.status)) !== JSON.stringify(newLeads.map(l => l.id + l.status))
+        const vehiclesChanged = JSON.stringify(prev.vehicles.map(v => v.id + v.status)) !== JSON.stringify(newVehicles.map(v => v.id + v.status))
+        const bookingsChanged = JSON.stringify(prev.bookings.map(b => b.id + b.status)) !== JSON.stringify(newBookings.map(b => b.id + b.status))
+
+        if (!leadsChanged && !vehiclesChanged && !bookingsChanged && initialLoadDoneRef.current) {
+          // Data hasn't changed — just update timestamp without triggering re-render cascade
+          return { ...prev, lastFetched: now }
+        }
+
+        initialLoadDoneRef.current = true
+        const newData: DashboardData = {
+          leads: newLeads,
+          vehicles: newVehicles,
+          bookings: newBookings,
+          lastFetched: now,
+          isLoading: false,
+          error: null,
+        }
+        saveCachedData(user.id, newData)
+        return newData
+      })
     } catch (err) {
-      console.error("Error fetching dashboard data:", err)
-      // Clear corrupted cache on error
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(LOCAL_CACHE_KEY)
+      console.error("Dashboard fetch error:", err)
+      if (mountedRef.current) {
+        setData(prev => ({ ...prev, isLoading: false, error: "Failed to fetch data" }))
       }
-      setData(prev => ({
-        ...prev,
-        isLoading: false,
-        error: "Failed to fetch data",
-      }))
+    } finally {
+      isFetchingRef.current = false
     }
   }, [supabase])
 
-  // Initial fetch
+  // Initial fetch on mount
   useEffect(() => {
+    mountedRef.current = true
+    // Clear legacy cache
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('velocity_labs_dashboard_cache')
+    }
     fetchAllData()
-  }, [])
+    return () => { mountedRef.current = false }
+  }, [fetchAllData])
 
-  // Background refresh every 30 seconds if tab is visible
+  // Poll every 5 seconds when tab is visible
   useEffect(() => {
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") {
         fetchAllData()
       }
-    }, CACHE_DURATION)
-
+    }, POLL_INTERVAL)
     return () => clearInterval(interval)
   }, [fetchAllData])
 
-  // Refresh when tab becomes visible if data is stale
+  // Refresh on tab focus
   useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        fetchAllData()
-      }
+    const handler = () => {
+      if (document.visibilityState === "visible") fetchAllData()
     }
-    document.addEventListener("visibilitychange", handleVisibility)
-    return () => document.removeEventListener("visibilitychange", handleVisibility)
+    document.addEventListener("visibilitychange", handler)
+    return () => document.removeEventListener("visibilitychange", handler)
   }, [fetchAllData])
 
-  // Real-time subscriptions for cross-tab sync (UPDATE and DELETE only)
-  // INSERT is handled by optimistic updates in addVehicle/addBooking/addLead
+  // Real-time subscriptions — INSERT, UPDATE, DELETE on all tables
   useEffect(() => {
-    let realtimeChannel: ReturnType<typeof supabase.channel> | null = null
-    let mounted = true
+    let channel: ReturnType<typeof supabase.channel> | null = null
 
-    const setupRealtimeSubscriptions = async () => {
+    const setup = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user || !mounted) return
-
+      if (!user || !mountedRef.current) return
       const userId = user.id
 
-      // Single channel for all tables - only UPDATE and DELETE events
-      realtimeChannel = supabase
-        .channel("dashboard-realtime-sync")
-        // Vehicles - UPDATE only (INSERT handled by optimistic update)
-        .on(
-          "postgres_changes",
-          { event: "UPDATE", schema: "public", table: "vehicles", filter: `user_id=eq.${userId}` },
-          (payload) => {
-            if (!mounted) return
-            setData(prev => ({
-              ...prev,
-              vehicles: prev.vehicles.map(v =>
-                v.id === (payload.new as Vehicle).id ? { ...v, ...payload.new as Vehicle } : v
-              ),
-            }))
-          }
-        )
-        .on(
-          "postgres_changes",
-          { event: "DELETE", schema: "public", table: "vehicles", filter: `user_id=eq.${userId}` },
-          (payload) => {
-            if (!mounted) return
-            setData(prev => ({
-              ...prev,
-              vehicles: prev.vehicles.filter(v => v.id !== (payload.old as Vehicle).id),
-            }))
-          }
-        )
-        // Bookings - UPDATE only
-        .on(
-          "postgres_changes",
-          { event: "UPDATE", schema: "public", table: "bookings", filter: `user_id=eq.${userId}` },
-          (payload) => {
-            if (!mounted) return
-            setData(prev => ({
-              ...prev,
-              bookings: prev.bookings.map(b =>
-                b.id === (payload.new as Booking).id ? { ...b, ...payload.new as Booking } : b
-              ),
-            }))
-          }
-        )
-        .on(
-          "postgres_changes",
-          { event: "DELETE", schema: "public", table: "bookings", filter: `user_id=eq.${userId}` },
-          (payload) => {
-            if (!mounted) return
-            setData(prev => ({
-              ...prev,
-              bookings: prev.bookings.filter(b => b.id !== (payload.old as Booking).id),
-            }))
-          }
-        )
-        // Leads - UPDATE only
-        .on(
-          "postgres_changes",
-          { event: "UPDATE", schema: "public", table: "leads", filter: `user_id=eq.${userId}` },
-          (payload) => {
-            if (!mounted) return
-            setData(prev => ({
-              ...prev,
-              leads: prev.leads.map(l =>
-                l.id === (payload.new as Lead).id ? { ...l, ...payload.new as Lead } : l
-              ),
-            }))
-          }
-        )
-        .on(
-          "postgres_changes",
-          { event: "DELETE", schema: "public", table: "leads", filter: `user_id=eq.${userId}` },
-          (payload) => {
-            if (!mounted) return
-            setData(prev => ({
-              ...prev,
-              leads: prev.leads.filter(l => l.id !== (payload.old as Lead).id),
-            }))
-          }
-        )
+      channel = supabase
+        .channel("dashboard-live-sync")
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "vehicles", filter: `user_id=eq.${userId}` }, (payload) => {
+          if (!mountedRef.current) return
+          setData(prev => {
+            if (prev.vehicles.some(v => v.id === (payload.new as Vehicle).id)) return prev
+            return { ...prev, vehicles: [payload.new as Vehicle, ...prev.vehicles] }
+          })
+        })
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "vehicles", filter: `user_id=eq.${userId}` }, (payload) => {
+          if (!mountedRef.current) return
+          setData(prev => ({ ...prev, vehicles: prev.vehicles.map(v => v.id === (payload.new as Vehicle).id ? { ...v, ...payload.new as Vehicle } : v) }))
+        })
+        .on("postgres_changes", { event: "DELETE", schema: "public", table: "vehicles", filter: `user_id=eq.${userId}` }, (payload) => {
+          if (!mountedRef.current) return
+          setData(prev => ({ ...prev, vehicles: prev.vehicles.filter(v => v.id !== (payload.old as Vehicle).id) }))
+        })
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "bookings", filter: `user_id=eq.${userId}` }, (payload) => {
+          if (!mountedRef.current) return
+          setData(prev => {
+            if (prev.bookings.some(b => b.id === (payload.new as Booking).id)) return prev
+            return { ...prev, bookings: [payload.new as Booking, ...prev.bookings] }
+          })
+        })
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "bookings", filter: `user_id=eq.${userId}` }, (payload) => {
+          if (!mountedRef.current) return
+          setData(prev => ({ ...prev, bookings: prev.bookings.map(b => b.id === (payload.new as Booking).id ? { ...b, ...payload.new as Booking } : b) }))
+        })
+        .on("postgres_changes", { event: "DELETE", schema: "public", table: "bookings", filter: `user_id=eq.${userId}` }, (payload) => {
+          if (!mountedRef.current) return
+          setData(prev => ({ ...prev, bookings: prev.bookings.filter(b => b.id !== (payload.old as Booking).id) }))
+        })
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "leads", filter: `user_id=eq.${userId}` }, (payload) => {
+          if (!mountedRef.current) return
+          setData(prev => {
+            if (prev.leads.some(l => l.id === (payload.new as Lead).id)) return prev
+            return { ...prev, leads: [payload.new as Lead, ...prev.leads] }
+          })
+        })
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "leads", filter: `user_id=eq.${userId}` }, (payload) => {
+          if (!mountedRef.current) return
+          setData(prev => ({ ...prev, leads: prev.leads.map(l => l.id === (payload.new as Lead).id ? { ...l, ...payload.new as Lead } : l) }))
+        })
+        .on("postgres_changes", { event: "DELETE", schema: "public", table: "leads", filter: `user_id=eq.${userId}` }, (payload) => {
+          if (!mountedRef.current) return
+          setData(prev => ({ ...prev, leads: prev.leads.filter(l => l.id !== (payload.old as Lead).id) }))
+        })
         .subscribe()
     }
 
-    setupRealtimeSubscriptions()
-
-    return () => {
-      mounted = false
-      if (realtimeChannel) supabase.removeChannel(realtimeChannel)
-    }
+    setup()
+    return () => { if (channel) supabase.removeChannel(channel) }
   }, [supabase])
 
-  const refreshData = useCallback(async () => {
-    await fetchAllData(true)
-  }, [fetchAllData])
+  const refreshData = useCallback(async () => { await fetchAllData() }, [fetchAllData])
 
   const refreshLeads = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
-    const { data: leads } = await supabase
-      .from("leads")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(500)
-
+    const { data: leads } = await supabase.from("leads").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(500)
     setData(prev => ({ ...prev, leads: leads || [], lastFetched: Date.now() }))
   }, [supabase])
 
   const refreshVehicles = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
-    const { data: vehicles } = await supabase
-      .from("vehicles")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-
+    const { data: vehicles } = await supabase.from("vehicles").select("*").eq("user_id", user.id).order("created_at", { ascending: false })
     setData(prev => ({ ...prev, vehicles: vehicles || [], lastFetched: Date.now() }))
   }, [supabase])
 
   const refreshBookings = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
     const { data: bookingsData } = await supabase
       .from("bookings")
-      .select("id, vehicle_id, customer_name, customer_email, customer_phone, start_date, end_date, status, total_amount, deposit_amount, deposit_paid, notes, created_at, user_id, vehicles(id, name, make, model, year, image_url, daily_rate)")
-      .eq("user_id", user.id)
-      .order("start_date", { ascending: false })
-      .limit(500)
-
-    const bookings = (bookingsData || []).map((b: any) => ({
-      ...b,
-      vehicles: Array.isArray(b.vehicles) ? b.vehicles[0] : b.vehicles,
-    })) as Booking[]
-
+      .select("*, vehicles(*)")
+      .eq("user_id", user.id).order("start_date", { ascending: false }).limit(500)
+    const bookings = (bookingsData || []).map((b: any) => ({ ...b, vehicles: Array.isArray(b.vehicles) ? b.vehicles[0] : b.vehicles })) as Booking[]
     setData(prev => ({ ...prev, bookings, lastFetched: Date.now() }))
   }, [supabase])
 
-  // Optimistic updates - update local state immediately without refetching
   const updateLead = useCallback((id: string, updates: Partial<Lead>) => {
-    setData(prev => ({
-      ...prev,
-      leads: prev.leads.map(l => l.id === id ? { ...l, ...updates } : l),
-    }))
+    setData(prev => ({ ...prev, leads: prev.leads.map(l => l.id === id ? { ...l, ...updates } : l) }))
   }, [])
-
   const updateVehicle = useCallback((id: string, updates: Partial<Vehicle>) => {
-    setData(prev => ({
-      ...prev,
-      vehicles: prev.vehicles.map(v => v.id === id ? { ...v, ...updates } : v),
-    }))
+    setData(prev => ({ ...prev, vehicles: prev.vehicles.map(v => v.id === id ? { ...v, ...updates } : v) }))
   }, [])
-
   const updateBooking = useCallback((id: string, updates: Partial<Booking>) => {
-    setData(prev => ({
-      ...prev,
-      bookings: prev.bookings.map(b => b.id === id ? { ...b, ...updates } : b),
-    }))
+    setData(prev => ({ ...prev, bookings: prev.bookings.map(b => b.id === id ? { ...b, ...updates } : b) }))
   }, [])
-
   const addLead = useCallback((lead: Lead) => {
-    setData(prev => ({
-      ...prev,
-      leads: [lead, ...prev.leads],
-    }))
+    setData(prev => ({ ...prev, leads: [lead, ...prev.leads] }))
   }, [])
-
   const addVehicle = useCallback((vehicle: Vehicle) => {
-    setData(prev => ({
-      ...prev,
-      vehicles: [vehicle, ...prev.vehicles],
-    }))
+    setData(prev => ({ ...prev, vehicles: [vehicle, ...prev.vehicles] }))
   }, [])
-
   const addBooking = useCallback((booking: Booking) => {
-    setData(prev => ({
-      ...prev,
-      bookings: [booking, ...prev.bookings],
-    }))
+    setData(prev => ({ ...prev, bookings: [booking, ...prev.bookings] }))
   }, [])
-
   const removeLead = useCallback((id: string) => {
-    setData(prev => ({
-      ...prev,
-      leads: prev.leads.filter(l => l.id !== id),
-    }))
+    setData(prev => ({ ...prev, leads: prev.leads.filter(l => l.id !== id) }))
   }, [])
-
   const removeVehicle = useCallback((id: string) => {
-    setData(prev => ({
-      ...prev,
-      vehicles: prev.vehicles.filter(v => v.id !== id),
-    }))
+    setData(prev => ({ ...prev, vehicles: prev.vehicles.filter(v => v.id !== id) }))
   }, [])
-
   const removeBooking = useCallback((id: string) => {
-    setData(prev => ({
-      ...prev,
-      bookings: prev.bookings.filter(b => b.id !== id),
-    }))
+    setData(prev => ({ ...prev, bookings: prev.bookings.filter(b => b.id !== id) }))
   }, [])
 
   return (
-    <DashboardCacheContext.Provider
-      value={{
-        data,
-        refreshData,
-        refreshLeads,
-        refreshVehicles,
-        refreshBookings,
-        updateLead,
-        updateVehicle,
-        updateBooking,
-        addLead,
-        addVehicle,
-        addBooking,
-        removeLead,
-        removeVehicle,
-        removeBooking,
-      }}
-    >
+    <DashboardCacheContext.Provider value={{
+      data, refreshData, refreshLeads, refreshVehicles, refreshBookings,
+      updateLead, updateVehicle, updateBooking,
+      addLead, addVehicle, addBooking,
+      removeLead, removeVehicle, removeBooking,
+    }}>
       {children}
     </DashboardCacheContext.Provider>
   )

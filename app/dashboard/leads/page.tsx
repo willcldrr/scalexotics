@@ -35,11 +35,14 @@ import {
   Link,
   ExternalLink,
   HelpCircle,
+  Download,
+  Square,
+  CheckSquare,
 } from "lucide-react"
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns"
 import { leadStatusOptions, getStatusColor, getStatusLabel, defaultLeadStatus } from "@/lib/lead-status"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import MatrixRainLoader from "@/app/components/matrix-rain-loader"
+import PageTransition from "@/app/components/page-transition"
 import { ConfirmModal } from "@/components/ui/confirm-modal"
 
 interface Lead {
@@ -56,6 +59,11 @@ interface Lead {
   last_message_time?: string
   last_message_direction?: "inbound" | "outbound"
   unread: boolean
+  instagram_username?: string | null
+  collected_vehicle_id?: string | null
+  collected_start_date?: string | null
+  collected_end_date?: string | null
+  ai_disabled?: boolean
 }
 
 interface Message {
@@ -90,12 +98,13 @@ const sourceOptions = [
 
 // Pipeline column configuration with progressive glow (dark → light → green/red)
 const pipelineColumns = [
-  { id: "new", label: "New", color: "bg-white/5 text-white/50 border-white/10", glow: "", textGlow: "" },
-  { id: "contacted", label: "Contacted", color: "bg-white/10 text-white/60 border-white/20", glow: "", textGlow: "" },
-  { id: "qualified", label: "Qualified", color: "bg-white/15 text-white/70 border-white/25", glow: "shadow-[0_0_8px_rgba(255,255,255,0.06)]", textGlow: "" },
-  { id: "negotiating", label: "Negotiating", color: "bg-white/25 text-white/90 border-white/30", glow: "shadow-[0_0_10px_rgba(255,255,255,0.1)]", textGlow: "" },
-  { id: "booked", label: "Booked", color: "bg-emerald-400 text-white border-emerald-300", glow: "shadow-[0_0_12px_rgba(52,211,153,0.4)]", textGlow: "" },
-  { id: "lost", label: "Lost", color: "bg-red-400 text-white border-red-300", glow: "shadow-[0_0_12px_rgba(248,113,113,0.4)]", textGlow: "" },
+  { id: "new", label: "New", color: "bg-white/15 text-white border-white/15", glow: "", textGlow: "" },
+  { id: "qualified", label: "Qualified", color: "bg-white/10 text-white/80 border-white/20", glow: "", textGlow: "" },
+  { id: "pending", label: "Pending", color: "bg-white/10 text-white/60 border-white/20", glow: "shadow-[0_0_8px_rgba(255,255,255,0.06)]", textGlow: "" },
+  { id: "booked", label: "Booked", color: "bg-white text-black border-white/80", glow: "shadow-[0_0_12px_rgba(255,255,255,0.2)]", textGlow: "" },
+  { id: "followup", label: "Follow Up", color: "bg-white/10 text-white/70 border-white/20", glow: "", textGlow: "" },
+  { id: "lost", label: "Lost", color: "bg-white/5 text-white/30 border-white/10", glow: "", textGlow: "" },
+  { id: "cancelled", label: "Cancelled", color: "bg-white/5 text-white/25 border-white/10", glow: "", textGlow: "" },
 ]
 
 export default function LeadsPage() {
@@ -113,6 +122,8 @@ export default function LeadsPage() {
   const [saving, setSaving] = useState(false)
   const [newMessage, setNewMessage] = useState("")
   const [sending, setSending] = useState(false)
+  const [sendConfirm, setSendConfirm] = useState(false)
+  const sendConfirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [readConversations, setReadConversations] = useState<Set<string>>(new Set())
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [viewMode, setViewMode] = useState<"pipeline" | "list">("pipeline")
@@ -167,10 +178,16 @@ export default function LeadsPage() {
     setConfirmModal({ open: true, leadId })
   }
 
+  // Bulk selection state
+  const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set())
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false)
+  const [bulkStatusDropdownOpen, setBulkStatusDropdownOpen] = useState(false)
+  const bulkStatusRef = useRef<HTMLDivElement>(null)
+
   // Check if a lead is on the do not rent list
   const isOnDoNotRentList = (lead: Lead): boolean => {
-    const leadNameLower = lead.name.toLowerCase().trim()
-    const leadPhone = lead.phone?.replace(/\D/g, "")
+    const leadNameLower = (lead.name || "").toLowerCase().trim()
+    const leadPhone = (lead.phone || "").replace(/\D/g, "")
     const leadEmail = lead.email?.toLowerCase().trim()
 
     return doNotRentList.some(entry => {
@@ -191,10 +208,12 @@ export default function LeadsPage() {
 
   useEffect(() => {
     fetchData()
-    const stored = localStorage.getItem("readConversations")
-    if (stored) {
-      setReadConversations(new Set(JSON.parse(stored)))
-    }
+    try {
+      const stored = localStorage.getItem("readConversations")
+      if (stored) {
+        setReadConversations(new Set(JSON.parse(stored)))
+      }
+    } catch { /* ignore corrupted localStorage */ }
 
     // Set up real-time subscription for leads
     const channel = supabase
@@ -241,12 +260,19 @@ export default function LeadsPage() {
         { event: "INSERT", schema: "public", table: "messages" },
         (payload) => {
           const newMessage = payload.new as Message
-          // Add message to current conversation if viewing that lead
-          setMessages((current) => {
-            // Check if this message is for the currently selected lead
-            // We'll update regardless and let the component handle filtering
-            return [...current, newMessage]
+
+          // Only add to conversation if it's for the currently selected lead
+          setSelectedLead((currentLead) => {
+            if (currentLead && newMessage.lead_id === currentLead.id) {
+              // Deduplicate — don't add if we already have this message ID
+              setMessages((current) => {
+                if (current.some(m => m.id === newMessage.id)) return current
+                return [...current, newMessage]
+              })
+            }
+            return currentLead
           })
+
           // Update lead's last message info and mark as unread if inbound
           setLeads((current) =>
             current.map((lead) =>
@@ -265,27 +291,48 @@ export default function LeadsPage() {
       )
       .subscribe()
 
+    // Poll every 30 seconds as a fallback (not 5 — too aggressive)
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchData()
+      }
+    }, 30000)
+
     return () => {
+      clearInterval(pollInterval)
       supabase.removeChannel(channel)
       supabase.removeChannel(messagesChannel)
     }
   }, [])
 
+  const prevSelectedLeadId = useRef<string | null>(null)
   useEffect(() => {
-    if (selectedLead) {
+    if (selectedLead && selectedLead.id !== prevSelectedLeadId.current) {
+      prevSelectedLeadId.current = selectedLead.id
       fetchMessages(selectedLead.id)
       markAsRead(selectedLead.id)
+      setSendConfirm(false)
+      setNewMessage("")
+    } else if (!selectedLead) {
+      prevSelectedLeadId.current = null
     }
-  }, [selectedLead])
+  }, [selectedLead?.id])
 
+  const prevMessageCountRef = useRef(0)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+    if (messages.length > prevMessageCountRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }
+    prevMessageCountRef.current = messages.length
+  }, [messages.length])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target as Node)) {
         setShowStatusDropdown(false)
+      }
+      if (bulkStatusRef.current && !bulkStatusRef.current.contains(e.target as Node)) {
+        setBulkStatusDropdownOpen(false)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -296,7 +343,7 @@ export default function LeadsPage() {
     setReadConversations(prev => {
       const newSet = new Set(prev)
       newSet.add(leadId)
-      localStorage.setItem("readConversations", JSON.stringify([...newSet]))
+      try { localStorage.setItem("readConversations", JSON.stringify([...newSet])) } catch { /* ignore */ }
       return newSet
     })
     setLeads(prev => prev.map(l =>
@@ -305,8 +352,7 @@ export default function LeadsPage() {
   }
 
   const fetchData = async () => {
-    setLoading(true)
-
+    try {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       setLoading(false)
@@ -327,15 +373,18 @@ export default function LeadsPage() {
 
     if (leadsRes.data) {
       const storedRead = localStorage.getItem("readConversations")
-      const readSet = storedRead ? new Set(JSON.parse(storedRead)) : new Set()
+      let readSet: Set<string> = new Set()
+      try { readSet = storedRead ? new Set(JSON.parse(storedRead)) : new Set() } catch { /* corrupted storage */ }
 
       const leadIds = leadsRes.data.map(lead => lead.id)
 
-      const { data: allMessages } = await supabase
-        .from("messages")
-        .select("lead_id, content, created_at, direction")
-        .in("lead_id", leadIds)
-        .order("created_at", { ascending: false })
+      const { data: allMessages } = leadIds.length > 0
+        ? await supabase
+          .from("messages")
+          .select("lead_id, content, created_at, direction")
+          .in("lead_id", leadIds)
+          .order("created_at", { ascending: false })
+        : { data: [] as { lead_id: string; content: string; created_at: string; direction: string }[] }
 
       const lastMessageMap = new Map<string, { content: string; created_at: string; direction: string }>()
       if (allMessages) {
@@ -374,6 +423,10 @@ export default function LeadsPage() {
 
     setVehicles(vehiclesRes.data || [])
     setLoading(false)
+    } catch (error) {
+      console.error("fetchData error:", error)
+      setLoading(false)
+    }
   }
 
   const fetchMessages = async (leadId: string) => {
@@ -388,20 +441,41 @@ export default function LeadsPage() {
     setMessagesLoading(false)
   }
 
+  const handleSendClick = () => {
+    if (!newMessage.trim() || !selectedLead || sending) return
+
+    if (!sendConfirm) {
+      // First click — arm the confirm
+      setSendConfirm(true)
+      if (sendConfirmTimer.current) clearTimeout(sendConfirmTimer.current)
+      sendConfirmTimer.current = setTimeout(() => setSendConfirm(false), 3000)
+      return
+    }
+
+    // Second click — actually send
+    setSendConfirm(false)
+    if (sendConfirmTimer.current) clearTimeout(sendConfirmTimer.current)
+    sendMessage()
+  }
+
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedLead || sending) return
+
+    const isInstagram = selectedLead.source === "instagram" && selectedLead.instagram_username
+    const messageText = newMessage.trim()
 
     setSending(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      // Save message to DB first
       const { data: savedMessage, error: saveError } = await supabase
         .from("messages")
         .insert({
           user_id: user.id,
           lead_id: selectedLead.id,
-          content: newMessage,
+          content: messageText,
           direction: "outbound",
         })
         .select()
@@ -409,34 +483,69 @@ export default function LeadsPage() {
 
       if (saveError) throw saveError
 
-      const response = await fetch("/api/sms/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: selectedLead.phone,
-          message: newMessage,
-        }),
-      })
+      if (isInstagram) {
+        // Send via Instagram DM
+        const { data: { session } } = await supabase.auth.getSession()
+        const response = await fetch("/api/instagram/send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            leadId: selectedLead.id,
+            message: messageText,
+          }),
+        })
 
-      if (!response.ok) {
-        throw new Error("Failed to send SMS")
+        if (!response.ok) {
+          const err = await response.json()
+          throw new Error(err.error || "Failed to send Instagram message")
+        }
+      } else if (selectedLead.phone) {
+        // Send via SMS
+        const response = await fetch("/api/sms/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: selectedLead.phone,
+            message: messageText,
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error("Failed to send SMS")
+        }
+      } else {
+        // No channel available — message saved to DB only
+        toast.success("Message saved", { description: "No phone or Instagram to deliver to" })
       }
 
       if (savedMessage) {
-        setMessages([...messages, savedMessage])
+        // Add optimistically — deduplicate check prevents realtime from doubling it
+        setMessages((current) => {
+          if (current.some(m => m.id === savedMessage.id)) return current
+          return [...current, savedMessage]
+        })
       }
 
       setNewMessage("")
 
+      // Disable AI for this conversation (human takeover)
+      await supabase.from("leads").update({ ai_disabled: true }).eq("id", selectedLead.id)
+
       setLeads(leads.map(l =>
         l.id === selectedLead.id
-          ? { ...l, last_message: newMessage, last_message_time: new Date().toISOString(), last_message_direction: "outbound" }
+          ? { ...l, last_message: messageText, last_message_time: new Date().toISOString(), last_message_direction: "outbound", ai_disabled: true }
           : l
       ))
+      setSelectedLead({ ...selectedLead, ai_disabled: true })
 
-    } catch (error) {
+      toast.success(isInstagram ? "Sent via Instagram — AI paused" : selectedLead.phone ? "Sent via SMS — AI paused" : "Message saved")
+
+    } catch (error: any) {
       console.error("Error sending message:", error)
-      toast.error("Failed to send message", { description: "Please check your connection and try again" })
+      toast.error("Failed to send message", { description: error.message || "Please check your connection and try again" })
     }
 
     setSending(false)
@@ -605,14 +714,6 @@ export default function LeadsPage() {
         console.warn("SMS send failed, but payment link created:", paymentUrl)
       }
 
-      // Save the message to the database
-      await supabase.from("messages").insert({
-        lead_id: paymentLinkLead.id,
-        user_id: userId,
-        content: messageContent,
-        direction: "outbound",
-      })
-
       // Update lead status to negotiating
       await handleStatusChange(paymentLinkLead.id, "negotiating")
 
@@ -667,6 +768,88 @@ export default function LeadsPage() {
       notes: "",
       vehicle_interest: "",
     })
+  }
+
+  // Bulk action handlers
+  const toggleLeadSelection = (leadId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    setSelectedLeads(prev => {
+      const next = new Set(prev)
+      if (next.has(leadId)) {
+        next.delete(leadId)
+      } else {
+        next.add(leadId)
+      }
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    const visibleIds = filteredLeads.map(l => l.id)
+    const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedLeads.has(id))
+    if (allSelected) {
+      setSelectedLeads(new Set())
+    } else {
+      setSelectedLeads(new Set(visibleIds))
+    }
+  }
+
+  const bulkDeleteLeads = async () => {
+    const ids = Array.from(selectedLeads)
+    for (const id of ids) {
+      await supabase.from("leads").delete().eq("id", id)
+    }
+    if (selectedLead && selectedLeads.has(selectedLead.id)) {
+      setSelectedLead(null)
+    }
+    setSelectedLeads(new Set())
+    setBulkConfirmOpen(false)
+    fetchData()
+    toast.success(`Deleted ${ids.length} lead${ids.length > 1 ? "s" : ""}`)
+  }
+
+  const bulkChangeStatus = async (newStatus: string) => {
+    const ids = Array.from(selectedLeads)
+    for (const id of ids) {
+      await supabase.from("leads").update({ status: newStatus }).eq("id", id)
+    }
+    setLeads(prev => prev.map(l => selectedLeads.has(l.id) ? { ...l, status: newStatus } : l))
+    if (selectedLead && selectedLeads.has(selectedLead.id)) {
+      setSelectedLead({ ...selectedLead, status: newStatus })
+    }
+    setBulkStatusDropdownOpen(false)
+    toast.success(`Updated ${ids.length} lead${ids.length > 1 ? "s" : ""} to ${pipelineColumns.find(c => c.id === newStatus)?.label || newStatus}`)
+  }
+
+  const exportSelectedCSV = () => {
+    const selected = leads.filter(l => selectedLeads.has(l.id))
+    const headers = ["Name", "Phone", "Email", "Status", "Source", "Created Date", "Vehicle Interest", "Notes"]
+    const rows = selected.map(l => [
+      l.name || "",
+      l.phone || "",
+      l.email || "",
+      getStatusLabel(l.status) || l.status || "",
+      l.source || "",
+      l.created_at ? format(new Date(l.created_at), "yyyy-MM-dd") : "",
+      getVehicleName(l.vehicle_interest) || "",
+      l.notes || "",
+    ])
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${(cell || "").replace(/"/g, '""')}"`).join(","))
+    ].join("\n")
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `leads-export-${format(new Date(), "yyyy-MM-dd")}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    toast.success(`Exported ${selected.length} lead${selected.length > 1 ? "s" : ""} to CSV`)
   }
 
   const openEditModal = (lead: Lead) => {
@@ -818,8 +1001,8 @@ export default function LeadsPage() {
 
   const filteredLeads = leads.filter((lead) => {
     const matchesSearch =
-      lead.name.toLowerCase().includes(search.toLowerCase()) ||
-      lead.phone.includes(search) ||
+      (lead.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (lead.phone || "").includes(search) ||
       lead.email?.toLowerCase().includes(search.toLowerCase())
     return matchesSearch
   })
@@ -829,20 +1012,65 @@ export default function LeadsPage() {
     return filteredLeads.filter(lead => lead.status === status)
   }
 
+  const exportConversation = (lead: Lead, msgs: Message[]) => {
+    const channel = getChannelInfo(lead.source)
+    const exportDate = format(new Date(), "yyyy-MM-dd h:mm a")
+    const lines: string[] = [
+      `Conversation with ${lead.name}`,
+      `Channel: ${channel.label}`,
+      `Exported: ${exportDate}`,
+      "---",
+      "",
+    ]
+
+    for (const msg of msgs) {
+      const ts = format(new Date(msg.created_at), "yyyy-MM-dd h:mm a")
+      const sender = msg.direction === "inbound" ? "Customer" : "AI Agent"
+      lines.push(`[${ts}] ${sender}:`)
+      lines.push(msg.content)
+      lines.push("")
+    }
+
+    lines.push("---")
+    lines.push(`Total messages: ${msgs.length}`)
+
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const safeName = lead.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "")
+    const dateStamp = format(new Date(), "yyyy-MM-dd")
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `conversation-${safeName}-${dateStamp}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   const formatMessageTime = (dateStr: string) => {
-    const date = new Date(dateStr)
-    if (isToday(date)) {
-      return format(date, "h:mm a")
-    } else if (isYesterday(date)) {
-      return "Yesterday"
-    } else {
-      return format(date, "MMM d")
+    try {
+      const date = new Date(dateStr)
+      if (isNaN(date.getTime())) return "Unknown"
+      if (isToday(date)) {
+        return format(date, "h:mm a")
+      } else if (isYesterday(date)) {
+        return "Yesterday"
+      } else {
+        return format(date, "MMM d")
+      }
+    } catch {
+      return "Unknown"
     }
   }
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return format(date, "MMM d, yyyy")
+    try {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return "Unknown"
+      return format(date, "MMM d, yyyy")
+    } catch {
+      return "Unknown"
+    }
   }
 
   const getVehicleName = (vehicleId: string | null) => {
@@ -867,9 +1095,9 @@ export default function LeadsPage() {
       case "phone":
         return {
           icon: MessageCircle,
-          label: "SMS",
-          color: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
-          textColor: "text-emerald-400"
+          label: "SMS (Coming Soon)",
+          color: "bg-white/[0.04] text-white/30 border border-white/[0.08] opacity-50",
+          textColor: "text-white/30"
         }
       case "facebook":
         return {
@@ -888,11 +1116,22 @@ export default function LeadsPage() {
     }
   }
 
-  if (loading) {
-    return <MatrixRainLoader />
+  // Status glow mapping for premium badge effect
+  const getStatusGlow = (status: string): string => {
+    switch (status) {
+      case "new": return "shadow-[0_0_8px_rgba(255,255,255,0.15)]"
+      case "qualified": return "shadow-[0_0_8px_rgba(255,255,255,0.1)]"
+      case "pending": return "shadow-[0_0_8px_rgba(255,255,255,0.08)]"
+      case "booked": return "shadow-[0_0_8px_rgba(255,255,255,0.25)]"
+      case "followup": return "shadow-[0_0_8px_rgba(255,255,255,0.08)]"
+      case "lost": return "shadow-[0_0_8px_rgba(255,255,255,0.03)]"
+      case "cancelled": return "shadow-[0_0_8px_rgba(255,255,255,0.02)]"
+      default: return ""
+    }
   }
 
   return (
+    <PageTransition loading={loading}>
     <div>
       {/* Header with search and actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -904,14 +1143,33 @@ export default function LeadsPage() {
             placeholder="Search leads..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/20 focus:bg-white/[0.06] transition-all shadow-[0_0_15px_rgba(255,255,255,0.03)]"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/20 focus:bg-white/[0.06] focus:shadow-[0_0_20px_rgba(255,255,255,0.06)] transition-all duration-300 shadow-[0_0_15px_rgba(255,255,255,0.03)]"
           />
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-3 w-full sm:w-auto">
+          {/* Select All */}
+          {filteredLeads.length > 0 && (
+            <button
+              onClick={toggleSelectAll}
+              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all duration-300 text-sm font-medium ${
+                filteredLeads.length > 0 && filteredLeads.every(l => selectedLeads.has(l.id))
+                  ? "bg-white/10 border-white/20 text-white"
+                  : "bg-white/[0.04] border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.08]"
+              }`}
+            >
+              {filteredLeads.length > 0 && filteredLeads.every(l => selectedLeads.has(l.id)) ? (
+                <CheckSquare className="w-4 h-4" />
+              ) : (
+                <Square className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">Select All</span>
+            </button>
+          )}
+
           {/* View toggle */}
-          <div className="flex items-center bg-white/[0.04] rounded-xl border border-white/[0.08] p-1">
+          <div className="flex items-center bg-white/[0.04] rounded-xl border border-white/[0.08] p-1 shadow-[0_2px_10px_rgba(0,0,0,0.3)]">
             <button
               onClick={() => setViewMode("pipeline")}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
@@ -950,7 +1208,7 @@ export default function LeadsPage() {
               setEditingLead(null)
               setShowAddModal(true)
             }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white text-black font-semibold rounded-xl transition-all hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white text-black font-semibold rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.15)] hover:shadow-[0_0_35px_rgba(255,255,255,0.35)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
           >
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Add Lead</span>
@@ -969,10 +1227,10 @@ export default function LeadsPage() {
               return (
                 <div
                   key={column.id}
-                  className={`w-56 sm:w-64 flex-shrink-0 rounded-2xl bg-white/[0.02] border transition-all ${
+                  className={`w-56 sm:w-64 flex-shrink-0 rounded-2xl bg-white/[0.02] border transition-all duration-300 ${
                     dragOverColumn === column.id
                       ? "border-white/30 bg-white/[0.05] shadow-[0_0_30px_rgba(255,255,255,0.1)]"
-                      : "border-white/[0.06]"
+                      : "border-white/[0.06] shadow-[0_2px_15px_rgba(0,0,0,0.2)]"
                   }`}
                   onDragOver={(e) => handleDragOver(e, column.id)}
                   onDragLeave={handleDragLeave}
@@ -998,97 +1256,79 @@ export default function LeadsPage() {
                         <p className="text-white/20 text-xs mt-1">Drag leads here or add new ones</p>
                       </div>
                     ) : (
-                      columnLeads.map((lead) => (
+                      columnLeads.map((lead) => {
+                        const channel = getChannelInfo(lead.source)
+                        const ChannelIcon = channel.icon
+                        const handle = lead.source === "instagram" && lead.instagram_username
+                          ? `@${lead.instagram_username}`
+                          : lead.phone || null
+
+                        return (
                         <div
                           key={lead.id}
                           draggable
                           onDragStart={(e) => handleDragStart(e, lead)}
                           onClick={() => setSelectedLead(lead)}
-                          className={`p-4 rounded-xl bg-white/[0.03] border cursor-pointer group transition-all hover:bg-white/[0.06] hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] ${
-                            isOnDoNotRentList(lead)
+                          className={`p-4 rounded-xl bg-white/[0.03] border cursor-pointer group transition-all duration-300 hover:bg-white/[0.06] hover:shadow-[0_0_20px_rgba(255,255,255,0.06)] hover:-translate-y-0.5 ${
+                            selectedLeads.has(lead.id)
+                              ? "border-white/25 bg-white/[0.06] ring-1 ring-white/10"
+                              : isOnDoNotRentList(lead)
                               ? "border-red-500/30 hover:border-red-500/50"
                               : lead.unread
-                              ? "border-white/20"
-                              : "border-white/[0.06] hover:border-white/20"
+                              ? "border-white/15"
+                              : "border-white/[0.06] hover:border-white/[0.12]"
                           } ${draggedLead?.id === lead.id ? "opacity-50" : ""}`}
                         >
-                          {/* Card Header */}
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <GripVertical className="w-4 h-4 text-white/20 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab" />
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className={`font-medium ${isOnDoNotRentList(lead) ? "text-red-400" : "text-white"}`}>
-                                    {lead.name}
-                                  </span>
-                                  {isOnDoNotRentList(lead) && (
-                                    <span className="px-1.5 py-0.5 bg-red-500/20 text-red-400 text-[9px] font-bold rounded">
-                                      DNR
-                                    </span>
-                                  )}
-                                  {lead.unread && (
-                                    <span className="w-2 h-2 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-xs text-white/40">{lead.phone}</span>
-                                  {/* Channel Badge */}
-                                  {(() => {
-                                    const channel = getChannelInfo(lead.source)
-                                    const ChannelIcon = channel.icon
-                                    return (
-                                      <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold ${channel.color}`}>
-                                        <ChannelIcon className="w-2.5 h-2.5" />
-                                        {channel.label}
-                                      </span>
-                                    )
-                                  })()}
-                                </div>
-                              </div>
+                          {/* Row 1: Checkbox + Name + Channel Icon */}
+                          <div className="flex items-center justify-between mb-1.5">
+                            <button
+                              onClick={(e) => toggleLeadSelection(lead.id, e)}
+                              className="mr-2 flex-shrink-0 text-white/30 hover:text-white transition-colors"
+                            >
+                              {selectedLeads.has(lead.id) ? (
+                                <CheckSquare className="w-4 h-4 text-white" />
+                              ) : (
+                                <Square className={`w-4 h-4 transition-opacity ${selectedLeads.size > 0 ? "opacity-50" : "opacity-0 group-hover:opacity-100"}`} />
+                              )}
+                            </button>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className={`text-sm font-semibold truncate ${isOnDoNotRentList(lead) ? "text-red-400" : "text-white"}`}>
+                                {lead.name}
+                              </span>
+                              {lead.unread && (
+                                <span className="w-1.5 h-1.5 bg-white rounded-full flex-shrink-0" />
+                              )}
+                              {isOnDoNotRentList(lead) && (
+                                <span className="px-1 py-0.5 bg-red-500/20 text-red-400 text-[8px] font-bold rounded flex-shrink-0">DNR</span>
+                              )}
                             </div>
+                            <ChannelIcon className={`w-3.5 h-3.5 flex-shrink-0 ${channel.textColor}`} />
                           </div>
 
-                          {/* Lead Info */}
-                          <div className="space-y-2">
-                            {/* Vehicle Interest */}
-                            {getVehicleName(lead.vehicle_interest) && (
-                              <div className="flex items-center gap-2 text-sm">
-                                <Car className="w-3.5 h-3.5 text-white/40" />
-                                <span className="text-white/60">{getVehicleName(lead.vehicle_interest)}</span>
-                              </div>
-                            )}
-
-                            {/* Notes (rental dates or other info from chatbot) */}
-                            {lead.notes && (
-                              <div className="flex items-start gap-2 text-sm">
-                                <StickyNote className="w-3.5 h-3.5 text-white/40 mt-0.5" />
-                                <span className="text-white/60 line-clamp-2">{lead.notes}</span>
-                              </div>
-                            )}
-
-                            {/* Source */}
-                            <div className="flex items-center gap-2 text-xs text-white/30">
-                              <span className="capitalize">{lead.source || "Unknown"}</span>
-                              <span className="w-1 h-1 rounded-full bg-white/20" />
-                              <span>{formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}</span>
-                            </div>
+                          {/* Row 2: Handle/Phone + Time */}
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs text-white/40 truncate">{handle}</span>
+                            <span className="text-[11px] text-white/25 flex-shrink-0 ml-2">
+                              {lead.last_message_time
+                                ? formatMessageTime(lead.last_message_time)
+                                : lead.created_at ? formatMessageTime(lead.created_at) : ""}
+                            </span>
                           </div>
 
-                          {/* Last Message Preview */}
+                          {/* Row 3: Last message preview */}
                           {lead.last_message && (
-                            <div className="mt-3 pt-3 border-t border-white/[0.06]">
-                              <div className="flex items-center gap-1.5 text-xs">
-                                {lead.last_message_direction === "outbound" && (
-                                  <CheckCheck className="w-3 h-3 text-white/30" />
-                                )}
-                                <span className={`truncate ${lead.unread ? "text-white/70 font-medium" : "text-white/40"}`}>
-                                  {lead.last_message}
-                                </span>
-                              </div>
+                            <div className="flex items-center gap-1.5">
+                              {lead.last_message_direction === "outbound" && (
+                                <CheckCheck className="w-3 h-3 text-white/20 flex-shrink-0" />
+                              )}
+                              <span className={`text-xs truncate ${lead.unread ? "text-white/60 font-medium" : "text-white/30"}`}>
+                                {lead.last_message}
+                              </span>
                             </div>
                           )}
                         </div>
-                      ))
+                        )
+                      })
                     )}
                   </div>
                 </div>
@@ -1121,7 +1361,7 @@ export default function LeadsPage() {
                     {leads.length === 0 && (
                       <button
                         onClick={() => setShowAddModal(true)}
-                        className="mt-4 flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg font-medium text-sm hover:bg-white/90 transition-colors"
+                        className="mt-4 flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg font-medium text-sm hover:bg-white/90 transition-all duration-300"
                       >
                         <Plus className="w-4 h-4" />
                         Add Your First Lead
@@ -1134,15 +1374,27 @@ export default function LeadsPage() {
                       <button
                         key={lead.id}
                         onClick={() => setSelectedLead(lead)}
-                        className={`w-full p-4 hover:bg-white/[0.03] transition-all text-left group relative ${
+                        className={`w-full p-4 hover:bg-white/[0.05] transition-all duration-300 text-left group relative hover:shadow-[inset_0_0_20px_rgba(255,255,255,0.02)] ${
                           selectedLead?.id === lead.id ? "bg-white/[0.05]" : ""
-                        }`}
+                        } ${selectedLeads.has(lead.id) ? "bg-white/[0.04]" : ""}`}
                       >
                         {lead.unread && (
                           <div className="absolute left-0 top-4 bottom-4 w-[3px] bg-white rounded-r-full shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
                         )}
 
                         <div className="flex items-start gap-3">
+                          {/* Bulk selection checkbox */}
+                          <div
+                            onClick={(e) => toggleLeadSelection(lead.id, e)}
+                            className="flex items-center justify-center pt-2.5 flex-shrink-0 text-white/30 hover:text-white transition-colors"
+                          >
+                            {selectedLeads.has(lead.id) ? (
+                              <CheckSquare className="w-4 h-4 text-white" />
+                            ) : (
+                              <Square className={`w-4 h-4 transition-opacity ${selectedLeads.size > 0 ? "opacity-50" : "opacity-0 group-hover:opacity-100"}`} />
+                            )}
+                          </div>
+
                           <div className="relative">
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
                               isOnDoNotRentList(lead)
@@ -1156,7 +1408,7 @@ export default function LeadsPage() {
                                   ? "text-red-400"
                                   : lead.unread ? "text-white" : "text-white/60"
                               }`}>
-                                {lead.name.charAt(0).toUpperCase()}
+                                {(lead.name || "?").charAt(0).toUpperCase()}
                               </span>
                             </div>
                             {isOnDoNotRentList(lead) ? (
@@ -1170,34 +1422,40 @@ export default function LeadsPage() {
 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2 mb-0.5">
-                              <span className={`font-medium truncate flex items-center gap-1.5 ${
-                                isOnDoNotRentList(lead)
-                                  ? "text-red-400"
-                                  : lead.unread ? "text-white" : "text-white/80"
-                              }`}>
-                                {lead.name}
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className={`font-medium truncate ${
+                                  isOnDoNotRentList(lead)
+                                    ? "text-red-400"
+                                    : lead.unread ? "text-white" : "text-white/80"
+                                }`}>
+                                  {lead.name}
+                                </span>
                                 {isOnDoNotRentList(lead) && (
-                                  <span className="px-1.5 py-0.5 bg-red-500/20 text-red-400 text-[9px] font-bold rounded uppercase">
-                                    DNR
-                                  </span>
+                                  <span className="px-1 py-0.5 bg-red-500/20 text-red-400 text-[8px] font-bold rounded flex-shrink-0">DNR</span>
                                 )}
-                              </span>
-                              <span className={`text-xs flex-shrink-0 ${lead.unread ? "text-white font-medium" : "text-white/30"}`}>
-                                {lead.last_message_time ? formatMessageTime(lead.last_message_time) : formatMessageTime(lead.created_at)}
-                              </span>
+                              </div>
+                              {(() => {
+                                const ch = getChannelInfo(lead.source)
+                                const ChIcon = ch.icon
+                                return <ChIcon className={`w-3.5 h-3.5 flex-shrink-0 ${ch.textColor}`} />
+                              })()}
                             </div>
                             <div className="flex items-center gap-2 mb-1.5">
-                              <p className="text-sm text-white/40 truncate">{lead.phone}</p>
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${getStatusColor(lead.status)}`}>
-                                {getStatusLabel(lead.status)}
+                              <p className="text-xs text-white/40 truncate">
+                                {lead.source === "instagram" && lead.instagram_username
+                                  ? `@${lead.instagram_username}`
+                                  : lead.phone}
+                              </p>
+                              <span className="text-[11px] text-white/25 flex-shrink-0 ml-auto">
+                                {lead.last_message_time ? formatMessageTime(lead.last_message_time) : formatMessageTime(lead.created_at)}
                               </span>
                             </div>
                             {lead.last_message && (
                               <div className="flex items-center gap-1.5">
                                 {lead.last_message_direction === "outbound" && (
-                                  <CheckCheck className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
+                                  <CheckCheck className="w-3 h-3 text-white/20 flex-shrink-0" />
                                 )}
-                                <p className={`text-sm truncate ${lead.unread ? "text-white/70 font-medium" : "text-white/40"}`}>
+                                <p className={`text-xs truncate ${lead.unread ? "text-white/60 font-medium" : "text-white/30"}`}>
                                   {lead.last_message}
                                 </p>
                               </div>
@@ -1220,7 +1478,7 @@ export default function LeadsPage() {
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => setSelectedLead(null)}
-                        className="md:hidden p-2 -ml-2 rounded-lg hover:bg-white/5 transition-colors"
+                        className="md:hidden p-2 -ml-2 rounded-lg hover:bg-white/5 transition-all duration-300"
                       >
                         <ChevronLeft className="w-5 h-5" />
                       </button>
@@ -1231,7 +1489,7 @@ export default function LeadsPage() {
                           : "bg-gradient-to-br from-white/20 to-white/5 ring-white/10"
                       }`}>
                         <span className={`font-semibold ${isOnDoNotRentList(selectedLead) ? "text-red-400" : "text-white"}`}>
-                          {selectedLead.name.charAt(0).toUpperCase()}
+                          {(selectedLead.name || "?").charAt(0).toUpperCase()}
                         </span>
                       </div>
 
@@ -1266,7 +1524,7 @@ export default function LeadsPage() {
                         <div className="relative" ref={statusDropdownRef}>
                           <button
                             onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${getStatusColor(selectedLead.status)}`}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all duration-300 ${getStatusColor(selectedLead.status)} ${getStatusGlow(selectedLead.status)}`}
                           >
                             {getStatusLabel(selectedLead.status)}
                             <ChevronDown className="w-3.5 h-3.5" />
@@ -1277,7 +1535,7 @@ export default function LeadsPage() {
                                 <button
                                   key={status.value}
                                   onClick={() => handleStatusChange(selectedLead.id, status.value)}
-                                  className={`w-full px-3 py-2 text-left text-sm hover:bg-white/5 transition-colors flex items-center gap-2 ${
+                                  className={`w-full px-3 py-2 text-left text-sm hover:bg-white/5 transition-all duration-300 flex items-center gap-2 ${
                                     selectedLead.status === status.value ? "bg-white/5" : ""
                                   }`}
                                 >
@@ -1291,13 +1549,13 @@ export default function LeadsPage() {
 
                         <button
                           onClick={() => openEditModal(selectedLead)}
-                          className="p-2 rounded-lg hover:bg-white/5 transition-colors text-white/40 hover:text-white"
+                          className="p-2 rounded-lg hover:bg-white/5 transition-all duration-300 text-white/40 hover:text-white"
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(selectedLead.id)}
-                          className="p-2 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400 transition-colors"
+                          className="p-2 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400 transition-all duration-300"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -1349,6 +1607,30 @@ export default function LeadsPage() {
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  {/* Conversation Header */}
+                  <div className="px-4 py-2.5 border-b border-white/[0.06] flex items-center gap-2 flex-shrink-0">
+                    {(() => {
+                      const listChannel = getChannelInfo(selectedLead.source)
+                      const ListChannelIcon = listChannel.icon
+                      return <ListChannelIcon className={`w-4 h-4 ${listChannel.textColor}`} />
+                    })()}
+                    <span className="text-sm font-medium text-white/60">Conversation</span>
+                    <span className="text-xs text-white/25">{messages.length}</span>
+                    {messages.length > 0 && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => exportConversation(selectedLead, messages)}
+                            className="ml-auto p-1.5 rounded-lg hover:bg-white/5 transition-all duration-300 text-white/30 hover:text-white/60"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">Export conversation</TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
 
                   {/* Messages */}
@@ -1414,22 +1696,37 @@ export default function LeadsPage() {
 
                   {/* Message Input */}
                   <div className="p-4 border-t border-white/[0.08] bg-white/[0.03]">
+                    {selectedLead && selectedLead.source !== "instagram" ? (
+                      <div className="flex items-center justify-center gap-2 py-3 opacity-50">
+                        <Send className="w-4 h-4 text-white/30" />
+                        <span className="px-2 py-0.5 bg-white/[0.06] text-white/30 text-[10px] rounded-full font-medium uppercase tracking-wider">SMS Coming Soon</span>
+                      </div>
+                    ) : (
                     <div className="flex gap-3">
                       <input
                         type="text"
                         placeholder="Type your message..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-                        className="flex-1 px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/20 focus:bg-white/[0.06] transition-all"
+                        onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendClick()}
+                        className="flex-1 px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:bg-white/[0.06] focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] transition-all duration-300"
                       />
                       <button
-                        onClick={sendMessage}
+                        onClick={handleSendClick}
                         disabled={!newMessage.trim() || sending}
-                        className="px-5 py-3 bg-white hover:bg-white/90 disabled:opacity-50 disabled:hover:bg-white text-black rounded-xl transition-all flex items-center gap-2 font-medium shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                        className={`px-5 py-3 rounded-xl transition-all flex items-center gap-2 font-medium disabled:opacity-50 ${
+                          sendConfirm
+                            ? "bg-emerald-500 hover:bg-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+                            : "bg-white hover:bg-white/90 text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                        }`}
                       >
                         {sending ? (
                           <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : sendConfirm ? (
+                          <>
+                            <span className="hidden sm:inline">Confirm</span>
+                            <CheckCheck className="w-4 h-4" />
+                          </>
                         ) : (
                           <>
                             <span className="hidden sm:inline">Send</span>
@@ -1438,6 +1735,7 @@ export default function LeadsPage() {
                         )}
                       </button>
                     </div>
+                    )}
                   </div>
                 </>
               ) : (
@@ -1458,15 +1756,15 @@ export default function LeadsPage() {
 
       {/* Add/Edit Lead Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-[0_0_60px_rgba(255,255,255,0.1)]">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/[0.1] w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-[0_0_60px_rgba(255,255,255,0.1)]">
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <h2 className="text-xl font-bold">
                 {editingLead ? "Edit Lead" : "Add Lead"}
               </h2>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+                className="p-2 rounded-lg hover:bg-white/5 transition-all duration-300"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1481,7 +1779,7 @@ export default function LeadsPage() {
                   placeholder="John Smith"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] transition-all duration-300"
                 />
               </div>
 
@@ -1493,7 +1791,7 @@ export default function LeadsPage() {
                   placeholder="(555) 123-4567"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] transition-all duration-300"
                 />
               </div>
 
@@ -1504,7 +1802,7 @@ export default function LeadsPage() {
                   placeholder="john@example.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] transition-all duration-300"
                 />
               </div>
 
@@ -1514,7 +1812,7 @@ export default function LeadsPage() {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-white/30 transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] transition-all duration-300"
                   >
                     {leadStatusOptions.map((status) => (
                       <option key={status.value} value={status.value}>
@@ -1528,7 +1826,7 @@ export default function LeadsPage() {
                   <select
                     value={formData.source}
                     onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-white/30 transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] transition-all duration-300"
                   >
                     {sourceOptions.map((source) => (
                       <option key={source.value} value={source.value}>
@@ -1544,7 +1842,7 @@ export default function LeadsPage() {
                 <select
                   value={formData.vehicle_interest}
                   onChange={(e) => setFormData({ ...formData, vehicle_interest: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-white/30 transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] transition-all duration-300"
                 >
                   <option value="">Not specified</option>
                   {vehicles.map((vehicle) => (
@@ -1562,7 +1860,7 @@ export default function LeadsPage() {
                   rows={3}
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors resize-none"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] transition-all duration-300 resize-none"
                 />
               </div>
 
@@ -1570,7 +1868,7 @@ export default function LeadsPage() {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 px-5 py-3 rounded-xl border border-white/20 hover:bg-white/5 font-medium transition-colors"
+                  className="flex-1 px-5 py-3 rounded-xl border border-white/20 hover:bg-white/5 font-medium transition-all duration-300"
                 >
                   Cancel
                 </button>
@@ -1589,8 +1887,8 @@ export default function LeadsPage() {
 
       {/* Import CSV Modal */}
       {showImportModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-[0_0_60px_rgba(255,255,255,0.1)]">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/[0.1] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-[0_0_60px_rgba(255,255,255,0.1)]">
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <div className="flex items-center gap-3">
                 <FileSpreadsheet className="w-6 h-6 text-white" />
@@ -1600,7 +1898,7 @@ export default function LeadsPage() {
               </div>
               <button
                 onClick={() => setShowImportModal(false)}
-                className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+                className="p-2 rounded-lg hover:bg-white/5 transition-all duration-300"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1611,7 +1909,7 @@ export default function LeadsPage() {
                 <div className="space-y-4">
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-white/20 rounded-xl p-12 text-center cursor-pointer hover:border-white/40 transition-colors"
+                    className="border-2 border-dashed border-white/20 rounded-xl p-12 text-center cursor-pointer hover:border-white/40 transition-all duration-300"
                   >
                     <Upload className="w-12 h-12 text-white/30 mx-auto mb-4" />
                     <p className="text-lg font-medium mb-2">Drop your CSV file here</p>
@@ -1654,7 +1952,7 @@ export default function LeadsPage() {
 
                   <div>
                     <h3 className="text-sm font-bold text-white/60 mb-3">Map your columns</h3>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {csvHeaders.map(header => (
                         <div key={header} className="flex items-center gap-3">
                           <span className="text-sm text-white/50 w-32 truncate" title={header}>
@@ -1666,7 +1964,7 @@ export default function LeadsPage() {
                               ...columnMapping,
                               [header]: e.target.value
                             })}
-                            className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-white/30"
+                            className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] transition-all duration-300"
                           >
                             <option value="">Skip</option>
                             <option value="name">Name *</option>
@@ -1724,14 +2022,14 @@ export default function LeadsPage() {
               {csvData.length > 0 && !importResult && (
                 <button
                   onClick={resetImportModal}
-                  className="px-5 py-3 rounded-xl border border-white/20 hover:bg-white/5 font-medium transition-colors"
+                  className="px-5 py-3 rounded-xl border border-white/20 hover:bg-white/5 font-medium transition-all duration-300"
                 >
                   Choose Different File
                 </button>
               )}
               <button
                 onClick={() => setShowImportModal(false)}
-                className="flex-1 px-5 py-3 rounded-xl border border-white/20 hover:bg-white/5 font-medium transition-colors"
+                className="flex-1 px-5 py-3 rounded-xl border border-white/20 hover:bg-white/5 font-medium transition-all duration-300"
               >
                 {importResult ? "Close" : "Cancel"}
               </button>
@@ -1759,171 +2057,176 @@ export default function LeadsPage() {
         </div>
       )}
 
-      {/* Lead Details Modal (for Pipeline View) - Two Column Layout */}
-      {viewMode === "pipeline" && selectedLead && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setSelectedLead(null)}>
-          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-5xl h-[85vh] overflow-hidden flex flex-col shadow-[0_0_60px_rgba(255,255,255,0.1)]" onClick={(e) => e.stopPropagation()}>
+      {/* Lead Details Modal (for Pipeline View) */}
+      {viewMode === "pipeline" && selectedLead && (() => {
+        const modalChannel = getChannelInfo(selectedLead.source)
+        const ModalChannelIcon = modalChannel.icon
+        const modalHandle = selectedLead.source === "instagram" && selectedLead.instagram_username
+          ? `@${selectedLead.instagram_username}`
+          : selectedLead.phone || null
+        const qualSteps = [
+          { label: "Vehicle", value: selectedLead.collected_vehicle_id ? getVehicleName(selectedLead.collected_vehicle_id) || "Selected" : null },
+          { label: "Start", value: selectedLead.collected_start_date || null },
+          { label: "End", value: selectedLead.collected_end_date || null },
+        ]
+        const qualCount = qualSteps.filter(s => s.value).length
+        const currentStatus = pipelineColumns.find(c => c.id === selectedLead.status)
+
+        return (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setSelectedLead(null)}>
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-5xl h-[90vh] md:h-[85vh] overflow-hidden flex flex-col shadow-[0_0_60px_rgba(0,0,0,0.5)]" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
-            <div className="p-4 border-b border-white/10 flex items-center justify-between flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ring-1 ${
-                  isOnDoNotRentList(selectedLead)
-                    ? "bg-gradient-to-br from-red-500/30 to-red-500/10 ring-red-500/30"
-                    : "bg-gradient-to-br from-white/20 to-white/5 ring-white/10"
-                }`}>
-                  <span className={`text-lg font-semibold ${isOnDoNotRentList(selectedLead) ? "text-red-400" : "text-white"}`}>
-                    {selectedLead.name.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className={`text-lg font-bold ${isOnDoNotRentList(selectedLead) ? "text-red-400" : "text-white"}`}>
+            <div className="px-4 sm:px-6 py-4 border-b border-white/[0.06] flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-4 min-w-0">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2.5">
+                    <h3 className={`text-lg font-bold truncate ${isOnDoNotRentList(selectedLead) ? "text-red-400" : "text-white"}`}>
                       {selectedLead.name}
                     </h3>
-                    {/* Channel Badge */}
-                    {(() => {
-                      const channel = getChannelInfo(selectedLead.source)
-                      const ChannelIcon = channel.icon
-                      return (
-                        <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${channel.color}`}>
-                          <ChannelIcon className="w-3 h-3" />
-                          {channel.label}
-                        </span>
-                      )
-                    })()}
                     {isOnDoNotRentList(selectedLead) && (
-                      <span className="flex items-center gap-1 px-2 py-0.5 bg-red-500/20 text-red-400 text-[10px] font-bold rounded">
-                        <AlertTriangle className="w-3 h-3" />
-                        DNR
-                      </span>
+                      <span className="px-1.5 py-0.5 bg-red-500/20 text-red-400 text-[9px] font-bold rounded flex-shrink-0">DNR</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-white/50">
-                    <span className="flex items-center gap-1">
-                      <Phone className="w-3.5 h-3.5" />
-                      {selectedLead.phone}
+                  <div className="flex items-center gap-3 mt-0.5">
+                    <span className="flex items-center gap-1.5 text-sm text-white/40">
+                      <ModalChannelIcon className={`w-3.5 h-3.5 ${modalChannel.textColor}`} />
+                      {modalHandle}
                     </span>
                     {selectedLead.email && (
-                      <span className="flex items-center gap-1">
-                        <Mail className="w-3.5 h-3.5" />
-                        {selectedLead.email}
-                      </span>
+                      <span className="text-sm text-white/30">{selectedLead.email}</span>
                     )}
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => openEditModal(selectedLead)}
-                  className="p-2 rounded-lg hover:bg-white/5 transition-colors text-white/40 hover:text-white"
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(selectedLead.id)}
-                  className="p-2 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setSelectedLead(null)}
-                  className="p-2 rounded-lg hover:bg-white/5 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+              <div className="flex items-center gap-1.5">
+                <button onClick={() => openEditModal(selectedLead)} className="p-2 rounded-lg hover:bg-white/5 text-white/30 hover:text-white transition-all"><Pencil className="w-4 h-4" /></button>
+                <button onClick={() => handleDelete(selectedLead.id)} className="p-2 rounded-lg hover:bg-red-500/10 text-white/30 hover:text-red-400 transition-all"><Trash2 className="w-4 h-4" /></button>
+                <button onClick={() => setSelectedLead(null)} className="p-2 rounded-lg hover:bg-white/5 text-white/30 hover:text-white transition-all"><X className="w-5 h-5" /></button>
               </div>
             </div>
 
             {/* Two Column Layout */}
-            <div className="flex flex-1 overflow-hidden">
-              {/* Left Side - Lead Information (35%) */}
-              <div className="w-[35%] border-r border-white/10 overflow-y-auto p-4 space-y-4 flex-shrink-0">
-                {/* Status */}
-                <div>
-                  <label className="block text-xs text-white/40 uppercase tracking-wider mb-2">Status</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {pipelineColumns.map((col) => (
-                      <button
-                        key={col.id}
-                        onClick={() => handleStatusChange(selectedLead.id, col.id)}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
-                          selectedLead.status === col.id
-                            ? `${col.color} ${col.glow} ${col.textGlow}`
-                            : "border-white/10 text-white/40 hover:border-white/20 hover:text-white/60"
-                        }`}
-                      >
-                        {col.label}
-                      </button>
+            <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+              {/* Left Side - Lead Info */}
+              <div className="w-full md:w-[320px] border-b md:border-b-0 md:border-r border-white/[0.06] overflow-y-auto flex-shrink-0 max-h-[40vh] md:max-h-none">
+                {/* Timestamps + Status */}
+                <div className="px-5 py-4 border-b border-white/[0.06]">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-[10px] text-white/30 uppercase tracking-wider">Inquiry</p>
+                      <p className="text-sm text-white/70">{formatDate(selectedLead.created_at)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-white/30 uppercase tracking-wider">Last Activity</p>
+                      <p className="text-sm text-white/70">
+                        {selectedLead.last_message_time
+                          ? formatDistanceToNow(new Date(selectedLead.last_message_time), { addSuffix: true })
+                          : "---"}
+                      </p>
+                    </div>
+                  </div>
+                  {/* Status Dropdown */}
+                  <div className="relative" ref={statusDropdownRef}>
+                    <button
+                      onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium border transition-all ${currentStatus ? `${currentStatus.color} ${currentStatus.glow}` : "border-white/10 text-white/50"}`}
+                    >
+                      <span>{currentStatus?.label || selectedLead.status}</span>
+                      <ChevronDown className="w-4 h-4 opacity-50" />
+                    </button>
+                    {showStatusDropdown && (
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-[#141414] rounded-lg border border-white/10 shadow-xl z-50 overflow-hidden">
+                        {pipelineColumns.map((col) => (
+                          <button
+                            key={col.id}
+                            onClick={() => { handleStatusChange(selectedLead.id, col.id); setShowStatusDropdown(false) }}
+                            className={`w-full px-3 py-2 text-left text-sm hover:bg-white/5 transition-all flex items-center gap-2 ${selectedLead.status === col.id ? "bg-white/5 text-white" : "text-white/60"}`}
+                          >
+                            <div className={`w-2 h-2 rounded-full ${col.id === "booked" ? "bg-white" : col.id === "lost" || col.id === "cancelled" ? "bg-white/20" : "bg-white/40"}`} />
+                            {col.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* AI Toggle */}
+                <div className="px-5 py-3 border-b border-white/[0.06] flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full ${selectedLead.ai_disabled ? "bg-white/20" : "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]"}`} />
+                    <span className="text-xs text-white/50">AI Agent</span>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      const newValue = !selectedLead.ai_disabled
+                      await supabase.from("leads").update({ ai_disabled: newValue }).eq("id", selectedLead.id)
+                      setSelectedLead({ ...selectedLead, ai_disabled: newValue })
+                      setLeads(leads.map(l => l.id === selectedLead.id ? { ...l, ai_disabled: newValue } : l))
+                    }}
+                    className={`relative w-9 h-5 rounded-full transition-all ${selectedLead.ai_disabled ? "bg-white/10" : "bg-emerald-500/80"}`}
+                  >
+                    <div className={`absolute top-0.5 w-4 h-4 rounded-full shadow transition-all ${selectedLead.ai_disabled ? "left-0.5 bg-white/40" : "left-[18px] bg-white"}`} />
+                  </button>
+                </div>
+
+                {/* Qualification Progress */}
+                <div className="px-5 py-4 border-b border-white/[0.06]">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider font-medium">Qualification</p>
+                    <span className="text-[11px] text-white/25">{qualCount}/3</span>
+                  </div>
+                  <div className="flex gap-1 mb-4">
+                    {qualSteps.map((step, i) => (
+                      <div key={i} className={`h-1 flex-1 rounded-full transition-all ${step.value ? "bg-white" : "bg-white/[0.08]"}`} />
+                    ))}
+                  </div>
+                  <div className="space-y-3">
+                    {qualSteps.map((step, i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold transition-all ${step.value ? "bg-white text-black" : "bg-white/[0.06] text-white/25"}`}>
+                            {step.value ? "✓" : i + 1}
+                          </div>
+                          <span className={`text-sm ${step.value ? "text-white/80" : "text-white/30"}`}>{step.label}</span>
+                        </div>
+                        {step.value && (
+                          <span className="text-xs text-white/40 truncate max-w-[120px]">{step.value}</span>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Info Cards */}
-                <div className="space-y-3">
-                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <Car className="w-4 h-4 text-white/40" />
-                      <span className="text-[10px] text-white/40 uppercase tracking-wider">Vehicle Interest</span>
-                    </div>
-                    <p className="text-sm font-medium">{getVehicleName(selectedLead.vehicle_interest) || "Not specified"}</p>
+                {/* Notes */}
+                {selectedLead.notes && (
+                  <div className="px-5 py-4">
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider font-medium mb-2">Notes</p>
+                    <p className="text-sm text-white/50 leading-relaxed">{selectedLead.notes}</p>
                   </div>
-
-                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <Calendar className="w-4 h-4 text-white/40" />
-                      <span className="text-[10px] text-white/40 uppercase tracking-wider">Created</span>
-                    </div>
-                    <p className="text-sm font-medium">{formatDate(selectedLead.created_at)}</p>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <Clock className="w-4 h-4 text-white/40" />
-                      <span className="text-[10px] text-white/40 uppercase tracking-wider">Last Activity</span>
-                    </div>
-                    <p className="text-sm font-medium">
-                      {selectedLead.last_message_time
-                        ? formatDistanceToNow(new Date(selectedLead.last_message_time), { addSuffix: true })
-                        : "No messages"}
-                    </p>
-                  </div>
-
-                  {selectedLead.notes && (
-                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <StickyNote className="w-4 h-4 text-white/40" />
-                        <span className="text-[10px] text-white/40 uppercase tracking-wider">Notes</span>
-                      </div>
-                      <p className="text-sm text-white/80 whitespace-pre-wrap">{selectedLead.notes}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Send Payment Link Button */}
-                <button
-                  onClick={() => openPaymentLinkModal(selectedLead)}
-                  className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white rounded-xl font-medium transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)]"
-                >
-                  <CreditCard className="w-4 h-4" />
-                  Send Payment Link
-                </button>
+                )}
               </div>
 
-              {/* Right Side - Conversation (65%) */}
-              <div className="flex-1 flex flex-col bg-black/30 min-w-0">
+              {/* Right Side - Conversation */}
+              <div className="flex-1 flex flex-col bg-black/20 min-w-0">
                 {/* Conversation Header */}
-                <div className="p-3 border-b border-white/[0.06] flex items-center gap-2 flex-shrink-0">
-                  {(() => {
-                    const channel = getChannelInfo(selectedLead.source)
-                    const ChannelIcon = channel.icon
-                    return (
-                      <>
-                        <ChannelIcon className={`w-4 h-4 ${channel.textColor}`} />
-                        <span className="text-sm font-medium text-white/70">Conversation</span>
-                        <span className="text-xs text-white/30">({messages.length} messages)</span>
-                      </>
-                    )
-                  })()}
+                <div className="px-4 py-3 border-b border-white/[0.06] flex items-center gap-2 flex-shrink-0">
+                  <ModalChannelIcon className={`w-4 h-4 ${modalChannel.textColor}`} />
+                  <span className="text-sm font-medium text-white/60">Conversation</span>
+                  <span className="text-xs text-white/25">{messages.length}</span>
+                  {messages.length > 0 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => exportConversation(selectedLead, messages)}
+                          className="ml-auto p-1.5 rounded-lg hover:bg-white/5 transition-all duration-300 text-white/30 hover:text-white/60"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">Export conversation</TooltipContent>
+                    </Tooltip>
+                  )}
                 </div>
 
                 {/* Messages */}
@@ -1989,34 +2292,46 @@ export default function LeadsPage() {
 
                 {/* Message Input */}
                 <div className="p-3 border-t border-white/[0.06] flex-shrink-0">
+                  {selectedLead.source !== "instagram" ? (
+                    <div className="flex items-center justify-center gap-2 py-2.5 opacity-50">
+                      <Send className="w-4 h-4 text-white/30" />
+                      <span className="px-2 py-0.5 bg-white/[0.06] text-white/30 text-[10px] rounded-full font-medium uppercase tracking-wider">SMS Coming Soon</span>
+                    </div>
+                  ) : (
                   <div className="flex gap-2">
                     <input
                       type="text"
                       placeholder="Type a message..."
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-                      className="flex-1 px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/20 transition-all text-sm"
+                      onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendClick()}
+                      className="flex-1 px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] transition-all duration-300 text-sm"
                     />
                     <button
-                      onClick={sendMessage}
+                      onClick={handleSendClick}
                       disabled={!newMessage.trim() || sending}
-                      className="px-4 py-2.5 bg-white hover:bg-white/90 disabled:opacity-50 text-black rounded-xl transition-all font-medium shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                      className={`px-4 py-2.5 rounded-xl transition-all font-medium disabled:opacity-50 ${
+                        sendConfirm
+                          ? "bg-emerald-500 hover:bg-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+                          : "bg-white hover:bg-white/90 text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                      }`}
                     >
-                      {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : sendConfirm ? <CheckCheck className="w-4 h-4" /> : <Send className="w-4 h-4" />}
                     </button>
                   </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
-      )}
+        )
+      })()}
 
       {/* Payment Link Modal */}
       {showPaymentLinkModal && paymentLinkLead && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <div className="bg-[#0a0a0a] rounded-2xl border border-white/10 w-full max-w-md overflow-hidden shadow-[0_0_60px_rgba(16,185,129,0.15)]">
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/[0.1] w-full max-w-md overflow-hidden shadow-[0_0_60px_rgba(16,185,129,0.15)]">
             {/* Header */}
             <div className="p-4 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -2030,7 +2345,7 @@ export default function LeadsPage() {
               </div>
               <button
                 onClick={() => setShowPaymentLinkModal(false)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 hover:bg-white/10 rounded-lg transition-all duration-300"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2044,11 +2359,11 @@ export default function LeadsPage() {
                 </div>
                 <h4 className="text-lg font-semibold mb-2">Payment Link Sent!</h4>
                 <p className="text-sm text-white/50 mb-6">
-                  The payment link has been sent to {paymentLinkLead.phone} via SMS
+                  The payment link has been created for {paymentLinkLead.phone} <span className="px-2 py-0.5 bg-white/[0.06] text-white/30 text-[10px] rounded-full font-medium uppercase tracking-wider">SMS Delivery Coming Soon</span>
                 </p>
                 <button
                   onClick={() => setShowPaymentLinkModal(false)}
-                  className="w-full py-3 bg-white text-black rounded-xl font-medium hover:bg-white/90 transition-colors"
+                  className="w-full py-3 bg-white text-black rounded-xl font-medium hover:bg-white/90 transition-all duration-300"
                 >
                   Done
                 </button>
@@ -2069,7 +2384,7 @@ export default function LeadsPage() {
                   <select
                     value={paymentLinkData.vehicleId}
                     onChange={(e) => updatePaymentLinkField('vehicleId', e.target.value)}
-                    className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white focus:outline-none focus:border-white/20 appearance-none cursor-pointer"
+                    className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] appearance-none cursor-pointer transition-all duration-300"
                   >
                     <option value="">Select a vehicle</option>
                     {vehicles.map(v => (
@@ -2081,7 +2396,7 @@ export default function LeadsPage() {
                 </div>
 
                 {/* Dates */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm text-white/60 mb-2">Start Date</label>
                     <input
@@ -2089,7 +2404,7 @@ export default function LeadsPage() {
                       value={paymentLinkData.startDate}
                       onChange={(e) => updatePaymentLinkField('startDate', e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
-                      className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white focus:outline-none focus:border-white/20"
+                      className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] transition-all duration-300"
                     />
                   </div>
                   <div>
@@ -2099,7 +2414,7 @@ export default function LeadsPage() {
                       value={paymentLinkData.endDate}
                       onChange={(e) => updatePaymentLinkField('endDate', e.target.value)}
                       min={paymentLinkData.startDate || new Date().toISOString().split('T')[0]}
-                      className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white focus:outline-none focus:border-white/20"
+                      className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] transition-all duration-300"
                     />
                   </div>
                 </div>
@@ -2125,31 +2440,100 @@ export default function LeadsPage() {
 
                 {/* Send Button */}
                 <button
-                  onClick={sendPaymentLink}
-                  disabled={sendingPaymentLink || !paymentLinkData.vehicleId || !paymentLinkData.startDate || !paymentLinkData.endDate}
-                  className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                  disabled
+                  className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 opacity-50 cursor-not-allowed text-white rounded-xl font-medium transition-all flex items-center justify-center gap-2"
                 >
-                  {sendingPaymentLink ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4" />
-                      Send via SMS
-                    </>
-                  )}
+                  <Send className="w-4 h-4" />
+                  Send via SMS
+                  <span className="px-2 py-0.5 bg-white/[0.06] text-white/30 text-[10px] rounded-full font-medium uppercase tracking-wider">Coming Soon</span>
                 </button>
 
                 <p className="text-xs text-white/30 text-center">
-                  Payment link will be sent to {paymentLinkLead.phone}
+                  SMS delivery is coming soon. Payment link will be sent to {paymentLinkLead.phone}
                 </p>
               </div>
             )}
           </div>
         </div>
       )}
+
+      {/* Bulk Actions Floating Bar */}
+      {selectedLeads.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-3 bg-[#1a1a1a]/90 backdrop-blur-xl border border-white/[0.12] rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.6),0_0_20px_rgba(255,255,255,0.05)]">
+          <span className="text-sm font-semibold text-white whitespace-nowrap">
+            {selectedLeads.size} selected
+          </span>
+
+          <div className="w-px h-6 bg-white/10" />
+
+          {/* Change Status */}
+          <div className="relative" ref={bulkStatusRef}>
+            <button
+              onClick={() => setBulkStatusDropdownOpen(!bulkStatusDropdownOpen)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] text-sm font-medium text-white/80 hover:text-white transition-all duration-300"
+            >
+              Change Status
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+            {bulkStatusDropdownOpen && (
+              <div className="absolute bottom-full mb-2 left-0 w-44 bg-[#1a1a1a] rounded-xl border border-white/10 shadow-xl overflow-hidden">
+                {pipelineColumns.map((col) => (
+                  <button
+                    key={col.id}
+                    onClick={() => bulkChangeStatus(col.id)}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-white/5 transition-all flex items-center gap-2 text-white/70 hover:text-white"
+                  >
+                    <div className={`w-2 h-2 rounded-full ${col.id === "booked" ? "bg-white" : col.id === "lost" || col.id === "cancelled" ? "bg-white/20" : "bg-white/40"}`} />
+                    {col.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Export CSV */}
+          <button
+            onClick={exportSelectedCSV}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] text-sm font-medium text-white/80 hover:text-white transition-all duration-300"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export CSV
+          </button>
+
+          {/* Delete */}
+          <button
+            onClick={() => setBulkConfirmOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-sm font-medium text-red-400 hover:text-red-300 transition-all duration-300"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Delete
+          </button>
+
+          <div className="w-px h-6 bg-white/10" />
+
+          {/* Deselect All */}
+          <button
+            onClick={() => setSelectedLeads(new Set())}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-white/[0.06] text-sm font-medium text-white/50 hover:text-white transition-all duration-300"
+          >
+            <X className="w-3.5 h-3.5" />
+            Deselect
+          </button>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      <ConfirmModal
+        open={bulkConfirmOpen}
+        onClose={() => setBulkConfirmOpen(false)}
+        onConfirm={bulkDeleteLeads}
+        title={`Delete ${selectedLeads.size} Lead${selectedLeads.size > 1 ? "s" : ""}`}
+        description={`Are you sure you want to delete ${selectedLeads.size} selected lead${selectedLeads.size > 1 ? "s" : ""}? This action cannot be undone.`}
+        confirmText={`Delete ${selectedLeads.size} Lead${selectedLeads.size > 1 ? "s" : ""}`}
+        cancelText="Cancel"
+        variant="danger"
+        icon="delete"
+      />
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal
@@ -2164,5 +2548,6 @@ export default function LeadsPage() {
         icon="delete"
       />
     </div>
+    </PageTransition>
   )
 }

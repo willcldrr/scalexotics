@@ -45,7 +45,13 @@ export default function PipelinePage() {
       )
       .subscribe()
 
+    // Poll every 5 seconds as fallback
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === "visible") fetchLeads()
+    }, 5000)
+
     return () => {
+      clearInterval(pollInterval)
       supabase.removeChannel(channel)
     }
   }, [])
@@ -151,11 +157,11 @@ export default function PipelinePage() {
           <div className="h-8 w-48 bg-white/[0.05] rounded-lg animate-pulse" />
           <div className="h-5 w-64 bg-white/[0.03] rounded mt-2 animate-pulse" />
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div className="flex gap-4 pb-4">
           {[1, 2, 3, 4, 5].map((i) => (
             <div
               key={i}
-              className="flex-shrink-0 w-72 h-[500px] bg-white/[0.02] rounded-2xl border border-white/[0.06] animate-pulse"
+              className="flex-1 min-w-[180px] h-[500px] bg-white/[0.02] rounded-2xl border border-white/[0.06] animate-pulse"
             />
           ))}
         </div>
@@ -202,7 +208,7 @@ export default function PipelinePage() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-4 overflow-x-auto pb-4 flex-1 min-h-0">
+        <div className="flex gap-4 pb-4 flex-1 min-h-0 overflow-x-auto">
           {leadStatusOptions.map((status) => (
             <PipelineColumn
               key={status.value}

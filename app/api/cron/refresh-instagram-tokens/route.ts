@@ -1,5 +1,9 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { encrypt, decrypt } from "@/lib/crypto"
+import { safeFetch } from "@/lib/safe-fetch"
+import { log } from "@/lib/log"
 
 /**
  * Cron job to refresh Instagram tokens before they expire
@@ -15,10 +19,18 @@ function getSupabase() {
   )
 }
 
-export async function GET(request: Request) {
-  // Verify cron secret (optional security)
+export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 10, window: 60 })
+  if (limited) return limited
+
+  // Verify cron secret (mandatory)
   const authHeader = request.headers.get("authorization")
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) {
+    log.error("CRON_SECRET not configured", undefined)
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 })
+  }
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -33,9 +45,13 @@ export async function GET(request: Request) {
   const sevenDaysFromNow = new Date()
   sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7)
 
+  // LB-6 dual-read: select both plaintext and encrypted trio so we can
+  // refresh tokens written either way.
   const { data: expiringConnections } = await supabase
     .from("instagram_connections")
-    .select("id, user_id, instagram_username, access_token, token_expires_at")
+    .select(
+      "id, user_id, instagram_username, access_token, token_expires_at, encrypted_access_token, access_token_iv, access_token_tag"
+    )
     .eq("is_active", true)
     .lt("token_expires_at", sevenDaysFromNow.toISOString())
 
@@ -46,19 +62,45 @@ export async function GET(request: Request) {
   // Refresh each expiring token
   for (const connection of expiringConnections) {
     try {
-      const refreshResponse = await fetch(
+      // LB-6 dual-read: prefer encrypted trio, fall back to legacy plaintext.
+      let currentToken: string | null = null
+      if (
+        connection.encrypted_access_token &&
+        connection.access_token_iv &&
+        connection.access_token_tag
+      ) {
+        try {
+          currentToken = decrypt({
+            ciphertext: connection.encrypted_access_token,
+            iv: connection.access_token_iv,
+            tag: connection.access_token_tag,
+          })
+        } catch (err) {
+          log.error(`[Token Refresh] Decrypt failed for ${connection.instagram_username}`, undefined)
+        }
+      }
+      if (!currentToken) {
+        currentToken = connection.access_token
+      }
+      if (!currentToken) {
+        results.failed.push(connection.instagram_username || connection.id)
+        continue
+      }
+
+      const refreshResponse = await safeFetch(
         `https://graph.facebook.com/v19.0/oauth/access_token?` +
         new URLSearchParams({
           grant_type: "fb_exchange_token",
           client_id: process.env.META_APP_ID!,
           client_secret: process.env.META_APP_SECRET!,
-          fb_exchange_token: connection.access_token,
-        }).toString()
+          fb_exchange_token: currentToken,
+        }).toString(),
+        { timeoutMs: 30_000 }
       )
 
       if (!refreshResponse.ok) {
         const error = await refreshResponse.json()
-        console.error(`[Token Refresh] Failed for ${connection.instagram_username}:`, error)
+        log.error(`[Token Refresh] Failed for ${connection.instagram_username}:`, error)
         results.failed.push(connection.instagram_username || connection.id)
 
         // Mark connection as needing attention if token is invalid
@@ -74,18 +116,24 @@ export async function GET(request: Request) {
       const tokenData = await refreshResponse.json()
       const newExpiresAt = new Date(Date.now() + (tokenData.expires_in || 5184000) * 1000)
 
-      // Update the token
+      // LB-6 dual-write: store encrypted trio and keep plaintext column
+      // populated until the drop migration runs.
+      // TODO(LB-6 cutover): remove plaintext write after drop migration
+      const enc = encrypt(tokenData.access_token)
       await supabase
         .from("instagram_connections")
         .update({
           access_token: tokenData.access_token,
+          encrypted_access_token: enc.ciphertext,
+          access_token_iv: enc.iv,
+          access_token_tag: enc.tag,
           token_expires_at: newExpiresAt.toISOString(),
         })
         .eq("id", connection.id)
 
       results.refreshed.push(connection.instagram_username || connection.id)
     } catch (error) {
-      console.error(`[Token Refresh] Error for ${connection.instagram_username}:`, error)
+      log.error(`[Token Refresh] Error for ${connection.instagram_username}:`, error)
       results.failed.push(connection.instagram_username || connection.id)
     }
   }

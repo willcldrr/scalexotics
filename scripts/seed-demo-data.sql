@@ -1,5 +1,5 @@
 -- =====================================================
--- Scale Exotics Demo Data Seed Script
+-- Velocity Labs Demo Data Seed Script
 -- Run this in Supabase SQL Editor for product photos
 -- =====================================================
 

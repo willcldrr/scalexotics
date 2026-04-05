@@ -1,6 +1,9 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import crypto from "crypto"
 import { createClient } from "@supabase/supabase-js"
 import { z } from "zod"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { log } from "@/lib/log"
 
 const deletionRequestSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -19,7 +22,10 @@ function getSupabase() {
   )
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 5, window: 60 })
+  if (limited) return limited
+
   try {
     const body = await request.json()
 
@@ -69,25 +75,30 @@ export async function POST(request: Request) {
       user_agent: request.headers.get("user-agent") || null,
     })
 
+    // Resolve a stable internal user id for logs. Never log the submitter's
+    // email or any other PII — data-deletion is the one endpoint where leaking
+    // PII into logs would be especially ironic.
+    const resolvedUserId = users?.[0]?.id || matchingAuthUser?.id || null
+
     if (insertError) {
-      // If table doesn't exist, log the request anyway
-      console.log("[Data Deletion Request]", {
-        email: email.toLowerCase(),
+      // If the insert failed (e.g. table missing), leave a breadcrumb so ops
+      // can still follow up — but only with non-identifying metadata.
+      log.error("[Data Deletion Request] insert failed; request received but not persisted", {
         deletionType,
-        additionalInfo,
+        userId: resolvedUserId,
         timestamp: new Date().toISOString(),
       })
     }
 
-    // Log for compliance tracking
-    console.log(`[GDPR/CCPA] Data deletion request received for: ${email}`)
+    // Log for compliance tracking — user id only, never email.
+    log.info(`[GDPR/CCPA] Data deletion request received (type=${deletionType}, userId=${resolvedUserId ?? "unknown"})`)
 
     return NextResponse.json({
       success: true,
       message: "Your deletion request has been submitted and will be processed within 30 days.",
     })
   } catch (error) {
-    console.error("[Data Deletion] Error processing request:", error)
+    log.error("[Data Deletion] Error processing request:", error)
     return NextResponse.json(
       { error: "Failed to process deletion request. Please try again." },
       { status: 500 }
@@ -97,7 +108,10 @@ export async function POST(request: Request) {
 
 // Meta requires a callback URL for data deletion requests
 // This handles the Meta Data Deletion Callback
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 20, window: 60 })
+  if (limited) return limited
+
   const url = new URL(request.url)
   const signedRequest = url.searchParams.get("signed_request")
 
@@ -119,6 +133,18 @@ export async function GET(request: Request) {
       )
     }
 
+    // Verify HMAC signature
+    const appSecret = process.env.INSTAGRAM_APP_SECRET
+    if (appSecret) {
+      const expectedSig = crypto
+        .createHmac("sha256", appSecret)
+        .update(payload)
+        .digest("base64url")
+      if (encodedSig !== expectedSig) {
+        return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
+      }
+    }
+
     // Decode the payload
     const decodedPayload = JSON.parse(
       Buffer.from(payload, "base64").toString("utf-8")
@@ -127,7 +153,7 @@ export async function GET(request: Request) {
     const userId = decodedPayload.user_id
 
     // Log the deletion request
-    console.log(`[Meta Data Deletion] Request for user_id: ${userId}`)
+    log.info(`[Meta Data Deletion] Request for user_id: ${userId}`)
 
     const supabase = getSupabase()
 
@@ -144,11 +170,11 @@ export async function GET(request: Request) {
 
     // Meta expects a specific response format
     return NextResponse.json({
-      url: `${process.env.NEXT_PUBLIC_APP_URL || "https://velocitylabs.io"}/data-deletion?confirmation=${confirmationCode}`,
+      url: `${process.env.NEXT_PUBLIC_APP_URL || "https://managevelocity.com"}/data-deletion?confirmation=${confirmationCode}`,
       confirmation_code: confirmationCode,
     })
   } catch (error) {
-    console.error("[Meta Data Deletion] Error:", error)
+    log.error("[Meta Data Deletion] Error:", error)
     return NextResponse.json(
       { error: "Failed to process deletion request" },
       { status: 500 }

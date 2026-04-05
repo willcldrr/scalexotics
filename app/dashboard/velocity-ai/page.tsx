@@ -1,8 +1,14 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import ReactMarkdown from "react-markdown"
+import dynamic from "next/dynamic"
 import remarkGfm from "remark-gfm"
+
+// Lazy-load react-markdown (~50KB) so it doesn't ship in the initial bundle.
+const ReactMarkdown = dynamic(() => import("react-markdown"), {
+  ssr: false,
+  loading: () => null,
+})
 import {
   Send,
   Loader2,
@@ -422,9 +428,10 @@ const markdownComponents = {
   blockquote: ({ children }: any) => (
     <blockquote className="border-l-2 border-white/30 pl-4 py-1 my-2 text-white/80 italic">{children}</blockquote>
   ),
-  a: ({ href, children }: any) => (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">{children}</a>
-  ),
+  a: ({ href, children }: any) => {
+    const safeHref = href && (href.startsWith('http://') || href.startsWith('https://')) ? href : '#'
+    return <a href={safeHref} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">{children}</a>
+  },
   table: ({ children }: any) => (
     <div className="overflow-x-auto mb-2">
       <table className="min-w-full border border-white/10 rounded">{children}</table>

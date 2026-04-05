@@ -102,7 +102,7 @@ export default function AdminInvoicesPage() {
   }, [])
 
   useRealtimeSubscription<Invoice>({
-    table: "invoices",
+    table: "client_invoices",
     onInsert: handleInsert as any,
     onUpdate: handleUpdate as any,
     onDelete: handleDelete as any,

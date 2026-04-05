@@ -37,7 +37,7 @@ const PipelineColumn = memo(function PipelineColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex-shrink-0 w-72 flex flex-col bg-white/[0.02] rounded-2xl border transition-all ${
+      className={`flex-1 min-w-[180px] flex flex-col bg-white/[0.02] rounded-2xl border transition-all ${
         isOver
           ? "border-[#375DEE]/50 bg-[#375DEE]/5"
           : "border-white/[0.06]"

@@ -1,7 +1,31 @@
 import * as crypto from "crypto"
+import { safeFetch } from "./safe-fetch"
+import { log } from "@/lib/log"
 
 const GRAPH_API_VERSION = "v19.0"
 const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`
+
+// Cache Page ID lookups so we don't call /me on every message
+const pageIdCache = new Map<string, { pageId: string; expires: number }>()
+
+async function resolvePageId(accessToken: string, fallbackId?: string): Promise<string> {
+  const cacheKey = accessToken.slice(-20)
+  const cached = pageIdCache.get(cacheKey)
+  if (cached && cached.expires > Date.now()) return cached.pageId
+
+  try {
+    const res = await safeFetch(`${GRAPH_API_BASE}/me?fields=id&access_token=${accessToken}`)
+    if (res.ok) {
+      const data = await res.json()
+      if (data.id) {
+        pageIdCache.set(cacheKey, { pageId: data.id, expires: Date.now() + 3600000 }) // 1hr cache
+        return data.id
+      }
+    }
+  } catch { /* fall through */ }
+
+  return fallbackId || ""
+}
 
 interface InstagramUserInfo {
   name: string
@@ -32,12 +56,15 @@ export async function sendInstagramMessage(
   const accountId = credentials?.accountId || process.env.INSTAGRAM_ACCOUNT_ID
 
   if (!accessToken || !accountId) {
-    console.error("Instagram credentials not configured")
+    log.error("Instagram credentials not configured", undefined)
     return { success: false, error: "Instagram credentials not configured" }
   }
 
+  // The messaging API requires the Page ID, not the Instagram Account ID.
+  const pageId = await resolvePageId(accessToken, accountId)
+
   try {
-    const response = await fetch(`${GRAPH_API_BASE}/${accountId}/messages`, {
+    const response = await safeFetch(`${GRAPH_API_BASE}/${pageId}/messages`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -51,7 +78,7 @@ export async function sendInstagramMessage(
 
     if (!response.ok) {
       const errorData = await response.json()
-      console.error("Instagram API error:", errorData)
+      log.error("Instagram API error:", errorData)
       return {
         success: false,
         error: errorData.error?.message || "Failed to send message",
@@ -61,7 +88,7 @@ export async function sendInstagramMessage(
     const data: SendMessageResponse = await response.json()
     return { success: true, messageId: data.message_id }
   } catch (error) {
-    console.error("Error sending Instagram message:", error)
+    log.error("Error sending Instagram message:", error)
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
@@ -80,12 +107,12 @@ export function verifyWebhookSignature(
   const appSecret = process.env.INSTAGRAM_APP_SECRET
 
   if (!appSecret) {
-    console.error("INSTAGRAM_APP_SECRET not configured")
+    log.error("INSTAGRAM_APP_SECRET not configured", undefined)
     return false
   }
 
   if (!signature) {
-    console.error("No signature provided")
+    log.error("No signature provided", undefined)
     return false
   }
 
@@ -114,18 +141,18 @@ export async function getInstagramUserInfo(
   const accessToken = credentials?.accessToken || process.env.INSTAGRAM_ACCESS_TOKEN
 
   if (!accessToken) {
-    console.error("Instagram access token not configured")
+    log.error("Instagram access token not configured", undefined)
     return null
   }
 
   try {
-    const response = await fetch(
+    const response = await safeFetch(
       `${GRAPH_API_BASE}/${userId}?fields=name,username&access_token=${accessToken}`
     )
 
     if (!response.ok) {
       const errorData = await response.json()
-      console.error("Error fetching Instagram user info:", errorData)
+      log.error("Error fetching Instagram user info:", errorData)
       return null
     }
 
@@ -135,7 +162,7 @@ export async function getInstagramUserInfo(
       username: data.username || "",
     }
   } catch (error) {
-    console.error("Error fetching Instagram user info:", error)
+    log.error("Error fetching Instagram user info:", error)
     return null
   }
 }
@@ -186,7 +213,7 @@ export function parseInstagramWebhook(body: any): InstagramMessage | null {
       isEcho: messaging.message?.is_echo,
     }
   } catch (error) {
-    console.error("Error parsing Instagram webhook:", error)
+    log.error("Error parsing Instagram webhook:", error)
     return null
   }
 }
@@ -199,14 +226,15 @@ export async function markMessageSeen(
   credentials?: InstagramCredentials
 ): Promise<boolean> {
   const accessToken = credentials?.accessToken || process.env.INSTAGRAM_ACCESS_TOKEN
-  const accountId = credentials?.accountId || process.env.INSTAGRAM_ACCOUNT_ID
 
-  if (!accessToken || !accountId) {
+  if (!accessToken) {
     return false
   }
 
+  const pageId = await resolvePageId(accessToken, credentials?.accountId)
+
   try {
-    const response = await fetch(`${GRAPH_API_BASE}/${accountId}/messages`, {
+    const response = await safeFetch(`${GRAPH_API_BASE}/${pageId}/messages`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -220,7 +248,7 @@ export async function markMessageSeen(
 
     return response.ok
   } catch (error) {
-    console.error("Error marking message as seen:", error)
+    log.error("Error marking message as seen:", error)
     return false
   }
 }
@@ -234,14 +262,15 @@ export async function sendTypingIndicator(
   credentials?: InstagramCredentials
 ): Promise<boolean> {
   const accessToken = credentials?.accessToken || process.env.INSTAGRAM_ACCESS_TOKEN
-  const accountId = credentials?.accountId || process.env.INSTAGRAM_ACCOUNT_ID
 
-  if (!accessToken || !accountId) {
+  if (!accessToken) {
     return false
   }
 
+  const pageId = await resolvePageId(accessToken, credentials?.accountId)
+
   try {
-    const response = await fetch(`${GRAPH_API_BASE}/${accountId}/messages`, {
+    const response = await safeFetch(`${GRAPH_API_BASE}/${pageId}/messages`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -255,7 +284,7 @@ export async function sendTypingIndicator(
 
     return response.ok
   } catch (error) {
-    console.error("Error sending typing indicator:", error)
+    log.error("Error sending typing indicator:", error)
     return false
   }
 }

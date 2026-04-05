@@ -3,6 +3,8 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { generateResponse, ChatMessage, ModelId } from "@/lib/anthropic"
 import { generateSecurePaymentLink, PaymentLinkData } from "@/lib/payment-link"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { log } from "@/lib/log"
 
 // Force Node.js runtime for Anthropic SDK compatibility
 export const runtime = "nodejs"
@@ -71,6 +73,9 @@ interface LeadData {
 }
 
 export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   try {
     // Verify user is authenticated - don't trust client-provided userId
     const authenticatedUser = await getAuthenticatedUser()
@@ -117,7 +122,7 @@ export async function POST(request: NextRequest) {
     )
 
     let aiResponse = result.content
-    console.log("[Chatbot Test] Raw AI response:", aiResponse.substring(0, 500))
+    log.debug("[chatbot-test] ai response", { length: aiResponse.length, model: result.model })
 
     // Parse extracted data from response
     let extractedData: {
@@ -131,7 +136,7 @@ export async function POST(request: NextRequest) {
     } | undefined
 
     const extractedMatch = aiResponse.match(/\[EXTRACTED\]([\s\S]*?)\[\/EXTRACTED\]/)
-    console.log("[Chatbot Test] extractedMatch found:", !!extractedMatch)
+    log.debug("[chatbot-test] extractedMatch", { found: !!extractedMatch })
     if (extractedMatch) {
       try {
         const data = JSON.parse(extractedMatch[1].trim())
@@ -144,27 +149,25 @@ export async function POST(request: NextRequest) {
           phone: data.phone !== "null" && data.phone !== null ? data.phone : undefined,
           confirmed: data.confirmed === true,
         }
-        console.log("[Chatbot Test] Parsed extractedData:", JSON.stringify(extractedData, null, 2))
+        log.debug("[chatbot-test] parsed extractedData", {
+          hasName: !!extractedData.name,
+          hasEmail: !!extractedData.email,
+          hasPhone: !!extractedData.phone,
+          hasVehicle: !!extractedData.vehicleId,
+          confirmed: !!extractedData.confirmed,
+        })
       } catch (e) {
-        console.error("Failed to parse extracted data:", e)
+        log.error("[chatbot-test] failed to parse extracted data", e, { route: "chatbot-test" })
       }
 
       // Remove the [EXTRACTED] block from the response
       aiResponse = aiResponse.replace(/\s*\[EXTRACTED\][\s\S]*?\[\/EXTRACTED\]\s*/, "").trim()
     }
 
-    // Check for fake URLs the AI might have made up (common hallucination)
-    const fakeUrlPattern = /https?:\/\/[^\s]+\/(payment|checkout|pay|book)[^\s]*/gi
-    if (fakeUrlPattern.test(aiResponse) && !aiResponse.includes("[SEND_PAYMENT_LINK]")) {
-      console.log("[Chatbot Test] WARNING: AI wrote a fake URL without using marker! Removing it.")
-      // Remove the fake URL and add the marker so we generate a real one
-      aiResponse = aiResponse.replace(fakeUrlPattern, "[SEND_PAYMENT_LINK]")
-    }
-
     // Generate payment link if [SEND_PAYMENT_LINK] marker is present
-    console.log("[Chatbot Test] Checking for [SEND_PAYMENT_LINK]:", aiResponse.includes("[SEND_PAYMENT_LINK]"))
+    log.debug("[chatbot-test] payment link check", { hasMarker: aiResponse.includes("[SEND_PAYMENT_LINK]") })
     if (aiResponse.includes("[SEND_PAYMENT_LINK]")) {
-      console.log("[Payment Link] Marker detected! Starting payment link generation...")
+      log.info("[chatbot-test] generating payment link", { route: "chatbot-test" })
       aiResponse = aiResponse.replace("[SEND_PAYMENT_LINK]", "")
       aiResponse = aiResponse.trim()
 
@@ -173,7 +176,7 @@ export async function POST(request: NextRequest) {
         ? vehicles as Vehicle[]
         : DEFAULT_VEHICLES
 
-      console.log("[Payment Link] Using vehicle list with", vehicleList.length, "vehicles", vehicles ? "(from client)" : "(DEFAULT FALLBACK)")
+      log.debug("[chatbot-test] vehicle list", { count: vehicleList.length, source: vehicles ? "client" : "default" })
 
       // Try to generate a real payment link
       const vehicleId = extractedData?.vehicleId || (leadData as LeadData)?.collected_vehicle_id
@@ -183,17 +186,15 @@ export async function POST(request: NextRequest) {
       const customerName = extractedData?.name || (leadData as LeadData)?.collected_name || (leadData as LeadData)?.name || "Customer"
       const customerPhone = extractedData?.phone || (leadData as LeadData)?.collected_phone || (leadData as LeadData)?.phone || ""
 
-      // Debug logging
-      console.log("[Payment Link] extractedData:", extractedData)
-      console.log("[Payment Link] leadData:", leadData)
-      console.log("[Payment Link] vehicleId:", vehicleId, "startDate:", startDate, "endDate:", endDate)
-      console.log("[Payment Link] vehicles count:", vehicleList.length)
-
-      console.log("[Payment Link] Final check - vehicleId:", vehicleId, "startDate:", startDate, "endDate:", endDate, "vehicleList length:", vehicleList.length)
+      log.debug("[chatbot-test] payment link inputs", {
+        hasVehicleId: !!vehicleId,
+        hasStartDate: !!startDate,
+        hasEndDate: !!endDate,
+        vehicleCount: vehicleList.length,
+      })
 
       if (vehicleId && startDate && endDate && vehicleList.length > 0) {
-        console.log("[Payment Link] All data present, looking up vehicle:", vehicleId)
-        console.log("[Payment Link] Available vehicles:", vehicleList.map((v: Vehicle) => ({ id: v.id, name: v.name, make: v.make, model: v.model })))
+        log.debug("[chatbot-test] looking up vehicle", { vehicleId })
 
         // Try to find vehicle by ID first, then by name/make/model match
         let vehicle = vehicleList.find((v: Vehicle) => v.id === vehicleId)
@@ -209,12 +210,12 @@ export async function POST(request: NextRequest) {
                    (vehicleIdLower.includes(v.make.toLowerCase()) && vehicleIdLower.includes(v.model.toLowerCase()))
           })
           if (vehicle) {
-            console.log("[Payment Link] Found vehicle by name match:", vehicle.name)
+            log.debug("[chatbot-test] vehicle matched by name", { vehicleId: vehicle.id })
           }
         }
 
         if (vehicle) {
-          console.log("[Payment Link] Found vehicle:", vehicle.name, "with daily_rate:", vehicle.daily_rate)
+          log.debug("[chatbot-test] found vehicle", { vehicleId: vehicle.id })
           // Calculate number of days
           const start = new Date(startDate)
           const end = new Date(endDate)
@@ -249,15 +250,15 @@ export async function POST(request: NextRequest) {
             const paymentLink = await generateSecurePaymentLink(paymentData)
             aiResponse += `\n\nHere's your secure payment link: ${paymentLink}`
           } catch (error) {
-            console.error("Failed to generate payment link:", error)
+            log.error("[chatbot-test] failed to generate payment link", error, { route: "chatbot-test" })
             aiResponse += "\n\n[Payment link generation failed - please contact us directly]"
           }
         } else {
-          console.log("[Payment Link] Vehicle not found in list!")
+          log.warn("[chatbot-test] vehicle not found in list", { route: "chatbot-test" })
           aiResponse += "\n\n[Could not find vehicle information for payment link]"
         }
       } else {
-        console.log("[Payment Link] Missing data - vehicleId:", !!vehicleId, "startDate:", !!startDate, "endDate:", !!endDate, "vehicleList length:", vehicleList.length)
+        log.debug("[chatbot-test] payment link missing data", { hasVehicleId: !!vehicleId, hasStart: !!startDate, hasEnd: !!endDate })
         aiResponse += "\n\n[Missing booking details for payment link - please provide vehicle and dates]"
       }
     }
@@ -273,27 +274,25 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error("Chatbot test error:", error)
-    console.error("Error message:", error?.message)
-    console.error("Error stack:", error?.stack)
+    // Log full error server-side only; never leak details to the client.
+    log.error("[chatbot-test] unhandled error", error, { route: "chatbot-test" })
 
-    // Check for specific error types
     if (error?.message?.includes("ANTHROPIC_API_KEY")) {
       return NextResponse.json(
-        { error: "ANTHROPIC_API_KEY not configured", details: error?.message },
+        { error: "Service misconfigured" },
         { status: 500 }
       )
     }
 
     if (error?.status === 401) {
       return NextResponse.json(
-        { error: "Invalid API key", details: "The Anthropic API key is invalid or expired" },
-        { status: 401 }
+        { error: "Service authentication failed" },
+        { status: 502 }
       )
     }
 
     return NextResponse.json(
-      { error: "Internal server error", details: error?.message },
+      { error: "Internal server error" },
       { status: 500 }
     )
   }

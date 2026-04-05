@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { log } from "@/lib/log"
 
 // Service role client bypasses RLS
 function getServiceSupabase() {
@@ -10,7 +12,10 @@ function getServiceSupabase() {
   )
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   try {
     // Get the current user from the request cookies
     const supabase = await createServerClient()
@@ -45,7 +50,7 @@ export async function GET() {
       canAccessDashboard: profile?.is_admin === true || business?.status === "active",
     })
   } catch (error) {
-    console.error("Auth status error:", error)
+    log.error("[auth.status] unhandled error", error, { route: "auth.status" })
     return NextResponse.json({ authenticated: false, error: "Internal error" }, { status: 500 })
   }
 }

@@ -6,6 +6,9 @@ import {
   findOrCreateLead,
   saveMessage,
 } from "@/lib/sms-ai"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { claimWebhookEvent, markWebhookEventProcessed } from "@/lib/webhook-idempotency"
+import { log } from "@/lib/log"
 
 function getTwilioClient() {
   return twilio(
@@ -30,13 +33,13 @@ function validateTwilioSignature(
 ): boolean {
   const authToken = process.env.TWILIO_AUTH_TOKEN
   if (!authToken) {
-    console.error("TWILIO_AUTH_TOKEN not configured")
+    log.error("[sms.webhook] TWILIO_AUTH_TOKEN not configured", new Error("missing_auth_token"), { route: "sms.webhook" })
     return false
   }
 
   const signature = request.headers.get("x-twilio-signature")
   if (!signature) {
-    console.error("Missing X-Twilio-Signature header")
+    log.warn("[sms.webhook] missing x-twilio-signature header", { route: "sms.webhook" })
     return false
   }
 
@@ -47,7 +50,7 @@ function validateTwilioSignature(
   const isValid = twilio.validateRequest(authToken, signature, url, params)
 
   if (!isValid) {
-    console.error("Invalid Twilio signature - request may be spoofed")
+    log.warn("[sms.webhook] invalid twilio signature (possible spoof)", { route: "sms.webhook" })
   }
 
   return isValid
@@ -57,31 +60,28 @@ function validateTwilioSignature(
 async function getUserIdByPhoneNumber(phoneNumber: string): Promise<string | null> {
   const supabase = getSupabase()
 
-  // Normalize the phone number for comparison
-  const normalizedPhone = phoneNumber.replace(/\D/g, "")
+  // Normalize to last 10 digits for matching
+  const normalizedPhone = phoneNumber.replace(/\D/g, "").slice(-10)
 
-  // Look up in ai_settings by business_phone
   const { data: settings } = await supabase
     .from("ai_settings")
     .select("user_id, business_phone")
 
-  if (!settings || settings.length === 0) {
-    return null
-  }
-
-  // Find matching phone number
-  for (const setting of settings) {
-    if (!setting.business_phone) continue
-    const settingPhone = setting.business_phone.replace(/\D/g, "")
-    if (settingPhone === normalizedPhone || normalizedPhone.endsWith(settingPhone) || settingPhone.endsWith(normalizedPhone)) {
-      return setting.user_id
+  if (settings) {
+    for (const s of settings) {
+      const storedNormalized = (s.business_phone || "").replace(/\D/g, "").slice(-10)
+      if (storedNormalized && storedNormalized === normalizedPhone) {
+        return s.user_id
+      }
     }
   }
-
   return null
 }
 
 export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 100, window: 60 })
+  if (limited) return limited
+
   try {
     const twilioClient = getTwilioClient()
     const formData = await request.formData()
@@ -100,27 +100,52 @@ export async function POST(request: NextRequest) {
     const from = params.From
     const to = params.To
     const body = params.Body
+    const messageSid = params.MessageSid
 
     if (!from || !body || !to) {
       return new NextResponse("Missing required fields", { status: 400 })
     }
 
+    // Idempotency: Twilio retries on our 5xx responses. If we've already
+    // processed this MessageSid, short-circuit with an empty TwiML response
+    // so the customer isn't double-replied.
+    const claim = await claimWebhookEvent("twilio", messageSid, "sms.inbound")
+    if (!claim.claimed) {
+      const twiml = `<?xml version="1.0" encoding="UTF-8"?><Response></Response>`
+      return new NextResponse(twiml, { status: 200, headers: { "Content-Type": "text/xml" } })
+    }
+
     // Look up the user by the Twilio number they received the SMS on
     const userId = await getUserIdByPhoneNumber(to)
     if (!userId) {
-      console.error(`No user configured for phone number: ${to}`)
+      log.warn("[sms.webhook] no user for phone", { phoneSuffix: to.slice(-4), route: "sms.webhook" })
       return new NextResponse("No user configured for this number", { status: 404 })
     }
 
     // Find or create the lead
     const lead = await findOrCreateLead(userId, from)
     if (!lead) {
-      console.error("Could not find or create lead")
+      log.error("[sms.webhook] could not find or create lead", new Error("lead_create_failed"), { route: "sms.webhook" })
       return new NextResponse("Lead error", { status: 500 })
     }
 
     // Save the incoming message
     await saveMessage(userId, lead.id, body, "inbound")
+
+    // Check if AI is disabled for this lead (human takeover)
+    const { data: leadData } = await getSupabase()
+      .from("leads")
+      .select("ai_disabled")
+      .eq("id", lead.id)
+      .single()
+
+    if (leadData?.ai_disabled) {
+      // AI is paused — business owner is handling manually, just save the message
+      const twiml = new (await import("twilio")).twiml.MessagingResponse()
+      return new NextResponse(twiml.toString(), {
+        headers: { "Content-Type": "text/xml" },
+      })
+    }
 
     // Generate AI response
     const aiResult = await generateAIResponse(userId, lead.id, body, lead.name)
@@ -136,11 +161,12 @@ export async function POST(request: NextRequest) {
     })
 
     // Log without PII
-    console.log(`SMS response sent [Model: ${aiResult.model}, Cost: $${aiResult.cost.totalCost.toFixed(4)}]`)
+    log.info("[sms.webhook] ai response sent", { model: aiResult.model, route: "sms.webhook" })
 
     // Return TwiML response (Twilio expects this)
     const twiml = `<?xml version="1.0" encoding="UTF-8"?><Response></Response>`
 
+    await markWebhookEventProcessed(claim.rowId, "processed")
     return new NextResponse(twiml, {
       status: 200,
       headers: {
@@ -148,12 +174,15 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("SMS webhook error:", error)
+    log.error("[sms.webhook] unhandled error", error, { route: "sms.webhook" })
     return new NextResponse("Internal error", { status: 500 })
   }
 }
 
 // Handle GET for webhook verification
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 100, window: 60 })
+  if (limited) return limited
+
   return new NextResponse("SMS webhook is active", { status: 200 })
 }

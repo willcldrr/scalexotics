@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { log } from "@/lib/log"
 
 // Service role client bypasses RLS
 const serviceSupabase = createClient(
@@ -36,6 +38,9 @@ async function verifyAdmin(): Promise<{ isAdmin: boolean; userId?: string; error
 
 // GET - List CRM leads with pagination, filtering, sorting
 export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   const { isAdmin, error } = await verifyAdmin()
   if (!isAdmin) {
     return NextResponse.json({ error }, { status: error === "Unauthorized" ? 401 : 403 })
@@ -72,7 +77,7 @@ export async function GET(request: NextRequest) {
     .range(from, to)
 
   if (dbError) {
-    console.error("Error fetching CRM leads:", dbError)
+    log.error("Error fetching CRM leads:", dbError)
     return NextResponse.json({ error: dbError.message }, { status: 500 })
   }
 
@@ -81,6 +86,9 @@ export async function GET(request: NextRequest) {
 
 // POST - Create a new CRM lead
 export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   const { isAdmin, userId, error } = await verifyAdmin()
   if (!isAdmin) {
     return NextResponse.json({ error }, { status: error === "Unauthorized" ? 401 : 403 })
@@ -95,7 +103,7 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (dbError) {
-    console.error("Error creating CRM lead:", dbError)
+    log.error("Error creating CRM lead:", dbError)
     return NextResponse.json({ error: dbError.message }, { status: 500 })
   }
 
@@ -104,6 +112,9 @@ export async function POST(request: NextRequest) {
 
 // PATCH - Update CRM lead(s) - supports single ID or array of IDs for bulk updates
 export async function PATCH(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   const { isAdmin, error } = await verifyAdmin()
   if (!isAdmin) {
     return NextResponse.json({ error }, { status: error === "Unauthorized" ? 401 : 403 })
@@ -125,7 +136,7 @@ export async function PATCH(request: NextRequest) {
     .select()
 
   if (dbError) {
-    console.error("Error updating CRM lead:", dbError)
+    log.error("Error updating CRM lead:", dbError)
     return NextResponse.json({ error: dbError.message }, { status: 500 })
   }
 
@@ -134,6 +145,9 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE - Delete a CRM lead
 export async function DELETE(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   const { isAdmin, error } = await verifyAdmin()
   if (!isAdmin) {
     return NextResponse.json({ error }, { status: error === "Unauthorized" ? 401 : 403 })
@@ -152,7 +166,7 @@ export async function DELETE(request: NextRequest) {
     .eq("id", id)
 
   if (dbError) {
-    console.error("Error deleting CRM lead:", dbError)
+    log.error("Error deleting CRM lead:", dbError)
     return NextResponse.json({ error: dbError.message }, { status: 500 })
   }
 

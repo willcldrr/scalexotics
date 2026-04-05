@@ -1,12 +1,30 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { sendInstagramMessage } from "@/lib/instagram"
+import { createClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { safeFetch } from "@/lib/safe-fetch"
+import { log } from "@/lib/log"
 
 /**
  * Debug endpoint to test Instagram setup
  * GET /api/instagram/debug - Check configuration
  * POST /api/instagram/debug - Send test message (provide recipientId in body)
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 10, window: 60 })
+  if (limited) return limited
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const { data: profile } = await supabase.from("profiles").select("is_admin").eq("id", user.id).single()
+  if (!profile?.is_admin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
   const config = {
     accessToken: process.env.INSTAGRAM_ACCESS_TOKEN ? "SET (" + process.env.INSTAGRAM_ACCESS_TOKEN.substring(0, 10) + "...)" : "NOT SET",
     accountId: process.env.INSTAGRAM_ACCOUNT_ID || "NOT SET",
@@ -19,8 +37,9 @@ export async function GET() {
 
   if (process.env.INSTAGRAM_ACCESS_TOKEN && process.env.INSTAGRAM_ACCOUNT_ID) {
     try {
-      const response = await fetch(
-        `https://graph.facebook.com/v19.0/${process.env.INSTAGRAM_ACCOUNT_ID}?fields=id,username,name&access_token=${process.env.INSTAGRAM_ACCESS_TOKEN}`
+      const response = await safeFetch(
+        `https://graph.facebook.com/v19.0/${process.env.INSTAGRAM_ACCOUNT_ID}?fields=id,username,name&access_token=${process.env.INSTAGRAM_ACCESS_TOKEN}`,
+        { timeoutMs: 10_000 }
       )
       const data = await response.json()
 
@@ -40,8 +59,9 @@ export async function GET() {
   if (process.env.INSTAGRAM_ACCESS_TOKEN) {
     try {
       // This requires app access token, not page token - may not work
-      const response = await fetch(
-        `https://graph.facebook.com/v19.0/${process.env.INSTAGRAM_ACCOUNT_ID}/subscribed_apps?access_token=${process.env.INSTAGRAM_ACCESS_TOKEN}`
+      const response = await safeFetch(
+        `https://graph.facebook.com/v19.0/${process.env.INSTAGRAM_ACCOUNT_ID}/subscribed_apps?access_token=${process.env.INSTAGRAM_ACCESS_TOKEN}`,
+        { timeoutMs: 10_000 }
       )
       const data = await response.json()
       webhookTest = { success: response.ok, error: data.error?.message || "", data }
@@ -77,8 +97,22 @@ export async function GET() {
 /**
  * POST - Send a test message to verify sending works
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 10, window: 60 })
+  if (limited) return limited
+
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { data: profile } = await supabase.from("profiles").select("is_admin").eq("id", user.id).single()
+    if (!profile?.is_admin) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     const body = await request.json()
     const { recipientId, message } = body
 
@@ -91,7 +125,7 @@ export async function POST(request: Request) {
 
     const testMessage = message || "This is a test message from the Velocity Labs AI Assistant!"
 
-    console.log(`[Debug] Sending test message to ${recipientId}: ${testMessage}`)
+    log.info(`[Debug] Sending test message to ${recipientId}: ${testMessage}`)
 
     const result = await sendInstagramMessage(recipientId, testMessage)
 

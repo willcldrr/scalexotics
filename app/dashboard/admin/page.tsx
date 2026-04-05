@@ -34,9 +34,11 @@ import {
   Receipt,
   LogIn,
   Save,
+  Key,
+  Mail,
 } from "lucide-react"
 import { format } from "date-fns"
-import MatrixRainLoader from "@/app/components/matrix-rain-loader"
+import PageTransition from "@/app/components/page-transition"
 
 // ============================================
 // TYPES
@@ -57,6 +59,13 @@ interface UserProfile {
     status: string
     payment_domain: string | null
     stripe_connected: boolean
+  } | null
+  // Auth metadata from Supabase
+  auth?: {
+    email_confirmed_at: string | null
+    last_sign_in_at: string | null
+    created_at: string | null
+    providers: string[]
   } | null
 }
 
@@ -727,29 +736,59 @@ export default function AdminPage() {
             return
           }
 
-          // Store original admin session for returning later (need both tokens to restore)
-          localStorage.setItem("admin_return_session", JSON.stringify({
-            access_token: session.access_token,
-            refresh_token: session.refresh_token,
-          }))
+          // 1. Sign out the current admin session first (clears all auth cookies)
+          await supabase.auth.signOut()
 
-          // Store impersonated user info for the top indicator bar
-          localStorage.setItem("impersonating_user", JSON.stringify({
+          // 2. Store admin user ID for restoring session later (tokens expire, IDs don't)
+          const { data: { user: currentAdmin } } = await supabase.auth.getUser(session.access_token)
+          sessionStorage.setItem("admin_user_id", currentAdmin?.id || "")
+
+          // 3. Store impersonated user info for the top indicator bar
+          sessionStorage.setItem("impersonating_user", JSON.stringify({
             id: data.user.id,
             email: data.user.email,
             name: selectedUser?.full_name || selectedUser?.email || data.user.email,
           }))
 
-          // IMPORTANT: Clear dashboard cache so fresh data loads for impersonated user
-          localStorage.removeItem("scale_exotics_dashboard_cache")
+          // 4. Clear ALL dashboard caches (sessionStorage + localStorage)
+          const keysToRemove: string[] = []
+          for (let i = 0; i < sessionStorage.length; i++) {
+            const key = sessionStorage.key(i)
+            if (key && (key.startsWith("velocity_dashboard_") || key === "velocity_labs_dashboard_cache")) {
+              keysToRemove.push(key)
+            }
+          }
+          keysToRemove.forEach(k => sessionStorage.removeItem(k))
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i)
+            if (key && (key.startsWith("velocity_dashboard_") || key === "velocity_labs_dashboard_cache")) {
+              localStorage.removeItem(key)
+            }
+          }
 
-          // Set the new session
-          await supabase.auth.setSession({
+          // 5. Set the impersonated user session (writes new auth cookies)
+          const { error: sessionError } = await supabase.auth.setSession({
             access_token: data.access_token,
             refresh_token: data.refresh_token,
           })
 
-          // Redirect to dashboard
+          if (sessionError) {
+            console.error("Failed to set impersonated session:", sessionError)
+            setMessage({ type: "error", text: "Failed to switch session" })
+            setImpersonating(false)
+            return
+          }
+
+          // 6. Verify the session actually switched
+          const { data: { user: verifyUser } } = await supabase.auth.getUser()
+          if (verifyUser?.id !== data.user.id) {
+            console.error("Session verification failed: expected", data.user.id, "got", verifyUser?.id)
+            setMessage({ type: "error", text: "Session switch failed — please try again" })
+            setImpersonating(false)
+            return
+          }
+
+          // 7. Full page reload to ensure middleware picks up new cookies
           toast.success(`Now logged in as ${selectedUser?.full_name || selectedUser?.email}`)
           window.location.href = "/dashboard"
         } catch (error) {
@@ -759,6 +798,35 @@ export default function AdminPage() {
         }
       },
     })
+  }
+
+  const handleResetPassword = async (userId: string, method: "email" | "set", newPassword?: string) => {
+    setSaving(true)
+    try {
+      const body: any = { userId }
+      if (method === "set" && newPassword) {
+        body.newPassword = newPassword
+      }
+
+      const response = await fetch("/api/admin/users/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setMessage({ type: "error", text: data.error || "Failed to reset password" })
+      } else if (data.method === "email_sent") {
+        toast.success("Password reset email sent to user")
+      } else {
+        toast.success("Password updated successfully")
+      }
+    } catch {
+      setMessage({ type: "error", text: "Failed to reset password" })
+    }
+    setSaving(false)
   }
 
   const openUserSettings = (user: UserProfile) => {
@@ -1284,10 +1352,6 @@ export default function AdminPage() {
   // LOADING & ACCESS DENIED STATES
   // ============================================
 
-  if (loading) {
-    return <MatrixRainLoader />
-  }
-
   if (!isAdmin) {
     return (
       <div className="text-center py-16">
@@ -1303,6 +1367,7 @@ export default function AdminPage() {
   // ============================================
 
   return (
+    <PageTransition loading={loading}>
     <div className="space-y-6">
       {/* Header */}
       <div>
@@ -2006,6 +2071,69 @@ export default function AdminPage() {
                 </div>
               )}
 
+              {/* Auth Information */}
+              {selectedUser.auth && (
+                <div>
+                  <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-4">Account Details</h3>
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-white/50">Email Verified</p>
+                        <p className={`font-medium ${selectedUser.auth.email_confirmed_at ? "text-green-400" : "text-amber-400"}`}>
+                          {selectedUser.auth.email_confirmed_at ? `Yes — ${formatDate(selectedUser.auth.email_confirmed_at)}` : "Not verified"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-white/50">Last Sign In</p>
+                        <p className="font-medium">
+                          {selectedUser.auth.last_sign_in_at ? formatDate(selectedUser.auth.last_sign_in_at) : "Never"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-white/50">Auth Providers</p>
+                        <p className="font-medium capitalize">
+                          {selectedUser.auth.providers?.length > 0 ? selectedUser.auth.providers.join(", ") : "Email"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-white/50">Account Created</p>
+                        <p className="font-medium">{selectedUser.auth.created_at ? formatDate(selectedUser.auth.created_at) : "—"}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Password Management */}
+              <div>
+                <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-4">Password Management</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <button
+                    onClick={() => handleResetPassword(selectedUser.id, "email")}
+                    disabled={saving}
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 text-white font-medium rounded-xl border border-white/10 transition-colors"
+                  >
+                    <Mail className="w-4 h-4" />
+                    Send Reset Email
+                  </button>
+                  <button
+                    onClick={() => {
+                      const pw = prompt("Enter new password for this user (min 6 chars):")
+                      if (pw && pw.length >= 6) {
+                        handleResetPassword(selectedUser.id, "set", pw)
+                      } else if (pw) {
+                        toast.error("Password must be at least 6 characters")
+                      }
+                    }}
+                    disabled={saving}
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 text-white font-medium rounded-xl border border-white/10 transition-colors"
+                  >
+                    <Key className="w-4 h-4" />
+                    Set Password Manually
+                  </button>
+                </div>
+              </div>
+
               {/* Quick Actions */}
               <div>
                 <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-4">Quick Actions</h3>
@@ -2558,5 +2686,6 @@ export default function AdminPage() {
         loading={confirmModal.loading}
       />
     </div>
+    </PageTransition>
   )
 }

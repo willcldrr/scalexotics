@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { log } from "@/lib/log"
 
 export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 10, window: 60 })
+  if (limited) return limited
+
   try {
     const { code, userId } = await request.json()
 
@@ -23,7 +28,7 @@ export async function POST(request: NextRequest) {
     // Create Supabase client with service role for database access
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
     // First, check the database for valid codes
@@ -84,7 +89,7 @@ export async function POST(request: NextRequest) {
       { status: 401 }
     )
   } catch (error) {
-    console.error("Error verifying access code:", error)
+    log.error("Error verifying access code:", error)
     return NextResponse.json(
       { error: "Failed to verify access code" },
       { status: 500 }

@@ -45,6 +45,23 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
 
+  // SECURITY: Gate /api/admin/* so unauthenticated requests are rejected before
+  // hitting per-route handlers. Individual routes still enforce admin role.
+  if (pathname.startsWith('/api/admin')) {
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const { data: adminProfile } = await serviceSupabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single()
+    if (!adminProfile?.is_admin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    return supabaseResponse
+  }
+
   // Public auth pages - allow access without login
   const publicAuthPages = ['/forgot-password', '/check-email']
   if (publicAuthPages.includes(pathname)) {

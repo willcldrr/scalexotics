@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { encrypt } from "@/lib/crypto"
+import { log } from "@/lib/log"
 
 // Service role client bypasses RLS
 const serviceSupabase = createClient(
@@ -36,6 +39,9 @@ async function verifyAdmin(request: NextRequest): Promise<{ isAdmin: boolean; us
 
 // GET - List all businesses
 export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   const { isAdmin, error } = await verifyAdmin(request)
   if (!isAdmin) {
     return NextResponse.json({ error }, { status: error === "Unauthorized" ? 401 : 403 })
@@ -43,7 +49,7 @@ export async function GET(request: NextRequest) {
 
   const { data: businesses, error: dbError } = await serviceSupabase
     .from("businesses")
-    .select("*")
+    .select("id, name, slug, status, created_at, owner_id, logo_url, primary_color, stripe_publishable_key, payment_domain")
     .order("created_at", { ascending: false })
 
   if (dbError) {
@@ -55,6 +61,9 @@ export async function GET(request: NextRequest) {
 
 // POST - Create a new business
 export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   const { isAdmin, error } = await verifyAdmin(request)
   if (!isAdmin) {
     return NextResponse.json({ error }, { status: error === "Unauthorized" ? 401 : 403 })
@@ -66,6 +75,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Name and slug are required" }, { status: 400 })
   }
 
+  // LB-6 dual-write: encrypt the Stripe secret key and also keep the
+  // plaintext column populated until the drop migration ships.
+  // TODO(LB-6 cutover): remove plaintext write after drop migration
+  let encryptedStripeSecretKey: string | null = null
+  let stripeSecretKeyIv: string | null = null
+  let stripeSecretKeyTag: string | null = null
+  if (body.stripe_secret_key) {
+    const enc = encrypt(body.stripe_secret_key)
+    encryptedStripeSecretKey = enc.ciphertext
+    stripeSecretKeyIv = enc.iv
+    stripeSecretKeyTag = enc.tag
+  }
+
   const { data, error: dbError } = await serviceSupabase
     .from("businesses")
     .insert({
@@ -75,6 +97,9 @@ export async function POST(request: NextRequest) {
       domain_status: body.domain_status || "pending",
       stripe_publishable_key: body.stripe_publishable_key || null,
       stripe_secret_key: body.stripe_secret_key || null,
+      encrypted_stripe_secret_key: encryptedStripeSecretKey,
+      stripe_secret_key_iv: stripeSecretKeyIv,
+      stripe_secret_key_tag: stripeSecretKeyTag,
       stripe_connected: !!(body.stripe_publishable_key && body.stripe_secret_key),
       logo_url: body.logo_url || null,
       primary_color: body.primary_color || "#FFFFFF",
@@ -98,6 +123,9 @@ export async function POST(request: NextRequest) {
 
 // PATCH - Update business (full update or status only)
 export async function PATCH(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   const { isAdmin, error } = await verifyAdmin(request)
   if (!isAdmin) {
     return NextResponse.json({ error }, { status: error === "Unauthorized" ? 401 : 403 })
@@ -118,7 +146,22 @@ export async function PATCH(request: NextRequest) {
   if (body.payment_domain !== undefined) updateData.payment_domain = body.payment_domain
   if (body.domain_status !== undefined) updateData.domain_status = body.domain_status
   if (body.stripe_publishable_key !== undefined) updateData.stripe_publishable_key = body.stripe_publishable_key
-  if (body.stripe_secret_key !== undefined) updateData.stripe_secret_key = body.stripe_secret_key
+  if (body.stripe_secret_key !== undefined) {
+    // LB-6 dual-write: keep plaintext column populated until the drop
+    // migration runs. TODO(LB-6 cutover): remove plaintext write after
+    // drop migration.
+    updateData.stripe_secret_key = body.stripe_secret_key
+    if (body.stripe_secret_key) {
+      const enc = encrypt(body.stripe_secret_key)
+      updateData.encrypted_stripe_secret_key = enc.ciphertext
+      updateData.stripe_secret_key_iv = enc.iv
+      updateData.stripe_secret_key_tag = enc.tag
+    } else {
+      updateData.encrypted_stripe_secret_key = null
+      updateData.stripe_secret_key_iv = null
+      updateData.stripe_secret_key_tag = null
+    }
+  }
   if (body.stripe_connected !== undefined) updateData.stripe_connected = body.stripe_connected
   if (body.logo_url !== undefined) updateData.logo_url = body.logo_url
   if (body.primary_color !== undefined) updateData.primary_color = body.primary_color
@@ -154,6 +197,9 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE - Delete a business
 export async function DELETE(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   const { isAdmin, error } = await verifyAdmin(request)
   if (!isAdmin) {
     return NextResponse.json({ error }, { status: error === "Unauthorized" ? 401 : 403 })
@@ -172,7 +218,7 @@ export async function DELETE(request: NextRequest) {
     .eq("id", businessId)
 
   if (dbError) {
-    console.error("Error deleting business:", dbError)
+    log.error("Error deleting business:", dbError)
     return NextResponse.json({ error: dbError.message }, { status: 500 })
   }
 

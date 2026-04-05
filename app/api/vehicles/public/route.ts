@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { log } from "@/lib/log"
 
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 }
 
@@ -20,6 +22,9 @@ export async function OPTIONS() {
 }
 
 export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   try {
     const supabase = getSupabase()
 
@@ -56,7 +61,7 @@ export async function GET(request: NextRequest) {
       .order("make", { ascending: true })
 
     if (vehiclesError) {
-      console.error("Error fetching vehicles:", vehiclesError)
+      log.error("Error fetching vehicles:", vehiclesError)
       return NextResponse.json(
         { error: "Failed to fetch vehicles" },
         { status: 500, headers: corsHeaders }
@@ -69,7 +74,7 @@ export async function GET(request: NextRequest) {
     )
 
   } catch (error) {
-    console.error("Vehicles API error:", error)
+    log.error("Vehicles API error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500, headers: corsHeaders }

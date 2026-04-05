@@ -4,7 +4,6 @@ import { Suspense, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
-import { createClient } from "@/lib/supabase/client"
 import { Mail, CheckCircle, Loader2 } from "lucide-react"
 
 function CheckEmailContent() {
@@ -13,7 +12,6 @@ function CheckEmailContent() {
   const email = searchParams.get("email") || ""
   const [resending, setResending] = useState(false)
   const [resent, setResent] = useState(false)
-  const supabase = createClient()
 
   const isSignup = type === "signup"
 
@@ -22,15 +20,15 @@ function CheckEmailContent() {
 
     setResending(true)
 
-    if (!isSignup) {
-      await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+    try {
+      const endpoint = isSignup ? "/api/auth/resend-otp" : "/api/auth/forgot-password"
+      await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
       })
-    } else {
-      await supabase.auth.resend({
-        type: "signup",
-        email,
-      })
+    } catch {
+      // Silently handle - we show success either way to not leak email info
     }
 
     setResending(false)

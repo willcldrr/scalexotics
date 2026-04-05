@@ -11,7 +11,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://managevelocity.com
 export const metadata: Metadata = {
   title: {
     default: "Velocity Labs",
-    template: "Velocity Labs",
+    template: "%s | Velocity Labs",
   },
   description: seoConfig.defaultDescription,
   keywords: seoConfig.keywords,
@@ -104,7 +104,7 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(schemas),
+            __html: JSON.stringify(schemas).replace(/</g, '\\u003c'),
           }}
         />
       </head>

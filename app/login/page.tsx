@@ -24,7 +24,7 @@ function LoginForm() {
 
   // Clear any stale session token when visiting login page
   useEffect(() => {
-    localStorage.removeItem(SESSION_TOKEN_KEY)
+    sessionStorage.removeItem(SESSION_TOKEN_KEY)
   }, [])
 
   const handleGoogleLogin = async () => {
@@ -51,7 +51,7 @@ function LoginForm() {
     setError("")
 
     // Clear any old session token before logging in
-    localStorage.removeItem(SESSION_TOKEN_KEY)
+    sessionStorage.removeItem(SESSION_TOKEN_KEY)
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -71,7 +71,7 @@ function LoginForm() {
         })
         const data = await response.json()
         if (data.session_token) {
-          localStorage.setItem(SESSION_TOKEN_KEY, data.session_token)
+          sessionStorage.setItem(SESSION_TOKEN_KEY, data.session_token)
         }
       } catch (e) {
         // Silently fail - session tracking is not critical

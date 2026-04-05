@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { safeFetch } from "@/lib/safe-fetch"
+import { log } from "@/lib/log"
 
 export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 10, window: 60 })
+  if (limited) return limited
+
   const searchParams = request.nextUrl.searchParams
   const code = searchParams.get("code")
   const state = searchParams.get("state")
@@ -27,6 +33,12 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return NextResponse.redirect(new URL("/login", baseUrl))
+  }
+
+  // Verify admin status
+  const { data: profile } = await supabase.from("profiles").select("is_admin").eq("id", user.id).single()
+  if (!profile?.is_admin) {
+    return NextResponse.redirect(new URL("/dashboard", baseUrl))
   }
 
   // Verify state
@@ -62,7 +74,7 @@ export async function GET(request: NextRequest) {
 
   // Exchange code for tokens
   try {
-    const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+    const tokenResponse = await safeFetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -74,11 +86,12 @@ export async function GET(request: NextRequest) {
         redirect_uri: config.redirect_uri,
         grant_type: "authorization_code",
       }),
+      timeoutMs: 30_000,
     })
 
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.json()
-      console.error("Token exchange error:", errorData)
+      const errorData = await tokenResponse.json().catch(() => ({} as any))
+      log.error("[crm.google] token exchange failed", new Error(errorData?.error || "token_exchange_failed"), { route: "crm.google.callback", stage: "token", status: tokenResponse.status })
       settingsUrl.searchParams.set("error", "token_exchange_failed")
       return NextResponse.redirect(settingsUrl)
     }
@@ -88,17 +101,18 @@ export async function GET(request: NextRequest) {
     // Get user email from Google
     let providerEmail = null
     try {
-      const userInfoResponse = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+      const userInfoResponse = await safeFetch("https://www.googleapis.com/oauth2/v2/userinfo", {
         headers: {
           Authorization: `Bearer ${tokens.access_token}`,
         },
+        timeoutMs: 10_000,
       })
       if (userInfoResponse.ok) {
         const userInfo = await userInfoResponse.json()
         providerEmail = userInfo.email
       }
     } catch (e) {
-      console.error("Failed to get user info:", e)
+      log.error("[crm.google] userinfo fetch failed", e, { route: "crm.google.callback", stage: "userinfo" })
     }
 
     // Calculate token expiration
@@ -125,7 +139,7 @@ export async function GET(request: NextRequest) {
       )
 
     if (upsertError) {
-      console.error("Failed to store tokens:", upsertError)
+      log.error("[crm.google] failed to store tokens", upsertError, { route: "crm.google.callback", stage: "upsert" })
       settingsUrl.searchParams.set("error", "storage_failed")
       return NextResponse.redirect(settingsUrl)
     }
@@ -134,7 +148,7 @@ export async function GET(request: NextRequest) {
     settingsUrl.searchParams.set("success", "connected")
     return NextResponse.redirect(settingsUrl)
   } catch (e) {
-    console.error("OAuth callback error:", e)
+    log.error("[crm.google] oauth callback unhandled", e, { route: "crm.google.callback" })
     settingsUrl.searchParams.set("error", "unknown_error")
     return NextResponse.redirect(settingsUrl)
   }

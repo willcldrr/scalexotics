@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { log } from "@/lib/log"
 
 // Generate a random 6-character code
 function generateCode(): string {
@@ -12,6 +14,9 @@ function generateCode(): string {
 }
 
 export async function POST(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 10, window: 60 })
+  if (limited) return limited
+
   try {
     const supabase = await createClient()
 
@@ -45,7 +50,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error("Error creating link code:", error)
+      log.error("Error creating link code:", error)
       return NextResponse.json({ error: "Failed to generate code" }, { status: 500 })
     }
 
@@ -54,13 +59,16 @@ export async function POST(request: NextRequest) {
       expiresAt: data.expires_at,
     })
   } catch (error) {
-    console.error("Link code error:", error)
+    log.error("Link code error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
 // Get current Telegram connection status
 export async function GET(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   try {
     const supabase = await createClient()
 
@@ -84,13 +92,16 @@ export async function GET(request: NextRequest) {
       linkedAt: profile?.telegram_linked_at,
     })
   } catch (error) {
-    console.error("Get Telegram status error:", error)
+    log.error("Get Telegram status error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
 // Disconnect Telegram
 export async function DELETE(request: NextRequest) {
+  const limited = await applyRateLimit(request, { limit: 10, window: 60 })
+  if (limited) return limited
+
   try {
     const supabase = await createClient()
 
@@ -115,7 +126,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Disconnect Telegram error:", error)
+    log.error("Disconnect Telegram error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
