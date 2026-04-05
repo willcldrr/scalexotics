@@ -1,3 +1,9 @@
+-- Retroactively added to migration pipeline from ad-hoc SQL.
+-- Original path: supabase/bookings_stripe_columns.sql
+-- NOTE: if this DDL has already been applied to production by hand, the
+--       new pipeline apply will no-op (IF NOT EXISTS) or fail loudly on
+--       re-apply. Review before running.
+
 -- Add Stripe payment columns to bookings table
 -- Run this migration in your Supabase SQL editor
 

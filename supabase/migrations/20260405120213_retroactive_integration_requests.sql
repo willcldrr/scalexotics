@@ -1,3 +1,9 @@
+-- Retroactively added to migration pipeline from ad-hoc SQL.
+-- Original path: supabase/integration_requests.sql
+-- NOTE: if this DDL has already been applied to production by hand, the
+--       new pipeline apply will no-op (IF NOT EXISTS) or fail loudly on
+--       re-apply. Review before running.
+
 -- Integration Requests Table
 -- Tracks user requests for early access to integrations
 
