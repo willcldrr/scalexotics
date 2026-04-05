@@ -8,5 +8,14 @@
       "path": "/api/cron/refresh-instagram-tokens",
       "schedule": "0 3 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "app/api/sms/**/*.ts": { "maxDuration": 60 },
+    "app/api/instagram/webhook/route.ts": { "maxDuration": 60 },
+    "app/api/telegram/webhook/route.ts": { "maxDuration": 60 },
+    "app/api/cron/follow-up-leads/route.ts": { "maxDuration": 300 },
+    "app/api/cron/calendar-sync/route.ts": { "maxDuration": 120 },
+    "app/api/velocity-ai/route.ts": { "maxDuration": 60 },
+    "app/api/chatbot-test/route.ts": { "maxDuration": 60 }
+  }
 }

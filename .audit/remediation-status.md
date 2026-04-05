@@ -82,9 +82,29 @@ Legend: `[ ] PENDING` · `[~] IN PROGRESS` · `[✓] DONE` · `[!] BLOCKED`
 - [✓] DevOps H1 — 22 ad-hoc supabase/*.sql files outside migrations/ (W1-B) — 21 files promoted to `supabase/migrations/20260405120200..20260405120220_retroactive_*.sql` (actual count was 21, not 22; all DDL, no seeds or scratch scripts). `supabase/performance_indexes.sql` kept as retroactive migration because it differs meaningfully from `20260404_performance_indexes.sql` (different index sets).
 - [ ] DevOps H2 — migrations not transactional, no down scripts — DEFERRED from W1-B. Wrapping each existing migration in BEGIN/COMMIT touches every historical file and risks breaking idempotency semantics (e.g. `CREATE EXTENSION` inside a transaction, `DO $$` blocks). Requires coordinated review per-file plus matching down scripts. Tracked as a standalone follow-up wave.
 - [ ] DevOps H3 — migration filename collisions / 2024 typo — DEFERRED from W1-B. Hard rule for this wave was "do not rename existing migrations" because any environment that has already applied them would re-apply or diverge from the tracked history. Fix requires coordination with every environment's `schema_migrations` ledger and is out of scope here.
-- [ ] DevOps H4 — PM2-vs-Vercel ambiguity in ecosystem.config.js
-- [ ] DevOps H5 — vercel.json missing functions.maxDuration + regions
-- [ ] DevOps H6 — cron CRON_SECRET enforcement verification
+- [~] DevOps H4 — PM2-vs-Vercel ambiguity in ecosystem.config.js — DEFERRED (W3-B). Resolving requires a human decision on whether PM2 self-host is active in any environment; cannot be determined from code alone. README and RUNBOOK note PM2 as historical/unsupported pending resolution.
+- [✓] DevOps H5 — vercel.json missing functions.maxDuration + regions (W3-B) — `functions` block added with elevated `maxDuration` for AI/webhook/cron routes (sms/**, instagram/telegram webhooks, velocity-ai, chatbot-test = 60s; calendar-sync = 120s; follow-up-leads = 300s). `regions` intentionally NOT set: depends on Supabase project region, tracked as `<FILL IN>` in `docs/RUNBOOK.md` §2.
+- [~] DevOps H6 — cron CRON_SECRET enforcement verification — DEFERRED (W3-B). Runbook documents the expected header (`Authorization: Bearer $CRON_SECRET`) and rotation procedure; a dedicated CI invariant test to confirm every `/api/cron/*` handler enforces it is backlog.
+- [✓] DevOps C2 — rollback / DR / backup runbook (W3-B) — `docs/RUNBOOK.md` created: on-call, health checks, rollback, Stripe/Anthropic/Supabase/Twilio/Meta incident playbooks, backups, secret rotation.
+- [✓] DevOps C3 — README at repo root (W3-B) — `README.md` created: stack, prerequisites, local setup, migrations, testing, deployment, operational links.
+- [✓] DevOps M3 — CI `build` needs test + audit + no-console (W3-B) — `build.needs` now `[lint, typecheck, test, audit, no-console]`; a single green `Build` check gates merge.
+- [~] DevOps M1 — next.config.mjs `ignoreBuildErrors` dev toggle — DEFERRED (W3-B). One-line hardcode to `false` but flagged as application-config change; kept out of Wave 3-B's docs/CI-only scope.
+- [~] DevOps M2 — CI schema-verify against staging Supabase — DEFERRED (W3-B). Requires a staging Supabase project URL + service-role key as GitHub Actions secrets, which are human-provisioned; no code change can complete it.
+- [~] DevOps M4 — CI `--legacy-peer-deps` — DEFERRED (W3-B). Removing the flag requires resolving the underlying peer-dep conflict (React 19 / Next 16 / Radix / Vercel Analytics 1.3.1); hygiene backlog, documented in README.
+
+## Wave 3-B Docs & CI
+
+Files created:
+- `README.md` — repo-root onboarding doc (~145 lines): stack, prerequisites, local setup with new remediation env vars (`ENCRYPTION_KEY`, `ENABLE_SESSION_RESTORE`, `UPSTASH_REDIS_REST_*`), migration ordering note, testing + coverage floor, deployment, links to runbook + audit.
+- `docs/RUNBOOK.md` — 11-section operational runbook with `<FILL IN:>` placeholders for all on-call / dashboard / vendor-support contact info: on-call escalation, `/api/health` response shape + HTTP codes, Vercel + DB rollback (with per-migration object list), Stripe webhook playbook (namespaced idempotency per LB-4), Anthropic cost spike, Supabase unreachable (LB-10 fallback behavior), Twilio SMS failures, Meta token expiration, Supabase PITR, secret rotation (with `ENCRYPTION_KEY` backfill caveat), vendor contacts.
+
+Files modified:
+- `vercel.json` — added `functions` block with `maxDuration` for AI/webhook/cron routes (H5). `regions` intentionally left unset pending Supabase region determination.
+- `.github/workflows/ci.yml` — added `no-console` job that greps `app/api` and `lib` for `console.(log|error|warn|info|debug)` in `.ts`/`.tsx` files, excluding `"use client"` files, and fails the build on any hit. `build.needs` expanded from `[lint, typecheck]` to `[lint, typecheck, test, audit, no-console]` (M3).
+
+Health endpoint sanity check (F-21): `app/api/health/route.ts` verified as returning `{ status, checks, elapsed_ms }` with 200/503 semantics and a 3s `AbortSignal.timeout`. No changes made; documented in RUNBOOK §2.
+
+`.gitignore` sanity check: `.env`, `.env.local`, `.env.production`, `.env*.local` all present (lines 9–12). No changes.
 
 ## Notes & scope decisions
 
