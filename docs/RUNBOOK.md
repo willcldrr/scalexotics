@@ -212,3 +212,142 @@ Stripe supports multiple active signing secrets during rotation — add the new 
 - **Meta / Instagram developer support**: `<FILL IN>`
 - **Upstash support**: `<FILL IN>`
 - **Vercel support**: `<FILL IN: account-tier support channel>`
+
+---
+
+## 12. Pre-deploy checklist — manual steps required before first deploy of the remediation branch
+
+These are the items that **cannot** be landed from code and must be done by a human in a dashboard. Do them in order. Each section tells you exactly what to click and what to paste.
+
+### 12.1 — `ENCRYPTION_KEY` (LB-6) — REQUIRED
+
+The AES-256-GCM key used by `lib/crypto.ts` for encryption-at-rest. A value has already been generated for local development and written to `/var/www/velocity/.env.local` (gitignored). You can re-use the same value for Vercel, or generate a fresh one.
+
+**To get the current local value** (safe to paste into Vercel — it is not sensitive until it protects live ciphertext):
+
+```bash
+grep '^ENCRYPTION_KEY=' /var/www/velocity/.env.local | cut -d= -f2
+```
+
+**To generate a fresh one**:
+
+```bash
+openssl rand -hex 32
+```
+
+**Paste into Vercel**:
+
+1. Vercel dashboard → your project → **Settings** → **Environment Variables**.
+2. Click **Add New**.
+3. **Key**: `ENCRYPTION_KEY`
+4. **Value**: the 64-character hex string from above.
+5. **Environment**: tick **Production**, **Preview**, and **Development**.
+6. **Save**.
+7. Redeploy production (Deployments → three-dot menu on latest → **Redeploy**) so the new env var is picked up.
+
+**Critical**: if you change this value later, every row with an `encrypted_*` column becomes undecryptable. Rotation requires a backfill script (see §10). Do **not** rotate without the backfill.
+
+### 12.2 — `ENABLE_SESSION_RESTORE` (LB-2) — REQUIRED
+
+LB-2 ships `/api/admin/restore-session` behind an env-gated kill switch. The endpoint is currently **off** in local dev (`.env.local` sets `ENABLE_SESSION_RESTORE=false`).
+
+**Paste into Vercel**:
+
+1. Vercel → Settings → Environment Variables → **Add New**.
+2. **Key**: `ENABLE_SESSION_RESTORE`
+3. **Value**: `false`
+4. **Environment**: tick **Production**, **Preview**, **Development**.
+5. **Save**.
+
+Only set to `true` if admin tooling actively invokes this endpoint. The audit (C2) flagged it as a lateral takeover primitive — default off is the right posture. If you need to turn it on, do so in Preview first, exercise it once, and confirm the `audit_logs` row appears before promoting.
+
+### 12.3 — `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (LB-10) — STRONGLY RECOMMENDED
+
+Without these, the rate limiter falls back to per-lambda in-memory state — effectively off across Vercel cold starts. System works, but LB-10 is not mitigated in production.
+
+**Sign up**:
+
+1. Go to https://console.upstash.com/ → **Create Database**.
+2. **Name**: `velocity-ratelimit` (or similar).
+3. **Type**: **Regional** (cheapest, lowest latency for a single region).
+4. **Region**: pick the one closest to your Vercel serverless region. If Vercel is `iad1` (default), pick `us-east-1`. Match your Supabase region if you know it.
+5. **TLS/Eviction**: defaults are fine.
+6. Click **Create**.
+
+**Copy credentials**:
+
+1. In the new database view, scroll to **REST API**.
+2. Copy **UPSTASH_REDIS_REST_URL** — a `https://<slug>.upstash.io` URL.
+3. Copy **UPSTASH_REDIS_REST_TOKEN** — a long opaque string.
+
+**Paste into Vercel**:
+
+1. Vercel → Settings → Environment Variables → **Add New**, twice:
+   - **Key**: `UPSTASH_REDIS_REST_URL` — **Value**: the URL above — **Environment**: Production + Preview + Development.
+   - **Key**: `UPSTASH_REDIS_REST_TOKEN` — **Value**: the token above — **Environment**: Production + Preview + Development.
+2. Redeploy production. On the next request, `lib/rate-limit.ts` will log `{level:"info", msg:"[rate-limit] backend selected", backend:"upstash"}` on stdout once per process — confirm in Vercel → Logs that the backend switched.
+3. If Upstash is ever unreachable, the rate limiter logs `[rate-limit] backend error, falling back to in-memory` and degrades gracefully — it does not fail closed.
+
+### 12.4 — Stripe webhook dual-delivery verification (LB-4) — REQUIRED
+
+LB-4 namespaced the idempotency ledger between `stripe:bookings` (handled by `/api/stripe-webhook`) and `stripe:payments` (handled by `/api/payments/webhook`). **Both endpoints must be subscribed to `checkout.session.completed` in Stripe** or one half of the business logic is dead.
+
+**Verify**:
+
+1. Stripe dashboard → **Developers** → **Webhooks**.
+2. You should see **two endpoints** pointing at your production domain:
+   - `https://<your-domain>/api/stripe-webhook`
+   - `https://<your-domain>/api/payments/webhook`
+3. Click each one → **Events to send**.
+4. Confirm that **both** have `checkout.session.completed` listed. (The first endpoint also handles `invoice.*` events for the dashboard-invoice flow; the second handles the IG/SMS booking-deposit flow.)
+5. If either endpoint is missing, click **Add endpoint** → paste the URL → select the events → **Add endpoint**. Stripe will show a new signing secret — **paste it** into the corresponding Vercel env var (`STRIPE_WEBHOOK_SECRET` for `/api/stripe-webhook`, or a second var if you decide to separate them; the current code reads one shared secret, so if you add a second endpoint use the same secret).
+
+**Test replay**:
+
+1. In Stripe → Webhooks → select an endpoint → **Send test webhook** → `checkout.session.completed`.
+2. Watch Vercel logs for `[stripe-webhook] event claimed` with the expected namespace (`stripe:bookings` or `stripe:payments`).
+3. Send the same event again — confirm the second delivery is deduped (`[webhook-idempotency] duplicate, skipping`).
+
+### 12.5 — GitHub branch protection (DevOps C1) — REQUIRED
+
+The new CI pipeline adds `no-console`, `test`, and `audit` as required checks, but nothing in-repo enforces that merges to `main` wait for them. This must be configured on GitHub itself.
+
+**Configure**:
+
+1. GitHub → your repo → **Settings** → **Branches**.
+2. Under **Branch protection rules**, click **Add rule** (or edit the existing rule for `main`).
+3. **Branch name pattern**: `main`
+4. Tick:
+   - ☑ **Require a pull request before merging**
+   - ☑ **Require approvals**: 1 (or your team's standard)
+   - ☑ **Require status checks to pass before merging**
+   - ☑ **Require branches to be up to date before merging**
+5. In the **Status checks** search box, add (one at a time — they must have run at least once before GitHub will autocomplete them, so push this branch first, let CI run, then come back):
+   - `Lint`
+   - `Typecheck`
+   - `Test`
+   - `Dependency audit` (or whatever the `audit` job is named in `.github/workflows/ci.yml`)
+   - `No console.* in server code` (the new `no-console` job)
+   - `Build`
+6. Optional but recommended: ☑ **Do not allow bypassing the above settings** (enforce for admins too).
+7. **Save changes**.
+
+After this, merging `fix/prod-readiness-remediation` → `main` will be blocked until all six checks are green.
+
+### 12.6 — Final pre-deploy sanity pass
+
+After 12.1 through 12.5 are done:
+
+1. In Vercel, trigger a redeploy of the latest commit on `fix/prod-readiness-remediation` (or your PR preview).
+2. Hit the preview URL's `/api/health` — expect 200 with `checks.database: "ok"`.
+3. Tail Vercel logs during the first 30 seconds — look for `[rate-limit] backend selected` with `backend:"upstash"` (confirms 12.3), and absence of any `ENCRYPTION_KEY must be set` errors (confirms 12.1).
+4. Fire a Stripe test webhook (12.4) — confirm idempotent replay.
+5. If all four pass, you are safe to merge and promote to production.
+
+### 12.7 — Items still deferred (not in this checklist)
+
+These require additional work beyond manual dashboard steps and are tracked in `.audit/REMEDIATION-COMPLETE.md`:
+
+- **Encryption backfill** — no script yet. Until it runs, encrypted columns are empty and the dual-read path falls back to plaintext. Required before you can drop the plaintext columns.
+- **Migration apply** — the 9 new migrations under `supabase/migrations/20260405*` have not been applied to any database from this session. Some of the 21 `retroactive_*.sql` files are not idempotent (bare `CREATE TABLE`, bare `CREATE POLICY`, bare `CREATE TRIGGER`) — see `.audit/remediation-status.md` for the per-file flag list.
+- **`<FILL IN:>` placeholders in §1, §2, §9, §11** — on-call contacts, dashboard URLs, PITR window, vendor contacts.
