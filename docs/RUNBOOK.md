@@ -323,12 +323,13 @@ The new CI pipeline adds `no-console`, `test`, and `audit` as required checks, b
    - ☑ **Require status checks to pass before merging**
    - ☑ **Require branches to be up to date before merging**
 5. In the **Status checks** search box, add (one at a time — they must have run at least once before GitHub will autocomplete them, so push this branch first, let CI run, then come back):
-   - `Lint`
    - `Typecheck`
    - `Test`
    - `Dependency audit` (or whatever the `audit` job is named in `.github/workflows/ci.yml`)
    - `No console.* in server code` (the new `no-console` job)
    - `Build`
+
+   **Do NOT add `Lint` as a required check.** The lint job exists but is pre-existing broken — there is no ESLint config in the repo and `npm run lint` fails with "no configuration file". `continue-on-error: true` is set on the job so it reports visibly without blocking. When a future PR adds an `eslint.config.js`, re-enable the hard gate by (a) removing `continue-on-error` from the job, (b) adding `lint` back to `build.needs` in `ci.yml`, and (c) adding `Lint` to this list.
 6. Optional but recommended: ☑ **Do not allow bypassing the above settings** (enforce for admins too).
 7. **Save changes**.
 
