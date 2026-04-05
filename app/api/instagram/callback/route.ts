@@ -1,13 +1,27 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { createClient as createCookieClient } from "@/lib/supabase/server"
 import { applyRateLimit } from "@/lib/api-rate-limit"
 import { encrypt } from "@/lib/crypto"
+import crypto from "crypto"
 
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
+}
+
+/**
+ * LB-3: Constant-time comparison of hex-encoded state strings.
+ * Returns false if buffers are unequal length (which itself leaks no
+ * length signal for fixed-size CSRF tokens).
+ */
+function safeEqualHex(a: string, b: string): boolean {
+  const ba = Buffer.from(a, "utf8")
+  const bb = Buffer.from(b, "utf8")
+  if (ba.length !== bb.length) return false
+  return crypto.timingSafeEqual(ba, bb)
 }
 
 /**
@@ -38,22 +52,26 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(dashboardUrl)
   }
 
-  // Verify state from cookie
+  // LB-3: Verify state cookie via constant-time compare. `state` is a pure
+  // random CSRF token — userId is resolved from the session, NOT from state.
   const storedState = request.cookies.get("instagram_oauth_state")?.value
-  if (state !== storedState) {
+  if (!storedState || !safeEqualHex(state, storedState)) {
     dashboardUrl.searchParams.set("instagram_error", "Invalid state parameter")
     return NextResponse.redirect(dashboardUrl)
   }
 
-  // Decode state to get user ID
-  let userId: string
-  try {
-    const decoded = JSON.parse(Buffer.from(state, "base64").toString())
-    userId = decoded.userId
-  } catch {
-    dashboardUrl.searchParams.set("instagram_error", "Invalid state format")
-    return NextResponse.redirect(dashboardUrl)
+  // Resolve the real user from the authenticated session cookie.
+  const cookieSupabase = await createCookieClient()
+  const { data: { user: sessionUser }, error: sessionError } =
+    await cookieSupabase.auth.getUser()
+
+  if (sessionError || !sessionUser) {
+    const loginUrl = new URL("/auth/login", request.url)
+    loginUrl.searchParams.set("error", "instagram_oauth_session_expired")
+    return NextResponse.redirect(loginUrl)
   }
+
+  const userId: string = sessionUser.id
 
   const appId = process.env.META_APP_ID
   const appSecret = process.env.META_APP_SECRET
