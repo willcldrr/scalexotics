@@ -33,10 +33,10 @@ vi.mock("stripe", () => {
 
 vi.mock("@supabase/supabase-js", () => {
   const chain: Record<string, unknown> = {}
-  chain.select = vi.fn(() => chain)
-  chain.eq = vi.fn(() => chain)
-  chain.update = vi.fn(() => ({ eq: async () => ({ data: null, error: null }) }))
-  chain.single = vi.fn(async () =>
+  chain.select = vi.fn((...args: any[]) => chain)
+  chain.eq = vi.fn((...args: any[]) => chain)
+  chain.update = vi.fn((...args: any[]) => ({ eq: async () => ({ data: null, error: null }) }))
+  chain.single = vi.fn(async (...args: any[]) =>
     bookingRowQueue.shift() ?? { data: null, error: null }
   )
   return { createClient: () => ({ from: () => chain }) }
@@ -49,7 +49,7 @@ vi.mock("@/lib/log", async () => {
     ...actual,
     log: {
       ...actual.log,
-      warn: (...args: unknown[]) => {
+      warn: (...args: any[]) => {
         logWarnMock(...args)
       },
     },

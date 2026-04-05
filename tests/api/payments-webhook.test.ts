@@ -12,8 +12,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
 
 const rpcMock = vi.fn()
-const markProcessedMock = vi.fn(async () => undefined)
-const claimMock = vi.fn(async () => ({ claimed: true, rowId: "ledger-1" }))
+const markProcessedMock = vi.fn(async (...args: any[]) => undefined)
+const claimMock = vi.fn(async (...args: any[]) => ({ claimed: true, rowId: "ledger-1" }))
 
 // Track individual table mutations so we can assert the 3-step mutation was
 // NOT performed (LB-5b proof).
@@ -21,16 +21,16 @@ const updateCalls: Array<{ table: string }> = []
 const insertCalls: Array<{ table: string }> = []
 
 vi.mock("@/lib/webhook-idempotency", () => ({
-  claimWebhookEvent: (...args: unknown[]) => claimMock(...args),
-  markWebhookEventProcessed: (...args: unknown[]) => markProcessedMock(...args),
+  claimWebhookEvent: (...args: any[]) => claimMock(...args),
+  markWebhookEventProcessed: (...args: any[]) => markProcessedMock(...args),
 }))
 
 vi.mock("@/lib/anthropic", () => ({
-  generateResponse: vi.fn(async () => ({ content: "Confirmation text" })),
+  generateResponse: vi.fn(async (...args: any[]) => ({ content: "Confirmation text" })),
 }))
 
 vi.mock("@/lib/instagram", () => ({
-  sendInstagramMessage: vi.fn(async () => ({ success: true })),
+  sendInstagramMessage: vi.fn(async (...args: any[]) => ({ success: true })),
 }))
 
 vi.mock("stripe", () => {
@@ -49,11 +49,11 @@ vi.mock("stripe", () => {
 vi.mock("@supabase/supabase-js", () => {
   const tableChain = (table: string) => {
     const chain: Record<string, unknown> = {}
-    chain.select = vi.fn(() => chain)
-    chain.eq = vi.fn(() => chain)
-    chain.or = vi.fn(() => chain)
-    chain.limit = vi.fn(() => chain)
-    chain.single = vi.fn(async () => {
+    chain.select = vi.fn((...args: any[]) => chain)
+    chain.eq = vi.fn((...args: any[]) => chain)
+    chain.or = vi.fn((...args: any[]) => chain)
+    chain.limit = vi.fn((...args: any[]) => chain)
+    chain.single = vi.fn(async (...args: any[]) => {
       // Minimal rows so the handler reaches the RPC path.
       if (table === "leads")
         return { data: { id: "lead-1", user_id: "user-1" }, error: null }
@@ -69,11 +69,11 @@ vi.mock("@supabase/supabase-js", () => {
         }
       return { data: null, error: null }
     })
-    chain.update = vi.fn(() => {
+    chain.update = vi.fn((...args: any[]) => {
       updateCalls.push({ table })
-      return { eq: vi.fn(async () => ({ data: null, error: null })) }
+      return { eq: vi.fn(async (...args: any[]) => ({ data: null, error: null })) }
     })
-    chain.insert = vi.fn(() => {
+    chain.insert = vi.fn((...args: any[]) => {
       insertCalls.push({ table })
       return {
         select: () => ({ single: async () => ({ data: null, error: null }) }),
@@ -84,7 +84,7 @@ vi.mock("@supabase/supabase-js", () => {
   return {
     createClient: () => ({
       from: (table: string) => tableChain(table),
-      rpc: (...args: unknown[]) => rpcMock(...args),
+      rpc: (...args: any[]) => rpcMock(...args),
     }),
   }
 })

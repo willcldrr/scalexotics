@@ -10,26 +10,26 @@ import { describe, it, expect, beforeEach, vi } from "vitest"
 type SelectResult = { data?: unknown; error?: unknown }
 const selectQueue: SelectResult[] = []
 const updateCalls: Array<Record<string, unknown>> = []
-const adminUpdateMock = vi.fn(async () => ({ data: null, error: null }))
+const adminUpdateMock = vi.fn(async (...args: any[]) => ({ data: null, error: null }))
 
 vi.mock("@supabase/supabase-js", () => {
   const chain = {
-    select: vi.fn(() => chain),
-    eq: vi.fn(() => chain),
-    order: vi.fn(() => chain),
-    limit: vi.fn(() => chain),
-    single: vi.fn(async () => selectQueue.shift() ?? { data: null, error: null }),
-    maybeSingle: vi.fn(async () => selectQueue.shift() ?? { data: null, error: null }),
+    select: vi.fn((...args: any[]) => chain),
+    eq: vi.fn((...args: any[]) => chain),
+    order: vi.fn((...args: any[]) => chain),
+    limit: vi.fn((...args: any[]) => chain),
+    single: vi.fn(async (...args: any[]) => selectQueue.shift() ?? { data: null, error: null }),
+    maybeSingle: vi.fn(async (...args: any[]) => selectQueue.shift() ?? { data: null, error: null }),
     update: vi.fn((patch: Record<string, unknown>) => {
       updateCalls.push(patch)
       return {
-        eq: vi.fn(async () => ({ data: null, error: null })),
+        eq: vi.fn(async (...args: any[]) => ({ data: null, error: null })),
       }
     }),
   }
   return {
     createClient: () => ({
-      from: vi.fn(() => chain),
+      from: vi.fn((...args: any[]) => chain),
       auth: {
         admin: {
           updateUserById: adminUpdateMock,

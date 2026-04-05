@@ -10,8 +10,8 @@
  */
 import { describe, it, expect, beforeEach, vi } from "vitest"
 
-const markProcessedMock = vi.fn(async () => undefined)
-const claimMock = vi.fn(async () => ({ claimed: true, rowId: "row-1" }))
+const markProcessedMock = vi.fn(async (...args: any[]) => undefined)
+const claimMock = vi.fn(async (...args: any[]) => ({ claimed: true, rowId: "row-1" }))
 const constructEventMock = vi.fn()
 
 // Supabase per-call queue
@@ -19,15 +19,15 @@ const selectQueue: Array<{ data?: unknown; error?: unknown }> = []
 const updateQueue: Array<{ data?: unknown; error?: unknown }> = []
 
 vi.mock("@/lib/webhook-idempotency", () => ({
-  claimWebhookEvent: (...args: unknown[]) => claimMock(...args),
-  markWebhookEventProcessed: (...args: unknown[]) => markProcessedMock(...args),
+  claimWebhookEvent: (...args: any[]) => claimMock(...args),
+  markWebhookEventProcessed: (...args: any[]) => markProcessedMock(...args),
 }))
 
 vi.mock("stripe", () => {
   function Stripe() {
     return {
       webhooks: {
-        constructEvent: (...args: unknown[]) => constructEventMock(...args),
+        constructEvent: (...args: any[]) => constructEventMock(...args),
       },
     }
   }
@@ -36,13 +36,13 @@ vi.mock("stripe", () => {
 
 vi.mock("@supabase/supabase-js", () => {
   const chain: Record<string, unknown> = {}
-  chain.select = vi.fn(() => chain)
-  chain.eq = vi.fn(() => chain)
-  chain.single = vi.fn(async () => selectQueue.shift() ?? { data: null, error: null })
-  chain.update = vi.fn(() => ({
-    eq: vi.fn(() => ({
-      select: vi.fn(() => ({
-        single: vi.fn(async () => updateQueue.shift() ?? { data: null, error: null }),
+  chain.select = vi.fn((...args: any[]) => chain)
+  chain.eq = vi.fn((...args: any[]) => chain)
+  chain.single = vi.fn(async (...args: any[]) => selectQueue.shift() ?? { data: null, error: null })
+  chain.update = vi.fn((...args: any[]) => ({
+    eq: vi.fn((...args: any[]) => ({
+      select: vi.fn((...args: any[]) => ({
+        single: vi.fn(async (...args: any[]) => updateQueue.shift() ?? { data: null, error: null }),
       })),
     })),
   }))

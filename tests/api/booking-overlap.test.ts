@@ -11,18 +11,18 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
 
 const rpcMock = vi.fn()
-const markProcessedMock = vi.fn(async () => undefined)
+const markProcessedMock = vi.fn(async (...args: any[]) => undefined)
 
 vi.mock("@/lib/webhook-idempotency", () => ({
-  claimWebhookEvent: vi.fn(async () => ({ claimed: true, rowId: "row-1" })),
-  markWebhookEventProcessed: (...args: unknown[]) => markProcessedMock(...args),
+  claimWebhookEvent: vi.fn(async (...args: any[]) => ({ claimed: true, rowId: "row-1" })),
+  markWebhookEventProcessed: (...args: any[]) => markProcessedMock(...args),
 }))
 
 vi.mock("@/lib/anthropic", () => ({
-  generateResponse: vi.fn(async () => ({ content: "..." })),
+  generateResponse: vi.fn(async (...args: any[]) => ({ content: "..." })),
 }))
 vi.mock("@/lib/instagram", () => ({
-  sendInstagramMessage: vi.fn(async () => ({ success: true })),
+  sendInstagramMessage: vi.fn(async (...args: any[]) => ({ success: true })),
 }))
 
 vi.mock("stripe", () => {
@@ -51,7 +51,7 @@ vi.mock("@supabase/supabase-js", () => {
   return {
     createClient: () => ({
       from: () => chain,
-      rpc: (...args: unknown[]) => rpcMock(...args),
+      rpc: (...args: any[]) => rpcMock(...args),
     }),
   }
 })
