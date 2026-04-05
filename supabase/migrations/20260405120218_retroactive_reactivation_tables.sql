@@ -260,50 +260,69 @@ ALTER TABLE reactivation_campaign_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reactivation_settings ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for reactivation_contacts
+DROP POLICY IF EXISTS "Users can view own contacts" ON reactivation_contacts;
 CREATE POLICY "Users can view own contacts" ON reactivation_contacts
   FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own contacts" ON reactivation_contacts;
 CREATE POLICY "Users can insert own contacts" ON reactivation_contacts
   FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own contacts" ON reactivation_contacts;
 CREATE POLICY "Users can update own contacts" ON reactivation_contacts
   FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own contacts" ON reactivation_contacts;
 CREATE POLICY "Users can delete own contacts" ON reactivation_contacts
   FOR DELETE USING (auth.uid() = user_id);
 
 -- RLS Policies for reactivation_templates
+DROP POLICY IF EXISTS "Users can view own templates" ON reactivation_templates;
 CREATE POLICY "Users can view own templates" ON reactivation_templates
   FOR SELECT USING (auth.uid() = user_id OR is_system_template = true);
+DROP POLICY IF EXISTS "Users can insert own templates" ON reactivation_templates;
 CREATE POLICY "Users can insert own templates" ON reactivation_templates
   FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own templates" ON reactivation_templates;
 CREATE POLICY "Users can update own templates" ON reactivation_templates
   FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own templates" ON reactivation_templates;
 CREATE POLICY "Users can delete own templates" ON reactivation_templates
   FOR DELETE USING (auth.uid() = user_id);
 
 -- RLS Policies for reactivation_campaigns
+DROP POLICY IF EXISTS "Users can view own campaigns" ON reactivation_campaigns;
 CREATE POLICY "Users can view own campaigns" ON reactivation_campaigns
   FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own campaigns" ON reactivation_campaigns;
 CREATE POLICY "Users can insert own campaigns" ON reactivation_campaigns
   FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own campaigns" ON reactivation_campaigns;
 CREATE POLICY "Users can update own campaigns" ON reactivation_campaigns
   FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own campaigns" ON reactivation_campaigns;
 CREATE POLICY "Users can delete own campaigns" ON reactivation_campaigns
   FOR DELETE USING (auth.uid() = user_id);
 
 -- RLS Policies for reactivation_campaign_messages
+DROP POLICY IF EXISTS "Users can view own messages" ON reactivation_campaign_messages;
 CREATE POLICY "Users can view own messages" ON reactivation_campaign_messages
   FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own messages" ON reactivation_campaign_messages;
 CREATE POLICY "Users can insert own messages" ON reactivation_campaign_messages
   FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own messages" ON reactivation_campaign_messages;
 CREATE POLICY "Users can update own messages" ON reactivation_campaign_messages
   FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own messages" ON reactivation_campaign_messages;
 CREATE POLICY "Users can delete own messages" ON reactivation_campaign_messages
   FOR DELETE USING (auth.uid() = user_id);
 
 -- RLS Policies for reactivation_settings
+DROP POLICY IF EXISTS "Users can view own settings" ON reactivation_settings;
 CREATE POLICY "Users can view own settings" ON reactivation_settings
   FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own settings" ON reactivation_settings;
 CREATE POLICY "Users can insert own settings" ON reactivation_settings
   FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own settings" ON reactivation_settings;
 CREATE POLICY "Users can update own settings" ON reactivation_settings
   FOR UPDATE USING (auth.uid() = user_id);
 
@@ -317,22 +336,27 @@ END;
 $$ language 'plpgsql';
 
 -- Add updated_at triggers
+DROP TRIGGER IF EXISTS update_reactivation_contacts_updated_at ON reactivation_contacts;
 CREATE TRIGGER update_reactivation_contacts_updated_at
   BEFORE UPDATE ON reactivation_contacts
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_reactivation_templates_updated_at ON reactivation_templates;
 CREATE TRIGGER update_reactivation_templates_updated_at
   BEFORE UPDATE ON reactivation_templates
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_reactivation_campaigns_updated_at ON reactivation_campaigns;
 CREATE TRIGGER update_reactivation_campaigns_updated_at
   BEFORE UPDATE ON reactivation_campaigns
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_reactivation_campaign_messages_updated_at ON reactivation_campaign_messages;
 CREATE TRIGGER update_reactivation_campaign_messages_updated_at
   BEFORE UPDATE ON reactivation_campaign_messages
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_reactivation_settings_updated_at ON reactivation_settings;
 CREATE TRIGGER update_reactivation_settings_updated_at
   BEFORE UPDATE ON reactivation_settings
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

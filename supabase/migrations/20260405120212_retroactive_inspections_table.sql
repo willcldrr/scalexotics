@@ -58,26 +58,31 @@ CREATE INDEX IF NOT EXISTS idx_inspections_type ON inspections(type);
 ALTER TABLE inspections ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Users can view their own inspections
+DROP POLICY IF EXISTS "Users can view own inspections" ON inspections;
 CREATE POLICY "Users can view own inspections"
   ON inspections FOR SELECT
   USING (auth.uid() = user_id);
 
 -- Policy: Users can create inspections
+DROP POLICY IF EXISTS "Users can create inspections" ON inspections;
 CREATE POLICY "Users can create inspections"
   ON inspections FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
 -- Policy: Users can update their own inspections
+DROP POLICY IF EXISTS "Users can update own inspections" ON inspections;
 CREATE POLICY "Users can update own inspections"
   ON inspections FOR UPDATE
   USING (auth.uid() = user_id);
 
 -- Policy: Anyone can view inspection by token (for signing)
+DROP POLICY IF EXISTS "Public can view inspection by token" ON inspections;
 CREATE POLICY "Public can view inspection by token"
   ON inspections FOR SELECT
   USING (true);
 
 -- Policy: Anyone can update inspection status via token (for signing)
+DROP POLICY IF EXISTS "Public can sign inspection via token" ON inspections;
 CREATE POLICY "Public can sign inspection via token"
   ON inspections FOR UPDATE
   USING (true)

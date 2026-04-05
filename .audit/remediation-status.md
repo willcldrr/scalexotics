@@ -224,6 +224,44 @@ Postgres < 16 has no `CREATE POLICY IF NOT EXISTS`, and `CREATE TRIGGER` has no 
   - 12.6 Final pre-deploy sanity pass
   - 12.7 Deferred items not in the checklist (encryption backfill, migration apply)
 
+### Option Z artifacts (2026-04-05, turn 3) — code-only prep for items 3 and 4
+
+User chose Option Z: produce code/docs only from this session, human runs the SQL and backfill later. Artifacts prepared:
+
+**Patched 15 retroactive migration files for idempotency** (all 5 DDL-level + 13 policy/trigger cases from the Item 1 audit; two files overlap both categories):
+
+- `20260405120200_retroactive_access_codes.sql` — `CREATE TABLE` → `IF NOT EXISTS`; 2× `CREATE INDEX` → `IF NOT EXISTS`; 2× `CREATE POLICY` → `DROP POLICY IF EXISTS` preamble
+- `20260405120201_retroactive_add_admin_field.sql` — `ADD COLUMN` → `ADD COLUMN IF NOT EXISTS`
+- `20260405120202_retroactive_agreements_table.sql` — 5× `DROP POLICY IF EXISTS` preamble
+- `20260405120204_retroactive_business_branding_table.sql` — 4× `DROP POLICY IF EXISTS` preamble
+- `20260405120205_retroactive_client_invoices.sql` — `CREATE TABLE` → `IF NOT EXISTS`; 2× `CREATE INDEX` → `IF NOT EXISTS`; 1× `DROP TRIGGER IF EXISTS`; 2× `DROP POLICY IF EXISTS`
+- `20260405120206_retroactive_crm_oauth_config.sql` — 4× `DROP POLICY IF EXISTS`; 1× `DROP TRIGGER IF EXISTS` (the `ADD COLUMN` is already inside a `DO` block guard, left as-is)
+- `20260405120207_retroactive_crm_statuses.sql` — 4× `DROP POLICY IF EXISTS`; 1× `DROP TRIGGER IF EXISTS`
+- `20260405120208_retroactive_crm_tables.sql` — 9× `DROP POLICY IF EXISTS`; 3× `DROP TRIGGER IF EXISTS`
+- `20260405120209_retroactive_custom_domains_table.sql` — 5× `DROP POLICY IF EXISTS`
+- `20260405120210_retroactive_deliveries_table.sql` — 4× `DROP POLICY IF EXISTS`
+- `20260405120212_retroactive_inspections_table.sql` — 5× `DROP POLICY IF EXISTS`
+- `20260405120213_retroactive_integration_requests.sql` — 3× `DROP POLICY IF EXISTS`
+- `20260405120215_retroactive_otp_codes.sql` — 2× `CREATE INDEX` → `IF NOT EXISTS`
+- `20260405120218_retroactive_reactivation_tables.sql` — 19× `DROP POLICY IF EXISTS`; 5× `DROP TRIGGER IF EXISTS`
+- `20260405120219_retroactive_security_fixes.sql` — 5× `DROP POLICY IF EXISTS` (3 drop-guards already existed; 2 added for the `custom_domains` "Admins can view/manage all domains" policies; defensive extra drops on pre-existing guarded policies)
+
+Policy / trigger count audit after patch: every `CREATE POLICY` is preceded by a matching `DROP POLICY IF EXISTS`; every `CREATE TRIGGER` by a matching `DROP TRIGGER IF EXISTS`. Counts verified per file.
+
+**New files:**
+- `scripts/db/backfill-encryption.ts` (~380 lines) — AES-256-GCM backfill for `businesses`, `deposit_portal_config`, `instagram_connections`. Opt-in `--dry-run`, paginated with `--batch-size` (default 100), resumable (skips rows where encrypted column already populated), continues on row-level errors with per-row `log.info|error` structured lines and a combined summary. Exit codes: 0 success, 1 any row-level error, 2 missing env vars / invalid args. All three target tables verified to use `id uuid PRIMARY KEY` — no schema deviations from the task's assumptions.
+- `scripts/db/README.md` — directory purpose + per-script usage notes.
+
+**RUNBOOK updates:**
+- `docs/RUNBOOK.md` §13 added (13.0–13.5): prerequisites, migration apply order (6 non-retroactive + 21 retroactive in timestamp order), dry-run backfill, real backfill, verification queries, per-step rollback SQL.
+- §12.7 deferred list updated to point at §13 instead of saying "no script yet".
+
+**Verification performed from this session:**
+- `npx tsc --noEmit` — clean (one `unknown` cast needed for supabase-js `GenericStringError[]` vs the script's `RowShape[]` return type).
+- `npx vitest run` — 14 files, 80 tests passing (one new passing test vs. the Wave 3-A baseline of 79 — pre-existing drift, not introduced here).
+
+**Items 3 and 4 status:** artifacts prepared (Option Z), awaiting human apply. The human runs `supabase db push` / SQL editor and `npx tsx scripts/db/backfill-encryption.ts` per `docs/RUNBOOK.md §13`. This session did NOT touch any database.
+
 ### Items 3 (apply migrations) and 4 (encryption backfill) — STOPPED, awaiting human decision
 
 Both items would execute SQL against a live database. The original plan (Option A) was explicit: **disk only, human applies**. Executing from this session requires:

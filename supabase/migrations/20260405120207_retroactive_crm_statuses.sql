@@ -46,27 +46,32 @@ CREATE INDEX IF NOT EXISTS idx_crm_statuses_sort_order ON crm_statuses(sort_orde
 ALTER TABLE crm_statuses ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Only admins can manage statuses
+DROP POLICY IF EXISTS "Admins can view CRM statuses" ON crm_statuses;
 CREATE POLICY "Admins can view CRM statuses" ON crm_statuses
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
   );
 
+DROP POLICY IF EXISTS "Admins can insert CRM statuses" ON crm_statuses;
 CREATE POLICY "Admins can insert CRM statuses" ON crm_statuses
   FOR INSERT WITH CHECK (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
   );
 
+DROP POLICY IF EXISTS "Admins can update CRM statuses" ON crm_statuses;
 CREATE POLICY "Admins can update CRM statuses" ON crm_statuses
   FOR UPDATE USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
   );
 
+DROP POLICY IF EXISTS "Admins can delete CRM statuses" ON crm_statuses;
 CREATE POLICY "Admins can delete CRM statuses" ON crm_statuses
   FOR DELETE USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
   );
 
 -- Trigger to update updated_at timestamp
+DROP TRIGGER IF EXISTS crm_statuses_updated_at ON crm_statuses;
 CREATE TRIGGER crm_statuses_updated_at
   BEFORE UPDATE ON crm_statuses
   FOR EACH ROW EXECUTE FUNCTION update_crm_updated_at();

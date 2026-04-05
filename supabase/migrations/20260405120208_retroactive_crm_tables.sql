@@ -59,21 +59,25 @@ CREATE INDEX IF NOT EXISTS idx_crm_leads_next_follow_up ON crm_leads(next_follow
 ALTER TABLE crm_leads ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Only admins can access CRM leads
+DROP POLICY IF EXISTS "Admins can view CRM leads" ON crm_leads;
 CREATE POLICY "Admins can view CRM leads" ON crm_leads
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
   );
 
+DROP POLICY IF EXISTS "Admins can insert CRM leads" ON crm_leads;
 CREATE POLICY "Admins can insert CRM leads" ON crm_leads
   FOR INSERT WITH CHECK (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
   );
 
+DROP POLICY IF EXISTS "Admins can update CRM leads" ON crm_leads;
 CREATE POLICY "Admins can update CRM leads" ON crm_leads
   FOR UPDATE USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
   );
 
+DROP POLICY IF EXISTS "Admins can delete CRM leads" ON crm_leads;
 CREATE POLICY "Admins can delete CRM leads" ON crm_leads
   FOR DELETE USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
@@ -102,6 +106,7 @@ CREATE INDEX IF NOT EXISTS idx_crm_notes_created_at ON crm_notes(lead_id, create
 -- Enable RLS
 ALTER TABLE crm_notes ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Admins can manage CRM notes" ON crm_notes;
 CREATE POLICY "Admins can manage CRM notes" ON crm_notes
   FOR ALL USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
@@ -156,6 +161,7 @@ CREATE INDEX IF NOT EXISTS idx_crm_events_google_event ON crm_events(google_even
 -- Enable RLS
 ALTER TABLE crm_events ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Admins can manage CRM events" ON crm_events;
 CREATE POLICY "Admins can manage CRM events" ON crm_events
   FOR ALL USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
@@ -185,6 +191,7 @@ CREATE TABLE IF NOT EXISTS crm_oauth_tokens (
 -- Enable RLS
 ALTER TABLE crm_oauth_tokens ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can manage their own OAuth tokens" ON crm_oauth_tokens;
 CREATE POLICY "Users can manage their own OAuth tokens" ON crm_oauth_tokens
   FOR ALL USING (auth.uid() = user_id);
 
@@ -211,11 +218,13 @@ CREATE INDEX IF NOT EXISTS idx_crm_activity_user_id ON crm_activity_log(user_id)
 -- Enable RLS
 ALTER TABLE crm_activity_log ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Admins can view CRM activity log" ON crm_activity_log;
 CREATE POLICY "Admins can view CRM activity log" ON crm_activity_log
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
   );
 
+DROP POLICY IF EXISTS "Admins can insert CRM activity log" ON crm_activity_log;
 CREATE POLICY "Admins can insert CRM activity log" ON crm_activity_log
   FOR INSERT WITH CHECK (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
@@ -230,14 +239,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS crm_leads_updated_at ON crm_leads;
 CREATE TRIGGER crm_leads_updated_at
   BEFORE UPDATE ON crm_leads
   FOR EACH ROW EXECUTE FUNCTION update_crm_updated_at();
 
+DROP TRIGGER IF EXISTS crm_events_updated_at ON crm_events;
 CREATE TRIGGER crm_events_updated_at
   BEFORE UPDATE ON crm_events
   FOR EACH ROW EXECUTE FUNCTION update_crm_updated_at();
 
+DROP TRIGGER IF EXISTS crm_oauth_tokens_updated_at ON crm_oauth_tokens;
 CREATE TRIGGER crm_oauth_tokens_updated_at
   BEFORE UPDATE ON crm_oauth_tokens
   FOR EACH ROW EXECUTE FUNCTION update_crm_updated_at();

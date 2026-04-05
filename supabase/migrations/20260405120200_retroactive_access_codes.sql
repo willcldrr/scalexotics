@@ -7,7 +7,7 @@
 -- Access Codes Table
 -- Run this in your Supabase SQL Editor
 
-CREATE TABLE access_codes (
+CREATE TABLE IF NOT EXISTS access_codes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   code VARCHAR(20) UNIQUE NOT NULL,
   name VARCHAR(100), -- Optional label like "Miami Client" or "John's Fleet"
@@ -21,18 +21,20 @@ CREATE TABLE access_codes (
 );
 
 -- Index for faster lookups
-CREATE INDEX idx_access_codes_code ON access_codes(code);
-CREATE INDEX idx_access_codes_active ON access_codes(is_active);
+CREATE INDEX IF NOT EXISTS idx_access_codes_code ON access_codes(code);
+CREATE INDEX IF NOT EXISTS idx_access_codes_active ON access_codes(is_active);
 
 -- RLS Policies
 ALTER TABLE access_codes ENABLE ROW LEVEL SECURITY;
 
 -- Only allow reading codes for verification (public read for active codes)
+DROP POLICY IF EXISTS "Allow public to verify codes" ON access_codes;
 CREATE POLICY "Allow public to verify codes" ON access_codes
   FOR SELECT
   USING (is_active = true);
 
 -- Only admins can manage access codes
+DROP POLICY IF EXISTS "Admins can manage codes" ON access_codes;
 CREATE POLICY "Admins can manage codes" ON access_codes
   FOR ALL
   TO authenticated

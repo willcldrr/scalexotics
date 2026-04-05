@@ -348,6 +348,244 @@ After 12.1 through 12.5 are done:
 
 These require additional work beyond manual dashboard steps and are tracked in `.audit/REMEDIATION-COMPLETE.md`:
 
-- **Encryption backfill** — no script yet. Until it runs, encrypted columns are empty and the dual-read path falls back to plaintext. Required before you can drop the plaintext columns.
-- **Migration apply** — the 9 new migrations under `supabase/migrations/20260405*` have not been applied to any database from this session. Some of the 21 `retroactive_*.sql` files are not idempotent (bare `CREATE TABLE`, bare `CREATE POLICY`, bare `CREATE TRIGGER`) — see `.audit/remediation-status.md` for the per-file flag list.
+- **Encryption backfill** — script lives at `scripts/db/backfill-encryption.ts`; run-order documented in §13 below. Until it runs, encrypted columns are empty and the dual-read path falls back to plaintext. Required before you can drop the plaintext columns.
+- **Migration apply** — the new `supabase/migrations/20260405*` files have not been applied to any database from this session. The 15 retroactive files that were previously non-idempotent have been patched to add `IF NOT EXISTS` / `DROP ... IF EXISTS` guards; see §13 for the apply order.
 - **`<FILL IN:>` placeholders in §1, §2, §9, §11** — on-call contacts, dashboard URLs, PITR window, vendor contacts.
+
+---
+
+## 13. Apply remediation migrations and encryption backfill
+
+Run this checklist once, in order, when you are ready to promote the
+`fix/prod-readiness-remediation` branch from code-only to deployed.
+Each step has a clear success signal and a clear failure mode.
+
+### 13.0 — Prerequisites
+
+- `ENCRYPTION_KEY` is set in the target environment AND matches the value on
+  the host that will run the backfill script. If they diverge, decryption
+  breaks for every row touched.
+- `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` point at the
+  **target** database. Do staging first, prod second — there is no automatic
+  environment guard in the script.
+- The 15 patched retroactive files are committed on your working branch.
+  Confirm with:
+
+  ```bash
+  git log --oneline fix/prod-readiness-remediation | head -20
+  ```
+
+  Look for a commit whose subject mentions "Option Z" / "idempotency" /
+  "retroactive guards" — it touches the 15 files listed at the top of this
+  section and adds `scripts/db/backfill-encryption.ts` plus this §13.
+
+- `psql` installed locally (for the per-file fallback path) or the
+  `supabase` CLI linked to your project (for the `db push` path).
+
+### 13.1 — Apply schema migrations in timestamp order
+
+Preferred:
+
+```bash
+supabase db push --linked
+```
+
+`supabase db push` wraps each file in a transaction automatically — no
+explicit `BEGIN/COMMIT` in the migration bodies.
+
+Fallback (SQL editor or manual psql): apply files in the order below.
+**Do not** reorder; `20260405120219_retroactive_security_fixes.sql`
+depends on policies created by earlier retroactive files.
+
+Non-retroactive remediation migrations (apply first in this sub-block):
+
+1. `20260405120000_encrypt_secrets_at_rest.sql` — adds `encrypted_*` / `*_iv` / `*_tag` columns on `businesses`, `deposit_portal_config`, `instagram_connections`, plus `api_keys.key_hash`.
+2. `20260405120100_booking_overlap_constraint.sql` — `EXCLUDE USING gist` on `bookings`.
+3. `20260405130000_audit_logs.sql` — `audit_logs` table.
+4. `20260405130100_otp_hardening.sql` — `failed_attempts`, `locked_until`, composite key on `otp_codes`.
+5. `20260405140000_confirm_booking_rpc.sql` — `confirm_booking_and_lead(...)` RPC.
+6. `20260405140100_businesses_currency.sql` — `currency` column on `businesses` and `bookings` (ISO-4217 CHECK).
+
+Retroactive files (apply after the six above, in timestamp order):
+
+```
+20260405120200_retroactive_access_codes.sql
+20260405120201_retroactive_add_admin_field.sql
+20260405120202_retroactive_agreements_table.sql
+20260405120203_retroactive_bookings_stripe_columns.sql
+20260405120204_retroactive_business_branding_table.sql
+20260405120205_retroactive_client_invoices.sql
+20260405120206_retroactive_crm_oauth_config.sql
+20260405120207_retroactive_crm_statuses.sql
+20260405120208_retroactive_crm_tables.sql
+20260405120209_retroactive_custom_domains_table.sql
+20260405120210_retroactive_deliveries_table.sql
+20260405120211_retroactive_fix_profiles_rls.sql
+20260405120212_retroactive_inspections_table.sql
+20260405120213_retroactive_integration_requests.sql
+20260405120214_retroactive_invoices_stripe_columns.sql
+20260405120215_retroactive_otp_codes.sql
+20260405120216_retroactive_payment_links_stripe_columns.sql
+20260405120217_retroactive_performance_indexes.sql
+20260405120218_retroactive_reactivation_tables.sql
+20260405120219_retroactive_security_fixes.sql
+20260405120220_retroactive_user_sessions.sql
+```
+
+Per-file fallback (if `supabase db push` is not available):
+
+```bash
+psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/<file>.sql
+```
+
+**Expected success output:**
+
+- First-time apply on a fresh clone: `CREATE TABLE`, `ALTER TABLE`, `CREATE INDEX`, `CREATE POLICY`, `CREATE TRIGGER`, `CREATE FUNCTION`.
+- Re-apply against a database where the object already exists (retroactive files only): `NOTICE: relation "<name>" already exists, skipping` for tables/indexes. Policies and triggers are re-created silently because every `CREATE POLICY` / `CREATE TRIGGER` is now preceded by a `DROP ... IF EXISTS`.
+
+**Expected failure output and what it means:**
+
+- `ERROR: relation "bookings" does not exist` — baseline schema is older than expected. Re-run earlier migrations (`20260319_bookings_lead_id.sql`, `20260405120203_retroactive_bookings_stripe_columns.sql`) first.
+- `ERROR: could not create exclusion constraint "bookings_no_vehicle_overlap" ... conflicting key value violates exclusion constraint` — `bookings` already contains overlapping rows for the same vehicle. LB-5a cannot land until they are reconciled. Find the offenders by hand:
+
+  ```sql
+  SELECT vehicle_id, count(*)
+  FROM bookings
+  WHERE status NOT IN ('cancelled', 'rejected')
+  GROUP BY 1
+  HAVING count(*) > 1;
+  ```
+
+  Resolve (cancel one side, adjust dates, or split rows) then re-run the migration.
+
+- `ERROR: function update_crm_updated_at() does not exist` on `20260405120206` or `20260405120207` — the CRM trigger function is defined in `20260405120208`. Apply `20260405120208` first, or re-order locally. (This is a pre-existing ordering wart in the retroactive set; not introduced by Option Z.)
+
+### 13.2 — Run the encryption backfill in DRY-RUN mode
+
+Load env vars from `.env.local` (or your secret manager) into the current shell first. Example using `dotenv-cli` if installed, else `export` them by hand:
+
+```bash
+set -a; source .env.local; set +a
+npx tsx scripts/db/backfill-encryption.ts --dry-run --table=all --batch-size=100
+```
+
+**Successful dry-run output:**
+
+- One JSON log line per row with `"action":"would_encrypt"`, `"skipped_already_encrypted"`, or `"skipped_no_plaintext"`.
+- A per-table `[backfill-encryption] summary` line with `dryRun:true` and `errors:0`.
+- A final `[backfill-encryption] combined summary` line.
+
+**Failed dry-run:** `[backfill-encryption] missing required env vars: ...` (exit 2) or `[backfill-encryption] select failed` with a Supabase error payload (exit 1). Dry-run performs no writes, so retries are free — fix the env or network issue and re-run.
+
+### 13.3 — Run the encryption backfill for real
+
+```bash
+npx tsx scripts/db/backfill-encryption.ts --table=all --batch-size=100
+```
+
+**Successful output:** every row processed ends in `"action":"encrypted"` or `"action":"skipped_*"`, and the combined summary shows `"errors": 0`. Exit code 0.
+
+**Failed output:** one or more `log.error` lines during the run (stderr JSON with an `err` field) AND `errors > 0` in the summary. Exit code 1.
+
+The script is **resumable**: rows whose `encrypted_*` column is already populated are skipped on subsequent runs. If some rows failed (e.g., transient 5xx from Supabase), simply re-run the same command — it will retry only the rows that still have NULL ciphertext.
+
+### 13.4 — Verify backfill landed and code path switches to ciphertext
+
+Paste into the Supabase SQL editor (one query per table):
+
+```sql
+SELECT
+  count(*) FILTER (WHERE encrypted_stripe_secret_key IS NOT NULL) AS encrypted,
+  count(*) FILTER (WHERE encrypted_stripe_secret_key IS NULL AND stripe_secret_key IS NOT NULL) AS remaining
+FROM businesses;
+
+SELECT
+  count(*) FILTER (WHERE encrypted_stripe_secret_key IS NOT NULL) AS encrypted,
+  count(*) FILTER (WHERE encrypted_stripe_secret_key IS NULL AND stripe_secret_key IS NOT NULL) AS remaining
+FROM deposit_portal_config;
+
+SELECT
+  count(*) FILTER (WHERE encrypted_access_token IS NOT NULL) AS encrypted,
+  count(*) FILTER (WHERE encrypted_access_token IS NULL AND access_token IS NOT NULL) AS remaining
+FROM instagram_connections;
+```
+
+**Expected:** `remaining = 0` for all three. If non-zero, re-run §13.3.
+
+Application-level verification:
+
+1. `curl https://<target-domain>/api/health` — expect HTTP 200 and `"status":"ok"`.
+2. Trigger a Stripe checkout on a test tenant. Confirm no `decrypt()` errors in Sentry (`tag:lib/crypto` or message `decrypt() requires`).
+3. Send a test Instagram DM to a connected tenant. Confirm the webhook handler resolves the access token from ciphertext without falling back to plaintext.
+
+### 13.5 — Rollback procedures per step
+
+**Migration rollback (per file — all additive, no data destroyed):**
+
+```sql
+-- 20260405120000_encrypt_secrets_at_rest.sql
+ALTER TABLE businesses
+  DROP COLUMN IF EXISTS encrypted_stripe_secret_key,
+  DROP COLUMN IF EXISTS stripe_secret_key_iv,
+  DROP COLUMN IF EXISTS stripe_secret_key_tag;
+ALTER TABLE deposit_portal_config
+  DROP COLUMN IF EXISTS encrypted_stripe_secret_key,
+  DROP COLUMN IF EXISTS stripe_secret_key_iv,
+  DROP COLUMN IF EXISTS stripe_secret_key_tag;
+ALTER TABLE instagram_connections
+  DROP COLUMN IF EXISTS encrypted_access_token,
+  DROP COLUMN IF EXISTS access_token_iv,
+  DROP COLUMN IF EXISTS access_token_tag;
+DROP INDEX IF EXISTS api_keys_key_hash_idx;
+ALTER TABLE api_keys DROP COLUMN IF EXISTS key_hash;
+
+-- 20260405120100_booking_overlap_constraint.sql
+ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_no_vehicle_overlap;
+
+-- 20260405130000_audit_logs.sql
+DROP TABLE IF EXISTS audit_logs;
+
+-- 20260405130100_otp_hardening.sql
+ALTER TABLE otp_codes
+  DROP COLUMN IF EXISTS failed_attempts,
+  DROP COLUMN IF EXISTS locked_until;
+-- (composite key drop is manual — inspect pg_indexes first)
+
+-- 20260405140000_confirm_booking_rpc.sql
+DROP FUNCTION IF EXISTS confirm_booking_and_lead;
+
+-- 20260405140100_businesses_currency.sql
+ALTER TABLE businesses DROP COLUMN IF EXISTS currency;
+ALTER TABLE bookings DROP COLUMN IF EXISTS currency;
+```
+
+Retroactive files intentionally have **no rollback** — dropping their
+tables would drop real production data.
+
+**Backfill rollback (wrong `ENCRYPTION_KEY`):**
+
+If the backfill ran with the wrong key, the ciphertext is garbage but
+the plaintext columns are still present (LB-6 deferred their drop). To
+clear the encrypted trio and re-run:
+
+```sql
+UPDATE businesses
+   SET encrypted_stripe_secret_key = NULL,
+       stripe_secret_key_iv        = NULL,
+       stripe_secret_key_tag       = NULL
+ WHERE encrypted_stripe_secret_key IS NOT NULL;
+
+UPDATE deposit_portal_config
+   SET encrypted_stripe_secret_key = NULL,
+       stripe_secret_key_iv        = NULL,
+       stripe_secret_key_tag       = NULL
+ WHERE encrypted_stripe_secret_key IS NOT NULL;
+
+UPDATE instagram_connections
+   SET encrypted_access_token = NULL,
+       access_token_iv        = NULL,
+       access_token_tag       = NULL
+ WHERE encrypted_access_token IS NOT NULL;
+```
+
+Then fix `ENCRYPTION_KEY` in the target environment and re-run §13.3. The dual-read path in `lib/crypto.ts` callers keeps the app serving from plaintext while the encrypted columns are NULL.

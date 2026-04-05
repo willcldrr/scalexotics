@@ -49,26 +49,31 @@ CREATE INDEX IF NOT EXISTS idx_agreements_status ON agreements(status);
 ALTER TABLE agreements ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Users can view their own agreements
+DROP POLICY IF EXISTS "Users can view own agreements" ON agreements;
 CREATE POLICY "Users can view own agreements"
   ON agreements FOR SELECT
   USING (auth.uid() = user_id);
 
 -- Policy: Users can create agreements
+DROP POLICY IF EXISTS "Users can create agreements" ON agreements;
 CREATE POLICY "Users can create agreements"
   ON agreements FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
 -- Policy: Users can update their own agreements
+DROP POLICY IF EXISTS "Users can update own agreements" ON agreements;
 CREATE POLICY "Users can update own agreements"
   ON agreements FOR UPDATE
   USING (auth.uid() = user_id);
 
 -- Policy: Anyone can view agreement by token (for signing)
+DROP POLICY IF EXISTS "Public can view agreement by token" ON agreements;
 CREATE POLICY "Public can view agreement by token"
   ON agreements FOR SELECT
   USING (true);
 
 -- Policy: Anyone can update agreement status via token (for signing)
+DROP POLICY IF EXISTS "Public can sign agreement via token" ON agreements;
 CREATE POLICY "Public can sign agreement via token"
   ON agreements FOR UPDATE
   USING (true)

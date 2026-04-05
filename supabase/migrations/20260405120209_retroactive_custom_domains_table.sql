@@ -35,26 +35,31 @@ CREATE INDEX IF NOT EXISTS idx_custom_domains_domain ON custom_domains(domain);
 ALTER TABLE custom_domains ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Users can view their own domains
+DROP POLICY IF EXISTS "Users can view own domains" ON custom_domains;
 CREATE POLICY "Users can view own domains"
   ON custom_domains FOR SELECT
   USING (auth.uid() = user_id);
 
 -- Policy: Users can create domains
+DROP POLICY IF EXISTS "Users can create domains" ON custom_domains;
 CREATE POLICY "Users can create domains"
   ON custom_domains FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
 -- Policy: Users can update their own domains
+DROP POLICY IF EXISTS "Users can update own domains" ON custom_domains;
 CREATE POLICY "Users can update own domains"
   ON custom_domains FOR UPDATE
   USING (auth.uid() = user_id);
 
 -- Policy: Users can delete their own domains
+DROP POLICY IF EXISTS "Users can delete own domains" ON custom_domains;
 CREATE POLICY "Users can delete own domains"
   ON custom_domains FOR DELETE
   USING (auth.uid() = user_id);
 
 -- Policy: Public can look up domains (for middleware)
+DROP POLICY IF EXISTS "Public can lookup domains" ON custom_domains;
 CREATE POLICY "Public can lookup domains"
   ON custom_domains FOR SELECT
   USING (true);
