@@ -5,6 +5,7 @@ import Stripe from "stripe"
 import { createClient } from "@supabase/supabase-js"
 import { z } from "zod"
 import { applyRateLimit } from "@/lib/api-rate-limit"
+import { decrypt } from "@/lib/crypto"
 
 const paymentCheckoutSchema = z.object({
   leadId: z.string().uuid("Invalid lead ID"),
@@ -57,15 +58,39 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get the business's Stripe configuration
+    // Get the business's Stripe configuration.
+    // LB-6 dual-read: prefer the encrypted trio, fall back to legacy
+    // plaintext for rows that predate the backfill.
     const { data: depositConfig } = await supabase
       .from("deposit_portal_config")
-      .select("stripe_secret_key, stripe_publishable_key")
+      .select(
+        "stripe_secret_key, stripe_publishable_key, encrypted_stripe_secret_key, stripe_secret_key_iv, stripe_secret_key_tag"
+      )
       .eq("user_id", lead.user_id)
       .single()
 
+    let tenantStripeSecretKey: string | null = null
+    if (
+      depositConfig?.encrypted_stripe_secret_key &&
+      depositConfig?.stripe_secret_key_iv &&
+      depositConfig?.stripe_secret_key_tag
+    ) {
+      try {
+        tenantStripeSecretKey = decrypt({
+          ciphertext: depositConfig.encrypted_stripe_secret_key,
+          iv: depositConfig.stripe_secret_key_iv,
+          tag: depositConfig.stripe_secret_key_tag,
+        })
+      } catch (err) {
+        console.error("[payments/create-checkout] Failed to decrypt tenant Stripe key")
+      }
+    }
+    if (!tenantStripeSecretKey && depositConfig?.stripe_secret_key) {
+      tenantStripeSecretKey = depositConfig.stripe_secret_key
+    }
+
     // Use business's Stripe key if available, otherwise fall back to platform key
-    const stripeSecretKey = depositConfig?.stripe_secret_key || process.env.STRIPE_SECRET_KEY
+    const stripeSecretKey = tenantStripeSecretKey || process.env.STRIPE_SECRET_KEY
 
     if (!stripeSecretKey) {
       return NextResponse.json(

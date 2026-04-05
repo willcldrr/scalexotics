@@ -46,11 +46,16 @@ async function createSurvey() {
   if (!apiKey) {
     console.log("No API key found. Creating one...")
     const newKey = `sk_live_${crypto.randomUUID().replace(/-/g, "")}`
+    // LB-6 dual-write: store SHA-256 hash alongside plaintext until the
+    // drop migration runs.
+    // TODO(LB-6 cutover): remove plaintext write after drop migration
+    const { hashApiKey } = await import("../lib/crypto")
     const { error: createKeyError } = await supabase
       .from("api_keys")
       .insert({
         user_id: userId,
         key: newKey,
+        key_hash: hashApiKey(newKey),
         name: "Lead Capture API Key",
         is_active: true,
       })
