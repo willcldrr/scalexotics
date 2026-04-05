@@ -1,3 +1,9 @@
+-- Retroactively added to migration pipeline from ad-hoc SQL.
+-- Original path: supabase/security_fixes.sql
+-- NOTE: if this DDL has already been applied to production by hand, the
+--       new pipeline apply will no-op (IF NOT EXISTS) or fail loudly on
+--       re-apply. Review before running.
+
 -- Security Fixes for Velocity Labs Admin Dashboard
 -- Run these in your Supabase SQL Editor
 -- IMPORTANT: Run these in order

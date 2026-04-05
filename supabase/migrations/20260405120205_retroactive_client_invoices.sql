@@ -1,3 +1,9 @@
+-- Retroactively added to migration pipeline from ad-hoc SQL.
+-- Original path: supabase/client_invoices.sql
+-- NOTE: if this DDL has already been applied to production by hand, the
+--       new pipeline apply will no-op (IF NOT EXISTS) or fail loudly on
+--       re-apply. Review before running.
+
 -- Client Invoices table for Velocity Labs billing
 -- Run this in your Supabase SQL Editor
 

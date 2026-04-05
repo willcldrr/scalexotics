@@ -1,3 +1,9 @@
+-- Retroactively added to migration pipeline from ad-hoc SQL.
+-- Original path: supabase/performance_indexes.sql
+-- NOTE: if this DDL has already been applied to production by hand, the
+--       new pipeline apply will no-op (IF NOT EXISTS) or fail loudly on
+--       re-apply. Review before running.
+
 -- Performance Indexes for Dashboard Speed Optimization
 -- Run this in Supabase SQL Editor to significantly improve query performance
 

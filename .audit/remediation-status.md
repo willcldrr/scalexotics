@@ -13,7 +13,7 @@ Legend: `[ ] PENDING` · `[~] IN PROGRESS` · `[✓] DONE` · `[!] BLOCKED`
 | LB-2 | [ ] | /api/admin/restore-session lateral takeover (caller==target, audit log) | W2-A |
 | LB-3 | [ ] | Instagram OAuth `state`-as-userId hijack (resolve user from session) | W2-A |
 | LB-4 | [ ] | Collapse/namespace Stripe webhooks; IG+TG idempotency | W2-B |
-| LB-5a | [ ] | Postgres EXCLUDE USING gist on bookings (vehicle × daterange) | W1-B |
+| LB-5a | [✓] | Postgres EXCLUDE USING gist on bookings (vehicle × daterange) | W1-B |
 | LB-5b | [ ] | Post-payment multi-step mutation → Postgres RPC transaction | W2-B |
 | LB-6 | [✓] | Encrypt per-tenant Stripe keys, IG tokens; hash api_keys | W1-A |
 | LB-7 | [ ] | Structured logger + Sentry wiring; redact 245 console.* | W2-D |
@@ -75,9 +75,9 @@ Legend: `[ ] PENDING` · `[~] IN PROGRESS` · `[✓] DONE` · `[!] BLOCKED`
 - [ ] F-20 — no trace propagation into Supabase/Stripe/Anthropic
 
 ### DevOps (HIGH tier)
-- [ ] DevOps H1 — 22 ad-hoc supabase/*.sql files outside migrations/ (W1-B)
-- [ ] DevOps H2 — migrations not transactional, no down scripts
-- [ ] DevOps H3 — migration filename collisions / 2024 typo
+- [✓] DevOps H1 — 22 ad-hoc supabase/*.sql files outside migrations/ (W1-B) — 21 files promoted to `supabase/migrations/20260405120200..20260405120220_retroactive_*.sql` (actual count was 21, not 22; all DDL, no seeds or scratch scripts). `supabase/performance_indexes.sql` kept as retroactive migration because it differs meaningfully from `20260404_performance_indexes.sql` (different index sets).
+- [ ] DevOps H2 — migrations not transactional, no down scripts — DEFERRED from W1-B. Wrapping each existing migration in BEGIN/COMMIT touches every historical file and risks breaking idempotency semantics (e.g. `CREATE EXTENSION` inside a transaction, `DO $$` blocks). Requires coordinated review per-file plus matching down scripts. Tracked as a standalone follow-up wave.
+- [ ] DevOps H3 — migration filename collisions / 2024 typo — DEFERRED from W1-B. Hard rule for this wave was "do not rename existing migrations" because any environment that has already applied them would re-apply or diverge from the tracked history. Fix requires coordination with every environment's `schema_migrations` ledger and is out of scope here.
 - [ ] DevOps H4 — PM2-vs-Vercel ambiguity in ecosystem.config.js
 - [ ] DevOps H5 — vercel.json missing functions.maxDuration + regions
 - [ ] DevOps H6 — cron CRON_SECRET enforcement verification
