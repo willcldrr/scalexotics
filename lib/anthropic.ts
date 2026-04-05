@@ -1,5 +1,14 @@
 import Anthropic from "@anthropic-ai/sdk"
 
+// Hard ceiling for a single Anthropic call. Serverless functions can hang on
+// a stalled upstream connection and silently burn the entire function timeout
+// budget; this bounds the blast radius of any one request.
+const ANTHROPIC_REQUEST_TIMEOUT_MS = 30_000
+
+// Bounded retry for transient network failures. We do NOT retry auth errors
+// or 4xx responses — only timeouts and 5xx class failures.
+const ANTHROPIC_MAX_RETRIES = 2
+
 // Lazy-initialized Anthropic client (initialized on first use, not at build time)
 let anthropicClient: Anthropic | null = null
 
@@ -10,6 +19,9 @@ function getAnthropicClient(): Anthropic {
     }
     anthropicClient = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY,
+      // SDK-level defaults; individual requests can still override via options.
+      timeout: ANTHROPIC_REQUEST_TIMEOUT_MS,
+      maxRetries: ANTHROPIC_MAX_RETRIES,
     })
   }
   return anthropicClient
@@ -211,13 +223,20 @@ export async function generateResponse(
 
   try {
     const client = getAnthropicClient()
-    const response = await client.messages.create({
-      model: finalModel,
-      max_tokens: maxTokens,
-      temperature,
-      system: systemPrompt,
-      messages: anthropicMessages,
-    })
+    const response = await client.messages.create(
+      {
+        model: finalModel,
+        max_tokens: maxTokens,
+        temperature,
+        system: systemPrompt,
+        messages: anthropicMessages,
+      },
+      {
+        // Per-request timeout; caps the stall time on any single call even if
+        // the client-level default is bumped elsewhere.
+        timeout: ANTHROPIC_REQUEST_TIMEOUT_MS,
+      }
+    )
 
     const content = response.content[0].type === "text"
       ? response.content[0].text

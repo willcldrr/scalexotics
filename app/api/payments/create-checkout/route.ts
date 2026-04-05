@@ -1,14 +1,17 @@
+export const dynamic = "force-dynamic"
+
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createClient } from "@supabase/supabase-js"
 import { z } from "zod"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 const paymentCheckoutSchema = z.object({
   leadId: z.string().uuid("Invalid lead ID"),
   vehicleId: z.string().uuid("Invalid vehicle ID"),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
-  depositAmount: z.number().positive("Deposit must be positive").max(100000, "Deposit too large"),
+  // depositAmount removed - calculated server-side from AI settings deposit_percentage
   customerPhone: z.string().max(20).optional(),
   customerName: z.string().max(200).optional(),
   customerEmail: z.string().email().optional().nullable(),
@@ -17,11 +20,14 @@ const paymentCheckoutSchema = z.object({
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 }
 
 export async function POST(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 15, window: 60 })
+  if (limited) return limited
+
   try {
     const supabase = getSupabase()
 
@@ -35,7 +41,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { leadId, vehicleId, startDate, endDate, depositAmount, customerPhone, customerName, customerEmail } = parseResult.data
+    const { leadId, vehicleId, startDate, endDate, customerPhone, customerName, customerEmail } = parseResult.data
 
     // Get the lead to find the user_id (business owner)
     const { data: lead } = await supabase
@@ -70,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     // Create Stripe instance with the business's key
     const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: "2025-12-15.clover",
+      apiVersion: "2026-02-25.clover",
     })
 
     // Get vehicle details
@@ -87,11 +93,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check for booking conflicts
+    const { data: conflicts } = await supabase
+      .from("bookings")
+      .select("id")
+      .eq("vehicle_id", vehicleId)
+      .eq("user_id", lead.user_id)
+      .in("status", ["confirmed", "pending"])
+      .lte("start_date", endDate)
+      .gte("end_date", startDate)
+
+    if (conflicts && conflicts.length > 0) {
+      return NextResponse.json(
+        { error: "This vehicle is already booked for the selected dates. Please choose different dates." },
+        { status: 409 }
+      )
+    }
+
     // Calculate rental days
     const start = new Date(startDate)
     const end = new Date(endDate)
     const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
     const totalAmount = days * vehicle.daily_rate
+
+    // Get AI settings for the business to determine deposit percentage
+    const { data: aiSettings } = await supabase
+      .from("ai_settings")
+      .select("deposit_percentage")
+      .eq("user_id", lead.user_id)
+      .single()
+
+    const depositPercentage = aiSettings?.deposit_percentage || 25
+    const depositAmount = totalAmount * depositPercentage / 100
 
     // Get the base URL for redirects
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.headers.get("origin") || "http://localhost:3000"

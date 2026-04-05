@@ -5,6 +5,7 @@ import {
   verifyLinkCode,
   getUserByChatId,
 } from "@/lib/telegram-bot-ai"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 
@@ -14,11 +15,8 @@ function verifyTelegramRequest(request: NextRequest): boolean {
   // If TELEGRAM_WEBHOOK_SECRET is set, verify the header
   const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET
   if (!webhookSecret) {
-    // No secret configured - allow (but log warning in production)
-    if (process.env.NODE_ENV === "production") {
-      console.warn("[Telegram] TELEGRAM_WEBHOOK_SECRET not set - webhook requests are not verified")
-    }
-    return true
+    console.error("[Telegram] TELEGRAM_WEBHOOK_SECRET not set - rejecting unverified request")
+    return false
   }
 
   const secretHeader = request.headers.get("x-telegram-bot-api-secret-token")
@@ -77,6 +75,9 @@ async function sendTelegramMessage(chatId: string | number, text: string) {
 }
 
 export async function POST(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 100, window: 60 })
+  if (limited) return limited
+
   // Verify the request is from Telegram
   if (!verifyTelegramRequest(request)) {
     console.error("[Telegram] Invalid webhook secret")
@@ -143,6 +144,9 @@ export async function POST(request: NextRequest) {
 }
 
 // Telegram sends GET request to verify webhook
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 100, window: 60 })
+  if (limited) return limited
+
   return NextResponse.json({ status: "Telegram webhook is active" })
 }

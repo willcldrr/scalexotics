@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js"
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 }
 
@@ -33,12 +33,17 @@ export async function findOrCreateInstagramLead(
     .single()
 
   if (existingLead) {
-    // Update username if we have it and it's different
+    // Update username and fix generic names
+    const updates: Record<string, string> = {}
     if (instagramUsername) {
-      await supabase
-        .from("leads")
-        .update({ instagram_username: instagramUsername })
-        .eq("id", existingLead.id)
+      updates.instagram_username = instagramUsername
+    }
+    if (existingLead.name.startsWith("Instagram User") && (instagramName || instagramUsername)) {
+      updates.name = instagramName || `@${instagramUsername}`
+    }
+    if (Object.keys(updates).length > 0) {
+      await supabase.from("leads").update(updates).eq("id", existingLead.id)
+      if (updates.name) existingLead.name = updates.name
     }
     return existingLead
   }

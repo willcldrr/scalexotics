@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 // Service role client for admin operations
 const getServiceSupabase = () => {
@@ -44,7 +45,7 @@ async function safeSetNull(
   value: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const { error } = await supabase.from(table).update({ [column]: null }).eq(column, value)
+    const { error } = await (supabase.from(table) as any).update({ [column]: null }).eq(column, value)
     if (error) {
       console.error(`[SET NULL] ${table}.${column}: ${error.message}`)
       return { success: false, error: error.message }
@@ -59,6 +60,9 @@ async function safeSetNull(
 }
 
 export async function DELETE(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 10, window: 60 })
+  if (limited) return limited
+
   const errors: string[] = []
 
   try {
@@ -74,7 +78,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Check admin status using service role
-    let serviceSupabase: ReturnType<typeof createClient>
+    let serviceSupabase: any
     try {
       serviceSupabase = getServiceSupabase()
     } catch (e) {

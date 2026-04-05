@@ -1,4 +1,4 @@
--- Client Invoices table for Scale Exotics billing
+-- Client Invoices table for Velocity Labs billing
 -- Run this in your Supabase SQL Editor
 
 CREATE TABLE client_invoices (

@@ -17,7 +17,7 @@ import {
   Phone,
   Building2,
 } from "lucide-react"
-import MatrixRainLoader from "@/app/components/matrix-rain-loader"
+import PageTransition from "@/app/components/page-transition"
 
 interface Business {
   id: string
@@ -139,10 +139,6 @@ export default function ConnectionsPage() {
     }
   }
 
-  if (loading) {
-    return <MatrixRainLoader />
-  }
-
   if (!business) {
     return (
       <div className="text-center py-12">
@@ -159,6 +155,7 @@ export default function ConnectionsPage() {
   const stripeStatus = getStripeStatus()
 
   return (
+    <PageTransition loading={loading}>
     <div className="space-y-6 max-w-4xl">
       {/* Header */}
       <div>
@@ -367,5 +364,6 @@ export default function ConnectionsPage() {
         </p>
       </div>
     </div>
+    </PageTransition>
   )
 }

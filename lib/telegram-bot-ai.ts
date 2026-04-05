@@ -123,7 +123,7 @@ const tools: Anthropic.Tool[] = [
       properties: {
         status: {
           type: "string",
-          enum: ["new", "contacted", "qualified", "negotiating", "booked", "lost", "all"],
+          enum: ["new", "qualified", "pending", "booked", "lost", "cancelled", "followup", "all"],
           description: "Filter by lead status (default: all)",
         },
         limit: {
@@ -146,7 +146,7 @@ const tools: Anthropic.Tool[] = [
         },
         status: {
           type: "string",
-          enum: ["new", "contacted", "qualified", "negotiating", "booked", "lost"],
+          enum: ["new", "qualified", "pending", "booked", "lost", "cancelled", "followup"],
           description: "The new status for the lead",
         },
       },

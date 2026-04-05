@@ -1,16 +1,16 @@
 {
   "company": {
-    "name": "Scale Exotics",
+    "name": "Velocity Labs",
     "tagline": "The proven system that fills your fleet with premium bookings—on autopilot",
     "tagline_alt": "The all in one growth engine for rental fleets",
     "meta_description": "Learn how to scale your exotic car rental business to $50k/month+ with our automated booking assistant",
     "mission": "We believe exotic car rental businesses deserve better than manual lead chasing and inconsistent revenue. Our mission is to give every fleet owner the automated systems they need to scale predictably.",
     "elevator_pitch": "We help exotic car rental fleet owners build automated systems that generate consistent $50k+ months on autopilot",
     "contact": {
-      "email": "info@scalexotics.com",
+      "email": "info@managevelocity.com",
       "phone": "+1 (844) 794-8871",
-      "website": "https://scalexotics.com",
-      "dashboard": "app.scalexotics.com/dashboard"
+      "website": "https://managevelocity.com",
+      "dashboard": "app.managevelocity.com/dashboard"
     },
     "target_audience": {
       "primary": "Exotic car rental fleet owners",
@@ -47,7 +47,7 @@
         "location": "LA"
       },
       {
-        "quote": "Went from $18k to $52k/month in 90 days. Scale Exotics knows exactly what works in this industry.",
+        "quote": "Went from $18k to $52k/month in 90 days. Velocity Labs knows exactly what works in this industry.",
         "author": "Anthony M.",
         "fleet": "6-Vehicle Fleet",
         "location": "Vegas"

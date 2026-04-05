@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createClient } from "@supabase/supabase-js"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 }
 
@@ -29,6 +30,9 @@ async function getStripeKeyForUser(userId: string): Promise<string | null> {
 }
 
 export async function POST(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 20, window: 60 })
+  if (limited) return limited
+
   try {
     const { sessionId } = await request.json()
 
@@ -84,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: "2025-12-15.clover",
+      apiVersion: "2026-02-25.clover",
     })
 
     const session = await stripe.checkout.sessions.retrieve(sessionId)
@@ -174,7 +178,7 @@ export async function POST(request: NextRequest) {
       await supabase
         .from("leads")
         .update({
-          status: "converted",
+          status: "booked",
           notes: `Deposit paid: $${depositAmount} via Stripe`,
         })
         .eq("id", leadId)

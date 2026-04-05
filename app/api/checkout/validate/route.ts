@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { lookupPaymentToken, decodePaymentToken, lookupBusinessById, BusinessInfo } from "@/lib/payment-link"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 export const runtime = "nodejs"
 
@@ -48,6 +49,9 @@ async function lookupDepositPortalConfig(userId: string): Promise<DepositPortalB
 }
 
 export async function POST(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 20, window: 60 })
+  if (limited) return limited
+
   try {
     const { token } = await request.json()
 

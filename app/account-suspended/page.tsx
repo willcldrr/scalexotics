@@ -145,7 +145,7 @@ export default function AccountSuspendedPage() {
             <div className="text-left">
               <p className="text-sm text-white/80 font-medium">Need help?</p>
               <p className="text-sm text-white/40 mt-1">
-                Contact us at <a href="mailto:support@velocitylabs.ai" className="text-white/60 hover:text-white underline">support@velocitylabs.ai</a>
+                Contact us at <a href="mailto:support@managevelocity.com" className="text-white/60 hover:text-white underline">support@managevelocity.com</a>
               </p>
             </div>
           </div>
@@ -216,8 +216,8 @@ export default function AccountSuspendedPage() {
                 <h4 className="font-medium text-white/90 mb-2">What you can do:</h4>
                 <p className="text-white/50">
                   If you believe this suspension was made in error, please contact our support team at{" "}
-                  <a href="mailto:support@velocitylabs.ai" className="text-white/70 underline">
-                    support@velocitylabs.ai
+                  <a href="mailto:support@managevelocity.com" className="text-white/70 underline">
+                    support@managevelocity.com
                   </a>{" "}
                   with your account details and we will review your case.
                 </p>

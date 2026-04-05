@@ -1,23 +1,27 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createClient } from "@supabase/supabase-js"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-12-15.clover",
+  apiVersion: "2026-02-25.clover",
 })
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
 export async function POST(request: NextRequest) {
-  try {
-    const { bookingId, vehicleName, startDate, endDate, depositAmount, customerEmail } = await request.json()
+  const limited = applyRateLimit(request, { limit: 15, window: 60 })
+  if (limited) return limited
 
-    if (!bookingId || !depositAmount) {
+  try {
+    const { bookingId, vehicleName, startDate, endDate, customerEmail } = await request.json()
+
+    if (!bookingId) {
       return NextResponse.json(
-        { error: "Booking ID and deposit amount are required" },
+        { error: "Booking ID is required" },
         { status: 400 }
       )
     }
@@ -55,7 +59,7 @@ export async function POST(request: NextRequest) {
               name: `Rental Deposit - ${vehicleName}`,
               description: `${startDate} to ${endDate}`,
             },
-            unit_amount: Math.round(depositAmount * 100), // Convert to cents
+            unit_amount: Math.round(booking.deposit_amount * 100), // Convert to cents - use DB amount
           },
           quantity: 1,
         },

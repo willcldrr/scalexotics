@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 function getSupabase() {
   return createClient(
@@ -13,6 +14,9 @@ function getSupabase() {
  * Exchanges auth code for access token and stores credentials
  */
 export async function GET(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 10, window: 60 })
+  if (limited) return limited
+
   const searchParams = request.nextUrl.searchParams
   const code = searchParams.get("code")
   const state = searchParams.get("state")
@@ -186,11 +190,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Clear the state cookie
+    dashboardUrl.searchParams.set("instagram_success", "true")
     const response = NextResponse.redirect(dashboardUrl)
     response.cookies.delete("instagram_oauth_state")
-    dashboardUrl.searchParams.set("instagram_success", "true")
-
-    return NextResponse.redirect(dashboardUrl)
+    return response
   } catch (err) {
     console.error("[Instagram OAuth] Error:", err)
     dashboardUrl.searchParams.set("instagram_error", "An unexpected error occurred")

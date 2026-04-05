@@ -1,4 +1,4 @@
-# Scale Exotics - Project Analysis Report
+# Velocity Labs - Project Analysis Report
 
 **Prepared for**: Brand Ambassador Review
 **Date**: January 2025
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Scale Exotics is a **B2B SaaS platform for exotic car rental businesses**. The platform provides lead capture, AI-powered SMS conversations, booking management, payment processing, and customer reactivation tools. It's built as a white-label solution that can be resold to other rental businesses.
+Velocity Labs is a **B2B SaaS platform for exotic car rental businesses**. The platform provides lead capture, AI-powered SMS conversations, booking management, payment processing, and customer reactivation tools. It's built as a white-label solution that can be resold to other rental businesses.
 
 **Tech Stack**: Next.js 16, React 19, Supabase (PostgreSQL), Stripe, Twilio, Claude AI
 
@@ -47,7 +47,7 @@ Scale Exotics is a **B2B SaaS platform for exotic car rental businesses**. The p
 | `/sign/[token]` | Digital agreement signing |
 | `/inspection/[token]` | Vehicle inspection form |
 
-### 4. Admin Tools (for Scale Exotics internal use)
+### 4. Admin Tools (for Velocity Labs internal use)
 | Tool | Purpose |
 |------|---------|
 | Client Invoices | Create B2B invoices (booking credits + ad spend) |
@@ -87,7 +87,7 @@ Scale Exotics is a **B2B SaaS platform for exotic car rental businesses**. The p
 7. Confirmation SMS sent with details
 ```
 
-### Revenue Model for Scale Exotics
+### Revenue Model for Velocity Labs
 - **Pay-per-booking fee**: Charge clients per qualified lead/booking
 - **Ad spend passthrough**: Bill clients for ad management
 - **Platform subscription**: Monthly access to dashboard (future)

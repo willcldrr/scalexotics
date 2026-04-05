@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import twilio from "twilio"
 import { z } from "zod"
-import { defaultLeadStatus, contactedStatus } from "@/lib/lead-status"
+import { defaultLeadStatus } from "@/lib/lead-status"
 import { checkRateLimit, getRateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
+import { resolveSurveyOrApiKey } from "@/lib/survey-auth"
 
 // Input validation schema
 const leadCaptureSchema = z.object({
@@ -20,7 +21,7 @@ const leadCaptureSchema = z.object({
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 }
 
@@ -35,7 +36,7 @@ function getTwilioClient() {
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, X-API-Key",
+  "Access-Control-Allow-Headers": "Content-Type, X-API-Key, X-Survey-Slug",
 }
 
 export async function OPTIONS() {
@@ -117,36 +118,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get API key from header for non-A2P submissions
-    const apiKey = request.headers.get("X-API-Key")
-
-    if (!apiKey) {
+    // Resolve auth: accepts either X-API-Key (legacy third-party widgets) or
+    // X-Survey-Slug (hosted survey at /lead/[slug]). The survey-slug path
+    // replaces the old flow where the browser held a real api_key.
+    const authResult = await resolveSurveyOrApiKey(request, supabase)
+    if (!authResult.ok) {
       return NextResponse.json(
-        { error: "Missing API key" },
-        { status: 401, headers: corsHeaders }
+        { error: authResult.error },
+        { status: authResult.status, headers: corsHeaders }
       )
     }
-
-    // Validate API key and get associated user
-    const { data: keyData, error: keyError } = await supabase
-      .from("api_keys")
-      .select("id, user_id, is_active, domain")
-      .eq("key", apiKey)
-      .single()
-
-    if (keyError || !keyData) {
-      return NextResponse.json(
-        { error: "Invalid API key" },
-        { status: 401, headers: corsHeaders }
-      )
-    }
-
-    if (!keyData.is_active) {
-      return NextResponse.json(
-        { error: "API key is inactive" },
-        { status: 401, headers: corsHeaders }
-      )
-    }
+    const auth = authResult.auth
 
     // Body already parsed above for A2P check
     // const { name, email, phone, vehicle_interest, notes, source } = body
@@ -176,7 +158,7 @@ export async function POST(request: NextRequest) {
     const { data: existingLead } = await supabase
       .from("leads")
       .select("id")
-      .eq("user_id", keyData.user_id)
+      .eq("user_id", auth.userId)
       .or(`phone.ilike.%${cleanPhone.slice(-10)}%`)
       .single()
 
@@ -196,11 +178,14 @@ export async function POST(request: NextRequest) {
         console.error("Error updating lead:", updateError)
       }
 
-      // Update last_used_at for API key
-      await supabase
-        .from("api_keys")
-        .update({ last_used_at: new Date().toISOString() })
-        .eq("id", keyData.id)
+      // Bookkeeping: only update api_key last_used_at when this request actually
+      // used an api_key (survey-slug auth has no key to stamp).
+      if (auth.source === "api_key" && auth.apiKeyId) {
+        await supabase
+          .from("api_keys")
+          .update({ last_used_at: new Date().toISOString() })
+          .eq("id", auth.apiKeyId)
+      }
 
       return NextResponse.json(
         {
@@ -217,14 +202,14 @@ export async function POST(request: NextRequest) {
     const { data: newLead, error: insertError } = await supabase
       .from("leads")
       .insert({
-        user_id: keyData.user_id,
-        api_key_id: keyData.id,
+        user_id: auth.userId,
+        api_key_id: auth.apiKeyId,
         name,
         email: email || null,
         phone: formattedPhone,
         vehicle_interest: vehicle_interest || null,
         notes: notes || null,
-        source: source || keyData.domain || "lead_capture",
+        source: source || auth.apiKeyDomain || (auth.source === "survey_slug" ? "hosted_survey" : "lead_capture"),
         status: defaultLeadStatus,
       })
       .select("id")
@@ -238,11 +223,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Update last_used_at for API key
-    await supabase
-      .from("api_keys")
-      .update({ last_used_at: new Date().toISOString() })
-      .eq("id", keyData.id)
+    // Bookkeeping: only update api_key last_used_at for api-key auth path.
+    if (auth.source === "api_key" && auth.apiKeyId) {
+      await supabase
+        .from("api_keys")
+        .update({ last_used_at: new Date().toISOString() })
+        .eq("id", auth.apiKeyId)
+    }
 
     // Send initial SMS to the new lead
     try {
@@ -252,14 +239,14 @@ export async function POST(request: NextRequest) {
       const { data: aiSettings } = await supabase
         .from("ai_settings")
         .select("business_name, tone")
-        .eq("user_id", keyData.user_id)
+        .eq("user_id", auth.userId)
         .single()
 
       // Get vehicles for context
       const { data: vehicles } = await supabase
         .from("vehicles")
         .select("make, model, year")
-        .eq("user_id", keyData.user_id)
+        .eq("user_id", auth.userId)
         .eq("status", "available")
         .limit(3)
 
@@ -282,7 +269,7 @@ export async function POST(request: NextRequest) {
 
       // Save the outbound message
       await supabase.from("messages").insert({
-        user_id: keyData.user_id,
+        user_id: auth.userId,
         lead_id: newLead.id,
         content: greeting,
         direction: "outbound",
@@ -291,7 +278,7 @@ export async function POST(request: NextRequest) {
       // Update lead status
       await supabase
         .from("leads")
-        .update({ status: contactedStatus })
+        .update({ status: "new" })
         .eq("id", newLead.id)
 
       // SMS sent successfully

@@ -1,6 +1,6 @@
--- Admin CRM Tables for Scale Exotics
+-- Admin CRM Tables for Velocity Labs
 -- Run this migration in your Supabase SQL editor
--- These tables are for managing B2B leads (potential Scale Exotics customers)
+-- These tables are for managing B2B leads (potential Velocity Labs customers)
 
 -- 1. CRM Leads - B2B Lead Management
 CREATE TABLE IF NOT EXISTS crm_leads (
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS crm_leads (
   contact_title VARCHAR(100), -- e.g., "Owner", "Fleet Manager"
 
   -- Lead Details
-  source VARCHAR(100), -- How they found Scale Exotics (e.g., "Referral", "Cold Outreach", "Inbound")
+  source VARCHAR(100), -- How they found Velocity Labs (e.g., "Referral", "Cold Outreach", "Inbound")
   status VARCHAR(50) NOT NULL DEFAULT 'not_contacted',
   -- Statuses: not_contacted, contacted, interested, not_interested, demo_scheduled, closed_won, closed_lost
 

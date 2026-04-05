@@ -106,7 +106,7 @@ export default function TelegramSettings() {
 
   if (loading) {
     return (
-      <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] p-6">
+      <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] shadow-[0_2px_20px_rgba(0,0,0,0.3),0_0_15px_rgba(255,255,255,0.03)] transition-all duration-300 hover:border-white/[0.12] p-6">
         <div className="animate-pulse space-y-4">
           <div className="h-6 bg-white/10 rounded w-1/3" />
           <div className="h-4 bg-white/10 rounded w-2/3" />
@@ -116,7 +116,7 @@ export default function TelegramSettings() {
   }
 
   return (
-    <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] p-6">
+    <div className="bg-white/[0.02] rounded-2xl border border-white/[0.08] shadow-[0_2px_20px_rgba(0,0,0,0.3),0_0_15px_rgba(255,255,255,0.03)] transition-all duration-300 hover:border-white/[0.12] p-6">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-xl bg-[#0088cc]/20 flex items-center justify-center">
           <MessageCircle className="w-5 h-5 text-[#0088cc]" />
@@ -141,7 +141,7 @@ export default function TelegramSettings() {
             <button
               onClick={disconnect}
               disabled={disconnecting}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-all duration-300 disabled:opacity-50"
             >
               <Unlink className="w-4 h-4" />
               {disconnecting ? "Disconnecting..." : "Disconnect"}
@@ -176,7 +176,7 @@ export default function TelegramSettings() {
                     </div>
                     <button
                       onClick={copyCode}
-                      className="p-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.1] transition-colors"
+                      className="p-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.1] transition-all duration-300"
                     >
                       {copied ? (
                         <Check className="w-5 h-5 text-emerald-400" />
@@ -193,7 +193,7 @@ export default function TelegramSettings() {
                 <button
                   onClick={generateCode}
                   disabled={generating}
-                  className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-[#0088cc] hover:bg-[#0088cc]/80 text-white rounded-xl transition-colors disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-[#0088cc] hover:bg-[#0088cc]/80 text-white rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-50"
                 >
                   {generating ? (
                     <>

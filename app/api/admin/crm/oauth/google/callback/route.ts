@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 export async function GET(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 10, window: 60 })
+  if (limited) return limited
+
   const searchParams = request.nextUrl.searchParams
   const code = searchParams.get("code")
   const state = searchParams.get("state")
@@ -27,6 +31,12 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return NextResponse.redirect(new URL("/login", baseUrl))
+  }
+
+  // Verify admin status
+  const { data: profile } = await supabase.from("profiles").select("is_admin").eq("id", user.id).single()
+  if (!profile?.is_admin) {
+    return NextResponse.redirect(new URL("/dashboard", baseUrl))
   }
 
   // Verify state

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 // Generate a random 6-character code
 function generateCode(): string {
@@ -12,6 +13,9 @@ function generateCode(): string {
 }
 
 export async function POST(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 10, window: 60 })
+  if (limited) return limited
+
   try {
     const supabase = await createClient()
 
@@ -61,6 +65,9 @@ export async function POST(request: NextRequest) {
 
 // Get current Telegram connection status
 export async function GET(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   try {
     const supabase = await createClient()
 
@@ -91,6 +98,9 @@ export async function GET(request: NextRequest) {
 
 // Disconnect Telegram
 export async function DELETE(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 10, window: 60 })
+  if (limited) return limited
+
   try {
     const supabase = await createClient()
 

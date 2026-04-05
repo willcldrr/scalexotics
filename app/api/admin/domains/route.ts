@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,6 +13,9 @@ const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID
 
 // GET - List all domains with their owners
 export async function GET(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   // Verify admin
   const authHeader = request.headers.get("authorization")
   if (!authHeader) {
@@ -57,6 +61,9 @@ export async function GET(request: NextRequest) {
 
 // POST - Add a domain to Vercel and database
 export async function POST(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   // Verify admin
   const authHeader = request.headers.get("authorization")
   if (!authHeader) {
@@ -167,6 +174,9 @@ export async function POST(request: NextRequest) {
 
 // DELETE - Remove a domain
 export async function DELETE(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   // Verify admin
   const authHeader = request.headers.get("authorization")
   if (!authHeader) {

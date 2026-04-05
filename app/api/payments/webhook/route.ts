@@ -1,20 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createClient } from "@supabase/supabase-js"
-import { convertedStatus } from "@/lib/lead-status"
+import { bookedStatus } from "@/lib/lead-status"
 import { generateResponse, ChatMessage } from "@/lib/anthropic"
 import { sendInstagramMessage } from "@/lib/instagram"
+import { applyRateLimit } from "@/lib/api-rate-limit"
+import { claimWebhookEvent, markWebhookEventProcessed } from "@/lib/webhook-idempotency"
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2025-12-15.clover",
+    apiVersion: "2026-02-25.clover",
   })
 }
 
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 }
 
@@ -84,6 +86,9 @@ DO NOT include any [EXTRACTED] blocks or special markers. Just write the natural
 }
 
 export async function POST(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 100, window: 60 })
+  if (limited) return limited
+
   const stripe = getStripe()
   const supabase = getSupabase()
 
@@ -105,6 +110,12 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     console.error("Webhook signature verification failed:", err.message)
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 })
+  }
+
+  // Idempotency: short-circuit duplicate deliveries of the same Stripe event.
+  const claim = await claimWebhookEvent("stripe", event.id, event.type)
+  if (!claim.claimed) {
+    return NextResponse.json({ received: true, duplicate: true })
   }
 
   // Handle the event
@@ -185,12 +196,20 @@ export async function POST(request: NextRequest) {
 
       console.log("Creating booking with userId:", userId, "vehicleId:", vehicleId)
 
+      // Verify the paid amount matches the expected deposit
+      const paidAmountCents = session.amount_total || 0
+      const expectedDepositCents = Math.round(depositAmount * 100)
+      if (Math.abs(paidAmountCents - expectedDepositCents) > 1) {
+        console.error(`AMOUNT MISMATCH: paid ${paidAmountCents} cents, expected ${expectedDepositCents} cents for vehicle ${vehicleId}`)
+        return NextResponse.json({ received: true })
+      }
+
       // Update lead status to converted (if we have a lead)
       if (lead && lead.id) {
         await supabase
           .from("leads")
           .update({
-            status: convertedStatus,
+            status: bookedStatus,
             notes: `Deposit paid: $${depositAmount} via Stripe`,
           })
           .eq("id", lead.id)
@@ -308,8 +327,15 @@ export async function POST(request: NextRequest) {
 
     } catch (error) {
       console.error("Error processing successful payment:", error)
+      await markWebhookEventProcessed(
+        claim.rowId,
+        "failed",
+        error instanceof Error ? error.message : String(error)
+      )
+      return NextResponse.json({ received: true })
     }
   }
 
+  await markWebhookEventProcessed(claim.rowId, "processed")
   return NextResponse.json({ received: true })
 }

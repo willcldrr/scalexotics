@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { fetchAndParseIcal, filterRelevantEvents } from "@/lib/ical-parser"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 interface SyncResult {
   vehicleId: string
@@ -16,6 +17,9 @@ interface SyncResult {
  * Manually trigger calendar sync for a specific vehicle or all vehicles
  */
 export async function POST(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   try {
     const supabase = await createClient()
 
@@ -129,6 +133,9 @@ export async function POST(request: NextRequest) {
  * Get sync status for vehicles
  */
 export async function GET(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   try {
     const supabase = await createClient()
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 // Service role client bypasses RLS
 const serviceSupabase = createClient(
@@ -36,6 +37,9 @@ async function verifyAdmin(request: NextRequest): Promise<{ isAdmin: boolean; us
 
 // GET - List all businesses
 export async function GET(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   const { isAdmin, error } = await verifyAdmin(request)
   if (!isAdmin) {
     return NextResponse.json({ error }, { status: error === "Unauthorized" ? 401 : 403 })
@@ -43,7 +47,7 @@ export async function GET(request: NextRequest) {
 
   const { data: businesses, error: dbError } = await serviceSupabase
     .from("businesses")
-    .select("*")
+    .select("id, name, slug, status, created_at, owner_id, logo_url, primary_color, stripe_publishable_key, payment_domain")
     .order("created_at", { ascending: false })
 
   if (dbError) {
@@ -55,6 +59,9 @@ export async function GET(request: NextRequest) {
 
 // POST - Create a new business
 export async function POST(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   const { isAdmin, error } = await verifyAdmin(request)
   if (!isAdmin) {
     return NextResponse.json({ error }, { status: error === "Unauthorized" ? 401 : 403 })
@@ -98,6 +105,9 @@ export async function POST(request: NextRequest) {
 
 // PATCH - Update business (full update or status only)
 export async function PATCH(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   const { isAdmin, error } = await verifyAdmin(request)
   if (!isAdmin) {
     return NextResponse.json({ error }, { status: error === "Unauthorized" ? 401 : 403 })
@@ -154,6 +164,9 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE - Delete a business
 export async function DELETE(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   const { isAdmin, error } = await verifyAdmin(request)
   if (!isAdmin) {
     return NextResponse.json({ error }, { status: error === "Unauthorized" ? 401 : 403 })

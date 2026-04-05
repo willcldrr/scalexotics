@@ -29,7 +29,9 @@ import {
 } from "lucide-react"
 import { format, parseISO, differenceInDays, isAfter, isBefore, startOfDay } from "date-fns"
 import { leadStatusOptions, getStatusColor, getStatusLabel } from "@/lib/lead-status"
-import MatrixRainLoader from "@/app/components/matrix-rain-loader"
+import PageTransition from "@/app/components/page-transition"
+// LeadDetailModal removed - causes chunk loading issues
+// import LeadDetailModal from "@/app/dashboard/leads/components/lead-detail-modal"
 
 interface Vehicle {
   id: string
@@ -39,6 +41,7 @@ interface Vehicle {
   year: number
   daily_rate: number
   image_url: string | null
+  color: string | null
 }
 
 interface Booking {
@@ -101,18 +104,6 @@ interface Message {
   created_at: string
 }
 
-// Vehicle colors for the calendar
-const vehicleColors = [
-  'bg-emerald-900 border-emerald-700',
-  'bg-slate-700 border-slate-600',
-  'bg-amber-900 border-amber-700',
-  'bg-rose-900 border-rose-700',
-  'bg-cyan-900 border-cyan-700',
-  'bg-violet-900 border-violet-700',
-  'bg-zinc-700 border-zinc-600',
-  'bg-orange-900 border-orange-700',
-]
-
 const statusConfig = {
   pending: {
     label: "Pending",
@@ -130,25 +121,25 @@ const statusConfig = {
   },
   completed: {
     label: "Completed",
-    color: "text-white/60",
+    color: "text-white/50",
     bg: "bg-white/5",
     border: "border-white/10",
     icon: CheckCircle,
   },
   cancelled: {
     label: "Cancelled",
-    color: "text-red-400",
-    bg: "bg-red-400/10",
-    border: "border-red-400/20",
+    color: "text-white/30",
+    bg: "bg-white/5",
+    border: "border-white/10",
     icon: XCircle,
   },
 }
 
 const bookingStatusOptions = [
-  { value: "pending", label: "Pending", color: "bg-amber-500/20 text-amber-400" },
-  { value: "confirmed", label: "Confirmed", color: "bg-emerald-500/20 text-emerald-400" },
-  { value: "completed", label: "Completed", color: "bg-blue-500/20 text-blue-400" },
-  { value: "cancelled", label: "Cancelled", color: "bg-red-500/20 text-red-400" },
+  { value: "pending", label: "Pending", color: "bg-amber-500/15 text-amber-400" },
+  { value: "confirmed", label: "Confirmed", color: "bg-emerald-500/15 text-emerald-400" },
+  { value: "completed", label: "Completed", color: "bg-white/10 text-white/50" },
+  { value: "cancelled", label: "Cancelled", color: "bg-white/10 text-white/30" },
 ]
 
 export default function BookingsPage() {
@@ -162,7 +153,8 @@ export default function BookingsPage() {
   const loading = cacheData.isLoading
 
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null)
+  const [hoveredBookingId, setHoveredBookingId] = useState<string | null>(null)
 
   // Calendar state
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([])
@@ -183,12 +175,13 @@ export default function BookingsPage() {
   const [updatingLead, setUpdatingLead] = useState(false)
   const bookingStatusRef = useRef<HTMLDivElement>(null)
   const leadStatusRef = useRef<HTMLDivElement>(null)
+  // const [leadDetailLead, setLeadDetailLead] = useState<Lead | null>(null)
 
   // Create a color map for vehicles
   const vehicleColorMap = useMemo(() => {
     const map = new Map<string, string>()
-    vehicles.forEach((v, i) => {
-      map.set(v.id, vehicleColors[i % vehicleColors.length])
+    vehicles.forEach(v => {
+      map.set(v.id, v.color || '#ffffff')
     })
     return map
   }, [vehicles])
@@ -386,7 +379,7 @@ export default function BookingsPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  // Filter and sort bookings - pending deposits first
+  // Filter and sort bookings - upcoming first, then past
   const filteredBookings = useMemo(() => {
     let filtered = bookings.filter(b => b.status !== "cancelled")
 
@@ -402,15 +395,74 @@ export default function BookingsPage() {
       )
     }
 
-    // Sort: pending deposits first, then by start date
+    const today = startOfDay(new Date())
+    // Sort: upcoming first, then past; within each group by start date
     return filtered.sort((a, b) => {
-      // Pending deposits first
-      if (!a.deposit_paid && b.deposit_paid) return -1
-      if (a.deposit_paid && !b.deposit_paid) return 1
-      // Then by start date (upcoming first)
+      const aIsPast = isBefore(parseISO(a.end_date), today)
+      const bIsPast = isBefore(parseISO(b.end_date), today)
+      if (aIsPast !== bIsPast) return aIsPast ? 1 : -1
       return new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
     })
   }, [bookings, searchQuery])
+
+  // Combined list of bookings and calendar events
+  const combinedBookings = useMemo(() => {
+    const items: Array<{
+      id: string
+      vehicleId: string
+      vehicleName: string
+      customerName: string
+      startDate: string
+      endDate: string
+      color: string
+      type: 'booking' | 'sync'
+      booking?: Booking
+      calendarEvent?: CalendarEvent
+    }> = []
+
+    // Add bookings
+    filteredBookings.forEach(b => {
+      const vehicle = b.vehicles
+      items.push({
+        id: b.id,
+        vehicleId: b.vehicle_id,
+        vehicleName: vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Unknown',
+        customerName: b.customer_name,
+        startDate: b.start_date,
+        endDate: b.end_date,
+        color: vehicleColorMap.get(b.vehicle_id) || '#ffffff',
+        type: 'booking',
+        booking: b,
+      })
+    })
+
+    // Add Turo calendar events
+    calendarEvents.forEach(event => {
+      const vehicle = vehicles.find(v => v.id === event.vehicle_id)
+      if (!vehicle) return
+      items.push({
+        id: event.id,
+        vehicleId: event.vehicle_id,
+        vehicleName: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+        customerName: event.event_summary || 'Turo Booking',
+        startDate: event.start_date,
+        endDate: event.end_date,
+        color: vehicleColorMap.get(event.vehicle_id) || '#ffffff',
+        type: 'sync',
+        calendarEvent: event,
+      })
+    })
+
+    // Sort: upcoming first, then past; within each group by start date
+    const today = startOfDay(new Date())
+    items.sort((a, b) => {
+      const aIsPast = a.endDate ? isBefore(parseISO(a.endDate), today) : false
+      const bIsPast = b.endDate ? isBefore(parseISO(b.endDate), today) : false
+      if (aIsPast !== bIsPast) return aIsPast ? 1 : -1
+      return new Date(a.startDate || 0).getTime() - new Date(b.startDate || 0).getTime()
+    })
+    return items
+  }, [filteredBookings, calendarEvents, vehicles, vehicleColorMap])
 
   // Calendar helpers
   const getWeeksInMonth = (date: Date) => {
@@ -465,7 +517,7 @@ export default function BookingsPage() {
         label: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
         startDate: new Date(event.start_date),
         endDate: new Date(event.end_date),
-        color: vehicleColorMap.get(event.vehicle_id) || vehicleColors[0],
+        color: vehicleColorMap.get(event.vehicle_id) || '#ffffff',
         type: 'sync',
         calendarEvent: event,
       })
@@ -484,7 +536,7 @@ export default function BookingsPage() {
           label: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
           startDate: new Date(booking.start_date),
           endDate: new Date(booking.end_date),
-          color: vehicleColorMap.get(booking.vehicle_id) || vehicleColors[0],
+          color: vehicleColorMap.get(booking.vehicle_id) || '#ffffff',
           type: 'booking',
           booking: booking,
         })
@@ -554,34 +606,31 @@ export default function BookingsPage() {
     return !isBefore(now, start) && !isAfter(now, end) && b.status !== "cancelled"
   }).length
 
-  if (loading) {
-    return <MatrixRainLoader />
-  }
-
   return (
+    <PageTransition loading={loading}>
     <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-120px)]">
       {/* Left Panel - Booking List */}
-      <div className="w-full lg:w-80 flex-shrink-0 flex flex-col bg-white/[0.02] border border-white/[0.08] rounded-2xl overflow-hidden h-[50vh] lg:h-auto">
+      <div className="w-full lg:w-80 flex-shrink-0 flex flex-col bg-white/[0.02] rounded-2xl border border-white/[0.06] p-0 overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.3)] h-[50vh] lg:h-auto">
         {/* Header with stats */}
-        <div className="p-3 border-b border-white/[0.08]">
-          <div className="mb-3">
-            <h2 className="font-semibold text-sm">Bookings</h2>
+        <div className="border-b border-white/[0.06]">
+          <div className="p-3 pb-0">
+            <h2 className="font-semibold text-sm mb-3">Bookings</h2>
           </div>
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
             <input
               type="text"
               placeholder="Search bookings..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-2 py-1.5 rounded-lg bg-white/5 border border-white/[0.08] text-xs text-white placeholder:text-white/40 focus:outline-none focus:border-white/30"
+              className="w-full pl-9 pr-3 py-2.5 bg-white/[0.03] border-b border-white/[0.06] text-xs text-white placeholder:text-white/40 focus:outline-none focus:bg-white/[0.05] transition-all duration-200"
             />
           </div>
         </div>
 
         {/* Booking List */}
         <div className="flex-1 overflow-y-auto">
-          {filteredBookings.length === 0 ? (
+          {combinedBookings.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full p-4 text-center">
               <div className="w-14 h-14 rounded-xl bg-white/[0.03] flex items-center justify-center mb-4">
                 <CalendarDays className="w-7 h-7 text-white/20" />
@@ -596,62 +645,78 @@ export default function BookingsPage() {
               </p>
             </div>
           ) : (
-            filteredBookings.map((booking) => {
-              const vehicle = booking.vehicles
-              const status = statusConfig[booking.status]
-              const now = startOfDay(new Date())
-              const start = parseISO(booking.start_date)
-              const end = parseISO(booking.end_date)
-              const isActive = !isBefore(now, start) && !isAfter(now, end) && booking.status !== "cancelled"
-              const isSelected = selectedBooking?.id === booking.id
+            combinedBookings.map((item) => {
+              if (!item.startDate || !item.endDate) return null
+              const start = parseISO(item.startDate)
+              const end = parseISO(item.endDate)
+              const isPast = isBefore(end, startOfDay(new Date()))
 
               return (
                 <div
-                  key={booking.id}
-                  onClick={() => setSelectedBooking(booking)}
-                  className={`p-3 cursor-pointer transition-colors border-b border-white/[0.06] ${
-                    isSelected ? 'bg-white/10' : 'hover:bg-white/[0.04]'
-                  }`}
+                  key={`${item.type}-${item.id}`}
+                  onMouseEnter={() => setHoveredBookingId(item.id)}
+                  onMouseLeave={() => setHoveredBookingId(null)}
+                  onClick={() => {
+                    setSelectedBookingId(prev => prev === item.id ? null : item.id)
+                    if (item.startDate) {
+                      setCurrentMonth(new Date(parseISO(item.startDate).getFullYear(), parseISO(item.startDate).getMonth(), 1))
+                    }
+                  }}
+                  onDoubleClick={() => {
+                    if (item.type === 'booking' && item.booking) {
+                      const v = vehicles.find(v => v.id === item.vehicleId)
+                      if (v) {
+                        const rentalBar: RentalBar = {
+                          id: item.id,
+                          vehicleId: item.vehicleId,
+                          vehicleName: v.name,
+                          label: item.customerName,
+                          startDate: new Date(item.startDate),
+                          endDate: new Date(item.endDate),
+                          color: item.color,
+                          type: 'booking',
+                          booking: item.booking,
+                        }
+                        handleRentalClick(rentalBar)
+                      }
+                    } else if (item.type === 'sync' && item.calendarEvent) {
+                      const v = vehicles.find(v => v.id === item.vehicleId)
+                      if (v) {
+                        const rentalBar: RentalBar = {
+                          id: item.id,
+                          vehicleId: item.vehicleId,
+                          vehicleName: v.name,
+                          label: item.customerName,
+                          startDate: new Date(item.startDate),
+                          endDate: new Date(item.endDate),
+                          color: item.color,
+                          type: 'sync',
+                          calendarEvent: item.calendarEvent,
+                        }
+                        handleRentalClick(rentalBar)
+                      }
+                    }
+                  }}
+                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-all duration-200 border-b border-white/[0.04] select-none ${
+                    selectedBookingId === item.id
+                      ? 'bg-white/[0.06]'
+                      : hoveredBookingId === item.id
+                      ? 'bg-white/[0.03]'
+                      : 'hover:bg-white/[0.02]'
+                  } ${isPast ? 'opacity-40' : ''}`}
+                  style={{ borderLeft: selectedBookingId === item.id || hoveredBookingId === item.id ? `3px solid ${item.color}` : '3px solid transparent' }}
                 >
-                  <div className="flex items-start gap-3">
-                    {/* Vehicle thumbnail */}
-                    <div className="w-12 h-10 rounded-lg bg-white/5 overflow-hidden flex-shrink-0">
-                      {vehicle?.image_url ? (
-                        <img src={vehicle.image_url} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Car className="w-5 h-5 text-white/20" />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h3 className="text-sm font-medium truncate">{booking.customer_name}</h3>
-                        {!booking.deposit_paid && (
-                          <span className="px-1.5 py-0.5 text-[9px] font-bold bg-amber-500/20 text-amber-400 rounded">
-                            DEPOSIT
-                          </span>
-                        )}
-                        {isActive && (
-                          <span className="px-1.5 py-0.5 text-[9px] font-bold bg-emerald-500/20 text-emerald-400 rounded">
-                            ACTIVE
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-white/50 truncate">
-                        {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : "Unknown"}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] text-white/40">
-                          {format(start, "MMM d")} - {format(end, "MMM d")}
-                        </span>
-                        <span className="text-[10px] font-medium text-white/60">
-                          ${booking.total_amount?.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-sm font-medium text-white truncate">
+                      {(item.vehicleName || 'Unknown').replace(/^\d{4}\s+/, '')}
+                    </span>
+                    {item.type === 'sync' && (
+                      <span className="text-[9px] text-white/25 font-medium flex-shrink-0">TURO</span>
+                    )}
                   </div>
+                  <span className="text-[11px] text-white/30 flex-shrink-0 ml-3 tabular-nums">
+                    {format(start, "MMM d")} – {format(end, "MMM d")}
+                  </span>
                 </div>
               )
             })
@@ -660,25 +725,25 @@ export default function BookingsPage() {
       </div>
 
       {/* Right Panel - Calendar (Hidden on mobile) */}
-      <div className="hidden lg:flex flex-1 flex-col bg-white/[0.02] border border-white/[0.08] rounded-2xl overflow-hidden">
+      <div className="hidden lg:flex flex-1 flex-col bg-white/[0.02] rounded-2xl border border-white/[0.06] p-0 overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.3)]" onClick={() => setSelectedBookingId(null)}>
         {/* Calendar Header */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.08]">
-          <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.06]">
+          <button onClick={prevMonth} className="p-1.5 hover:bg-white/[0.06] rounded-lg transition-all duration-200">
             <ChevronLeft className="w-4 h-4" />
           </button>
           <h3 className="text-sm font-semibold">
             {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
           </h3>
-          <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
+          <button onClick={nextMonth} className="p-1.5 hover:bg-white/[0.06] rounded-lg transition-all duration-200">
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
 
         {/* Vehicle Legend */}
-        <div className="px-4 py-2 border-b border-white/[0.08] flex items-center gap-2 flex-wrap">
-          {vehicles.slice(0, 6).map((v, i) => (
+        <div className="px-4 py-2 border-b border-white/[0.06] flex items-center gap-2 flex-wrap">
+          {vehicles.slice(0, 6).map((v) => (
             <div key={v.id} className="flex items-center gap-1.5">
-              <div className={`w-3 h-3 rounded ${vehicleColors[i % vehicleColors.length].split(' ')[0]}`} />
+              <div className="w-3 h-3 rounded-full border border-white/20" style={{ backgroundColor: v.color || '#ffffff' }} />
               <span className="text-[10px] text-white/50">{v.make} {v.model}</span>
             </div>
           ))}
@@ -696,9 +761,9 @@ export default function BookingsPage() {
           ) : (
             <>
               {/* Day Headers */}
-              <div className="grid grid-cols-7 border-b border-white/[0.08]">
+              <div className="grid grid-cols-7 border-b border-white/[0.06]">
                 {dayNames.map((day) => (
-                  <div key={day} className="text-center text-[10px] text-white/40 font-medium py-1.5 border-r border-white/[0.06] last:border-r-0">
+                  <div key={day} className="text-center text-[10px] text-white/30 uppercase tracking-wider font-medium py-1.5 border-r border-white/[0.06] last:border-r-0">
                     {day}
                   </div>
                 ))}
@@ -711,7 +776,7 @@ export default function BookingsPage() {
                   const maxRow = bars.length > 0 ? Math.max(...bars.map(b => b.row)) + 1 : 0
 
                   return (
-                    <div key={weekIndex} className="flex-1 border-b border-white/[0.08] last:border-b-0 min-h-[80px]">
+                    <div key={weekIndex} className="flex-1 border-b border-white/[0.06] last:border-b-0 min-h-[80px]">
                       {/* Date numbers */}
                       <div className="grid grid-cols-7 h-6">
                         {week.map((day, dayIndex) => {
@@ -722,11 +787,13 @@ export default function BookingsPage() {
                           return (
                             <div
                               key={dayIndex}
-                              className={`text-sm font-medium px-2 py-0.5 border-r border-white/[0.06] last:border-r-0 ${
-                                day ? (isToday ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'text-white/70') : ''
+                              className={`px-2 py-0.5 border-r border-white/[0.06] last:border-r-0 ${
+                                day ? (isToday ? 'text-xs text-white font-medium' : 'text-xs text-white/50') : ''
                               }`}
                             >
-                              {day}
+                              {isToday ? (
+                                <span className="inline-flex items-center justify-center w-5 h-5 bg-white/10 rounded-full text-white font-medium">{day}</span>
+                              ) : day}
                             </div>
                           )
                         })}
@@ -737,15 +804,27 @@ export default function BookingsPage() {
                         {bars.map(({ bar, startCol, endCol, row }) => {
                           const leftPercent = (startCol / 7) * 100
                           const widthPercent = ((endCol - startCol + 1) / 7) * 100
+                          const isHighlighted = selectedBookingId === bar.id || hoveredBookingId === bar.id
                           return (
                             <div
                               key={bar.id}
-                              onClick={() => handleRentalClick(bar)}
-                              className={`absolute h-5 rounded px-2 text-[11px] font-medium text-white truncate border-l-2 cursor-pointer hover:brightness-110 transition-all ${bar.color}`}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setSelectedBookingId(prev => prev === bar.id ? null : bar.id)
+                              }}
+                              onDoubleClick={() => handleRentalClick(bar)}
+                              className="absolute h-[18px] rounded-[4px] px-1.5 text-[9px] font-semibold truncate cursor-pointer leading-[18px] tracking-wide select-none"
                               style={{
                                 left: `${leftPercent}%`,
                                 width: `${widthPercent}%`,
-                                top: `${row * 24 + 2}px`,
+                                top: `${row * 24 + 3}px`,
+                                backgroundColor: `${bar.color || '#ffffff'}${isHighlighted ? '' : '30'}`,
+                                color: isHighlighted
+                                  ? (() => { try { const c = bar.color || '#fff'; const r = parseInt(c.slice(1,3),16)||0; const g = parseInt(c.slice(3,5),16)||0; const b = parseInt(c.slice(5,7),16)||0; return (0.299*r+0.587*g+0.114*b)/255 > 0.6 ? '#000' : '#fff'; } catch { return '#fff'; } })()
+                                  : (bar.color || '#ffffff'),
+                                boxShadow: isHighlighted ? `0 0 8px ${bar.color || '#fff'}50, inset 0 0 0 1px rgba(255,255,255,0.2)` : 'none',
+                                borderLeft: `2px solid ${bar.color || '#ffffff'}`,
+                                transition: 'all 0.15s ease',
                               }}
                             >
                               {bar.label}
@@ -762,241 +841,149 @@ export default function BookingsPage() {
         </div>
       </div>
 
+
       {/* Rental Details Modal */}
       {selectedRental && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-2 sm:p-4" onClick={() => setSelectedRental(null)}>
-          <div className="bg-[#0a0a0a] rounded-2xl border border-white/[0.08] w-full max-w-5xl h-[95vh] lg:h-[85vh] overflow-hidden flex flex-col shadow-[0_0_60px_rgba(255,255,255,0.1)]" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#0a0a0a] rounded-2xl border border-white/[0.06] w-full max-w-5xl h-[95vh] lg:h-[85vh] overflow-hidden flex flex-col shadow-[0_2px_20px_rgba(0,0,0,0.3)]" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
-            <div className="p-3 sm:p-4 border-b border-white/[0.08] flex items-center justify-between flex-shrink-0">
-              <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${selectedRental.color}`}>
-                  <Car className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base sm:text-lg font-bold text-white truncate">{selectedRental.vehicleName}</h3>
-                    {selectedRental.type === 'booking' ? (
-                      <div className="relative" ref={bookingStatusRef}>
-                        <button
-                          onClick={() => setShowBookingStatusDropdown(!showBookingStatusDropdown)}
-                          disabled={updatingBooking}
-                          className={`px-2 py-0.5 rounded text-[10px] font-semibold flex items-center gap-1 transition-colors hover:brightness-110 ${
-                            bookingStatusOptions.find(s => s.value === selectedRental.booking?.status)?.color || 'bg-white/10 text-white/60'
-                          }`}
-                        >
-                          {updatingBooking ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <>
-                              {selectedRental.booking?.status?.toUpperCase()}
-                              <ChevronDown className="w-3 h-3" />
-                            </>
-                          )}
-                        </button>
-                        {showBookingStatusDropdown && (
-                          <div className="absolute left-0 top-full mt-1 w-32 bg-[#1a1a1a] rounded-xl border border-white/10 shadow-xl z-50 overflow-hidden">
-                            {bookingStatusOptions.map((status) => (
-                              <button
-                                key={status.value}
-                                onClick={() => updateBookingStatusHandler(status.value)}
-                                className={`w-full px-3 py-2 text-left text-xs hover:bg-white/5 transition-colors flex items-center gap-2 ${
-                                  selectedRental.booking?.status === status.value ? "bg-white/5" : ""
-                                }`}
-                              >
-                                <div className={`w-2 h-2 rounded-full ${status.color.split(" ")[0]}`} />
-                                {status.label}
-                              </button>
-                            ))}
-                          </div>
+            <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-white/[0.06] flex items-start justify-between flex-shrink-0">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: selectedRental.color }} />
+                  <h3 className="text-base sm:text-lg font-bold text-white truncate">{selectedRental.label}</h3>
+                  {selectedRental.type === 'booking' ? (
+                    <div className="relative" ref={bookingStatusRef}>
+                      <button
+                        onClick={() => setShowBookingStatusDropdown(!showBookingStatusDropdown)}
+                        disabled={updatingBooking}
+                        className={`px-2 py-0.5 rounded text-[10px] font-semibold flex items-center gap-1 transition-all duration-200 hover:brightness-110 ${
+                          bookingStatusOptions.find(s => s.value === selectedRental.booking?.status)?.color || 'bg-white/10 text-white/50'
+                        }`}
+                      >
+                        {updatingBooking ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <>
+                            {selectedRental.booking?.status?.toUpperCase()}
+                            <ChevronDown className="w-3 h-3" />
+                          </>
                         )}
-                      </div>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/20 text-cyan-400">
-                        TURO SYNC
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-white/50">
-                    <span className="flex items-center gap-1">
-                      <CalendarIcon className="w-3.5 h-3.5" />
-                      {format(selectedRental.startDate, "MMM d")} - {format(selectedRental.endDate, "MMM d, yyyy")}
+                      </button>
+                      {showBookingStatusDropdown && (
+                        <div className="absolute left-0 top-full mt-1 w-32 bg-[#1a1a1a] rounded-xl border border-white/[0.08] shadow-xl z-50 overflow-hidden">
+                          {bookingStatusOptions.map((status) => (
+                            <button
+                              key={status.value}
+                              onClick={() => updateBookingStatusHandler(status.value)}
+                              className={`w-full px-3 py-2 text-left text-xs hover:bg-white/[0.06] transition-all duration-200 flex items-center gap-2 ${
+                                selectedRental.booking?.status === status.value ? "bg-white/[0.06]" : ""
+                              }`}
+                            >
+                              <div className={`w-2 h-2 rounded-full ${status.color.split(" ")[0]}`} />
+                              {status.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-white/10 text-white/50">
+                      TURO SYNC
                     </span>
-                    {selectedRental.type === 'booking' && selectedRental.booking?.customer_phone && (
-                      <span className="flex items-center gap-1">
-                        <Phone className="w-3.5 h-3.5" />
-                        {selectedRental.booking.customer_phone}
-                      </span>
-                    )}
-                  </div>
+                  )}
                 </div>
+                <p className="text-sm text-white/40 mt-0.5">
+                  {format(selectedRental.startDate, "MMM d")} - {format(selectedRental.endDate, "MMM d, yyyy")}
+                </p>
               </div>
               <button
                 onClick={() => setSelectedRental(null)}
-                className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-all duration-200 flex-shrink-0"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 text-white/50" />
               </button>
             </div>
 
             {/* Two Column Layout - Stacks on mobile */}
             <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
               {/* Left Side - Booking & Lead Info */}
-              <div className="w-full lg:w-[35%] border-b lg:border-b-0 lg:border-r border-white/[0.08] overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 flex-shrink-0 max-h-[40vh] lg:max-h-none">
+              <div className="w-full lg:w-[35%] border-b lg:border-b-0 lg:border-r border-white/[0.06] overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 flex-shrink-0 max-h-[40vh] lg:max-h-none">
                 {selectedRental.type === 'booking' && selectedRental.booking ? (
-                  <>
-                    {/* Customer Info */}
-                    <div>
-                      <label className="block text-xs text-white/40 uppercase tracking-wider mb-2">Customer</label>
-                      <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-white/20 to-white/5 flex items-center justify-center ring-1 ring-white/10">
-                            <span className="text-sm font-semibold">{selectedRental.booking.customer_name.charAt(0).toUpperCase()}</span>
-                          </div>
-                          <div>
-                            <p className="font-medium">{selectedRental.booking.customer_name}</p>
-                            {selectedRental.booking.customer_email && (
-                              <p className="text-xs text-white/50">{selectedRental.booking.customer_email}</p>
-                            )}
-                          </div>
-                        </div>
+                  <div className="space-y-0">
+                    {/* Customer name & contact */}
+                    <div className="pb-4 border-b border-white/[0.06]">
+                      <div className="flex items-center gap-2">
+                        <p className="text-lg font-bold text-white">{selectedRental.booking.customer_name}</p>
                       </div>
+                      {selectedRental.booking.customer_email && (
+                        <p className="text-xs text-white/40 mt-1">{selectedRental.booking.customer_email}</p>
+                      )}
+                      {selectedRental.booking.customer_phone && (
+                        <p className="text-xs text-white/40 mt-0.5">{selectedRental.booking.customer_phone}</p>
+                      )}
                     </div>
 
-                    {/* Lead Status (if matched) */}
-                    {matchedLead && (
-                      <div>
-                        <label className="block text-xs text-white/40 uppercase tracking-wider mb-2">Lead Status</label>
-                        <div className="relative" ref={leadStatusRef}>
-                          <button
-                            onClick={() => setShowLeadStatusDropdown(!showLeadStatusDropdown)}
-                            disabled={updatingLead}
-                            className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors hover:brightness-110 ${getStatusColor(matchedLead.status)}`}
-                          >
-                            {updatingLead ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <>
-                                {getStatusLabel(matchedLead.status)}
-                                <ChevronDown className="w-3.5 h-3.5" />
-                              </>
-                            )}
-                          </button>
-                          {showLeadStatusDropdown && (
-                            <div className="absolute left-0 top-full mt-1 w-40 bg-[#1a1a1a] rounded-xl border border-white/10 shadow-xl z-50 overflow-hidden max-h-64 overflow-y-auto">
-                              {leadStatusOptions.map((status) => (
-                                <button
-                                  key={status.value}
-                                  onClick={() => updateLeadStatusHandler(status.value)}
-                                  className={`w-full px-3 py-2 text-left text-sm hover:bg-white/5 transition-colors flex items-center gap-2 ${
-                                    matchedLead.status === status.value ? "bg-white/5" : ""
-                                  }`}
-                                >
-                                  <div className={`w-2 h-2 rounded-full ${status.color.split(" ")[0]}`} />
-                                  {status.label}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Booking Details */}
-                    <div className="space-y-3">
-                      <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <Clock className="w-4 h-4 text-white/40" />
-                          <span className="text-[10px] text-white/40 uppercase tracking-wider">Duration</span>
-                        </div>
-                        <p className="text-sm font-medium">
+                    {/* Dates, amount, deposit */}
+                    <div className="py-4 border-b border-white/[0.06] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-white">
+                          {format(selectedRental.startDate, "MMM d")} &rarr; {format(selectedRental.endDate, "MMM d")}
+                        </span>
+                        <span className="text-sm text-white/50">
                           {Math.ceil((selectedRental.endDate.getTime() - selectedRental.startDate.getTime()) / (1000 * 60 * 60 * 24))} days
+                        </span>
+                      </div>
+                      {selectedRental.booking.total_amount > 0 && (
+                        <p className="text-sm text-white/70">${selectedRental.booking.total_amount.toLocaleString()} total</p>
+                      )}
+                      {selectedRental.booking.deposit_amount > 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-white/70">${selectedRental.booking.deposit_amount.toLocaleString()} deposit</span>
+                          <button
+                            onClick={toggleDepositPaid}
+                            className={`px-1.5 py-0.5 text-[9px] font-bold rounded cursor-pointer transition-all duration-200 hover:brightness-110 ${
+                              selectedRental.booking.deposit_paid
+                                ? 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25'
+                                : 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25'
+                            }`}
+                          >
+                            {selectedRental.booking.deposit_paid ? 'PAID' : 'PENDING'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Notes */}
+                    {(selectedRental.booking.notes || matchedLead?.notes) && (
+                      <div className="pt-4">
+                        <p className="text-sm text-white/60 whitespace-pre-wrap leading-relaxed">
+                          {selectedRental.booking.notes || matchedLead?.notes}
                         </p>
                       </div>
-
-                      {selectedRental.booking.total_amount && (
-                        <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <DollarSign className="w-4 h-4 text-white/40" />
-                            <span className="text-[10px] text-white/40 uppercase tracking-wider">Total Amount</span>
-                          </div>
-                          <p className="text-sm font-medium">${selectedRental.booking.total_amount.toLocaleString()}</p>
-                        </div>
-                      )}
-
-                      {selectedRental.booking.deposit_amount && (
-                        <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <DollarSign className="w-4 h-4 text-white/40" />
-                            <span className="text-[10px] text-white/40 uppercase tracking-wider">Deposit</span>
-                          </div>
-                          <p className="text-sm font-medium flex items-center gap-2">
-                            ${selectedRental.booking.deposit_amount.toLocaleString()}
-                            <button
-                              onClick={toggleDepositPaid}
-                              className={`px-1.5 py-0.5 text-[9px] font-bold rounded cursor-pointer transition-colors hover:brightness-110 ${
-                                selectedRental.booking.deposit_paid
-                                  ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
-                                  : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
-                              }`}
-                            >
-                              {selectedRental.booking.deposit_paid ? 'PAID' : 'PENDING'}
-                            </button>
-                          </p>
-                        </div>
-                      )}
-
-                      {(selectedRental.booking.notes || matchedLead?.notes) && (
-                        <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <StickyNote className="w-4 h-4 text-white/40" />
-                            <span className="text-[10px] text-white/40 uppercase tracking-wider">Notes</span>
-                          </div>
-                          <p className="text-sm text-white/80 whitespace-pre-wrap">
-                            {selectedRental.booking.notes || matchedLead?.notes}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </>
+                    )}
+                  </div>
                 ) : (
                   // Turo Sync Event Info
-                  <div className="space-y-3">
-                    <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <CalendarIcon className="w-4 h-4 text-cyan-400" />
-                        <span className="text-[10px] text-cyan-400 uppercase tracking-wider">External Source</span>
-                      </div>
-                      <p className="text-sm font-medium text-cyan-400 capitalize">{selectedRental.calendarEvent?.source || 'Turo'}</p>
+                  <div className="space-y-0">
+                    <div className="pb-4 border-b border-white/[0.06]">
+                      <p className="text-lg font-bold text-white">{selectedRental.calendarEvent?.event_summary || 'Turo Booking'}</p>
+                      <p className="text-xs text-white/40 mt-1 capitalize">{selectedRental.calendarEvent?.source || 'Turo'}</p>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <CalendarIcon className="w-4 h-4 text-white/40" />
-                        <span className="text-[10px] text-white/40 uppercase tracking-wider">Start Date</span>
+                    <div className="py-4 border-b border-white/[0.06] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-white">
+                          {format(selectedRental.startDate, "MMM d")} &rarr; {format(selectedRental.endDate, "MMM d")}
+                        </span>
+                        <span className="text-sm text-white/50">
+                          {Math.ceil((selectedRental.endDate.getTime() - selectedRental.startDate.getTime()) / (1000 * 60 * 60 * 24))} days
+                        </span>
                       </div>
-                      <p className="text-sm font-medium">{format(selectedRental.startDate, "MMM d, yyyy")}</p>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <CalendarIcon className="w-4 h-4 text-white/40" />
-                        <span className="text-[10px] text-white/40 uppercase tracking-wider">End Date</span>
-                      </div>
-                      <p className="text-sm font-medium">{format(selectedRental.endDate, "MMM d, yyyy")}</p>
-                    </div>
-
-                    {selectedRental.calendarEvent?.event_summary && (
-                      <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <FileText className="w-4 h-4 text-white/40" />
-                          <span className="text-[10px] text-white/40 uppercase tracking-wider">Event Summary</span>
-                        </div>
-                        <p className="text-sm text-white/80">{selectedRental.calendarEvent.event_summary}</p>
-                      </div>
-                    )}
-
-                    <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
-                      <p className="text-xs text-cyan-400">
+                    <div className="pt-4">
+                      <p className="text-xs text-white/40">
                         This event was imported from an external calendar. To view full details, check the original platform.
                       </p>
                     </div>
@@ -1053,8 +1040,8 @@ export default function BookingsPage() {
                                   <div
                                     className={`rounded-2xl px-4 py-2.5 ${
                                       isOutbound
-                                        ? "bg-white text-black rounded-br-md"
-                                        : "bg-white/[0.08] text-white rounded-bl-md"
+                                        ? "bg-white/[0.06] text-white rounded-br-md"
+                                        : "bg-white/[0.03] text-white rounded-bl-md"
                                     }`}
                                   >
                                     <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{message.content}</p>
@@ -1085,12 +1072,12 @@ export default function BookingsPage() {
                           value={newMessage}
                           onChange={(e) => setNewMessage(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-                          className="flex-1 px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/20 transition-all text-sm"
+                          className="flex-1 px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-white placeholder:text-white/30 focus:outline-none focus:border-white/20 transition-all duration-200 text-sm"
                         />
                         <button
                           onClick={sendMessage}
                           disabled={!newMessage.trim() || sending}
-                          className="px-4 py-2.5 bg-white hover:bg-white/90 disabled:opacity-50 text-black rounded-xl transition-all font-medium shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                          className="px-4 py-2.5 bg-white text-black hover:bg-white/90 disabled:opacity-50 rounded-xl transition-all duration-200 font-medium"
                         >
                           {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                         </button>
@@ -1109,8 +1096,8 @@ export default function BookingsPage() {
                   </div>
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
-                    <div className="w-20 h-20 rounded-2xl bg-cyan-500/10 flex items-center justify-center mb-4">
-                      <CalendarIcon className="w-10 h-10 text-cyan-400/50" />
+                    <div className="w-20 h-20 rounded-2xl bg-white/[0.03] flex items-center justify-center mb-4">
+                      <CalendarIcon className="w-10 h-10 text-white/20" />
                     </div>
                     <p className="text-white/50 font-medium mb-2">External Calendar Event</p>
                     <p className="text-white/30 text-sm max-w-[280px]">
@@ -1124,5 +1111,6 @@ export default function BookingsPage() {
         </div>
       )}
     </div>
+    </PageTransition>
   )
 }

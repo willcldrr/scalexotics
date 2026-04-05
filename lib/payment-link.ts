@@ -34,7 +34,6 @@ export interface BusinessInfo {
   slug: string
   payment_domain: string | null
   stripe_publishable_key: string | null
-  stripe_secret_key: string | null
   logo_url: string | null
   primary_color: string
   secondary_color: string
@@ -310,7 +309,7 @@ export async function lookupBusinessByDomain(domain: string): Promise<BusinessIn
 
     const { data, error } = await supabase
       .from("businesses")
-      .select("id, name, slug, payment_domain, stripe_publishable_key, stripe_secret_key, logo_url, primary_color, secondary_color, phone, email, deposit_percentage")
+      .select("id, name, slug, payment_domain, stripe_publishable_key, logo_url, primary_color, secondary_color, phone, email, deposit_percentage")
       .eq("payment_domain", normalizedDomain)
       .eq("domain_status", "active")
       .eq("status", "active")
@@ -337,7 +336,7 @@ export async function lookupBusinessById(businessId: string): Promise<BusinessIn
 
     const { data, error } = await supabase
       .from("businesses")
-      .select("id, name, slug, payment_domain, stripe_publishable_key, stripe_secret_key, logo_url, primary_color, secondary_color, phone, email, deposit_percentage")
+      .select("id, name, slug, payment_domain, stripe_publishable_key, logo_url, primary_color, secondary_color, phone, email, deposit_percentage")
       .eq("id", businessId)
       .eq("status", "active")
       .single()

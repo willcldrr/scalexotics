@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import crypto from "crypto"
 import { createClient } from "@supabase/supabase-js"
 import { z } from "zod"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 const deletionRequestSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -19,7 +21,10 @@ function getSupabase() {
   )
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 5, window: 60 })
+  if (limited) return limited
+
   try {
     const body = await request.json()
 
@@ -69,18 +74,25 @@ export async function POST(request: Request) {
       user_agent: request.headers.get("user-agent") || null,
     })
 
+    // Resolve a stable internal user id for logs. Never log the submitter's
+    // email or any other PII — data-deletion is the one endpoint where leaking
+    // PII into logs would be especially ironic.
+    const resolvedUserId = users?.[0]?.id || matchingAuthUser?.id || null
+
     if (insertError) {
-      // If table doesn't exist, log the request anyway
-      console.log("[Data Deletion Request]", {
-        email: email.toLowerCase(),
+      // If the insert failed (e.g. table missing), leave a breadcrumb so ops
+      // can still follow up — but only with non-identifying metadata.
+      console.error("[Data Deletion Request] insert failed; request received but not persisted", {
         deletionType,
-        additionalInfo,
+        userId: resolvedUserId,
         timestamp: new Date().toISOString(),
       })
     }
 
-    // Log for compliance tracking
-    console.log(`[GDPR/CCPA] Data deletion request received for: ${email}`)
+    // Log for compliance tracking — user id only, never email.
+    console.log(
+      `[GDPR/CCPA] Data deletion request received (type=${deletionType}, userId=${resolvedUserId ?? "unknown"})`
+    )
 
     return NextResponse.json({
       success: true,
@@ -97,7 +109,10 @@ export async function POST(request: Request) {
 
 // Meta requires a callback URL for data deletion requests
 // This handles the Meta Data Deletion Callback
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 20, window: 60 })
+  if (limited) return limited
+
   const url = new URL(request.url)
   const signedRequest = url.searchParams.get("signed_request")
 
@@ -117,6 +132,18 @@ export async function GET(request: Request) {
         { error: "Invalid signed_request format" },
         { status: 400 }
       )
+    }
+
+    // Verify HMAC signature
+    const appSecret = process.env.INSTAGRAM_APP_SECRET
+    if (appSecret) {
+      const expectedSig = crypto
+        .createHmac("sha256", appSecret)
+        .update(payload)
+        .digest("base64url")
+      if (encodedSig !== expectedSig) {
+        return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
+      }
     }
 
     // Decode the payload
@@ -144,7 +171,7 @@ export async function GET(request: Request) {
 
     // Meta expects a specific response format
     return NextResponse.json({
-      url: `${process.env.NEXT_PUBLIC_APP_URL || "https://velocitylabs.io"}/data-deletion?confirmation=${confirmationCode}`,
+      url: `${process.env.NEXT_PUBLIC_APP_URL || "https://managevelocity.com"}/data-deletion?confirmation=${confirmationCode}`,
       confirmation_code: confirmationCode,
     })
   } catch (error) {

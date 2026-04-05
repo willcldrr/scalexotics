@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 /**
  * Cron job to refresh Instagram tokens before they expire
@@ -15,10 +16,18 @@ function getSupabase() {
   )
 }
 
-export async function GET(request: Request) {
-  // Verify cron secret (optional security)
+export async function GET(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 10, window: 60 })
+  if (limited) return limited
+
+  // Verify cron secret (mandatory)
   const authHeader = request.headers.get("authorization")
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) {
+    console.error("CRON_SECRET not configured")
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 })
+  }
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 

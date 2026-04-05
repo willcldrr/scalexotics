@@ -1,7 +1,30 @@
 import * as crypto from "crypto"
+import { safeFetch } from "./safe-fetch"
 
 const GRAPH_API_VERSION = "v19.0"
 const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`
+
+// Cache Page ID lookups so we don't call /me on every message
+const pageIdCache = new Map<string, { pageId: string; expires: number }>()
+
+async function resolvePageId(accessToken: string, fallbackId?: string): Promise<string> {
+  const cacheKey = accessToken.slice(-20)
+  const cached = pageIdCache.get(cacheKey)
+  if (cached && cached.expires > Date.now()) return cached.pageId
+
+  try {
+    const res = await safeFetch(`${GRAPH_API_BASE}/me?fields=id&access_token=${accessToken}`)
+    if (res.ok) {
+      const data = await res.json()
+      if (data.id) {
+        pageIdCache.set(cacheKey, { pageId: data.id, expires: Date.now() + 3600000 }) // 1hr cache
+        return data.id
+      }
+    }
+  } catch { /* fall through */ }
+
+  return fallbackId || ""
+}
 
 interface InstagramUserInfo {
   name: string
@@ -36,8 +59,11 @@ export async function sendInstagramMessage(
     return { success: false, error: "Instagram credentials not configured" }
   }
 
+  // The messaging API requires the Page ID, not the Instagram Account ID.
+  const pageId = await resolvePageId(accessToken, accountId)
+
   try {
-    const response = await fetch(`${GRAPH_API_BASE}/${accountId}/messages`, {
+    const response = await safeFetch(`${GRAPH_API_BASE}/${pageId}/messages`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -119,7 +145,7 @@ export async function getInstagramUserInfo(
   }
 
   try {
-    const response = await fetch(
+    const response = await safeFetch(
       `${GRAPH_API_BASE}/${userId}?fields=name,username&access_token=${accessToken}`
     )
 
@@ -199,14 +225,15 @@ export async function markMessageSeen(
   credentials?: InstagramCredentials
 ): Promise<boolean> {
   const accessToken = credentials?.accessToken || process.env.INSTAGRAM_ACCESS_TOKEN
-  const accountId = credentials?.accountId || process.env.INSTAGRAM_ACCOUNT_ID
 
-  if (!accessToken || !accountId) {
+  if (!accessToken) {
     return false
   }
 
+  const pageId = await resolvePageId(accessToken, credentials?.accountId)
+
   try {
-    const response = await fetch(`${GRAPH_API_BASE}/${accountId}/messages`, {
+    const response = await safeFetch(`${GRAPH_API_BASE}/${pageId}/messages`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -234,14 +261,15 @@ export async function sendTypingIndicator(
   credentials?: InstagramCredentials
 ): Promise<boolean> {
   const accessToken = credentials?.accessToken || process.env.INSTAGRAM_ACCESS_TOKEN
-  const accountId = credentials?.accountId || process.env.INSTAGRAM_ACCOUNT_ID
 
-  if (!accessToken || !accountId) {
+  if (!accessToken) {
     return false
   }
 
+  const pageId = await resolvePageId(accessToken, credentials?.accountId)
+
   try {
-    const response = await fetch(`${GRAPH_API_BASE}/${accountId}/messages`, {
+    const response = await safeFetch(`${GRAPH_API_BASE}/${pageId}/messages`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { fetchAndParseIcal, filterRelevantEvents } from "@/lib/ical-parser"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 // Use service role for cron jobs (no user context)
 const supabase = createClient(
@@ -14,12 +15,19 @@ const supabase = createClient(
  * Call this endpoint every 2 hours via Vercel Cron or external scheduler
  */
 export async function GET(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 10, window: 60 })
+  if (limited) return limited
+
   try {
     // Verify cron secret (optional but recommended for production)
     const authHeader = request.headers.get("authorization")
     const cronSecret = process.env.CRON_SECRET
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (!cronSecret) {
+      console.error("CRON_SECRET not configured")
+      return NextResponse.json({ error: "Server misconfigured" }, { status: 500 })
+    }
+    if (authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

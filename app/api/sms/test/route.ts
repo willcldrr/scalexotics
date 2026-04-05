@@ -1,5 +1,7 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import twilio from "twilio"
+import { createClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 function getTwilioClient() {
   return twilio(
@@ -8,8 +10,22 @@ function getTwilioClient() {
   )
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 10, window: 60 })
+  if (limited) return limited
+
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { data: profile } = await supabase.from("profiles").select("is_admin").eq("id", user.id).single()
+    if (!profile?.is_admin) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     const client = getTwilioClient()
 
     // Test the connection by fetching account info

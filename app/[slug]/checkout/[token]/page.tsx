@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { useParams } from "next/navigation"
 import { Car, Calendar, DollarSign, Clock, Shield, AlertCircle, Loader2, CheckCircle, Phone, Mail } from "lucide-react"
 
@@ -169,7 +170,7 @@ export default function SlugCheckoutPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {business?.logo_url ? (
-                <img src={business.logo_url} alt={businessName} className="h-10 w-auto object-contain" />
+                <Image src={business.logo_url} alt={businessName} width={160} height={40} className="h-10 w-auto object-contain" unoptimized />
               ) : (
                 <div
                   className="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold"

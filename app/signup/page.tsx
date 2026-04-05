@@ -64,97 +64,51 @@ export default function SignUpPage() {
       return
     }
 
-    // Sign up the user - this will send a verification email with OTP
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-          phone: phone.replace(/(?!^\+)[^\d]/g, ''), // Store cleaned phone
-        },
-      },
-    })
-
-    // Check for "already registered" error (case-insensitive)
-    const isAlreadyRegistered = signUpError?.message?.toLowerCase().includes("already registered") ||
-                                 signUpError?.message?.toLowerCase().includes("already been registered")
-
-    if (isAlreadyRegistered) {
-      // User exists - try to resend OTP for unconfirmed users
-      const { error: resendError } = await supabase.auth.resend({
-        type: 'signup',
-        email,
+    // Call our API to create user and send OTP via Resend
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName,
+          phone: phone.replace(/(?!^\+)[^\d]/g, ''),
+        }),
       })
 
-      if (resendError) {
-        console.log("Resend error:", resendError.message)
+      const result = await res.json()
 
-        // Check if it's a rate limit
-        if (resendError.message?.toLowerCase().includes("rate") ||
-            resendError.message?.toLowerCase().includes("limit") ||
-            resendError.message?.toLowerCase().includes("seconds")) {
-          setError("Please wait a moment before requesting another code.")
+      if (!res.ok) {
+        if (res.status === 409) {
+          // Already registered - check if they can sign in
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          })
+
+          if (!signInError) {
+            router.push("/dashboard")
+            return
+          }
+
+          setError("This email is already registered. Please sign in with your existing password, or use 'Forgot password' to reset it.")
           setLoading(false)
           return
         }
 
-        // User is likely already confirmed - try signing in with provided password
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
-
-        if (!signInError) {
-          // Sign in worked! Redirect to dashboard or pending approval
-          router.push("/dashboard")
-          return
-        }
-
-        // Sign in failed - wrong password or other issue
-        setError("This email is already registered. Please sign in with your existing password, or use 'Forgot password' to reset it.")
+        setError(result.error || "Something went wrong")
         setLoading(false)
         return
       }
 
-      // OTP resent successfully - proceed to verification
+      // OTP sent via Resend - move to verification step
       setStep('verify')
       setLoading(false)
-      return
-    }
-
-    // Handle other signup errors
-    if (signUpError) {
-      setError(signUpError.message)
+    } catch {
+      setError("Something went wrong. Please try again.")
       setLoading(false)
-      return
     }
-
-    // Supabase returns user with empty identities array for existing confirmed users (security feature)
-    // Check if this is a "fake" success response
-    if (data?.user?.identities?.length === 0) {
-      setError("This email is already registered. Please sign in instead.")
-      setLoading(false)
-      return
-    }
-
-    // Check if user was created but needs confirmation
-    if (data?.user && !data.user.confirmed_at) {
-      setStep('verify')
-      setLoading(false)
-      return
-    }
-
-    // If user is already confirmed (edge case)
-    if (data?.user?.confirmed_at) {
-      // Try signing them in
-      router.push("/dashboard")
-      return
-    }
-
-    // Default: Move to OTP verification step
-    setStep('verify')
-    setLoading(false)
   }
 
   // Handle OTP input
@@ -190,7 +144,7 @@ export default function SignUpPage() {
     otpInputRefs.current[focusIndex]?.focus()
   }
 
-  // Step 2: Verify OTP
+  // Step 2: Verify OTP via our API
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -203,38 +157,63 @@ export default function SignUpPage() {
       return
     }
 
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: 'email',
-    })
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code: token }),
+      })
 
-    if (verifyError) {
-      setError(verifyError.message)
+      const result = await res.json()
+
+      if (!res.ok) {
+        setError(result.error || "Invalid code")
+        setLoading(false)
+        return
+      }
+
+      // User is now confirmed — sign them in so they have a session for the next step
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (signInError) {
+        setError("Email verified but sign-in failed. Please try logging in.")
+        setLoading(false)
+        return
+      }
+
+      // Move to business name step
+      setStep('business')
       setLoading(false)
-      return
+    } catch {
+      setError("Something went wrong. Please try again.")
+      setLoading(false)
     }
-
-    // Move to business name step
-    setStep('business')
-    setLoading(false)
   }
 
-  // Resend OTP
+  // Resend OTP via our API (sends through Resend)
   const handleResendOtp = async () => {
     setResending(true)
     setError("")
 
-    const { error: resendError } = await supabase.auth.resend({
-      type: 'signup',
-      email,
-    })
+    try {
+      const res = await fetch('/api/auth/resend-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, fullName }),
+      })
 
-    if (resendError) {
-      setError(resendError.message)
-    } else {
-      setError("") // Clear any errors
-      setOtpCode(["", "", "", "", "", ""]) // Clear OTP inputs
+      const result = await res.json()
+
+      if (!res.ok) {
+        setError(result.error || "Failed to resend code")
+      } else {
+        setOtpCode(["", "", "", "", "", ""])
+      }
+    } catch {
+      setError("Failed to resend code. Please try again.")
     }
     setResending(false)
   }
@@ -398,10 +377,10 @@ export default function SignUpPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/20 text-white text-lg placeholder:text-white/30 focus:outline-none focus:border-white/50 focus:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-all"
               />
-              <p className="text-xs text-white/40 mt-2">Minimum 6 characters</p>
+              <p className="text-xs text-white/40 mt-2">Minimum 8 characters</p>
             </div>
 
             {error && (

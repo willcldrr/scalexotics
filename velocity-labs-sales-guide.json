@@ -1,9 +1,9 @@
 {
   "company": {
-    "name": "Scale Exotics",
+    "name": "Velocity Labs",
     "tagline": "Only Pay Us When You Get Paid",
     "mission": "Help exotic car rental fleet owners build automated systems that generate consistent $50k+ months",
-    "website": "scaleexotics.com"
+    "website": "managevelocity.com"
   },
 
   "target_market": {
@@ -135,7 +135,7 @@
           "Algorithm controls visibility",
           "Fees eat profit margins"
         ],
-        "scale_exotics_advantages": [
+        "velocity_labs_advantages": [
           "Client owns the customer relationship",
           "Premium pricing power",
           "Direct communication with renters",
@@ -150,7 +150,7 @@
           "Generic strategies not built for exotic rentals",
           "Client bears all the risk"
         ],
-        "scale_exotics_advantages": [
+        "velocity_labs_advantages": [
           "Only pay when you get paid",
           "Specialized in exotic/luxury rental market",
           "Aligned incentives - we only win when client wins",
@@ -311,7 +311,7 @@
       "agenda": [
         "Understand their current situation",
         "Identify specific pain points",
-        "Present Scale Exotics solution",
+        "Present Velocity Labs solution",
         "Handle objections",
         "Close or schedule follow-up"
       ]

@@ -1,4 +1,4 @@
--- Security Fixes for Scale Exotics Admin Dashboard
+-- Security Fixes for Velocity Labs Admin Dashboard
 -- Run these in your Supabase SQL Editor
 -- IMPORTANT: Run these in order
 

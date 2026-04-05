@@ -3,6 +3,7 @@ import Stripe from "stripe"
 import { z } from "zod"
 import { createClient } from "@supabase/supabase-js"
 import { lookupPaymentToken, decodePaymentToken, claimPaymentLinkForCheckout } from "@/lib/payment-link"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 const checkoutSchema = z.object({
   token: z.string().min(1, "Payment token is required").max(500, "Invalid token"),
@@ -45,6 +46,9 @@ async function getStripeKeysForUser(userId: string): Promise<{ secretKey: string
 }
 
 export async function POST(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 10, window: 60 })
+  if (limited) return limited
+
   try {
     const body = await request.json()
 
@@ -92,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     // Create Stripe instance with the appropriate key
     const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: "2025-12-15.clover",
+      apiVersion: "2026-02-25.clover",
     })
 
     // Build success and cancel URLs

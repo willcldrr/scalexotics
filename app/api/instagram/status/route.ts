@@ -1,9 +1,20 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { createClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 /**
  * Check if Instagram API is configured
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN
   const accountId = process.env.INSTAGRAM_ACCOUNT_ID
   const verifyToken = process.env.INSTAGRAM_VERIFY_TOKEN

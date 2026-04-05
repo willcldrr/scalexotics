@@ -46,7 +46,8 @@ function EmbedContent() {
   const searchParams = useSearchParams()
   const apiKey = searchParams.get("key")
   const theme = searchParams.get("theme") || "dark"
-  const primaryColor = searchParams.get("color") || "#375DEE"
+  const rawColor = searchParams.get("color") || "#375DEE"
+  const primaryColor = /^#[0-9a-fA-F]{3,8}$/.test(rawColor) ? rawColor : "#375DEE"
 
   const [loading, setLoading] = useState(true)
   const [vehicles, setVehicles] = useState<Vehicle[]>([])

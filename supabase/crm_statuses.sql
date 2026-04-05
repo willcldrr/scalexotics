@@ -69,7 +69,7 @@ CREATE TRIGGER crm_statuses_updated_at
 INSERT INTO crm_statuses (value, label, description, color, bg_color, sort_order, is_active, is_won, is_lost, show_in_pipeline) VALUES
   ('not_contacted', 'Not Contacted', 'New lead, no outreach yet', 'text-white/60', 'bg-white/10', 1, true, false, false, true),
   ('contacted', 'Contacted', 'Initial contact made', 'text-[#375DEE]', 'bg-[#375DEE]/15', 2, true, false, false, true),
-  ('interested', 'Interested', 'Showed interest in Scale Exotics', 'text-[#5a7df4]', 'bg-[#375DEE]/25', 3, true, false, false, true),
+  ('interested', 'Interested', 'Showed interest in Velocity Labs', 'text-[#5a7df4]', 'bg-[#375DEE]/25', 3, true, false, false, true),
   ('not_interested', 'Not Interested', 'Declined to proceed', 'text-white/40', 'bg-white/5', 4, false, false, true, false),
   ('demo_scheduled', 'Demo Scheduled', 'Demo or call scheduled', 'text-[#7b9af7]', 'bg-[#375DEE]/35', 5, true, false, false, true),
   ('closed_won', 'Closed Won', 'Signed up as customer', 'text-white', 'bg-[#375DEE]', 6, false, true, false, true),

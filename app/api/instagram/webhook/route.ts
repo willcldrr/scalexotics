@@ -13,7 +13,8 @@ import {
   generateAIResponse,
   saveMessage,
 } from "@/lib/sms-ai"
-import { findOrCreateInstagramLead } from "@/lib/instagram-leads"
+import { findOrCreateInstagramLead, isInstagramAIEnabled } from "@/lib/instagram-leads"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 function getSupabase() {
   return createClient(
@@ -84,6 +85,9 @@ async function getConnectionByInstagramAccount(instagramAccountId: string): Prom
  * Meta sends a verification request when you configure the webhook
  */
 export async function GET(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 100, window: 60 })
+  if (limited) return limited
+
   const searchParams = request.nextUrl.searchParams
 
   const mode = searchParams.get("hub.mode")
@@ -105,6 +109,9 @@ export async function GET(request: NextRequest) {
  * Meta sends webhook events here when users message the Instagram account
  */
 export async function POST(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 100, window: 60 })
+  if (limited) return limited
+
   try {
     // Get raw body for signature verification
     const rawBody = await request.text()
@@ -156,6 +163,13 @@ async function processInstagramMessage(webhookBody: any): Promise<void> {
 
   const { userId, credentials } = connection
 
+  // Check if Instagram AI is enabled for this user
+  const instagramEnabled = await isInstagramAIEnabled(userId)
+  if (!instagramEnabled) {
+    console.log("[Instagram] AI responses disabled for user", userId)
+    return
+  }
+
   // Skip if no text content (e.g., media-only message)
   if (!message.text) {
     await sendInstagramMessage(
@@ -187,6 +201,19 @@ async function processInstagramMessage(webhookBody: any): Promise<void> {
 
   // Save the incoming message
   await saveMessage(userId, lead.id, message.text, "inbound")
+
+  // Check if AI is disabled for this lead (human takeover)
+  const supabase = getSupabase()
+  const { data: leadData } = await supabase
+    .from("leads")
+    .select("ai_disabled")
+    .eq("id", lead.id)
+    .single()
+
+  if (leadData?.ai_disabled) {
+    // AI is paused — business owner is handling this conversation manually
+    return
+  }
 
   // Show typing indicator while generating response
   await sendTypingIndicator(message.senderId, true, credentials)

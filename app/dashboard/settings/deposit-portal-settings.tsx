@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 import {
@@ -271,7 +272,7 @@ export default function DepositPortalSettings() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2.5 bg-white text-black font-semibold rounded-xl hover:bg-white/90 disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+          className="flex items-center gap-2 px-4 py-2.5 bg-white text-black font-semibold rounded-xl hover:bg-white/90 disabled:opacity-50 shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
         >
           {saving ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -283,7 +284,7 @@ export default function DepositPortalSettings() {
       </div>
 
       {/* Portal Link Preview */}
-      <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08]">
+      <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] shadow-[0_2px_20px_rgba(0,0,0,0.3),0_0_15px_rgba(255,255,255,0.03)] transition-all duration-300 hover:border-white/[0.12]">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-white/50 mb-1">Your deposit portal link</p>
@@ -293,7 +294,7 @@ export default function DepositPortalSettings() {
           </div>
           <button
             onClick={copyPortalLink}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition-all duration-300"
           >
             {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
             {copied ? 'Copied!' : 'Copy'}
@@ -314,7 +315,7 @@ export default function DepositPortalSettings() {
           <button
             key={section.id}
             onClick={() => setActiveSection(section.id as typeof activeSection)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-300 whitespace-nowrap ${
               activeSection === section.id
                 ? "bg-white/10 text-white"
                 : "text-white/50 hover:text-white hover:bg-white/5"
@@ -329,7 +330,7 @@ export default function DepositPortalSettings() {
       {/* Stripe Configuration */}
       {activeSection === 'stripe' && (
         <div className="space-y-4">
-          <div className="p-5 rounded-2xl bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-white/[0.08] backdrop-blur-sm">
+          <div className="p-5 rounded-2xl bg-gradient-to-br from-white/[0.04] to-white/[0.01] border border-white/[0.08] backdrop-blur-sm shadow-[0_2px_20px_rgba(0,0,0,0.3),0_0_15px_rgba(255,255,255,0.03)] transition-all duration-300 hover:border-white/[0.12]">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-white/[0.08] flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(255,255,255,0.15)]">
                 <Shield className="w-6 h-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
@@ -338,7 +339,7 @@ export default function DepositPortalSettings() {
                 <p className="text-sm font-semibold text-white tracking-wide">Secure Payment Processing</p>
                 <p className="text-xs text-white/40 mt-1 leading-relaxed">
                   Your Stripe keys are encrypted and stored securely. Get your API keys from the{' '}
-                  <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener noreferrer" className="text-white/60 hover:text-white transition-colors underline underline-offset-2">
+                  <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener noreferrer" className="text-white/60 hover:text-white transition-all duration-300 underline underline-offset-2">
                     Stripe Dashboard
                   </a>
                 </p>
@@ -352,7 +353,7 @@ export default function DepositPortalSettings() {
                 <label className="text-sm text-white/60">Publishable Key</label>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button className="text-white/30 hover:text-white/50 transition-colors">
+                    <button className="text-white/30 hover:text-white/50 transition-all duration-300">
                       <HelpCircle className="w-3.5 h-3.5" />
                     </button>
                   </TooltipTrigger>
@@ -366,7 +367,7 @@ export default function DepositPortalSettings() {
                 placeholder="pk_live_..."
                 value={config.stripe_publishable_key || ''}
                 onChange={(e) => setConfig({ ...config, stripe_publishable_key: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 font-mono text-sm"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] font-mono text-sm"
               />
             </div>
 
@@ -375,7 +376,7 @@ export default function DepositPortalSettings() {
                 <label className="text-sm text-white/60">Secret Key</label>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button className="text-white/30 hover:text-white/50 transition-colors">
+                    <button className="text-white/30 hover:text-white/50 transition-all duration-300">
                       <HelpCircle className="w-3.5 h-3.5" />
                     </button>
                   </TooltipTrigger>
@@ -390,7 +391,7 @@ export default function DepositPortalSettings() {
                   placeholder="sk_live_..."
                   value={config.stripe_secret_key || ''}
                   onChange={(e) => setConfig({ ...config, stripe_secret_key: e.target.value })}
-                  className="w-full px-4 py-3 pr-12 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 font-mono text-sm"
+                  className="w-full px-4 py-3 pr-12 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] font-mono text-sm"
                 />
                 <button
                   type="button"
@@ -414,7 +415,7 @@ export default function DepositPortalSettings() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setConfig({ ...config, default_deposit_type: 'percentage' })}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all duration-300 ${
                     config.default_deposit_type === 'percentage'
                       ? 'bg-white/10 border-white/30 text-white'
                       : 'border-white/[0.08] text-white/50 hover:border-white/20'
@@ -425,7 +426,7 @@ export default function DepositPortalSettings() {
                 </button>
                 <button
                   onClick={() => setConfig({ ...config, default_deposit_type: 'fixed' })}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all duration-300 ${
                     config.default_deposit_type === 'fixed'
                       ? 'bg-white/10 border-white/30 text-white'
                       : 'border-white/[0.08] text-white/50 hover:border-white/20'
@@ -450,7 +451,7 @@ export default function DepositPortalSettings() {
                   min="1"
                   value={config.default_deposit_value}
                   onChange={(e) => setConfig({ ...config, default_deposit_value: parseFloat(e.target.value) || 0 })}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white focus:outline-none focus:border-white/30"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)]"
                 />
               </div>
             </div>
@@ -466,7 +467,7 @@ export default function DepositPortalSettings() {
                   min="0"
                   value={config.min_deposit_amount}
                   onChange={(e) => setConfig({ ...config, min_deposit_amount: parseFloat(e.target.value) || 0 })}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white focus:outline-none focus:border-white/30"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)]"
                 />
               </div>
             </div>
@@ -481,14 +482,14 @@ export default function DepositPortalSettings() {
                   placeholder="No limit"
                   value={config.max_deposit_amount || ''}
                   onChange={(e) => setConfig({ ...config, max_deposit_amount: e.target.value ? parseFloat(e.target.value) : null })}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)]"
                 />
               </div>
             </div>
           </div>
 
           <div className="space-y-3 pt-4 border-t border-white/[0.08]">
-            <label className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] cursor-pointer hover:bg-white/[0.05] transition-colors">
+            <label className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] cursor-pointer hover:bg-white/[0.05] transition-all duration-300">
               <div>
                 <p className="font-medium">Require ID Upload</p>
                 <p className="text-sm text-white/50">Customer must upload driver's license before paying</p>
@@ -501,7 +502,7 @@ export default function DepositPortalSettings() {
               />
             </label>
 
-            <label className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] cursor-pointer hover:bg-white/[0.05] transition-colors">
+            <label className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] cursor-pointer hover:bg-white/[0.05] transition-all duration-300">
               <div>
                 <p className="font-medium">Require Insurance Upload</p>
                 <p className="text-sm text-white/50">Customer must upload proof of insurance</p>
@@ -529,7 +530,7 @@ export default function DepositPortalSettings() {
                 placeholder="yourcompany"
                 value={config.company_slug || ''}
                 onChange={(e) => setConfig({ ...config, company_slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                className="w-full pl-40 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
+                className="w-full pl-40 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)]"
               />
             </div>
             <p className="text-xs text-white/40 mt-2">
@@ -544,7 +545,7 @@ export default function DepositPortalSettings() {
               placeholder="Secure Deposit"
               value={config.portal_title || ''}
               onChange={(e) => setConfig({ ...config, portal_title: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)]"
             />
           </div>
 
@@ -555,7 +556,7 @@ export default function DepositPortalSettings() {
               placeholder="Complete your rental deposit to confirm your booking"
               value={config.portal_subtitle || ''}
               onChange={(e) => setConfig({ ...config, portal_subtitle: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)]"
             />
           </div>
 
@@ -570,20 +571,20 @@ export default function DepositPortalSettings() {
             />
             {config.logo_url ? (
               <div className="flex items-center gap-4">
-                <div className="w-24 h-24 rounded-xl bg-white/5 border border-white/[0.08] overflow-hidden">
-                  <img src={config.logo_url} alt="Logo" className="w-full h-full object-contain" />
+                <div className="relative w-24 h-24 rounded-xl bg-white/5 border border-white/[0.08] overflow-hidden">
+                  <Image src={config.logo_url} alt="Logo" fill sizes="96px" className="object-contain" />
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploadingLogo}
-                    className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition-colors"
+                    className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition-all duration-300"
                   >
                     {uploadingLogo ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Change'}
                   </button>
                   <button
                     onClick={() => setConfig({ ...config, logo_url: '' })}
-                    className="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm transition-colors"
+                    className="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm transition-all duration-300"
                   >
                     Remove
                   </button>
@@ -593,7 +594,7 @@ export default function DepositPortalSettings() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingLogo}
-                className="w-full px-4 py-8 rounded-xl bg-white/5 border border-white/[0.08] border-dashed hover:border-white/30 transition-colors flex flex-col items-center justify-center gap-2"
+                className="w-full px-4 py-8 rounded-xl bg-white/5 border border-white/[0.08] border-dashed hover:border-white/30 transition-all duration-300 flex flex-col items-center justify-center gap-2"
               >
                 {uploadingLogo ? (
                   <Loader2 className="w-6 h-6 animate-spin text-white/40" />
@@ -620,7 +621,7 @@ export default function DepositPortalSettings() {
                 type="text"
                 value={config.accent_color}
                 onChange={(e) => setConfig({ ...config, accent_color: e.target.value })}
-                className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white font-mono text-sm focus:outline-none focus:border-white/30"
+                className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white font-mono text-sm focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)]"
               />
             </div>
           </div>
@@ -654,7 +655,7 @@ export default function DepositPortalSettings() {
                 placeholder="pay.yourcompany.com"
                 value={config.custom_domain || ''}
                 onChange={(e) => setConfig({ ...config, custom_domain: e.target.value.toLowerCase().replace(/^https?:\/\//, '')})}
-                className="w-full pl-20 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
+                className="w-full pl-20 pr-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)]"
               />
             </div>
           </div>
@@ -688,7 +689,7 @@ export default function DepositPortalSettings() {
                       </span>
                       <button
                         onClick={() => copyDnsValue(config.custom_domain.split('.')[0], 'name')}
-                        className="p-1 rounded hover:bg-white/10 transition-colors"
+                        className="p-1 rounded hover:bg-white/10 transition-all duration-300"
                       >
                         {copiedDns === 'name' ? (
                           <Check className="w-3.5 h-3.5 text-emerald-400" />
@@ -701,7 +702,7 @@ export default function DepositPortalSettings() {
                       <span className="font-mono text-emerald-400">cname.vercel-dns.com</span>
                       <button
                         onClick={() => copyDnsValue('cname.vercel-dns.com', 'value')}
-                        className="p-1 rounded hover:bg-white/10 transition-colors"
+                        className="p-1 rounded hover:bg-white/10 transition-all duration-300"
                       >
                         {copiedDns === 'value' ? (
                           <Check className="w-3.5 h-3.5 text-emerald-400" />
@@ -772,7 +773,7 @@ export default function DepositPortalSettings() {
                     <button
                       onClick={verifyDomain}
                       disabled={verifyingDomain}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition-colors disabled:opacity-50"
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition-all duration-300 disabled:opacity-50"
                     >
                       {verifyingDomain ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -828,7 +829,7 @@ export default function DepositPortalSettings() {
       {/* Terms & Success */}
       {activeSection === 'terms' && (
         <div className="space-y-4">
-          <label className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] cursor-pointer hover:bg-white/[0.05] transition-colors">
+          <label className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] cursor-pointer hover:bg-white/[0.05] transition-all duration-300">
             <div>
               <p className="font-medium">Require Terms Agreement</p>
               <p className="text-sm text-white/50">Customer must agree to terms before paying</p>
@@ -848,7 +849,7 @@ export default function DepositPortalSettings() {
                 rows={3}
                 value={config.terms_text || ''}
                 onChange={(e) => setConfig({ ...config, terms_text: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] resize-none"
               />
             </div>
           )}
@@ -859,7 +860,7 @@ export default function DepositPortalSettings() {
               rows={2}
               value={config.success_message || ''}
               onChange={(e) => setConfig({ ...config, success_message: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 resize-none"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] resize-none"
             />
           </div>
 
@@ -870,7 +871,7 @@ export default function DepositPortalSettings() {
               placeholder="https://yourwebsite.com/thank-you"
               value={config.success_redirect_url || ''}
               onChange={(e) => setConfig({ ...config, success_redirect_url: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)]"
             />
             <p className="text-xs text-white/40 mt-2">
               Leave empty to show success message on portal
@@ -882,7 +883,7 @@ export default function DepositPortalSettings() {
       {/* Notifications */}
       {activeSection === 'notifications' && (
         <div className="space-y-4">
-          <label className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] cursor-pointer hover:bg-white/[0.05] transition-colors">
+          <label className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] cursor-pointer hover:bg-white/[0.05] transition-all duration-300">
             <div>
               <p className="font-medium">Send Confirmation SMS</p>
               <p className="text-sm text-white/50">Automatically text the customer when payment is received</p>
@@ -902,7 +903,7 @@ export default function DepositPortalSettings() {
                 rows={3}
                 value={config.confirmation_sms_template || ''}
                 onChange={(e) => setConfig({ ...config, confirmation_sms_template: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 resize-none font-mono text-sm"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/25 focus:shadow-[0_0_12px_rgba(255,255,255,0.05)] resize-none font-mono text-sm"
               />
               <p className="text-xs text-white/40 mt-2">
                 Available variables: {'{amount}'}, {'{vehicle}'}, {'{dates}'}, {'{customer_name}'}

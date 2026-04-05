@@ -1,7 +1,18 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { createClient } from "@/lib/supabase/server"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 20, window: 60 })
+  if (limited) return limited
+
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const { domain } = await request.json()
 
     if (!domain) {

@@ -25,6 +25,7 @@ import {
   Home,
   CalendarDays,
   Sparkles,
+  BarChart3,
 } from "lucide-react"
 
 // Ordered by frequency of use for rental fleet owners
@@ -34,6 +35,7 @@ const allNavItems = [
   { name: "Vehicles", href: "/dashboard/vehicles", icon: Car, key: "vehicles" },
   { name: "Bookings", href: "/dashboard/bookings", icon: CalendarDays, key: "bookings" },
   { name: "AI Assistant", href: "/dashboard/ai-assistant", icon: Bot, key: "ai-assistant" },
+  { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3, key: "analytics" },
 ]
 
 const adminNavItems = [
@@ -60,8 +62,8 @@ export default function DashboardLayout({
   const [sidebarSettings, setSidebarSettings] = useState<SidebarSettings>(getDefaultSidebarSettings())
   const [impersonatingUser, setImpersonatingUser] = useState<{ id: string; email: string; name: string } | null>(null)
 
-  // Sidebar is always collapsed on desktop, expanded on mobile
-  const isExpanded = false
+  // Sidebar is always collapsed on desktop, expands on hover to reveal labels
+  const [sidebarHovered, setSidebarHovered] = useState(false)
 
   useEffect(() => {
     const getUser = async () => {
@@ -103,7 +105,7 @@ export default function DashboardLayout({
     setSidebarSettings(getSidebarSettings())
 
     // Check if we're impersonating a user
-    const impersonatingData = localStorage.getItem("impersonating_user")
+    const impersonatingData = sessionStorage.getItem("impersonating_user")
     if (impersonatingData) {
       try {
         setImpersonatingUser(JSON.parse(impersonatingData))
@@ -214,89 +216,100 @@ export default function DashboardLayout({
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
   ]
 
-  const handleSignOut = useCallback(async () => {
-    localStorage.removeItem(SESSION_TOKEN_KEY)
-    localStorage.removeItem("impersonating_user")
-    localStorage.removeItem("admin_return_token")
+  // Raw sign out — clears everything and redirects to login
+  const forceSignOut = useCallback(async () => {
+    sessionStorage.removeItem(SESSION_TOKEN_KEY)
+    sessionStorage.removeItem("impersonating_user")
+    sessionStorage.removeItem("admin_return_token")
+    sessionStorage.removeItem("admin_return_session")
     await supabase.auth.signOut()
-    router.push("/login")
-    router.refresh()
-  }, [supabase, router])
+    window.location.href = "/login"
+  }, [supabase])
 
   const exitImpersonation = useCallback(async () => {
     try {
-      // Try to restore from new session storage format (both tokens)
-      const adminSessionStr = localStorage.getItem("admin_return_session")
-      let adminSession: { access_token: string; refresh_token: string } | null = null
+      // Get the stored admin user ID
+      const adminUserId = sessionStorage.getItem("admin_user_id")
+      // Fallback: try old format
+      let adminSessionStr = sessionStorage.getItem("admin_return_session")
 
-      if (adminSessionStr) {
-        try {
-          adminSession = JSON.parse(adminSessionStr)
-        } catch {
-          // Invalid JSON, ignore
-        }
-      }
-
-      // Fallback to old format (just access token)
-      if (!adminSession) {
-        const adminToken = localStorage.getItem("admin_return_token")
-        if (adminToken) {
-          adminSession = { access_token: adminToken, refresh_token: "" }
-        }
-      }
-
-      if (!adminSession?.access_token) {
-        // No admin token stored, just sign out completely
-        handleSignOut()
+      if (!adminUserId && !adminSessionStr) {
+        forceSignOut()
         return
       }
 
-      // Clear ALL impersonation and cache data
-      localStorage.removeItem("impersonating_user")
-      localStorage.removeItem("admin_return_token")
-      localStorage.removeItem("admin_return_session")
-      localStorage.removeItem("scale_exotics_dashboard_cache")
-
-      // Sign out the impersonated user session
-      await supabase.auth.signOut()
-
-      // Restore the admin session using refresh token first (more reliable)
-      let sessionRestored = false
-
-      if (adminSession.refresh_token) {
-        const { error: refreshError } = await supabase.auth.setSession({
-          access_token: adminSession.access_token,
-          refresh_token: adminSession.refresh_token,
-        })
-
-        if (!refreshError) {
-          sessionRestored = true
+      // 1. Clear ALL impersonation state and caches
+      sessionStorage.removeItem("impersonating_user")
+      sessionStorage.removeItem("admin_user_id")
+      sessionStorage.removeItem("admin_return_token")
+      sessionStorage.removeItem("admin_return_session")
+      for (let i = sessionStorage.length - 1; i >= 0; i--) {
+        const key = sessionStorage.key(i)
+        if (key && (key.startsWith("velocity_dashboard_") || key === "velocity_labs_dashboard_cache")) {
+          sessionStorage.removeItem(key)
+        }
+      }
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i)
+        if (key && (key.startsWith("velocity_dashboard_") || key === "velocity_labs_dashboard_cache")) {
+          localStorage.removeItem(key)
         }
       }
 
-      // If refresh didn't work, try just the access token
-      if (!sessionRestored) {
-        const { error } = await supabase.auth.setSession({
-          access_token: adminSession.access_token,
-          refresh_token: adminSession.refresh_token || "",
+      // 2. Sign out impersonated user
+      await supabase.auth.signOut()
+
+      // 3. Get a fresh admin session from the server
+      if (adminUserId) {
+        const res = await fetch("/api/admin/restore-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ adminUserId }),
         })
 
-        if (error) {
-          console.error("Failed to restore admin session:", error)
-          // Token expired - redirect to login with message
-          window.location.href = "/login?message=session_expired"
+        if (res.ok) {
+          const data = await res.json()
+          await supabase.auth.setSession({
+            access_token: data.access_token,
+            refresh_token: data.refresh_token,
+          })
+          window.location.href = "/dashboard/admin"
           return
         }
       }
 
-      // Redirect to admin dashboard
-      window.location.href = "/dashboard/admin"
+      // 4. Fallback: try old stored tokens
+      if (adminSessionStr) {
+        try {
+          const adminSession = JSON.parse(adminSessionStr)
+          const { error } = await supabase.auth.setSession({
+            access_token: adminSession.access_token,
+            refresh_token: adminSession.refresh_token || "",
+          })
+          if (!error) {
+            window.location.href = "/dashboard/admin"
+            return
+          }
+        } catch { /* ignore */ }
+      }
+
+      // All methods failed
+      window.location.href = "/login"
     } catch (error) {
       console.error("Error exiting impersonation:", error)
-      // On error, just sign out and redirect to login
-      handleSignOut()
+      forceSignOut()
     }
-  }, [supabase, handleSignOut])
+  }, [supabase, forceSignOut])
+
+  // Smart sign out: if impersonating, return to admin; otherwise sign out fully
+  const handleSignOut = useCallback(async () => {
+    const impersonating = sessionStorage.getItem("impersonating_user")
+    if (impersonating) {
+      exitImpersonation()
+    } else {
+      forceSignOut()
+    }
+  }, [exitImpersonation, forceSignOut])
 
   // Prefetch critical routes on mount for faster navigation
   useEffect(() => {
@@ -364,11 +377,15 @@ export default function DashboardLayout({
 
       {/* Sidebar - Always collapsed on desktop with hover tooltips */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full bg-black border-r border-white/10 transform transition-all duration-200 ease-out lg:translate-x-0 w-64 lg:w-[72px] ${
+        onMouseEnter={() => setSidebarHovered(true)}
+        onMouseLeave={() => setSidebarHovered(false)}
+        className={`fixed top-0 left-0 z-50 h-full bg-black border-r border-white/10 transform transition-[width] duration-100 ease-out lg:translate-x-0 w-64 ${
+          sidebarHovered ? "lg:w-52" : "lg:w-[72px]"
+        } ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        } overflow-hidden`}
       >
-        <div className="flex flex-col h-full overflow-hidden lg:overflow-visible">
+        <div className="flex flex-col h-full overflow-hidden">
           {/* Logo - aligned with header height */}
           <div className="py-3 lg:h-[73px] flex items-center transition-all duration-200 px-6 lg:px-3 justify-center">
             <Link href="/dashboard" className="flex items-center">
@@ -384,7 +401,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Main Navigation */}
-          <nav className="flex-1 space-y-1 overflow-y-auto lg:overflow-visible transition-all duration-200 p-4 lg:p-2">
+          <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden transition-all duration-200 p-4 lg:p-2">
             {navItems.map((item) => {
               const isActive = pathname === item.href ||
                 (item.href !== "/dashboard" && pathname.startsWith(item.href))
@@ -393,7 +410,7 @@ export default function DashboardLayout({
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`group relative flex items-center py-3 rounded-xl transition-colors gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center ${
+                  className={`group relative flex items-center py-3 rounded-xl transition-all duration-200 gap-3 px-4 lg:px-3 ${
                     isActive
                       ? "text-white"
                       : "text-white/60 hover:text-white hover:bg-white/5"
@@ -401,27 +418,22 @@ export default function DashboardLayout({
                   style={isActive ? { backgroundColor: "rgba(255,255,255,0.15)" } : undefined}
                 >
                   <item.icon className="w-5 h-5 flex-shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.5)]" />
-                  {/* Mobile: always show text */}
-                  <span className="font-medium lg:hidden">{item.name}</span>
+                  <span className="font-medium whitespace-nowrap overflow-hidden">{item.name}</span>
                   {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
-                  {/* Desktop: tooltip on hover */}
-                  <div className="hidden lg:flex absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[60] shadow-xl items-center">
-                    <span className="text-sm font-medium text-white">{item.name}</span>
-                  </div>
                 </Link>
               )
             })}
           </nav>
 
           {/* Bottom section: Admin + Settings + User */}
-          <div className="border-t border-white/10 transition-all duration-200 p-4 lg:p-2 lg:overflow-visible space-y-1">
+          <div className="border-t border-white/10 transition-all duration-200 p-4 lg:p-2 overflow-hidden space-y-1">
             {/* Admin Section - above Settings */}
             {profile?.is_admin && (
               <>
-                <div className="pb-2 px-4 lg:px-2 lg:flex lg:justify-center">
-                  <p className="text-xs font-semibold text-white/30 uppercase tracking-wider flex items-center gap-2 lg:gap-0">
-                    <Shield className="w-3 h-3" />
-                    <span className="lg:hidden">Admin</span>
+                <div className="pb-2 px-4 lg:px-3 overflow-hidden">
+                  <p className="text-xs font-semibold text-white/30 uppercase tracking-wider flex items-center gap-2 whitespace-nowrap">
+                    <Shield className="w-3 h-3 flex-shrink-0" />
+                    <span className="overflow-hidden">Admin</span>
                   </p>
                 </div>
                 {adminNavItems.map((item) => {
@@ -432,7 +444,7 @@ export default function DashboardLayout({
                       key={item.href}
                       href={item.href}
                       onClick={() => setSidebarOpen(false)}
-                      className={`group relative flex items-center py-3 rounded-xl transition-colors gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center ${
+                      className={`group relative flex items-center py-3 rounded-xl transition-all duration-200 gap-3 px-4 lg:px-3 ${
                         isActive
                           ? "text-white"
                           : "text-white/60 hover:text-white hover:bg-white/5"
@@ -440,13 +452,8 @@ export default function DashboardLayout({
                       style={isActive ? { backgroundColor: "rgba(255,255,255,0.15)" } : undefined}
                     >
                       <item.icon className="w-5 h-5 flex-shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.5)]" />
-                      {/* Mobile: always show text */}
-                      <span className="font-medium lg:hidden">{item.name}</span>
+                      <span className="font-medium whitespace-nowrap overflow-hidden">{item.name}</span>
                       {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
-                      {/* Desktop: tooltip on hover */}
-                      <div className="hidden lg:flex absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[60] shadow-xl items-center">
-                        <span className="text-sm font-medium text-white">{item.name}</span>
-                      </div>
                     </Link>
                   )
                 })}
@@ -461,7 +468,7 @@ export default function DashboardLayout({
                 <Link
                   href={settingsItem.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`group relative flex items-center py-3 rounded-xl transition-colors gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center ${
+                  className={`group relative flex items-center py-3 rounded-xl transition-all duration-200 gap-3 px-4 lg:px-3 ${
                     isActive
                       ? "text-white"
                       : "text-white/60 hover:text-white hover:bg-white/5"
@@ -469,18 +476,13 @@ export default function DashboardLayout({
                   style={isActive ? { backgroundColor: "rgba(255,255,255,0.15)" } : undefined}
                 >
                   <settingsItem.icon className="w-5 h-5 flex-shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.5)]" />
-                  {/* Mobile: always show text */}
-                  <span className="font-medium lg:hidden">{settingsItem.name}</span>
+                  <span className="font-medium whitespace-nowrap overflow-hidden">{settingsItem.name}</span>
                   {isActive && <ChevronRight className="w-4 h-4 ml-auto lg:hidden" />}
-                  {/* Desktop: tooltip on hover */}
-                  <div className="hidden lg:flex absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[60] shadow-xl items-center">
-                    <span className="text-sm font-medium text-white">{settingsItem.name}</span>
-                  </div>
                 </Link>
               )
             })()}
-            {/* User info - shows on mobile always, tooltip on desktop */}
-            <div className="group relative flex items-center py-3 mb-2 gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center">
+            {/* User info */}
+            <div className="flex items-center py-3 mb-2 gap-3 px-4 lg:px-3 overflow-hidden">
               <div
                 className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-white/10"
               >
@@ -488,32 +490,22 @@ export default function DashboardLayout({
                   {profile?.full_name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || "U"}
                 </span>
               </div>
-              {/* Mobile: always show info */}
-              <div className="flex-1 min-w-0 lg:hidden">
-                <p className="text-sm font-medium truncate">
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <p className="text-sm font-medium truncate whitespace-nowrap">
                   {profile?.full_name || "User"}
                 </p>
-                <p className="text-xs text-white/40 truncate">
+                <p className="text-xs text-white/40 truncate whitespace-nowrap">
                   {profile?.company_name || user?.email}
                 </p>
-              </div>
-              {/* Desktop: tooltip on hover */}
-              <div className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[60] shadow-xl">
-                <p className="text-sm font-medium text-white">{profile?.full_name || "User"}</p>
-                <p className="text-xs text-white/50">{profile?.company_name || user?.email}</p>
               </div>
             </div>
             {/* Sign out button */}
             <button
               onClick={handleSignOut}
-              className="group relative flex items-center py-3 w-full rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors gap-3 px-4 lg:gap-0 lg:px-0 lg:justify-center"
+              className="group flex items-center py-3 w-full rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all duration-200 gap-3 px-4 lg:px-3 overflow-hidden"
             >
               <LogOut className="w-5 h-5 flex-shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.5)]" />
-              <span className="font-medium lg:hidden">Sign Out</span>
-              {/* Desktop: tooltip on hover */}
-              <div className="hidden lg:flex absolute left-full ml-3 px-3 py-2 bg-[#1a1a1a] border border-white/20 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 whitespace-nowrap z-[60] shadow-xl items-center">
-                <span className="text-sm font-medium text-white">Sign Out</span>
-              </div>
+              <span className="font-medium whitespace-nowrap overflow-hidden">Sign Out</span>
             </button>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { generateResponse, ChatMessage, ModelId } from "@/lib/anthropic"
 import { generateSecurePaymentLink, PaymentLinkData } from "@/lib/payment-link"
+import { applyRateLimit } from "@/lib/api-rate-limit"
 
 // Force Node.js runtime for Anthropic SDK compatibility
 export const runtime = "nodejs"
@@ -71,6 +72,9 @@ interface LeadData {
 }
 
 export async function POST(request: NextRequest) {
+  const limited = applyRateLimit(request, { limit: 30, window: 60 })
+  if (limited) return limited
+
   try {
     // Verify user is authenticated - don't trust client-provided userId
     const authenticatedUser = await getAuthenticatedUser()
@@ -151,14 +155,6 @@ export async function POST(request: NextRequest) {
 
       // Remove the [EXTRACTED] block from the response
       aiResponse = aiResponse.replace(/\s*\[EXTRACTED\][\s\S]*?\[\/EXTRACTED\]\s*/, "").trim()
-    }
-
-    // Check for fake URLs the AI might have made up (common hallucination)
-    const fakeUrlPattern = /https?:\/\/[^\s]+\/(payment|checkout|pay|book)[^\s]*/gi
-    if (fakeUrlPattern.test(aiResponse) && !aiResponse.includes("[SEND_PAYMENT_LINK]")) {
-      console.log("[Chatbot Test] WARNING: AI wrote a fake URL without using marker! Removing it.")
-      // Remove the fake URL and add the marker so we generate a real one
-      aiResponse = aiResponse.replace(fakeUrlPattern, "[SEND_PAYMENT_LINK]")
     }
 
     // Generate payment link if [SEND_PAYMENT_LINK] marker is present
@@ -273,27 +269,25 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: any) {
+    // Log full error server-side only; never leak details to the client.
     console.error("Chatbot test error:", error)
-    console.error("Error message:", error?.message)
-    console.error("Error stack:", error?.stack)
 
-    // Check for specific error types
     if (error?.message?.includes("ANTHROPIC_API_KEY")) {
       return NextResponse.json(
-        { error: "ANTHROPIC_API_KEY not configured", details: error?.message },
+        { error: "Service misconfigured" },
         { status: 500 }
       )
     }
 
     if (error?.status === 401) {
       return NextResponse.json(
-        { error: "Invalid API key", details: "The Anthropic API key is invalid or expired" },
-        { status: 401 }
+        { error: "Service authentication failed" },
+        { status: 502 }
       )
     }
 
     return NextResponse.json(
-      { error: "Internal server error", details: error?.message },
+      { error: "Internal server error" },
       { status: 500 }
     )
   }
