@@ -24,16 +24,19 @@ CREATE INDEX IF NOT EXISTS idx_integration_requests_provider ON integration_requ
 ALTER TABLE integration_requests ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Anyone can create an integration request (even unauthenticated for lead capture)
+DROP POLICY IF EXISTS "Anyone can create integration requests" ON integration_requests;
 CREATE POLICY "Anyone can create integration requests"
   ON integration_requests FOR INSERT
   WITH CHECK (true);
 
 -- Policy: Users can view their own requests
+DROP POLICY IF EXISTS "Users can view own integration requests" ON integration_requests;
 CREATE POLICY "Users can view own integration requests"
   ON integration_requests FOR SELECT
   USING (auth.uid() = user_id);
 
 -- Policy: Admins can view all requests
+DROP POLICY IF EXISTS "Admins can view all integration requests" ON integration_requests;
 CREATE POLICY "Admins can view all integration requests"
   ON integration_requests FOR SELECT
   USING (

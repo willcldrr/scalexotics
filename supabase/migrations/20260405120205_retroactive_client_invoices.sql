@@ -7,7 +7,7 @@
 -- Client Invoices table for Velocity Labs billing
 -- Run this in your Supabase SQL Editor
 
-CREATE TABLE client_invoices (
+CREATE TABLE IF NOT EXISTS client_invoices (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   invoice_number VARCHAR(20) UNIQUE NOT NULL,
 
@@ -45,8 +45,8 @@ CREATE TABLE client_invoices (
 );
 
 -- Create index for faster lookups
-CREATE INDEX idx_client_invoices_status ON client_invoices(status);
-CREATE INDEX idx_client_invoices_invoice_number ON client_invoices(invoice_number);
+CREATE INDEX IF NOT EXISTS idx_client_invoices_status ON client_invoices(status);
+CREATE INDEX IF NOT EXISTS idx_client_invoices_invoice_number ON client_invoices(invoice_number);
 
 -- Function to generate invoice number
 CREATE OR REPLACE FUNCTION generate_client_invoice_number()
@@ -72,6 +72,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger to auto-generate invoice number
+DROP TRIGGER IF EXISTS set_client_invoice_number ON client_invoices;
 CREATE TRIGGER set_client_invoice_number
   BEFORE INSERT ON client_invoices
   FOR EACH ROW
@@ -82,6 +83,7 @@ CREATE TRIGGER set_client_invoice_number
 ALTER TABLE client_invoices ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Admins can do everything
+DROP POLICY IF EXISTS "Admins can manage client_invoices" ON client_invoices;
 CREATE POLICY "Admins can manage client_invoices" ON client_invoices
   FOR ALL
   USING (
@@ -93,6 +95,7 @@ CREATE POLICY "Admins can manage client_invoices" ON client_invoices
   );
 
 -- Policy: Anyone can read invoice by id (for payment page)
+DROP POLICY IF EXISTS "Anyone can view client_invoice by id" ON client_invoices;
 CREATE POLICY "Anyone can view client_invoice by id" ON client_invoices
   FOR SELECT
   USING (true);

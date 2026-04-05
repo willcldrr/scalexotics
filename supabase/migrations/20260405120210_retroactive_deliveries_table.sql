@@ -55,21 +55,25 @@ CREATE INDEX IF NOT EXISTS idx_deliveries_status ON deliveries(status);
 ALTER TABLE deliveries ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Users can view their own deliveries
+DROP POLICY IF EXISTS "Users can view own deliveries" ON deliveries;
 CREATE POLICY "Users can view own deliveries"
   ON deliveries FOR SELECT
   USING (auth.uid() = user_id);
 
 -- Policy: Users can create deliveries
+DROP POLICY IF EXISTS "Users can create deliveries" ON deliveries;
 CREATE POLICY "Users can create deliveries"
   ON deliveries FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
 -- Policy: Users can update their own deliveries
+DROP POLICY IF EXISTS "Users can update own deliveries" ON deliveries;
 CREATE POLICY "Users can update own deliveries"
   ON deliveries FOR UPDATE
   USING (auth.uid() = user_id);
 
 -- Policy: Users can delete their own deliveries
+DROP POLICY IF EXISTS "Users can delete own deliveries" ON deliveries;
 CREATE POLICY "Users can delete own deliveries"
   ON deliveries FOR DELETE
   USING (auth.uid() = user_id);

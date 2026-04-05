@@ -25,27 +25,32 @@ CREATE TABLE IF NOT EXISTS crm_oauth_config (
 ALTER TABLE crm_oauth_config ENABLE ROW LEVEL SECURITY;
 
 -- Only admins can manage OAuth config
+DROP POLICY IF EXISTS "Admins can view OAuth config" ON crm_oauth_config;
 CREATE POLICY "Admins can view OAuth config" ON crm_oauth_config
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
   );
 
+DROP POLICY IF EXISTS "Admins can insert OAuth config" ON crm_oauth_config;
 CREATE POLICY "Admins can insert OAuth config" ON crm_oauth_config
   FOR INSERT WITH CHECK (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
   );
 
+DROP POLICY IF EXISTS "Admins can update OAuth config" ON crm_oauth_config;
 CREATE POLICY "Admins can update OAuth config" ON crm_oauth_config
   FOR UPDATE USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
   );
 
+DROP POLICY IF EXISTS "Admins can delete OAuth config" ON crm_oauth_config;
 CREATE POLICY "Admins can delete OAuth config" ON crm_oauth_config
   FOR DELETE USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
   );
 
 -- Trigger to update updated_at timestamp
+DROP TRIGGER IF EXISTS crm_oauth_config_updated_at ON crm_oauth_config;
 CREATE TRIGGER crm_oauth_config_updated_at
   BEFORE UPDATE ON crm_oauth_config
   FOR EACH ROW EXECUTE FUNCTION update_crm_updated_at();

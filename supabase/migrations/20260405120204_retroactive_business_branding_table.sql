@@ -36,22 +36,26 @@ CREATE INDEX IF NOT EXISTS idx_business_branding_user_id ON business_branding(us
 ALTER TABLE business_branding ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Users can view their own branding
+DROP POLICY IF EXISTS "Users can view own branding" ON business_branding;
 CREATE POLICY "Users can view own branding"
   ON business_branding FOR SELECT
   USING (auth.uid() = user_id);
 
 -- Policy: Users can create their branding
+DROP POLICY IF EXISTS "Users can create branding" ON business_branding;
 CREATE POLICY "Users can create branding"
   ON business_branding FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
 -- Policy: Users can update their own branding
+DROP POLICY IF EXISTS "Users can update own branding" ON business_branding;
 CREATE POLICY "Users can update own branding"
   ON business_branding FOR UPDATE
   USING (auth.uid() = user_id);
 
 -- Policy: Public can view branding (for customer-facing pages)
 -- This allows invoice pages, booking portals, etc. to fetch branding without auth
+DROP POLICY IF EXISTS "Public can view branding" ON business_branding;
 CREATE POLICY "Public can view branding"
   ON business_branding FOR SELECT
   USING (true);

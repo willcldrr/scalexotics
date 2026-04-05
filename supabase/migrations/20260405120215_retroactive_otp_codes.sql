@@ -16,10 +16,10 @@ CREATE TABLE IF NOT EXISTS otp_codes (
 );
 
 -- Index for quick lookups
-CREATE INDEX idx_otp_codes_email_code ON otp_codes (email, code) WHERE used = false;
+CREATE INDEX IF NOT EXISTS idx_otp_codes_email_code ON otp_codes (email, code) WHERE used = false;
 
 -- Auto-cleanup expired codes (optional, can also be done via cron)
-CREATE INDEX idx_otp_codes_expires ON otp_codes (expires_at);
+CREATE INDEX IF NOT EXISTS idx_otp_codes_expires ON otp_codes (expires_at);
 
 -- RLS: only service role should access this table
 ALTER TABLE otp_codes ENABLE ROW LEVEL SECURITY;

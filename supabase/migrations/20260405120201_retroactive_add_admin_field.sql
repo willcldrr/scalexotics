@@ -7,7 +7,7 @@
 -- Add is_admin field to profiles
 -- Run this in your Supabase SQL Editor
 
-ALTER TABLE profiles ADD COLUMN is_admin BOOLEAN DEFAULT FALSE;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
 
 -- Set yourself as admin (replace with your user ID or email)
 -- Option 1: By email

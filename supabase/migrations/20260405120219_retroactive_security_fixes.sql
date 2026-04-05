@@ -21,6 +21,7 @@
 
 -- Option A: If you have a simple "users can update own profile" policy, replace it with:
 DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
+DROP POLICY IF EXISTS "Users can update own profile (except admin field)" ON profiles;
 
 CREATE POLICY "Users can update own profile (except admin field)" ON profiles
   FOR UPDATE
@@ -40,6 +41,7 @@ CREATE POLICY "Users can update own profile (except admin field)" ON profiles
 
 -- Drop the vulnerable policy
 DROP POLICY IF EXISTS "Allow authenticated to manage codes" ON access_codes;
+DROP POLICY IF EXISTS "Only admins can manage access codes" ON access_codes;
 
 -- Create admin-only management policy
 CREATE POLICY "Only admins can manage access codes" ON access_codes
@@ -68,6 +70,7 @@ CREATE POLICY "Only admins can manage access codes" ON access_codes
 
 -- Drop the overly permissive policy
 DROP POLICY IF EXISTS "Anyone can view client_invoice by id" ON client_invoices;
+DROP POLICY IF EXISTS "Admins can view all invoices" ON client_invoices;
 
 -- Create admin-only read policy
 -- NOTE: Public invoice viewing for payments is handled by
@@ -91,6 +94,7 @@ CREATE POLICY "Admins can view all invoices" ON client_invoices
 -- ============================================
 
 -- Allow admins to view all domains (for admin management)
+DROP POLICY IF EXISTS "Admins can view all domains" ON custom_domains;
 CREATE POLICY "Admins can view all domains" ON custom_domains
   FOR SELECT
   USING (
@@ -102,6 +106,7 @@ CREATE POLICY "Admins can view all domains" ON custom_domains
   );
 
 -- Allow admins to manage all domains
+DROP POLICY IF EXISTS "Admins can manage all domains" ON custom_domains;
 CREATE POLICY "Admins can manage all domains" ON custom_domains
   FOR ALL
   USING (
