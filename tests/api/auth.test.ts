@@ -26,15 +26,15 @@ vi.mock("@/lib/supabase/server", () => ({
 // @supabase/supabase-js createClient returns whatever each test installs on
 // `serviceClientMock`. This lets both routes share the same mock.
 vi.mock("@supabase/supabase-js", () => ({
-  createClient: (...args: unknown[]) => serviceClientMock(...args),
+  createClient: (...args: any[]) => serviceClientMock(...args),
 }))
 
 // SSRF-guarded fetch (used by instagram/callback) → immediately return
 // synthetic success responses.
 const safeFetchMock = vi.fn()
 vi.mock("@/lib/safe-fetch", () => ({
-  safeFetch: (...args: unknown[]) => safeFetchMock(...args),
-  safeFetchAllowInternal: (...args: unknown[]) => safeFetchMock(...args),
+  safeFetch: (...args: any[]) => safeFetchMock(...args),
+  safeFetchAllowInternal: (...args: any[]) => safeFetchMock(...args),
   SsrfBlockedError: class SsrfBlockedError extends Error {},
 }))
 
@@ -95,7 +95,7 @@ describe("/api/admin/restore-session (LB-2)", () => {
       data: { user: { id: uuid } },
       error: null,
     })
-    const auditInsertMock = vi.fn(async () => ({ data: null, error: null }))
+    const auditInsertMock = vi.fn(async (...args: any[]) => ({ data: null, error: null }))
     const profilesChain = {
       select: () => profilesChain,
       eq: () => profilesChain,
@@ -134,7 +134,7 @@ describe("/api/admin/restore-session (LB-2)", () => {
     const res = await POST(req({ adminUserId: uuid }))
     expect(res.status).toBe(200)
     expect(auditInsertMock).toHaveBeenCalledTimes(1)
-    const inserted = auditInsertMock.mock.calls[0][0] as Record<string, unknown>
+    const inserted = (auditInsertMock.mock.calls[0] as any[])[0] as Record<string, unknown>
     expect(inserted.action).toBe("session_restore")
     expect(inserted.actor_id).toBe(uuid)
     expect(inserted.target_id).toBe(uuid)
@@ -235,8 +235,8 @@ describe("/api/instagram/callback (LB-3)", () => {
         new Response(JSON.stringify({ username: "igname" }), { status: 200 })
       )
 
-    const upsertMock = vi.fn(async () => ({ error: null }))
-    const from = vi.fn(() => ({ upsert: upsertMock }))
+    const upsertMock = vi.fn(async (...args: any[]) => ({ error: null }))
+    const from = vi.fn((...args: any[]) => ({ upsert: upsertMock }))
     serviceClientMock.mockReturnValue({ from })
 
     const { GET } = await import("@/app/api/instagram/callback/route")
