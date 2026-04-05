@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { applyRateLimit } from "@/lib/api-rate-limit"
+import crypto from "crypto"
 
 /**
  * Initiate Instagram OAuth flow
@@ -28,13 +29,10 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  // Generate state parameter to prevent CSRF
-  const state = Buffer.from(JSON.stringify({
-    userId: user.id,
-    timestamp: Date.now(),
-  })).toString("base64")
+  // LB-3: state is a pure random CSRF token. The userId is NOT encoded in
+  // it — the callback resolves the real user from the session cookie.
+  const state = crypto.randomBytes(32).toString("hex")
 
-  // Store state in a cookie for verification
   const response = NextResponse.redirect(
     `https://www.facebook.com/v19.0/dialog/oauth?` +
     new URLSearchParams({

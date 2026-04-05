@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { Resend } from "resend"
-import { applyRateLimit } from "@/lib/api-rate-limit"
+import { applyAuthRateLimit } from "@/lib/auth-rate-limit"
 import crypto from "crypto"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -18,12 +18,21 @@ function generateOtp(): string {
 }
 
 export async function POST(request: NextRequest) {
-  const limited = applyRateLimit(request, { limit: 3, window: 60 })
+  let email: string | undefined
+  let fullName: string | undefined
+  try {
+    const body = await request.json()
+    email = body?.email
+    fullName = body?.fullName
+  } catch {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  // LB-11: composite (email+IP) rate-limit.
+  const limited = applyAuthRateLimit(request, email, { limit: 3, window: 60 })
   if (limited) return limited
 
   try {
-    const { email, fullName } = await request.json()
-
     if (!email) {
       return NextResponse.json(
         { error: "Email is required" },

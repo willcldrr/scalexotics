@@ -81,8 +81,6 @@ export async function POST(request: NextRequest) {
       token_hash: linkData.properties.hashed_token,
     })
 
-    console.log("[Impersonate] verifyOtp result - error:", verifyError, "session:", !!sessionData.session, "refresh_token:", !!sessionData.session?.refresh_token)
-
     if (verifyError || !sessionData.session) {
       console.error("Failed to verify token:", verifyError)
       return NextResponse.json({ error: "Failed to create session" }, { status: 500 })

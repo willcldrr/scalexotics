@@ -10,8 +10,8 @@ Legend: `[ ] PENDING` · `[~] IN PROGRESS` · `[✓] DONE` · `[!] BLOCKED`
 
 | ID | Status | Item | Owner |
 |----|--------|------|-------|
-| LB-2 | [ ] | /api/admin/restore-session lateral takeover (caller==target, audit log) | W2-A |
-| LB-3 | [ ] | Instagram OAuth `state`-as-userId hijack (resolve user from session) | W2-A |
+| LB-2 | [✓] | /api/admin/restore-session lateral takeover (caller==target, audit log) | W2-A |
+| LB-3 | [✓] | Instagram OAuth `state`-as-userId hijack (resolve user from session) | W2-A |
 | LB-4 | [ ] | Collapse/namespace Stripe webhooks; IG+TG idempotency | W2-B |
 | LB-5a | [✓] | Postgres EXCLUDE USING gist on bookings (vehicle × daterange) | W1-B |
 | LB-5b | [ ] | Post-payment multi-step mutation → Postgres RPC transaction | W2-B |
@@ -20,7 +20,7 @@ Legend: `[ ] PENDING` · `[~] IN PROGRESS` · `[✓] DONE` · `[!] BLOCKED`
 | LB-8 | [ ] | Stripe webhook 500 on internal errors; Sentry capture | W2-B |
 | LB-9 | [ ] | safe-fetch SSRF hardening + fetch timeouts everywhere | W2-C |
 | LB-10 | [ ] | Replace in-memory rate limiter with shared store | W2-C |
-| LB-11 | [ ] | OTP brute-force: failed_attempts, lockout, TTL, composite key | W2-A |
+| LB-11 | [✓] | OTP brute-force: failed_attempts, lockout, TTL, composite key | W2-A |
 | LB-12 | [ ] | Thread currency through 4 Stripe checkout routes | W2-B |
 
 ## High-priority findings (from domain reports)
@@ -38,7 +38,7 @@ Legend: `[ ] PENDING` · `[~] IN PROGRESS` · `[✓] DONE` · `[!] BLOCKED`
 - [ ] M6 — CSP unsafe-inline + unsafe-eval
 - [ ] M7 — HTML email template un-escaped fullName
 - [ ] M8 — widget CORS Access-Control-Allow-Origin: *
-- [ ] M9 — impersonate logs verify-otp result (covered by LB-7)
+- [✓] M9 — impersonate logs verify-otp result (log line removed in W2-A)
 - [ ] M10 — access_codes plaintext + non-constant-time compare
 - [ ] M11 — cron secret non-constant-time compare
 
@@ -89,3 +89,4 @@ Legend: `[ ] PENDING` · `[~] IN PROGRESS` · `[✓] DONE` · `[!] BLOCKED`
 - **Test-first scope is narrow.** Wave 3-A writes tests for every path touched in Waves 1–2, not for untouched code.
 - **Conservative scope.** No refactors beyond what each finding requires. Renames are avoided.
 - **No cross-agent messaging primitives available.** Waves are sequenced by the main loop, not by agent-to-agent SendMessage.
+- **LB-11 rate-limit wrapper (W2-A).** `lib/auth-rate-limit.ts` computes `sha256(email+'|'+ip)` and delegates to the existing in-memory `applyRateLimit`. Backend is still the in-memory Map from `lib/rate-limit.ts` pending W2-C (LB-10); when W2-C swaps the store, this helper keeps working with no changes. A `TODO(LB-10)` marker is left in the wrapper.

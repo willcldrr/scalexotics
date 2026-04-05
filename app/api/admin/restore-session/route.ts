@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { createClient as createServiceClient } from "@supabase/supabase-js"
+import { createClient as createCookieClient } from "@/lib/supabase/server"
 import { z } from "zod"
 import { applyRateLimit } from "@/lib/api-rate-limit"
 
@@ -9,8 +10,8 @@ const restoreSessionSchema = z.object({
 
 export const dynamic = "force-dynamic"
 
-function getSupabase() {
-  return createClient(
+function getServiceSupabase() {
+  return createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
@@ -18,20 +19,49 @@ function getSupabase() {
 
 /**
  * Generate a fresh session for the admin user after exiting impersonation.
- * Uses the admin user ID (stored in sessionStorage) to create a new magic link session.
+ *
+ * Self-only: the caller must already be authenticated as `adminUserId`.
+ * This endpoint is purely a "re-mint my own session" helper used after
+ * exiting an impersonation flow — it is NEVER a lateral-restore path.
+ *
+ * Gated behind ENABLE_SESSION_RESTORE feature flag (LB-2).
  */
 export async function POST(request: NextRequest) {
   const limited = applyRateLimit(request, { limit: 10, window: 60 })
   if (limited) return limited
 
+  // Kill switch — must be explicitly enabled per environment.
+  if (process.env.ENABLE_SESSION_RESTORE !== "true") {
+    return NextResponse.json(
+      { error: "Session restore endpoint is disabled" },
+      { status: 503 }
+    )
+  }
+
   try {
-    const supabase = getSupabase()
+    // Cookie-authenticated client — resolves the CURRENT caller, not the body.
+    const cookieSupabase = await createCookieClient()
+    const { data: { user: callerUser }, error: callerError } = await cookieSupabase.auth.getUser()
+
+    if (callerError || !callerUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
 
     const parsed = restoreSessionSchema.safeParse(await request.json())
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 })
     }
     const { adminUserId } = parsed.data
+
+    // Self-only: the caller must be re-minting their OWN session.
+    if (callerUser.id !== adminUserId) {
+      return NextResponse.json(
+        { error: "Forbidden: session restore is self-only" },
+        { status: 403 }
+      )
+    }
+
+    const supabase = getServiceSupabase()
 
     // Verify this user is actually an admin
     const { data: profile } = await supabase
@@ -68,6 +98,24 @@ export async function POST(request: NextRequest) {
 
     if (verifyError || !sessionData.session) {
       return NextResponse.json({ error: "Failed to create session" }, { status: 500 })
+    }
+
+    // Audit log (non-blocking but best-effort)
+    try {
+      const ip =
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        request.headers.get("x-real-ip") ||
+        "unknown"
+      const userAgent = request.headers.get("user-agent") || "unknown"
+      await supabase.from("audit_logs").insert({
+        action: "session_restore",
+        actor_id: callerUser.id,
+        target_id: adminUserId,
+        ip_address: ip,
+        user_agent: userAgent,
+      })
+    } catch {
+      /* non-blocking */
     }
 
     return NextResponse.json({
