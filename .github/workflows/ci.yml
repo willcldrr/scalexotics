@@ -68,10 +68,41 @@ jobs:
       # produce a warning so everyday dependency updates don't block PRs.
       - run: npm audit --audit-level=high
 
+  no-console:
+    name: No console.* in server code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure no console.* in app/api or server-only lib/
+        run: |
+          set -e
+          # Collect every file containing a console.* call under app/api and lib.
+          # Then exclude any file whose first few lines declare "use client" —
+          # those run in the browser and rightfully use console.
+          CANDIDATES=$(grep -rln "console\.\(log\|error\|warn\|info\|debug\)" app/api lib \
+            --include="*.ts" --include="*.tsx" \
+            --exclude-dir=node_modules || true)
+          HITS=""
+          for f in $CANDIDATES; do
+            if head -5 "$f" | grep -q '"use client"'; then
+              continue
+            fi
+            FILE_HITS=$(grep -n "console\.\(log\|error\|warn\|info\|debug\)" "$f" || true)
+            if [ -n "$FILE_HITS" ]; then
+              HITS="${HITS}${f}:"$'\n'"${FILE_HITS}"$'\n'
+            fi
+          done
+          if [ -n "$HITS" ]; then
+            echo "console.* found in server code — use lib/log.ts instead:"
+            echo "$HITS"
+            exit 1
+          fi
+          echo "no console.* in server code"
+
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [lint, typecheck]
+    needs: [lint, typecheck, test, audit, no-console]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
