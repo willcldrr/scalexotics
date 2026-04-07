@@ -21,12 +21,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ valid: true }) // No token to validate
   }
 
-  // Check if the session token exists for this user
+  // Check if the session token exists and is active for this user
   const { data: session } = await supabase
     .from('user_sessions')
     .select('id')
     .eq('user_id', user.id)
     .eq('session_token', sessionToken)
+    .eq('is_active', true)
     .single()
 
   if (!session) {

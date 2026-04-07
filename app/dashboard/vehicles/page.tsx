@@ -155,6 +155,7 @@ export default function VehiclesPage() {
     name: "", make: "", model: "", year: new Date().getFullYear(),
     daily_rate: 0, image_url: "", status: "available", notes: "", turo_ical_url: "", color: "#ffffff",
   })
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const getUser = async () => {
@@ -305,8 +306,8 @@ export default function VehiclesPage() {
             >
               {/* Image */}
               <div className="aspect-[16/10] bg-white/[0.03] relative overflow-hidden">
-                {vehicle.image_url ? (
-                  <Image src={vehicle.image_url} alt={vehicle.name} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
+                {vehicle.image_url && !failedImages.has(vehicle.id) ? (
+                  <Image src={vehicle.image_url} alt={vehicle.name} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.04]" unoptimized onError={() => setFailedImages(prev => new Set(prev).add(vehicle.id))} />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Car className="w-16 h-16 text-white/[0.06]" />
@@ -371,7 +372,7 @@ export default function VehiclesPage() {
             <div className="md:w-[380px] shrink-0 bg-white/[0.02] flex items-center justify-center relative">
               {formData.image_url ? (
                 <div className="relative w-full h-full min-h-[200px] md:min-h-0">
-                  <Image src={formData.image_url} alt="Preview" fill sizes="380px" className="object-cover" />
+                  <Image src={formData.image_url} alt="Preview" fill sizes="380px" className="object-cover" unoptimized />
                   <button type="button" onClick={() => setFormData({ ...formData, image_url: '' })} className="absolute top-3 right-3 p-1.5 rounded-lg bg-black/60 hover:bg-red-500/60 transition-all duration-300">
                     <X className="w-4 h-4" />
                   </button>

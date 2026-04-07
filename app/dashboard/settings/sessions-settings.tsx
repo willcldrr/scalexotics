@@ -9,7 +9,9 @@ interface Session {
   browser: string
   os: string
   ip_address: string
+  location: string | null
   is_current: boolean
+  is_active: boolean
   last_active: string
   created_at: string
 }
@@ -249,11 +251,11 @@ DELETE FROM user_sessions WHERE session_token IS NULL;`}
                       )}
                     </div>
                     <div className="flex items-center gap-3 text-sm text-white/50 mt-1">
-                      {session.ip_address && session.ip_address !== 'Unknown' && (
+                      {(session.location || (session.ip_address && session.ip_address !== 'Unknown')) && (
                         <>
                           <span className="flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
-                            {session.ip_address}
+                            {session.location || session.ip_address}
                           </span>
                           <span>•</span>
                         </>

@@ -133,6 +133,7 @@ export default function DashboardLayout({
       "/dashboard/vehicles",
       "/dashboard/bookings",
       "/dashboard/ai-assistant",
+      "/dashboard/ai-assistant/test",
       "/dashboard/settings",
     ]
     routesToPrefetch.forEach(route => router.prefetch(route))
@@ -387,7 +388,7 @@ export default function DashboardLayout({
       >
         <div className="flex flex-col h-full overflow-hidden">
           {/* Logo - aligned with header height */}
-          <div className="py-3 lg:h-[73px] flex items-center transition-all duration-200 px-6 lg:px-3 justify-center">
+          <div className="py-3 lg:h-[73px] flex items-center transition-all duration-200 px-6 lg:px-2 justify-center">
             <Link href="/dashboard" className="flex items-center">
               <Image
                 src={branding.logoUrl || "/velocity.jpg"}
@@ -401,7 +402,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Main Navigation */}
-          <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden transition-all duration-200 p-4 lg:p-2">
+          <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden transition-all duration-200 p-4 lg:px-1 lg:py-2">
             {navItems.map((item) => {
               const isActive = pathname === item.href ||
                 (item.href !== "/dashboard" && pathname.startsWith(item.href))
@@ -410,7 +411,7 @@ export default function DashboardLayout({
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`group relative flex items-center py-3 rounded-xl transition-all duration-200 gap-3 px-4 lg:px-3 ${
+                  className={`group relative flex items-center py-3 rounded-xl transition-all duration-200 gap-3 px-4 lg:px-2 ${
                     isActive
                       ? "text-white"
                       : "text-white/60 hover:text-white hover:bg-white/5"
@@ -426,11 +427,11 @@ export default function DashboardLayout({
           </nav>
 
           {/* Bottom section: Admin + Settings + User */}
-          <div className="border-t border-white/10 transition-all duration-200 p-4 lg:p-2 overflow-hidden space-y-1">
+          <div className="border-t border-white/10 transition-all duration-200 p-4 lg:px-1 lg:py-2 overflow-hidden space-y-1">
             {/* Admin Section - above Settings */}
             {profile?.is_admin && (
               <>
-                <div className="pb-2 px-4 lg:px-3 overflow-hidden">
+                <div className="pb-2 px-4 lg:px-2 overflow-hidden">
                   <p className="text-xs font-semibold text-white/30 uppercase tracking-wider flex items-center gap-2 whitespace-nowrap">
                     <Shield className="w-3 h-3 flex-shrink-0" />
                     <span className="overflow-hidden">Admin</span>
@@ -444,7 +445,7 @@ export default function DashboardLayout({
                       key={item.href}
                       href={item.href}
                       onClick={() => setSidebarOpen(false)}
-                      className={`group relative flex items-center py-3 rounded-xl transition-all duration-200 gap-3 px-4 lg:px-3 ${
+                      className={`group relative flex items-center py-3 rounded-xl transition-all duration-200 gap-3 px-4 lg:px-2 ${
                         isActive
                           ? "text-white"
                           : "text-white/60 hover:text-white hover:bg-white/5"
@@ -468,7 +469,7 @@ export default function DashboardLayout({
                 <Link
                   href={settingsItem.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`group relative flex items-center py-3 rounded-xl transition-all duration-200 gap-3 px-4 lg:px-3 ${
+                  className={`group relative flex items-center py-3 rounded-xl transition-all duration-200 gap-3 px-4 lg:px-2 ${
                     isActive
                       ? "text-white"
                       : "text-white/60 hover:text-white hover:bg-white/5"
@@ -482,7 +483,7 @@ export default function DashboardLayout({
               )
             })()}
             {/* User info */}
-            <div className="flex items-center py-3 mb-2 gap-3 px-4 lg:px-3 overflow-hidden">
+            <div className="flex items-center py-3 mb-2 gap-3 px-4 lg:px-2 overflow-hidden">
               <div
                 className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-white/10"
               >
@@ -502,7 +503,7 @@ export default function DashboardLayout({
             {/* Sign out button */}
             <button
               onClick={handleSignOut}
-              className="group flex items-center py-3 w-full rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all duration-200 gap-3 px-4 lg:px-3 overflow-hidden"
+              className="group flex items-center py-3 w-full rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all duration-200 gap-3 px-4 lg:px-2 overflow-hidden"
             >
               <LogOut className="w-5 h-5 flex-shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.5)]" />
               <span className="font-medium whitespace-nowrap overflow-hidden">Sign Out</span>
